@@ -1,0 +1,27 @@
+name: hed-bot
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - langgraph>=1.0.3
+      - langchain>=1.0.7
+      - langchain-community>=1.0.7
+      - langchain-core>=1.0.5
+      - fastapi>=0.121.2
+      - uvicorn[standard]>=0.32.1
+      - pydantic>=2.10.2
+      - python-multipart>=0.0.17
+      - aiofiles>=24.1.0
+      - httpx>=0.28.1
+      - hedtools>=0.5.0
+      - lxml>=5.3.0
+      - beautifulsoup4>=4.12.3
+      - pytest>=8.3.0
+      - pytest-cov>=5.0.0
+      - pytest-asyncio>=0.24.0
+      - ruff>=0.8.4
+      - black>=24.10.0
+      - mypy>=1.13.0

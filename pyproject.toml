@@ -1,0 +1,80 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hed-bot"
+version = "0.1.0"
+description = "Multi-agent system for HED annotation generation and validation"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Yahya", email = "yahya@example.com"}
+]
+
+dependencies = [
+    "langgraph>=1.0.3",
+    "langchain>=1.0.7",
+    "langchain-community>=1.0.7",
+    "langchain-core>=1.0.5",
+    "fastapi>=0.121.2",
+    "uvicorn[standard]>=0.32.1",
+    "pydantic>=2.10.2",
+    "python-multipart>=0.0.17",
+    "aiofiles>=24.1.0",
+    "httpx>=0.28.1",
+    "hedtools>=0.5.0",
+    "lxml>=5.3.0",
+    "beautifulsoup4>=4.12.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-cov>=5.0.0",
+    "pytest-asyncio>=0.24.0",
+    "ruff>=0.7.0",
+    "black>=24.8.0",
+    "mypy>=1.11.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--cov=src",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+    "--strict-markers",
+]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
