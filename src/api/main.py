@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
 
     # Get configuration from environment
     llm_base_url = os.getenv("LLM_BASE_URL", "http://localhost:11434")
-    llm_model = os.getenv("LLM_MODEL", "llama3.2")
+    llm_model = os.getenv("LLM_MODEL", "gpt-oss:20b")
     schema_dir = os.getenv(
         "HED_SCHEMA_DIR",
         "/Users/yahya/Documents/git/HED/hed-schemas/schemas_latest_json",

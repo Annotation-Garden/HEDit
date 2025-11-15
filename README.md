@@ -12,9 +12,10 @@ Multi-agent system for converting natural language event descriptions into valid
 
 - **JSON Schema Support**: Uses official HED JSON schemas with short-form tags and extensionAllowed detection
 - **Intelligent Validation**: Multi-stage validation with feedback loops and closest match suggestions
-- **Local LLM Serving**: Supports vLLM or Ollama for efficient multi-user inference
+- **Local LLM Serving**: Uses Ollama with `gpt-oss:20b` model (20B parameters)
 - **GPU Acceleration**: Optimized for NVIDIA RTX 4090 with CUDA support
 - **Scalable**: Designed for 10-15 concurrent users
+- **Auto-Configuration**: Model automatically pulled on first Docker start
 
 ## Architecture
 

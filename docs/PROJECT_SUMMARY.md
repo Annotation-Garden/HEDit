@@ -16,7 +16,7 @@ Completed: November 15, 2025
 - **Agent Framework**: LangGraph 1.0.3 (latest)
 - **LLM Framework**: LangChain 1.0.7 (latest)
 - **Backend**: FastAPI 0.121.2 (latest)
-- **LLM Serving**: Ollama (with vLLM as alternative)
+- **LLM Serving**: Ollama with `gpt-oss:20b` (20B parameters)
 - **Validation**: HED Python tools + HED JavaScript validator
 - **Deployment**: Docker with CUDA 12.2 support
 - **Testing**: pytest with coverage
@@ -103,10 +103,10 @@ Final HED Annotation + Feedback
 - **Multiple Schemas**: Support for different HED versions
 
 ### 6. GPU-Accelerated Serving
-- **Ollama Integration**: Easy LLM deployment
-- **CUDA Support**: NVIDIA GPU acceleration
+- **Ollama Integration**: Easy LLM deployment with `gpt-oss:20b`
+- **CUDA Support**: NVIDIA GPU acceleration (RTX 4090 optimized)
 - **Concurrent Users**: Optimized for 10-15 simultaneous users
-- **Model Flexibility**: Support for various LLaMA models
+- **Auto-Pull**: Model automatically downloaded on first container start
 
 ### 7. Containerized Deployment
 - **Docker**: Single-command deployment
@@ -179,11 +179,12 @@ cd /Users/yahya/Documents/git/HED/hed-bot
 # Configure
 cp .env.example .env
 
-# Build and start
+# Build and start (model auto-pulls on first start)
 docker-compose up -d
 
-# Pull LLM model
-docker exec -it hed-bot-ollama ollama pull llama3.2
+# Wait for model to download (first start only, ~10-20 min)
+# Check progress:
+docker logs -f hed-bot-ollama
 
 # Test
 curl http://localhost:38427/health

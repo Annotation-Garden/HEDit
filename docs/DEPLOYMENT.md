@@ -42,11 +42,12 @@ docker-compose logs -f hed-bot
 ### 3. Pull LLM Model
 
 ```bash
-# Pull Llama 3.2 (or your preferred model)
-docker exec -it hed-bot-ollama ollama pull llama3.2
+# Model is automatically pulled on first container start
+# Or manually pull the default model:
+docker exec -it hed-bot-ollama ollama pull gpt-oss:20b
 
-# Alternative: Use a larger model for better results
-docker exec -it hed-bot-ollama ollama pull llama3.2:70b
+# Alternative: Use a different model if needed
+docker exec -it hed-bot-ollama ollama pull llama3.2
 ```
 
 ### 4. Access the Service
@@ -89,7 +90,7 @@ cp .env.example .env
 ollama serve
 
 # In another terminal, pull model
-ollama pull llama3.2
+ollama pull gpt-oss:20b
 ```
 
 ### 5. Start HED-BOT API
@@ -209,7 +210,8 @@ sudo systemctl status hed-bot
 
 3. **GPU Memory**:
    - Monitor with `nvidia-smi`
-   - Consider using smaller quantized models (e.g., `llama3.2:8b-q4_0`)
+   - Default model: `gpt-oss:20b` (optimized for RTX 4090)
+   - Consider smaller models if memory constrained (e.g., `llama3.2:8b`)
 
 4. **Caching**:
    - HED schemas are cached in memory
@@ -261,7 +263,8 @@ docker run --rm --gpus all nvidia/cuda:12.2.0-base nvidia-smi
 
 ### Ollama Out of Memory
 
-- Use smaller model: `llama3.2:8b`
+- Default model is `gpt-oss:20b` (optimized for RTX 4090)
+- Use smaller model if needed: `llama3.2:8b`
 - Reduce `OLLAMA_NUM_PARALLEL`
 - Increase GPU memory limit in Docker
 
