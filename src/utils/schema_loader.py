@@ -61,7 +61,9 @@ class HedSchemaLoader:
                 schema = load_schema(schema_spec)
             else:
                 # Load from version string
-                schema = load_schema_version(schema_spec, library_name=library_name)
+                # Note: library_name is not directly supported by load_schema_version
+                # For library schemas, use format "library:version" (e.g., "score:2.0.0")
+                schema = load_schema_version(xml_version=schema_spec)
 
             # Cache the loaded schema
             self._cache[cache_key] = schema

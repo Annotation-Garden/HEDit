@@ -124,7 +124,10 @@ class HedAnnotationWorkflow:
         Returns:
             State update
         """
-        return await self.annotation_agent.annotate(state)
+        print(f"[WORKFLOW] Entering annotate node (attempt {state['validation_attempts']})")
+        result = await self.annotation_agent.annotate(state)
+        print(f"[WORKFLOW] Annotation generated: {result.get('current_annotation', '')[:100]}...")
+        return result
 
     async def _validate_node(self, state: HedAnnotationState) -> dict:
         """Validation node: Validate HED annotation.
@@ -135,7 +138,12 @@ class HedAnnotationWorkflow:
         Returns:
             State update
         """
-        return await self.validation_agent.validate(state)
+        print(f"[WORKFLOW] Entering validate node")
+        result = await self.validation_agent.validate(state)
+        print(f"[WORKFLOW] Validation result: {result.get('validation_status')}, is_valid: {result.get('is_valid')}")
+        if not result.get('is_valid'):
+            print(f"[WORKFLOW] Validation errors: {result.get('validation_errors', [])}")
+        return result
 
     async def _evaluate_node(self, state: HedAnnotationState) -> dict:
         """Evaluation node: Evaluate annotation faithfulness.
@@ -146,7 +154,10 @@ class HedAnnotationWorkflow:
         Returns:
             State update
         """
-        return await self.evaluation_agent.evaluate(state)
+        print(f"[WORKFLOW] Entering evaluate node")
+        result = await self.evaluation_agent.evaluate(state)
+        print(f"[WORKFLOW] Evaluation result: is_faithful={result.get('is_faithful')}")
+        return result
 
     async def _assess_node(self, state: HedAnnotationState) -> dict:
         """Assessment node: Final assessment.
@@ -172,10 +183,13 @@ class HedAnnotationWorkflow:
             Next node name
         """
         if state["validation_status"] == "valid":
+            print(f"[WORKFLOW] Routing to evaluate (validation passed)")
             return "evaluate"
         elif state["validation_status"] == "max_attempts_reached":
+            print(f"[WORKFLOW] Routing to end (max validation attempts reached)")
             return "end"
         else:
+            print(f"[WORKFLOW] Routing to annotate (validation failed, attempts: {state['validation_attempts']}/{state['max_validation_attempts']})")
             return "annotate"
 
     def _route_after_evaluation(
@@ -191,8 +205,10 @@ class HedAnnotationWorkflow:
             Next node name
         """
         if state["is_faithful"]:
+            print(f"[WORKFLOW] Routing to assess (annotation is faithful)")
             return "assess"
         else:
+            print(f"[WORKFLOW] Routing to annotate (annotation needs refinement)")
             return "annotate"
 
     async def run(
@@ -200,6 +216,7 @@ class HedAnnotationWorkflow:
         input_description: str,
         schema_version: str = "8.3.0",
         max_validation_attempts: int = 5,
+        config: dict | None = None,
     ) -> HedAnnotationState:
         """Run the complete annotation workflow.
 
@@ -207,6 +224,7 @@ class HedAnnotationWorkflow:
             input_description: Natural language event description
             schema_version: HED schema version to use
             max_validation_attempts: Maximum validation retry attempts
+            config: Optional LangGraph config (e.g., recursion_limit)
 
         Returns:
             Final workflow state with annotation and feedback
@@ -221,6 +239,6 @@ class HedAnnotationWorkflow:
         )
 
         # Run workflow
-        final_state = await self.graph.ainvoke(initial_state)
+        final_state = await self.graph.ainvoke(initial_state, config=config)
 
         return final_state
