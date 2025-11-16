@@ -245,12 +245,16 @@ async def annotate(request: AnnotationRequest) -> AnnotationResponse:
         raise HTTPException(status_code=503, detail="Workflow not initialized")
 
     try:
-        # Run annotation workflow
+        # Run annotation workflow with increased recursion limit for long descriptions
+        # LangGraph default is 25, increase to 100 for complex workflows
+        config = {"recursion_limit": 100}
+
         final_state = await workflow.run(
             input_description=request.description,
             schema_version=request.schema_version,
             max_validation_attempts=request.max_validation_attempts,
             run_assessment=request.run_assessment,
+            config=config,
         )
 
         # Determine overall status
