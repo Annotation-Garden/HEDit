@@ -41,24 +41,60 @@ async def lifespan(app: FastAPI):
     # Startup: Initialize workflow
     print("Initializing HED-BOT annotation workflow...")
 
-    # Get configuration from environment
+    # Auto-detect environment (Docker vs local)
+    def get_default_path(docker_path: str, local_path: str) -> str:
+        """Get default path based on environment.
+
+        Args:
+            docker_path: Path to use in Docker
+            local_path: Path to use in local development
+
+        Returns:
+            Appropriate default path
+        """
+        # Check if running in Docker (look for Docker-specific paths)
+        if Path("/app").exists() and Path(docker_path).exists():
+            return docker_path
+        # Check if local development path exists
+        elif Path(local_path).exists():
+            return local_path
+        # Fall back to Docker path (will fail gracefully if not available)
+        return docker_path
+
+    # Get configuration from environment with smart defaults
     llm_base_url = os.getenv("LLM_BASE_URL", "http://localhost:11435")
     llm_model = os.getenv("LLM_MODEL", "gpt-oss:20b")
+    llm_temperature = float(os.getenv("LLM_TEMPERATURE", "0.1"))
+
+    # Schema directory with environment detection
     schema_dir = os.getenv(
         "HED_SCHEMA_DIR",
-        "/Users/yahya/Documents/git/HED/hed-schemas/schemas_latest_json",
+        get_default_path(
+            "/app/hed-schemas/schemas_latest_json",  # Docker
+            str(Path.home() / "git/hed-schemas/schemas_latest_json"),  # Local Linux/macOS
+        ),
     )
+
+    # Validator path with environment detection
     validator_path = os.getenv(
         "HED_VALIDATOR_PATH",
-        "/Users/yahya/Documents/git/HED/hed-javascript",
+        get_default_path(
+            "/app/hed-javascript",  # Docker
+            str(Path.home() / "git/hed-javascript"),  # Local Linux/macOS
+        ),
     )
+
     use_js_validator = os.getenv("USE_JS_VALIDATOR", "true").lower() == "true"
+
+    print(f"Environment: {'Docker' if Path('/app').exists() else 'Local'}")
+    print(f"Schema directory: {schema_dir}")
+    print(f"Validator path: {validator_path}")
 
     # Initialize LLM
     llm = ChatOllama(
         base_url=llm_base_url,
         model=llm_model,
-        temperature=0.1,  # Low temperature for consistent annotations
+        temperature=llm_temperature,  # Configurable temperature (default: 0.1 for consistency)
     )
 
     # Initialize workflow with JSON schema support
@@ -72,8 +108,9 @@ async def lifespan(app: FastAPI):
     # Set global schema_loader from workflow
     schema_loader = workflow.schema_loader
 
-    print(f"Workflow initialized with LLM: {llm_model} at {llm_base_url}")
-    print(f"Using JavaScript validator: {use_js_validator}")
+    print(f"Workflow initialized successfully!")
+    print(f"  LLM: {llm_model} at {llm_base_url} (temperature={llm_temperature})")
+    print(f"  JavaScript validator: {use_js_validator}")
 
     yield
 
