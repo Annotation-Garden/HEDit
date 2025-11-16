@@ -42,55 +42,50 @@ class EvaluationAgent:
 
 Your task is to assess how faithfully a HED annotation captures the original natural language event description.
 
+## Evaluation Philosophy
+
+- **Be practical, not perfectionist**: Annotations don't need to capture EVERY detail
+- **Focus on core event elements**: Event type, main objects, key actions
+- **Accept reasonable variations**: Multiple valid ways to annotate the same event
+- **Prioritize correctness over completeness**: Better to be accurate than exhaustive
+
 ## Evaluation Criteria
 
-### 1. Completeness
-- Are all important aspects of the event captured?
-- Are key attributes (colors, shapes, positions, etc.) included?
-- Is the event type correctly identified?
-- Is the task role properly specified?
+### 1. Core Elements (REQUIRED)
+- Event type identified (Sensory-event, Agent-action, etc.)
+- Main objects/stimuli included
+- Key actions captured (if any)
 
-### 2. Accuracy
-- Do the HED tags correctly represent the described event?
-- Are sensory modalities accurate (visual, auditory, etc.)?
-- Are spatial relationships correct?
-- Are temporal aspects properly captured?
+### 2. Important Details (SHOULD HAVE)
+- Colors, shapes if explicitly mentioned
+- Spatial relationships if specified
+- Task role (Experimental-stimulus, Participant-response)
 
-### 3. Semantic Fidelity
-- Does the annotation follow the reversibility principle?
-- Can the HED annotation be translated back to coherent English?
-- Is the grouping semantically correct?
-- Are relationships properly expressed?
+### 3. Optional Enhancements (NICE TO HAVE)
+- Fine-grained attributes
+- Implicit details
+- Additional context
 
-### 4. Missing Elements
-- What important details are missing?
-- What dimensions could be added for better description?
-- Are there implicit aspects that should be made explicit?
+## Decision Guidelines
 
-### 5. Tag Validity Check
-- Are all tags from the HED schema vocabulary?
-- If invalid tags detected, suggest closest schema matches
-- Consider if tag extension is needed (extensionAllowed tags)
+**ACCEPT if**:
+- Core elements are present ✓
+- No major inaccuracies
+- Can translate back to similar English description
+
+**REFINE only if**:
+- Missing critical information (event type, main object, key action)
+- Contains clear errors or misrepresentations
+- Would fail reversibility test (can't translate back)
 
 ## Response Format
 
-Provide your evaluation in this structure:
-
-FAITHFUL: [yes/no/partial]
-
-STRENGTHS:
-- [What the annotation captures well]
-
-WEAKNESSES:
-- [What the annotation misses or misrepresents]
-
-MISSING ELEMENTS:
-- [Specific missing aspects]
-
-REFINEMENT SUGGESTIONS:
-- [Specific suggestions for improvement]
+FAITHFUL: [yes/partial/no]
 
 DECISION: [ACCEPT/REFINE]
+
+FEEDBACK:
+- [Brief feedback if refinement needed]
 """
 
     def _build_user_prompt(self, description: str, annotation: str) -> str:
@@ -150,8 +145,8 @@ Provide a thorough evaluation following the specified format."""
         response = await self.llm.ainvoke(messages)
         feedback = response.content.strip()
 
-        # Parse decision
-        is_faithful = "DECISION: ACCEPT" in feedback
+        # Parse decision with multiple fallbacks
+        is_faithful = self._parse_decision(feedback)
 
         # Update state
         return {
@@ -159,6 +154,44 @@ Provide a thorough evaluation following the specified format."""
             "is_faithful": is_faithful,
             "messages": state.get("messages", []) + messages + [response],
         }
+
+    def _parse_decision(self, feedback: str) -> bool:
+        """Parse evaluation decision from LLM feedback.
+
+        Args:
+            feedback: LLM evaluation feedback
+
+        Returns:
+            True if annotation should be accepted, False if needs refinement
+        """
+        import re
+
+        feedback_lower = feedback.lower()
+
+        # Check for explicit DECISION line
+        decision_match = re.search(r'decision:\s*(accept|refine)', feedback_lower)
+        if decision_match:
+            return decision_match.group(1) == 'accept'
+
+        # Check for FAITHFUL field - accept "yes" or "partial"
+        faithful_match = re.search(r'faithful:\s*(yes|partial|no)', feedback_lower)
+        if faithful_match:
+            result = faithful_match.group(1)
+            return result in ['yes', 'partial']  # Accept partial as good enough!
+
+        # Fallback: look for positive indicators
+        positive_indicators = ['accept', 'good', 'sufficient', 'adequate', 'captures well']
+        negative_indicators = ['refine', 'missing', 'incorrect', 'inaccurate', 'lacks']
+
+        positive_score = sum(1 for indicator in positive_indicators if indicator in feedback_lower)
+        negative_score = sum(1 for indicator in negative_indicators if indicator in feedback_lower)
+
+        # If more positive than negative, accept
+        if positive_score > negative_score:
+            return True
+
+        # Default to refine if ambiguous (conservative)
+        return False
 
     def _check_tags_and_suggest(self, annotation: str) -> str:
         """Check annotation for invalid tags and suggest alternatives.

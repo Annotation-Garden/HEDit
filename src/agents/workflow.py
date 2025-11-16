@@ -124,8 +124,10 @@ class HedAnnotationWorkflow:
         Returns:
             State update
         """
-        print(f"[WORKFLOW] Entering annotate node (attempt {state['validation_attempts']})")
+        total_iters = state.get('total_iterations', 0) + 1
+        print(f"[WORKFLOW] Entering annotate node (validation attempt {state['validation_attempts']}, total iteration {total_iters})")
         result = await self.annotation_agent.annotate(state)
+        result['total_iterations'] = total_iters  # Increment counter
         print(f"[WORKFLOW] Annotation generated: {result.get('current_annotation', '')[:100]}...")
         return result
 
@@ -204,11 +206,19 @@ class HedAnnotationWorkflow:
         Returns:
             Next node name
         """
+        # Check if max total iterations reached
+        total_iters = state.get('total_iterations', 0)
+        max_iters = state.get('max_total_iterations', 10)
+
+        if total_iters >= max_iters:
+            print(f"[WORKFLOW] Routing to assess (max total iterations {max_iters} reached)")
+            return "assess"
+
         if state["is_faithful"]:
             print(f"[WORKFLOW] Routing to assess (annotation is faithful)")
             return "assess"
         else:
-            print(f"[WORKFLOW] Routing to annotate (annotation needs refinement)")
+            print(f"[WORKFLOW] Routing to annotate (annotation needs refinement, iteration {total_iters}/{max_iters})")
             return "annotate"
 
     async def run(

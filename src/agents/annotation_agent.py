@@ -88,12 +88,27 @@ Please fix these errors and generate a corrected HED annotation for:
 {description}
 
 Remember to use only valid HED tags and follow proper grouping rules.
-Provide ONLY the corrected HED annotation string."""
+
+CRITICAL: Output ONLY the raw HED annotation string.
+Do NOT include:
+- Markdown headers (##, ###)
+- Code blocks (```)
+- Explanatory text like "Here is", "Corrected", "Refined"
+- Any other commentary
+
+Just output the HED string directly."""
 
         return f"""Generate a HED annotation for this event description:
 {description}
 
-Provide ONLY the HED annotation string."""
+CRITICAL: Output ONLY the raw HED annotation string.
+Do NOT include:
+- Markdown headers (##, ###)
+- Code blocks (```)
+- Explanatory text
+- Any commentary
+
+Just output the HED string directly."""
 
     async def annotate(self, state: HedAnnotationState) -> dict:
         """Generate or refine a HED annotation.
@@ -137,10 +152,56 @@ Provide ONLY the HED annotation string."""
         ]
 
         response = await self.llm.ainvoke(messages)
-        annotation = response.content.strip()
+        raw_annotation = response.content.strip()
+
+        # Clean up LLM output - extract just the HED annotation
+        annotation = self._extract_hed_annotation(raw_annotation)
 
         # Update state
         return {
             "current_annotation": annotation,
             "messages": messages + [response],
         }
+
+    def _extract_hed_annotation(self, text: str) -> str:
+        """Extract HED annotation from LLM response, removing markdown and explanations.
+
+        Args:
+            text: Raw LLM response
+
+        Returns:
+            Clean HED annotation string
+        """
+        import re
+
+        # Remove markdown code blocks
+        text = re.sub(r'```(?:hed|HED)?\s*\n?', '', text)
+        text = re.sub(r'```\s*$', '', text)
+
+        # Remove markdown headers
+        text = re.sub(r'^#{1,6}\s+.*$', '', text, flags=re.MULTILINE)
+
+        # Split by lines and find HED-like content
+        lines = [line.strip() for line in text.split('\n') if line.strip()]
+
+        # Look for lines that look like HED annotations:
+        # - Contain HED keywords (Sensory-event, Agent-action, etc.)
+        # - Have parentheses and commas typical of HED
+        # - Don't start with explanatory words (The, Here, This, etc.)
+        hed_keywords = ['Sensory-event', 'Agent-action', 'Event', 'Visual-presentation',
+                        'Participant-response', 'Experimental-stimulus']
+
+        for line in lines:
+            # Skip obvious explanation lines
+            if line.lower().startswith(('the ', 'here ', 'this ', 'note:', 'corrected', 'refined')):
+                continue
+            # Check if line contains HED structure
+            if any(keyword in line for keyword in hed_keywords) or ('(' in line and ',' in line):
+                return line
+
+        # If no clear HED line found, return the longest non-empty line
+        # (likely to be the annotation)
+        if lines:
+            return max(lines, key=len)
+
+        return text

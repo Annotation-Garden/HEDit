@@ -25,12 +25,14 @@ class HedAnnotationState(TypedDict):
         validation_errors: List of validation error messages
         validation_warnings: List of validation warning messages
         validation_attempts: Number of validation attempts made
+        total_iterations: Total number of annotation attempts (validation + evaluation)
         evaluation_feedback: Feedback from evaluation agent
         assessment_feedback: Feedback from assessment agent
         is_valid: Whether current annotation is valid
         is_faithful: Whether annotation faithfully captures description
         is_complete: Whether annotation is complete
         max_validation_attempts: Maximum allowed validation attempts
+        max_total_iterations: Maximum total iterations to prevent infinite loops
         schema_version: HED schema version being used
     """
 
@@ -46,6 +48,7 @@ class HedAnnotationState(TypedDict):
     validation_errors: list[str]
     validation_warnings: list[str]
     validation_attempts: int
+    total_iterations: int  # Total annotation attempts
 
     # Agent feedback
     evaluation_feedback: str
@@ -58,6 +61,7 @@ class HedAnnotationState(TypedDict):
 
     # Configuration
     max_validation_attempts: int
+    max_total_iterations: int  # Max total iterations
     schema_version: str
 
 
@@ -65,6 +69,7 @@ def create_initial_state(
     input_description: str,
     schema_version: str = "8.3.0",
     max_validation_attempts: int = 5,
+    max_total_iterations: int = 10,
 ) -> HedAnnotationState:
     """Create an initial state for a new annotation workflow.
 
@@ -72,6 +77,7 @@ def create_initial_state(
         input_description: Natural language event description to annotate
         schema_version: HED schema version to use (default: "8.3.0")
         max_validation_attempts: Maximum validation retry attempts (default: 5)
+        max_total_iterations: Maximum total iterations to prevent infinite loops (default: 10)
 
     Returns:
         Initial HedAnnotationState
@@ -84,11 +90,13 @@ def create_initial_state(
         validation_errors=[],
         validation_warnings=[],
         validation_attempts=0,
+        total_iterations=0,
         evaluation_feedback="",
         assessment_feedback="",
         is_valid=False,
         is_faithful=False,
         is_complete=False,
         max_validation_attempts=max_validation_attempts,
+        max_total_iterations=max_total_iterations,
         schema_version=schema_version,
     )
