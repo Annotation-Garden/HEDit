@@ -1,0 +1,23 @@
+name = "hed-bot-api"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# KV Namespaces for caching
+[[kv_namespaces]]
+binding = "HED_CACHE"
+id = "YOUR_KV_NAMESPACE_ID"  # Will be created during deployment
+
+# KV Namespace for rate limiting
+[[kv_namespaces]]
+binding = "RATE_LIMITER"
+id = "YOUR_RATE_LIMIT_KV_ID"  # Will be created during deployment
+
+# Environment variables (secrets set via wrangler secret put)
+# Run: wrangler secret put OPENROUTER_API_KEY
+[vars]
+ENVIRONMENT = "production"
+
+# Routes (optional - if you want custom domain)
+# routes = [
+#   { pattern = "api.your-domain.com/*", zone_name = "your-domain.com" }
+# ]

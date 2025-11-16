@@ -1,8 +1,27 @@
 # HED-BOT Deployment Guide
 
-This guide walks you through deploying HED-BOT using Cloudflare Pages (frontend) and Cloudflare Tunnel (backend).
+This guide provides deployment options for HED-BOT.
 
-## Architecture
+## Deployment Options
+
+### ⭐ Option 1: Cloudflare Pages + Workers (RECOMMENDED)
+**Best for:** Using OpenRouter/Cerebras API (no local LLM)
+- Fully serverless
+- No backend infrastructure
+- ~$2-5/month total cost
+- 100,000 requests/day FREE
+- See: `workers/README.md`
+
+### Option 2: Cloudflare Pages + Tunnel
+**Best for:** Using local LLM on your GPU machine
+- Frontend on CDN
+- Backend on local GPU
+- $0/month (both free)
+- See guide below
+
+---
+
+# Option 2: Pages + Tunnel Architecture
 
 ```
 ┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
