@@ -219,6 +219,21 @@
             font-weight: 600;
         }
 
+        .beta-disclaimer {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 4px solid #f59e0b;
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            color: #92400e;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .beta-disclaimer strong {
+            color: #78350f;
+        }
+
         .annotation-box {
             background: white;
             padding: 24px;
@@ -475,6 +490,10 @@ Example: A red circle appears on the left side of the screen and the participant
 
         <div class="result-section" id="results">
             <h2>Results</h2>
+            <p class="beta-disclaimer">
+                <strong>Note:</strong> This is a beta service. Validation may still fail in some cases.
+                Please carefully review the validation results below before using the generated annotation.
+            </p>
 
             <div class="annotation-box">
                 <h3>Generated HED Annotation</h3>
