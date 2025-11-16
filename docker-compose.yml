@@ -33,15 +33,29 @@ services:
     depends_on:
       - ollama
     environment:
-      - LLM_BASE_URL=http://ollama:11434
-      - LLM_MODEL=gpt-oss:20b
-      - LLM_TEMPERATURE=0.1
+      # LLM Provider Configuration
+      - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
+
+      # OpenRouter Configuration (used when LLM_PROVIDER=openrouter)
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - LLM_PROVIDER_PREFERENCE=${LLM_PROVIDER_PREFERENCE}
+      - ANNOTATION_MODEL=${ANNOTATION_MODEL:-gpt-5-mini}
+      - EVALUATION_MODEL=${EVALUATION_MODEL:-gpt-5-mini}
+      - ASSESSMENT_MODEL=${ASSESSMENT_MODEL:-gpt-5-mini}
+      - FEEDBACK_MODEL=${FEEDBACK_MODEL:-gpt-5-nano}
+
+      # Ollama Configuration (used when LLM_PROVIDER=ollama)
+      - LLM_BASE_URL=${LLM_BASE_URL:-http://ollama:11434}
+      - LLM_MODEL=${LLM_MODEL:-gpt-oss:20b}
+      - LLM_TEMPERATURE=${LLM_TEMPERATURE:-0.1}
       - OLLAMA_HOST=http://ollama:11434
-      - HED_SCHEMA_VERSION=8.4.0
+
+      # HED Configuration
+      - HED_SCHEMA_VERSION=${HED_SCHEMA_VERSION:-8.4.0}
+      - USE_JS_VALIDATOR=${USE_JS_VALIDATOR:-true}
       # HED paths are set in Dockerfile, override here if needed
       # - HED_SCHEMA_DIR=/app/hed-schemas/schemas_latest_json
       # - HED_VALIDATOR_PATH=/app/hed-javascript
-      # - USE_JS_VALIDATOR=true
     ports:
       - "38427:38427"
     restart: unless-stopped

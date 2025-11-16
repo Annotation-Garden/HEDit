@@ -10,13 +10,19 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from langchain_community.chat_models import ChatOllama
+from langchain_core.language_models import BaseChatModel
 
 from src import __version__
 from src.agents.workflow import HedAnnotationWorkflow
+from src.utils.openrouter_llm import create_openrouter_llm, get_model_name
 from src.api.models import (
     AnnotationRequest,
     AnnotationResponse,
@@ -65,8 +71,7 @@ async def lifespan(app: FastAPI):
         return docker_path
 
     # Get configuration from environment with smart defaults
-    llm_base_url = os.getenv("LLM_BASE_URL", "http://localhost:11435")
-    llm_model = os.getenv("LLM_MODEL", "gpt-oss:20b")
+    llm_provider = os.getenv("LLM_PROVIDER", "ollama")  # "ollama" or "openrouter"
     llm_temperature = float(os.getenv("LLM_TEMPERATURE", "0.1"))
 
     # Schema directory with environment detection
@@ -93,16 +98,80 @@ async def lifespan(app: FastAPI):
     print(f"Schema directory: {schema_dir}")
     print(f"Validator path: {validator_path}")
 
-    # Initialize LLM
-    llm = ChatOllama(
-        base_url=llm_base_url,
-        model=llm_model,
-        temperature=llm_temperature,  # Configurable temperature (default: 0.1 for consistency)
-    )
+    # Initialize LLM based on provider
+    if llm_provider == "openrouter":
+        # OpenRouter configuration
+        openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
+        if not openrouter_api_key:
+            raise ValueError("OPENROUTER_API_KEY environment variable is required when using OpenRouter")
 
-    # Initialize workflow with JSON schema support
+        # Provider preference (e.g., "Cerebras" for ultra-fast inference)
+        provider_preference = os.getenv("LLM_PROVIDER_PREFERENCE")
+
+        # Per-agent model configuration
+        annotation_model = get_model_name(os.getenv("ANNOTATION_MODEL", "gpt-5-mini"))
+        evaluation_model = get_model_name(os.getenv("EVALUATION_MODEL", "gpt-5-mini"))
+        assessment_model = get_model_name(os.getenv("ASSESSMENT_MODEL", "gpt-5-mini"))
+        feedback_model = get_model_name(os.getenv("FEEDBACK_MODEL", "gpt-5-nano"))
+
+        print(f"Using OpenRouter with models:")
+        print(f"  Annotation: {annotation_model}")
+        print(f"  Evaluation: {evaluation_model}")
+        print(f"  Assessment: {assessment_model}")
+        print(f"  Feedback: {feedback_model}")
+        if provider_preference:
+            print(f"  Provider: {provider_preference} (ultra-fast)")
+
+        # Create LLMs for each agent
+        annotation_llm = create_openrouter_llm(
+            model=annotation_model,
+            api_key=openrouter_api_key,
+            temperature=llm_temperature,
+            provider=provider_preference,
+        )
+        evaluation_llm = create_openrouter_llm(
+            model=evaluation_model,
+            api_key=openrouter_api_key,
+            temperature=llm_temperature,
+            provider=provider_preference,
+        )
+        assessment_llm = create_openrouter_llm(
+            model=assessment_model,
+            api_key=openrouter_api_key,
+            temperature=llm_temperature,
+            provider=provider_preference,
+        )
+        feedback_llm = create_openrouter_llm(
+            model=feedback_model,
+            api_key=openrouter_api_key,
+            temperature=llm_temperature,
+            provider=provider_preference,
+        )
+
+        # Use annotation_llm as default
+        llm = annotation_llm
+    else:
+        # Ollama configuration (default)
+        llm_base_url = os.getenv("LLM_BASE_URL", "http://localhost:11435")
+        llm_model = os.getenv("LLM_MODEL", "gpt-oss:20b")
+
+        llm = ChatOllama(
+            base_url=llm_base_url,
+            model=llm_model,
+            temperature=llm_temperature,
+        )
+
+        # All agents use same model for Ollama
+        annotation_llm = evaluation_llm = assessment_llm = feedback_llm = llm
+
+        print(f"Using Ollama: {llm_model} at {llm_base_url}")
+
+    # Initialize workflow with per-agent LLMs
     workflow = HedAnnotationWorkflow(
-        llm=llm,
+        llm=annotation_llm,
+        evaluation_llm=evaluation_llm if llm_provider == "openrouter" else None,
+        assessment_llm=assessment_llm if llm_provider == "openrouter" else None,
+        feedback_llm=feedback_llm if llm_provider == "openrouter" else None,
         schema_dir=Path(schema_dir),
         validator_path=Path(validator_path) if use_js_validator else None,
         use_js_validator=use_js_validator,
@@ -112,7 +181,7 @@ async def lifespan(app: FastAPI):
     schema_loader = workflow.schema_loader
 
     print(f"Workflow initialized successfully!")
-    print(f"  LLM: {llm_model} at {llm_base_url} (temperature={llm_temperature})")
+    print(f"  LLM Provider: {llm_provider} (temperature={llm_temperature})")
     print(f"  JavaScript validator: {use_js_validator}")
 
     yield

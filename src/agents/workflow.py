@@ -12,6 +12,7 @@ from langgraph.graph import END, StateGraph
 from src.agents.annotation_agent import AnnotationAgent
 from src.agents.assessment_agent import AssessmentAgent
 from src.agents.evaluation_agent import EvaluationAgent
+from src.agents.feedback_summarizer import FeedbackSummarizer
 from src.agents.state import HedAnnotationState
 from src.agents.validation_agent import ValidationAgent
 from src.utils.schema_loader import HedSchemaLoader
@@ -35,6 +36,9 @@ class HedAnnotationWorkflow:
     def __init__(
         self,
         llm: BaseChatModel,
+        evaluation_llm: BaseChatModel | None = None,
+        assessment_llm: BaseChatModel | None = None,
+        feedback_llm: BaseChatModel | None = None,
         schema_dir: Path | str | None = None,
         validator_path: Path | None = None,
         use_js_validator: bool = True,
@@ -42,7 +46,10 @@ class HedAnnotationWorkflow:
         """Initialize the workflow.
 
         Args:
-            llm: Language model for agents
+            llm: Language model for annotation agent
+            evaluation_llm: Language model for evaluation agent (defaults to llm)
+            assessment_llm: Language model for assessment agent (defaults to llm)
+            feedback_llm: Language model for feedback summarization (defaults to llm)
             schema_dir: Directory containing JSON schemas
             validator_path: Path to hed-javascript for validation
             use_js_validator: Whether to use JavaScript validator
@@ -55,15 +62,21 @@ class HedAnnotationWorkflow:
         # Initialize legacy schema loader for validation
         self.schema_loader = HedSchemaLoader()
 
-        # Initialize agents with JSON schema support
+        # Use provided LLMs or default to main llm
+        eval_llm = evaluation_llm or llm
+        assess_llm = assessment_llm or llm
+        feed_llm = feedback_llm or llm
+
+        # Initialize agents with JSON schema support and per-agent LLMs
         self.annotation_agent = AnnotationAgent(llm, schema_dir=self.schema_dir)
         self.validation_agent = ValidationAgent(
             self.schema_loader,
             use_javascript=use_js_validator,
             validator_path=validator_path,
         )
-        self.evaluation_agent = EvaluationAgent(llm, schema_dir=self.schema_dir)
-        self.assessment_agent = AssessmentAgent(llm, schema_dir=self.schema_dir)
+        self.evaluation_agent = EvaluationAgent(eval_llm, schema_dir=self.schema_dir)
+        self.assessment_agent = AssessmentAgent(assess_llm, schema_dir=self.schema_dir)
+        self.feedback_summarizer = FeedbackSummarizer(feed_llm)
 
         # Build graph
         self.graph = self._build_graph()
@@ -80,6 +93,7 @@ class HedAnnotationWorkflow:
         # Add nodes
         workflow.add_node("annotate", self._annotate_node)
         workflow.add_node("validate", self._validate_node)
+        workflow.add_node("summarize_feedback", self._summarize_feedback_node)
         workflow.add_node("evaluate", self._evaluate_node)
         workflow.add_node("assess", self._assess_node)
 
@@ -94,18 +108,21 @@ class HedAnnotationWorkflow:
             "validate",
             self._route_after_validation,
             {
-                "annotate": "annotate",  # Retry if invalid and attempts remain
+                "summarize_feedback": "summarize_feedback",  # Summarize feedback if invalid
                 "evaluate": "evaluate",  # Proceed if valid
                 "end": END,  # End if max attempts reached
             },
         )
+
+        # After feedback summarization, go to annotation
+        workflow.add_edge("summarize_feedback", "annotate")
 
         # After evaluation, route based on faithfulness
         workflow.add_conditional_edges(
             "evaluate",
             self._route_after_evaluation,
             {
-                "annotate": "annotate",  # Refine if not faithful
+                "summarize_feedback": "summarize_feedback",  # Summarize feedback if not faithful
                 "assess": "assess",  # Proceed to assessment if needed
                 "end": END,  # Skip assessment if valid and faithful
             },
@@ -183,6 +200,20 @@ class HedAnnotationWorkflow:
         """
         return await self.assessment_agent.assess(state)
 
+    async def _summarize_feedback_node(self, state: HedAnnotationState) -> dict:
+        """Summarize feedback node: Condense errors and feedback.
+
+        Args:
+            state: Current workflow state
+
+        Returns:
+            State update with summarized feedback
+        """
+        print(f"[WORKFLOW] Entering summarize_feedback node")
+        result = await self.feedback_summarizer.summarize(state)
+        print(f"[WORKFLOW] Feedback summarized: {result.get('validation_errors', [''])[0][:100] if result.get('validation_errors') else 'No feedback'}...")
+        return result
+
     def _route_after_validation(
         self,
         state: HedAnnotationState,
@@ -202,8 +233,8 @@ class HedAnnotationWorkflow:
             print(f"[WORKFLOW] Routing to end (max validation attempts reached)")
             return "end"
         else:
-            print(f"[WORKFLOW] Routing to annotate (validation failed, attempts: {state['validation_attempts']}/{state['max_validation_attempts']})")
-            return "annotate"
+            print(f"[WORKFLOW] Routing to summarize_feedback (validation failed, attempts: {state['validation_attempts']}/{state['max_validation_attempts']})")
+            return "summarize_feedback"
 
     def _route_after_evaluation(
         self,
@@ -246,8 +277,8 @@ class HedAnnotationWorkflow:
                 print(f"[WORKFLOW] Skipping assessment (has validation issues, assessment not requested) - routing to END")
                 return "end"
         else:
-            print(f"[WORKFLOW] Routing to annotate (annotation needs refinement, iteration {total_iters}/{max_iters})")
-            return "annotate"
+            print(f"[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration {total_iters}/{max_iters})")
+            return "summarize_feedback"
 
     async def run(
         self,
