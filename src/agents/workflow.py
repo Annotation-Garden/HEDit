@@ -279,10 +279,8 @@ class HedAnnotationWorkflow:
             schema_version,
             max_validation_attempts,
             max_total_iterations,
+            run_assessment,
         )
-
-        # Add run_assessment flag to state
-        initial_state['run_assessment'] = run_assessment
 
         # Run workflow
         final_state = await self.graph.ainvoke(initial_state, config=config)

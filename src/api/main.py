@@ -251,13 +251,8 @@ async def annotate_stream(request: AnnotationRequest):
             import asyncio
             from src.agents.state import create_initial_state
 
-            initial_state = create_initial_state(
-                request.description,
-                request.schema_version,
-                request.max_validation_attempts,
-                10,  # max_total_iterations
-            )
-            initial_state['run_assessment'] = request.run_assessment
+            # Note: create_initial_state is called internally by workflow.run()
+            # No need to create it here
 
             # Track workflow progress by monitoring state changes
             # This is a simplified version - ideally we'd use callbacks

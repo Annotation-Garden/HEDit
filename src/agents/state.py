@@ -63,6 +63,7 @@ class HedAnnotationState(TypedDict):
     max_validation_attempts: int
     max_total_iterations: int  # Max total iterations
     schema_version: str
+    run_assessment: bool  # Whether to run final assessment
 
 
 def create_initial_state(
@@ -70,6 +71,7 @@ def create_initial_state(
     schema_version: str = "8.3.0",
     max_validation_attempts: int = 5,
     max_total_iterations: int = 10,
+    run_assessment: bool = False,
 ) -> HedAnnotationState:
     """Create an initial state for a new annotation workflow.
 
@@ -78,6 +80,7 @@ def create_initial_state(
         schema_version: HED schema version to use (default: "8.3.0")
         max_validation_attempts: Maximum validation retry attempts (default: 5)
         max_total_iterations: Maximum total iterations to prevent infinite loops (default: 10)
+        run_assessment: Whether to run final assessment (default: False)
 
     Returns:
         Initial HedAnnotationState
@@ -99,4 +102,5 @@ def create_initial_state(
         max_validation_attempts=max_validation_attempts,
         max_total_iterations=max_total_iterations,
         schema_version=schema_version,
+        run_assessment=run_assessment,
     )
