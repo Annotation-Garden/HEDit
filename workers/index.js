@@ -116,6 +116,17 @@ async function handleHealth(request, env, corsHeaders) {
 }
 
 /**
+ * Hash a string using SHA-256
+ */
+async function hashString(str) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
  * Main annotation endpoint (proxies to backend)
  */
 async function handleAnnotate(request, env, ctx, corsHeaders) {
@@ -151,8 +162,9 @@ async function handleAnnotate(request, env, ctx, corsHeaders) {
     });
   }
 
-  // Check cache
-  const cacheKey = `hed:${schema_version}:${description}`;
+  // Check cache - hash the description to avoid KV key length limit (512 bytes)
+  const descriptionHash = await hashString(description);
+  const cacheKey = `hed:${schema_version}:${descriptionHash}`;
   const cached = await env.HED_CACHE?.get(cacheKey, 'json');
   if (cached) {
     return new Response(JSON.stringify({ ...cached, cached: true }), {
