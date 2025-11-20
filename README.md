@@ -183,7 +183,8 @@ hed-bot/
 ├── frontend/           # Web UI
 ├── tests/              # Test suite
 ├── docs/               # Documentation
-└── plan.md            # Project roadmap
+└── .context/
+    └── plan.md        # Project roadmap
 ```
 
 ## License

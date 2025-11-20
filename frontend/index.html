@@ -288,6 +288,73 @@
             border: 2px solid #f59e0b;
         }
 
+        .badge-container {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: 5px 8px 5px 0;
+        }
+
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: help;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .info-icon:hover {
+            background: linear-gradient(135deg, #3730a3 0%, #1e40af 100%);
+            transform: scale(1.15);
+        }
+
+        .tooltip {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            pointer-events: none;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            border: 2px solid #3730a3;
+            max-width: 300px;
+            white-space: normal;
+            line-height: 1.5;
+        }
+
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #1e293b;
+        }
+
+        .info-icon:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
         .feedback {
             background: white;
             padding: 18px;
@@ -624,14 +691,41 @@ Example: A red circle appears on the left side of the screen and the participant
             // Display annotation
             document.getElementById('annotationText').textContent = data.annotation;
 
-            // Display status badges
+            // Display status badges with tooltips
             const badges = [];
-            badges.push(`<span class="status-badge ${data.is_valid ? 'status-valid' : 'status-invalid'}">
-                ${data.is_valid ? 'Valid' : 'Invalid'}</span>`);
-            badges.push(`<span class="status-badge ${data.is_faithful ? 'status-faithful' : 'status-invalid'}">
-                ${data.is_faithful ? 'Faithful' : 'Needs Refinement'}</span>`);
-            badges.push(`<span class="status-badge ${data.is_complete ? 'status-complete' : 'status-invalid'}">
-                ${data.is_complete ? 'Complete' : 'Incomplete'}</span>`);
+            badges.push(`
+                <div class="badge-container">
+                    <span class="status-badge ${data.is_valid ? 'status-valid' : 'status-invalid'}">
+                        ${data.is_valid ? 'Valid' : 'Invalid'}
+                    </span>
+                    <span class="info-icon" role="img" aria-label="Valid badge information">
+                        <span style="font-style: normal;">ℹ️</span>
+                        <span class="tooltip">HED validator returned no errors in the final annotation string</span>
+                    </span>
+                </div>
+            `);
+            badges.push(`
+                <div class="badge-container">
+                    <span class="status-badge ${data.is_faithful ? 'status-faithful' : 'status-invalid'}">
+                        ${data.is_faithful ? 'Faithful' : 'Needs Refinement'}
+                    </span>
+                    <span class="info-icon" role="img" aria-label="Faithful badge information">
+                        <span style="font-style: normal;">ℹ️</span>
+                        <span class="tooltip">Annotation accurately represents the original description without adding unrelated information</span>
+                    </span>
+                </div>
+            `);
+            badges.push(`
+                <div class="badge-container">
+                    <span class="status-badge ${data.is_complete ? 'status-complete' : 'status-invalid'}">
+                        ${data.is_complete ? 'Complete' : 'Incomplete'}
+                    </span>
+                    <span class="info-icon" role="img" aria-label="Complete badge information">
+                        <span style="font-style: normal;">ℹ️</span>
+                        <span class="tooltip">All relevant dimensions and elements from the description are captured in the annotation</span>
+                    </span>
+                </div>
+            `);
             document.getElementById('statusBadges').innerHTML = badges.join('');
 
             // Display attempts
