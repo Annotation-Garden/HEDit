@@ -552,9 +552,9 @@ Example: A red circle appears on the left side of the screen and the participant
                 <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px; text-align: left; border: 2px solid #e2e8f0;">
                     <strong style="color: #1e293b; font-size: 14px;">What happens when you submit feedback:</strong>
                     <ul style="margin: 8px 0 0 20px; color: #475569; font-size: 13px; line-height: 1.8;">
-                        <li>📥 A JSON file with your annotation data will be downloaded</li>
                         <li>📧 Your email client will open with a pre-filled template</li>
-                        <li>✍️ Add your comments and attach the downloaded file</li>
+                        <li>📝 All annotation data is included in JSON format at the bottom</li>
+                        <li>✍️ Add your comments at the top of the email</li>
                         <li>📤 Send to help us improve the system</li>
                     </ul>
                     <p style="margin: 12px 0 0 0; color: #64748b; font-size: 12px; font-style: italic;">
@@ -803,7 +803,7 @@ Example: A red circle appears on the left side of the screen and the participant
             }
 
             try {
-                // Create feedback data object in JSONL format
+                // Create feedback data object
                 const feedbackData = {
                     timestamp: new Date().toISOString(),
                     input: {
@@ -829,44 +829,23 @@ Example: A red circle appears on the left side of the screen and the participant
                     }
                 };
 
-                // Convert to JSONL (one JSON object per line)
-                const jsonlContent = JSON.stringify(feedbackData, null, 2);
+                // Convert to formatted JSON
+                const jsonContent = JSON.stringify(feedbackData, null, 2);
 
-                // Create blob and download link
-                const blob = new Blob([jsonlContent], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const downloadLink = document.createElement('a');
-                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-                const filename = `hed-bot-feedback-${timestamp}.json`;
-                downloadLink.href = url;
-                downloadLink.download = filename;
-                downloadLink.style.display = 'none';
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-                URL.revokeObjectURL(url);
-
-                // Create mailto link
+                // Create mailto link with JSON in body
                 const emailSubject = `[HED-BOT Feedback] User Feedback - ${new Date().toLocaleString()}`;
-                const emailBody = `Please attach the downloaded JSON file (${filename}) with your feedback comments below:
+                const emailBody = `Please add your feedback comments below:
 
----
-Your comments here:
+========================================
+YOUR COMMENTS HERE:
 
 
----
+========================================
 
-Technical Details:
-- Annotation: ${lastResultData.annotation}
-- Valid: ${lastResultData.is_valid}
-- Faithful: ${lastResultData.is_faithful}
-- Complete: ${lastResultData.is_complete}
-- Validation Attempts: ${lastResultData.validation_attempts}`;
+ANNOTATION DATA (JSON):
+${jsonContent}`;
 
                 const mailtoLink = `mailto:shirazi@ieee.org?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
-
-                // Show success message
-                alert('Feedback file downloaded! Your email client will open shortly. Please attach the downloaded file to the email.');
 
                 // Open email client
                 window.location.href = mailtoLink;
