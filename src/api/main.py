@@ -418,6 +418,18 @@ async def validate(request: ValidationRequest) -> ValidationResponse:
         ) from e
 
 
+@app.get("/version")
+async def get_version():
+    """Get API version information.
+
+    Returns:
+        Version information
+    """
+    return {
+        "version": __version__,
+    }
+
+
 @app.get("/")
 async def root():
     """Root endpoint with API information.
@@ -433,6 +445,7 @@ async def root():
             "POST /annotate": "Generate HED annotation from description",
             "POST /validate": "Validate HED annotation string",
             "GET /health": "Health check",
+            "GET /version": "Get version information",
         },
     }
 

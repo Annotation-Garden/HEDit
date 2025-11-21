@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hed-bot"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Multi-agent system for HED annotation generation and validation"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -79,3 +79,6 @@ python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+
+[tool.setuptools.dynamic]
+version = {attr = "src.version.__version__"}
