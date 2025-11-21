@@ -70,3 +70,4 @@ schemas_cache/
 # Docker
 .dockerignore
 src/agents/feedback_summarizer.py
+bug_reports/
