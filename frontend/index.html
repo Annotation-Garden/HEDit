@@ -1358,26 +1358,65 @@ Example: A red circle appears on the left side of the screen and the participant
                     feedbackRecord.user_comment = userComment.trim();
                 }
 
-                // Convert to single-line JSON (JSONL format - no pretty printing)
-                const jsonlContent = JSON.stringify(feedbackRecord);
+                // Handle feedback differently based on mode
+                if (isImageMode) {
+                    // IMAGE MODE: Download JSONL file + open email asking to attach it
+                    const jsonlContent = JSON.stringify(feedbackRecord);
 
-                // Create downloadable JSONL file
-                const blob = new Blob([jsonlContent + '\n'], { type: 'application/x-ndjson' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
+                    // Download JSONL file
+                    const blob = new Blob([jsonlContent + '\n'], { type: 'application/x-ndjson' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
 
-                // Filename with timestamp
-                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-                const modePrefix = isImageMode ? 'image' : 'text';
-                a.download = `hed-feedback-${modePrefix}-${timestamp}.jsonl`;
+                    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+                    const filename = `hed-feedback-image-${timestamp}.jsonl`;
+                    a.download = filename;
 
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
 
-                alert('Feedback saved as JSONL file! You can append this to your feedback dataset.');
+                    // Open email asking to attach the downloaded file
+                    const emailSubject = `[HED-BOT Feedback] Image Annotation Feedback - ${new Date().toLocaleString()}`;
+                    const emailBody = `Please add your feedback comments below:
+
+========================================
+YOUR COMMENTS HERE:
+
+
+========================================
+
+IMPORTANT: Please attach the recently downloaded JSONL file:
+${filename}
+
+This file contains your image annotation data in JSONL format, which is too large to include in the email body.
+
+Thank you for your feedback!`;
+
+                    const mailtoLink = `mailto:shirazi@ieee.org?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+                    window.location.href = mailtoLink;
+
+                } else {
+                    // TEXT MODE: Email with JSON in body (like before)
+                    const jsonContent = JSON.stringify(feedbackRecord, null, 2);
+
+                    const emailSubject = `[HED-BOT Feedback] Text Annotation Feedback - ${new Date().toLocaleString()}`;
+                    const emailBody = `Please add your feedback comments below:
+
+========================================
+YOUR COMMENTS HERE:
+
+
+========================================
+
+ANNOTATION DATA (JSON):
+${jsonContent}`;
+
+                    const mailtoLink = `mailto:shirazi@ieee.org?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+                    window.location.href = mailtoLink;
+                }
 
             } catch (error) {
                 console.error('Error generating feedback:', error);
