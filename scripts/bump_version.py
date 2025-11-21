@@ -124,11 +124,13 @@ def get_version_info() -> tuple:
 
         content = self.pyproject_file.read_text()
 
-        # Update version line in [project] section
+        # Update version line in [project] section only
+        # Use a more specific pattern that captures the [project] section context
         updated_content = re.sub(
-            r'(version\s*=\s*)"[^"]+"',
+            r'(\[project\][^\[]*?version\s*=\s*)"[^"]+"',
             f'\\1"{version}"',
-            content
+            content,
+            flags=re.DOTALL
         )
 
         self.pyproject_file.write_text(updated_content)

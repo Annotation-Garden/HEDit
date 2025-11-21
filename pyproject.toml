@@ -42,7 +42,7 @@ dev = [
 
 [tool.ruff]
 line-length = 100
-target-version = "0.3.1-alpha"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = [
@@ -75,7 +75,7 @@ addopts = [
 ]
 
 [tool.mypy]
-python_version = "0.3.1-alpha"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
