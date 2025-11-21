@@ -53,6 +53,7 @@ WORKDIR /app
 # Copy project files
 COPY pyproject.toml README.md ./
 COPY src/ ./src/
+COPY scripts/ ./scripts/
 
 # Install Python dependencies (regular install, not editable)
 RUN pip install --no-cache-dir .
