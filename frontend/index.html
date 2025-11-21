@@ -325,30 +325,21 @@
         }
 
         .feedback-section {
-            margin-top: 30px;
-            padding: 24px;
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            border-radius: 12px;
-            border: 2px solid #cbd5e1;
+            margin-top: 24px;
+            padding: 16px;
             text-align: center;
-        }
-
-        .feedback-section h3 {
-            color: #1e293b;
-            margin-bottom: 8px;
-            font-size: 1.2em;
+            border-top: 1px solid #e2e8f0;
         }
 
         .feedback-btn {
             background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-            padding: 12px 28px;
-            font-size: 15px;
-            margin-top: 8px;
+            padding: 10px 24px;
+            font-size: 14px;
             width: auto;
             font-weight: 600;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .feedback-btn:hover {
@@ -545,25 +536,12 @@ Example: A red circle appears on the left side of the screen and the participant
             <div id="assessmentSection"></div>
 
             <div class="feedback-section">
-                <h3>Help Us Improve</h3>
-                <p style="color: #64748b; font-size: 14px; margin-bottom: 16px; line-height: 1.6;">
-                    Found an issue or have suggestions? Your feedback helps us improve!
-                </p>
-                <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px; text-align: left; border: 2px solid #e2e8f0;">
-                    <strong style="color: #1e293b; font-size: 14px;">What happens when you submit feedback:</strong>
-                    <ul style="margin: 8px 0 0 20px; color: #475569; font-size: 13px; line-height: 1.8;">
-                        <li>📧 Your email client will open with a pre-filled template</li>
-                        <li>📝 All annotation data is included in JSON format at the bottom</li>
-                        <li>✍️ Add your comments at the top of the email</li>
-                        <li>📤 Send to help us improve the system</li>
-                    </ul>
-                    <p style="margin: 12px 0 0 0; color: #64748b; font-size: 12px; font-style: italic;">
-                        Your feedback is sent to: shirazi@ieee.org
-                    </p>
-                </div>
-                <button class="feedback-btn" onclick="provideFeedback()">
+                <button class="feedback-btn" onclick="provideFeedback()" title="Opens email with annotation data in JSON format. Add your comments and send.">
                     📧 Provide Feedback
                 </button>
+                <p style="color: #64748b; font-size: 12px; margin-top: 8px;">
+                    Found an issue or have suggestions? Click to send feedback.
+                </p>
             </div>
         </div>
 
