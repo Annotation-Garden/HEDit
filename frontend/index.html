@@ -1318,53 +1318,66 @@ Example: A red circle appears on the left side of the screen and the participant
             }
 
             try {
-                // Create feedback data object
-                const feedbackData = {
-                    version: appVersion || 'unknown',
+                // Determine if this is text or image mode
+                const isImageMode = lastImageData !== null;
+
+                // Create flat JSONL record (one JSON object per line)
+                const feedbackRecord = {
+                    type: isImageMode ? 'image' : 'text',
                     timestamp: new Date().toISOString(),
-                    input: {
-                        description: lastInputDescription,
-                        schema_version: document.getElementById('schema').value,
-                        max_attempts: parseInt(document.getElementById('maxAttempts').value),
-                        run_assessment: document.getElementById('runAssessment').checked
-                    },
-                    output: {
-                        annotation: lastResultData.annotation,
-                        is_valid: lastResultData.is_valid,
-                        is_faithful: lastResultData.is_faithful,
-                        is_complete: lastResultData.is_complete,
-                        validation_attempts: lastResultData.validation_attempts
-                    },
-                    validation: {
-                        errors: lastResultData.validation_errors || [],
-                        warnings: lastResultData.validation_warnings || []
-                    },
-                    feedback: {
-                        evaluation: lastResultData.evaluation_feedback || '',
-                        assessment: lastResultData.assessment_feedback || ''
-                    }
+                    version: appVersion || 'unknown',
                 };
 
-                // Convert to formatted JSON
-                const jsonContent = JSON.stringify(feedbackData, null, 2);
+                // Add mode-specific fields
+                if (isImageMode) {
+                    feedbackRecord.image = lastImageData;
+                    feedbackRecord.image_description = lastResultData.image_description || '';
 
-                // Create mailto link with JSON in body
-                const emailSubject = `[HED-BOT Feedback] User Feedback - ${new Date().toLocaleString()}`;
-                const emailBody = `Please add your feedback comments below:
+                    // Check if custom prompt was used
+                    const customPrompt = document.getElementById('visionPrompt')?.value?.trim();
+                    if (customPrompt) {
+                        feedbackRecord.custom_prompt = customPrompt;
+                    }
+                } else {
+                    feedbackRecord.description = lastInputDescription;
+                }
 
-========================================
-YOUR COMMENTS HERE:
+                // Add common annotation fields
+                feedbackRecord.annotation = lastResultData.annotation;
+                feedbackRecord.is_valid = lastResultData.is_valid;
+                feedbackRecord.is_faithful = lastResultData.is_faithful;
+                feedbackRecord.is_complete = lastResultData.is_complete;
+                feedbackRecord.validation_errors = lastResultData.validation_errors || [];
+                feedbackRecord.validation_warnings = lastResultData.validation_warnings || [];
+                feedbackRecord.evaluation_feedback = lastResultData.evaluation_feedback || '';
+                feedbackRecord.assessment_feedback = lastResultData.assessment_feedback || '';
 
+                // Prompt for optional user comment
+                const userComment = prompt('Optional: Add your feedback or comments about this annotation:');
+                if (userComment && userComment.trim()) {
+                    feedbackRecord.user_comment = userComment.trim();
+                }
 
-========================================
+                // Convert to single-line JSON (JSONL format - no pretty printing)
+                const jsonlContent = JSON.stringify(feedbackRecord);
 
-ANNOTATION DATA (JSON):
-${jsonContent}`;
+                // Create downloadable JSONL file
+                const blob = new Blob([jsonlContent + '\n'], { type: 'application/x-ndjson' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
 
-                const mailtoLink = `mailto:shirazi@ieee.org?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+                // Filename with timestamp
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+                const modePrefix = isImageMode ? 'image' : 'text';
+                a.download = `hed-feedback-${modePrefix}-${timestamp}.jsonl`;
 
-                // Open email client
-                window.location.href = mailtoLink;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                alert('Feedback saved as JSONL file! You can append this to your feedback dataset.');
 
             } catch (error) {
                 console.error('Error generating feedback:', error);
