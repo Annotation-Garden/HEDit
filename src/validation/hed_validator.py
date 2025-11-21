@@ -184,8 +184,18 @@ class HedJavaScriptValidator:
                     true    // full validation
                 );
 
-                // Treat certain warnings as errors (TAG_INVALID means tag doesn't exist in schema)
-                const errorCodes = ['TAG_INVALID', 'INVALID_TAG', 'TAG_NOT_FOUND'];
+                // Reclassify warnings that should actually be errors
+                // Based on HED validator source: these indicate invalid/malformed HED
+                const errorCodes = [
+                    'TAG_INVALID',                    // Invalid tag - doesn't exist in schema
+                    'TAG_NAMESPACE_PREFIX_INVALID',   // Invalid tag prefix
+                    'TAG_NOT_UNIQUE',                 // Multiple unique tags
+                    'TAG_REQUIRES_CHILD',             // Child/value required
+                    'TAG_EXTENSION_INVALID',          // Invalid extension
+                    'TAG_EMPTY',                      // Empty tag
+                    'UNITS_INVALID',                  // Invalid units
+                    'VALUE_INVALID',                  // Invalid value
+                ];
                 const actualErrors = [];
                 const actualWarnings = [];
 
