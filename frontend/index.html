@@ -522,6 +522,13 @@
             color: #1e40af;
             text-decoration: underline;
         }
+
+        .version-info {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 8px;
+            font-family: 'JetBrains Mono', monospace;
+        }
     </style>
 </head>
 <body>
@@ -616,7 +623,10 @@ Example: A red circle appears on the left side of the screen and the participant
         </div>
 
         <div class="footer">
-            &copy; 2025, <a href="https://neuromechanist.github.io" target="_blank" rel="noopener noreferrer">neuromechanist</a> and the HED Working Group
+            <div class="version-info" id="versionInfo">Version: Loading...</div>
+            <div>
+                &copy; 2025, <a href="https://neuromechanist.github.io" target="_blank" rel="noopener noreferrer">neuromechanist</a> and the HED Working Group
+            </div>
         </div>
         </div>
     </div>
@@ -633,6 +643,7 @@ Example: A red circle appears on the left side of the screen and the participant
         // Store last result for feedback
         let lastResultData = null;
         let lastInputDescription = null;
+        let appVersion = null;
 
         async function generateAnnotation() {
             const description = document.getElementById('description').value.trim();
@@ -868,6 +879,7 @@ Example: A red circle appears on the left side of the screen and the participant
             try {
                 // Create feedback data object
                 const feedbackData = {
+                    version: appVersion || 'unknown',
                     timestamp: new Date().toISOString(),
                     input: {
                         description: lastInputDescription,
@@ -926,6 +938,26 @@ ${jsonContent}`;
                 generateAnnotation();
             }
         });
+
+        // Fetch and display version on page load
+        async function fetchVersion() {
+            try {
+                const response = await fetch(`${API_URL}/version`);
+                if (response.ok) {
+                    const data = await response.json();
+                    appVersion = data.version;
+                    document.getElementById('versionInfo').textContent = `v${data.version}`;
+                } else {
+                    document.getElementById('versionInfo').textContent = 'Version: N/A';
+                }
+            } catch (error) {
+                console.error('Failed to fetch version:', error);
+                document.getElementById('versionInfo').textContent = 'Version: N/A';
+            }
+        }
+
+        // Fetch version on page load
+        fetchVersion();
     </script>
 </body>
 </html>

@@ -1,0 +1,81 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get the previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          if [ -z "$PREV_TAG" ]; then
+            # First release - get all commits
+            CHANGELOG=$(git log --oneline --no-decorate)
+          else
+            # Get commits since previous tag
+            CHANGELOG=$(git log --oneline --no-decorate ${PREV_TAG}..HEAD)
+          fi
+
+          # Format changelog
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          echo "## Changes" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" | while read line; do
+            echo "- $line" >> $GITHUB_OUTPUT
+          done
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ steps.get_version.outputs.VERSION }}
+          body: |
+            ## HED-BOT ${{ steps.get_version.outputs.VERSION }}
+
+            ${{ steps.changelog.outputs.CHANGELOG }}
+
+            ---
+
+            ### Installation
+
+            **Docker (Recommended):**
+            ```bash
+            docker pull ghcr.io/${{ github.repository }}:${{ steps.get_version.outputs.VERSION }}
+            ```
+
+            **From Source:**
+            ```bash
+            git clone https://github.com/${{ github.repository }}.git
+            cd hed-bot
+            git checkout v${{ steps.get_version.outputs.VERSION }}
+            pip install -e .
+            ```
+
+            ### Documentation
+            See [README.md](https://github.com/${{ github.repository }}/blob/main/README.md) for setup and usage instructions.
+          draft: false
+          prerelease: ${{ contains(steps.get_version.outputs.VERSION, 'alpha') || contains(steps.get_version.outputs.VERSION, 'beta') || contains(steps.get_version.outputs.VERSION, 'rc') }}

@@ -1,3 +1,5 @@
 """HED-BOT: Multi-agent system for HED annotation generation."""
 
-__version__ = "0.1.0"
+from src.version import __version__, __version_info__, get_version, get_version_info
+
+__all__ = ["__version__", "__version_info__", "get_version", "get_version_info"]
