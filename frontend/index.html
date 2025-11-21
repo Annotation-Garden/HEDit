@@ -1379,8 +1379,10 @@ Example: A red circle appears on the left side of the screen and the participant
                     URL.revokeObjectURL(url);
 
                     // Open email asking to attach the downloaded file
-                    const emailSubject = `[HED-BOT Feedback] Image Annotation Feedback - ${new Date().toLocaleString()}`;
-                    const emailBody = `Please add your feedback comments below:
+                    // Use setTimeout to ensure download completes before opening email
+                    setTimeout(() => {
+                        const emailSubject = `[HED-BOT Feedback] Image Annotation Feedback - ${new Date().toLocaleString()}`;
+                        const emailBody = `Please add your feedback comments below:
 
 ========================================
 YOUR COMMENTS HERE:
@@ -1395,8 +1397,9 @@ This file contains your image annotation data in JSONL format, which is too larg
 
 Thank you for your feedback!`;
 
-                    const mailtoLink = `mailto:shirazi@ieee.org?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
-                    window.location.href = mailtoLink;
+                        const mailtoLink = `mailto:shirazi@ieee.org?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+                        window.location.href = mailtoLink;
+                    }, 500); // 500ms delay to ensure download starts
 
                 } else {
                     // TEXT MODE: Email with JSON in body (like before)
