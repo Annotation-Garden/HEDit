@@ -36,6 +36,8 @@ export default {
         return await handleVersion(request, env, corsHeaders);
       } else if (url.pathname === '/annotate' && request.method === 'POST') {
         return await handleAnnotate(request, env, ctx, corsHeaders);
+      } else if (url.pathname === '/annotate-from-image' && request.method === 'POST') {
+        return await handleAnnotateFromImage(request, env, corsHeaders);
       } else if (url.pathname === '/validate' && request.method === 'POST') {
         return await handleValidate(request, env, corsHeaders);
       } else if (url.pathname === '/') {
@@ -63,8 +65,10 @@ function handleRoot(corsHeaders) {
     mode: 'proxy',
     endpoints: {
       'POST /annotate': 'Generate HED annotation from description',
+      'POST /annotate-from-image': 'Generate HED annotation from image',
       'POST /validate': 'Validate HED annotation string',
       'GET /health': 'Health check',
+      'GET /version': 'Get API version',
     },
   }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -255,6 +259,73 @@ async function handleAnnotate(request, env, ctx, corsHeaders) {
   } catch (error) {
     return new Response(JSON.stringify({
       error: 'Backend request failed',
+      details: error.message,
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+}
+
+/**
+ * Image annotation endpoint (proxies to backend)
+ */
+async function handleAnnotateFromImage(request, env, corsHeaders) {
+  const backendUrl = env.BACKEND_URL;
+
+  if (!backendUrl) {
+    return new Response(JSON.stringify({ error: 'Backend not configured' }), {
+      status: 503,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  try {
+    const body = await request.json();
+    const {
+      image,
+      prompt,
+      schema_version = '8.4.0',
+      max_validation_attempts = 5,
+      run_assessment = false,
+    } = body;
+
+    if (!image || image.trim() === '') {
+      return new Response(JSON.stringify({ error: 'Image is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Proxy request to Python backend
+    const response = await fetch(`${backendUrl}/annotate-from-image`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        image,
+        prompt,
+        schema_version,
+        max_validation_attempts,
+        run_assessment,
+      }),
+      signal: AbortSignal.timeout(CONFIG.REQUEST_TIMEOUT),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Backend error: ${error}`);
+    }
+
+    const result = await response.json();
+
+    return new Response(JSON.stringify(result), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({
+      error: 'Image annotation request failed',
       details: error.message,
     }), {
       status: 500,
