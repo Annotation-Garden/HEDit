@@ -258,11 +258,14 @@ async def annotate(request: AnnotationRequest) -> AnnotationResponse:
         )
 
         # Determine overall status
-        status = "success" if final_state["is_valid"] else "failed"
+        # IMPORTANT: Ensure is_valid is only True when there are NO validation errors
+        # This is a safeguard to prevent inconsistencies in the workflow
+        is_valid = final_state["is_valid"] and len(final_state["validation_errors"]) == 0
+        status = "success" if is_valid else "failed"
 
         return AnnotationResponse(
             annotation=final_state["current_annotation"],
-            is_valid=final_state["is_valid"],
+            is_valid=is_valid,
             is_faithful=final_state["is_faithful"],
             is_complete=final_state["is_complete"],
             validation_attempts=final_state["validation_attempts"],
@@ -344,10 +347,12 @@ async def annotate_stream(request: AnnotationRequest):
             )
 
             # Send final result
-            status = "success" if final_state["is_valid"] else "failed"
+            # IMPORTANT: Ensure is_valid is only True when there are NO validation errors
+            is_valid = final_state["is_valid"] and len(final_state["validation_errors"]) == 0
+            status = "success" if is_valid else "failed"
             result = {
                 "annotation": final_state["current_annotation"],
-                "is_valid": final_state["is_valid"],
+                "is_valid": is_valid,
                 "is_faithful": final_state["is_faithful"],
                 "is_complete": final_state["is_complete"],
                 "validation_attempts": final_state["validation_attempts"],
