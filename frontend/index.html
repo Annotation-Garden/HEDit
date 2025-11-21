@@ -16,7 +16,7 @@
 
         body {
             font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 50%, #581c87 100%);
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -36,7 +36,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 30px 40px;
-            background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
             border-bottom: 4px solid #60a5fa;
         }
 
@@ -149,7 +149,7 @@
         }
 
         button {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
             color: white;
             border: none;
             padding: 16px 32px;
@@ -166,7 +166,7 @@
         button:hover {
             transform: translateY(-2px);
             box-shadow: 0 12px 24px rgba(30, 58, 138, 0.4);
-            background: linear-gradient(135deg, #1e40af 0%, #4338ca 100%);
+            background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
         }
 
         button:active {
@@ -394,6 +394,29 @@
             box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
         }
 
+        .feedback-section {
+            margin-top: 24px;
+            padding: 16px;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .feedback-btn {
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            padding: 10px 24px;
+            font-size: 14px;
+            width: auto;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .feedback-btn:hover {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+        }
+
         .checkbox-container {
             display: flex;
             align-items: center;
@@ -581,6 +604,15 @@ Example: A red circle appears on the left side of the screen and the participant
             <div id="warningsSection"></div>
             <div id="evaluationSection"></div>
             <div id="assessmentSection"></div>
+
+            <div class="feedback-section">
+                <button class="feedback-btn" onclick="provideFeedback()" title="Opens email with annotation data in JSON format. Add your comments and send.">
+                    📧 Provide Feedback
+                </button>
+                <p style="color: #64748b; font-size: 12px; margin-top: 8px;">
+                    Found an issue or have suggestions? Click to send feedback.
+                </p>
+            </div>
         </div>
 
         <div class="footer">
@@ -598,6 +630,10 @@ Example: A red circle appears on the left side of the screen and the participant
             ? 'http://localhost:38427'
             : (window.BACKEND_URL || 'https://your-tunnel-url.trycloudflare.com');
 
+        // Store last result for feedback
+        let lastResultData = null;
+        let lastInputDescription = null;
+
         async function generateAnnotation() {
             const description = document.getElementById('description').value.trim();
             const schema = document.getElementById('schema').value;
@@ -608,6 +644,9 @@ Example: A red circle appears on the left side of the screen and the participant
                 alert('Please enter an event description');
                 return;
             }
+
+            // Store input for feedback
+            lastInputDescription = description;
 
             // Hide results and show progress
             document.getElementById('results').classList.remove('active');
@@ -688,6 +727,9 @@ Example: A red circle appears on the left side of the screen and the participant
         }
 
         function displayResults(data) {
+            // Store result data for feedback
+            lastResultData = data;
+
             // Show results section
             document.getElementById('results').classList.add('active');
 
@@ -814,6 +856,66 @@ Example: A red circle appears on the left side of the screen and the participant
                 alert('Failed to copy to clipboard. Please copy manually.');
             } finally {
                 document.body.removeChild(textarea);
+            }
+        }
+
+        function provideFeedback() {
+            if (!lastResultData || !lastInputDescription) {
+                alert('No annotation results available. Please generate an annotation first.');
+                return;
+            }
+
+            try {
+                // Create feedback data object
+                const feedbackData = {
+                    timestamp: new Date().toISOString(),
+                    input: {
+                        description: lastInputDescription,
+                        schema_version: document.getElementById('schema').value,
+                        max_attempts: parseInt(document.getElementById('maxAttempts').value),
+                        run_assessment: document.getElementById('runAssessment').checked
+                    },
+                    output: {
+                        annotation: lastResultData.annotation,
+                        is_valid: lastResultData.is_valid,
+                        is_faithful: lastResultData.is_faithful,
+                        is_complete: lastResultData.is_complete,
+                        validation_attempts: lastResultData.validation_attempts
+                    },
+                    validation: {
+                        errors: lastResultData.validation_errors || [],
+                        warnings: lastResultData.validation_warnings || []
+                    },
+                    feedback: {
+                        evaluation: lastResultData.evaluation_feedback || '',
+                        assessment: lastResultData.assessment_feedback || ''
+                    }
+                };
+
+                // Convert to formatted JSON
+                const jsonContent = JSON.stringify(feedbackData, null, 2);
+
+                // Create mailto link with JSON in body
+                const emailSubject = `[HED-BOT Feedback] User Feedback - ${new Date().toLocaleString()}`;
+                const emailBody = `Please add your feedback comments below:
+
+========================================
+YOUR COMMENTS HERE:
+
+
+========================================
+
+ANNOTATION DATA (JSON):
+${jsonContent}`;
+
+                const mailtoLink = `mailto:shirazi@ieee.org?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+
+                // Open email client
+                window.location.href = mailtoLink;
+
+            } catch (error) {
+                console.error('Error generating feedback:', error);
+                alert('Failed to generate feedback. Please try again or contact support.');
             }
         }
 
