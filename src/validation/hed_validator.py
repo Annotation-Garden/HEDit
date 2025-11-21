@@ -184,21 +184,43 @@ class HedJavaScriptValidator:
                     true    // full validation
                 );
 
-                const result = {{
-                    isValid: errors.length === 0,
-                    parsed: parsed ? parsed.toString() : null,
-                    errors: errors.map(e => ({{
+                // Treat certain warnings as errors (TAG_INVALID means tag doesn't exist in schema)
+                const errorCodes = ['TAG_INVALID', 'INVALID_TAG', 'TAG_NOT_FOUND'];
+                const actualErrors = [];
+                const actualWarnings = [];
+
+                // Process errors
+                errors.forEach(e => {{
+                    actualErrors.push({{
                         code: e.hedCode || e.internalCode,
                         message: e.message,
                         tag: e.parameters?.tag,
                         level: 'error'
-                    }})),
-                    warnings: warnings.map(w => ({{
-                        code: w.hedCode || w.internalCode,
+                    }});
+                }});
+
+                // Process warnings - promote critical ones to errors
+                warnings.forEach(w => {{
+                    const code = w.hedCode || w.internalCode;
+                    const issue = {{
+                        code: code,
                         message: w.message,
                         tag: w.parameters?.tag,
-                        level: 'warning'
-                    }}))
+                        level: errorCodes.includes(code) ? 'error' : 'warning'
+                    }};
+
+                    if (errorCodes.includes(code)) {{
+                        actualErrors.push(issue);
+                    }} else {{
+                        actualWarnings.push(issue);
+                    }}
+                }});
+
+                const result = {{
+                    isValid: actualErrors.length === 0,
+                    parsed: parsed ? parsed.toString() : null,
+                    errors: actualErrors,
+                    warnings: actualWarnings
                 }};
 
                 console.log(JSON.stringify(result));
