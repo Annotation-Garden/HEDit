@@ -90,6 +90,166 @@
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
         }
 
+        /* Workflow Tabs */
+        .workflow-tabs {
+            display: flex;
+            background: #f1f5f9;
+            border-bottom: 3px solid #e2e8f0;
+            padding: 0 40px;
+            gap: 8px;
+        }
+
+        .tab-button {
+            flex: 1;
+            max-width: 300px;
+            padding: 18px 24px;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            color: #64748b;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -3px;
+        }
+
+        .tab-button:hover {
+            background: rgba(30, 58, 138, 0.05);
+            color: #1e40af;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .tab-button.active {
+            background: white;
+            color: #1e3a8a;
+            border-bottom-color: #1e3a8a;
+        }
+
+        .tab-button .tab-icon {
+            margin-right: 8px;
+            font-size: 18px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Image Upload Styles */
+        .image-upload-area {
+            border: 3px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            background: #f8fafc;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 24px;
+        }
+
+        .image-upload-area:hover {
+            border-color: #3730a3;
+            background: white;
+        }
+
+        .image-upload-area.drag-over {
+            border-color: #1e40af;
+            background: #dbeafe;
+        }
+
+        .image-upload-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #94a3b8;
+        }
+
+        .image-upload-area p {
+            color: #64748b;
+            margin: 8px 0;
+        }
+
+        .image-upload-area .supported-formats {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 12px;
+        }
+
+        .image-preview {
+            display: none;
+            margin-bottom: 24px;
+            padding: 24px;
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .image-preview.active {
+            display: block;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .image-metadata {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .image-metadata-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .image-metadata-item strong {
+            color: #334155;
+        }
+
+        .clear-image-btn {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            padding: 10px 20px;
+            font-size: 14px;
+            width: auto;
+            display: inline-block;
+        }
+
+        .clear-image-btn:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        }
+
+        .vision-prompt-section {
+            margin-bottom: 24px;
+        }
+
+        .vision-prompt-section label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .prompt-help {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: normal;
+            margin-left: auto;
+        }
+
         .content {
             padding: 40px;
         }
@@ -547,7 +707,19 @@
             </div>
         </div>
 
+        <!-- Workflow Tabs -->
+        <div class="workflow-tabs">
+            <button class="tab-button active" onclick="switchTab('text')">
+                <span class="tab-icon">📝</span> Text Description
+            </button>
+            <button class="tab-button" onclick="switchTab('image')">
+                <span class="tab-icon">🖼️</span> Image Analysis
+            </button>
+        </div>
+
         <div class="content">
+        <!-- Tab 1: Text Description Workflow -->
+        <div id="text-tab" class="tab-content active">
         <div class="input-section">
             <label for="description">Event Description</label>
             <textarea
@@ -578,7 +750,69 @@ Example: A red circle appears on the left side of the screen and the participant
         </div>
 
         <button id="generateBtn" onclick="generateAnnotation()">Generate HED Annotation</button>
+        </div>
+        <!-- End Tab 1: Text Description -->
 
+        <!-- Tab 2: Image Analysis Workflow -->
+        <div id="image-tab" class="tab-content">
+            <!-- Image Upload Area -->
+            <div class="image-upload-area" id="imageUploadArea"
+                 onclick="document.getElementById('imageInput').click()"
+                 ondrop="handleDrop(event)"
+                 ondragover="handleDragOver(event)"
+                 ondragleave="handleDragLeave(event)">
+                <div class="image-upload-icon">📸</div>
+                <p><strong>Click to upload</strong> or drag and drop</p>
+                <p class="supported-formats">Supported: PNG, JPG, JPEG, WebP (max 10MB)</p>
+            </div>
+            <input type="file" id="imageInput" accept="image/png,image/jpeg,image/jpg,image/webp" style="display: none;" onchange="handleImageUpload(event)">
+
+            <!-- Image Preview -->
+            <div class="image-preview" id="imagePreview">
+                <h3>Image Preview</h3>
+                <img id="previewImage" src="" alt="Uploaded image preview">
+                <div class="image-metadata" id="imageMetadata"></div>
+                <button class="clear-image-btn" onclick="clearImage()">Clear Image</button>
+            </div>
+
+            <!-- Vision Prompt (Optional) -->
+            <div class="vision-prompt-section">
+                <label for="visionPrompt">
+                    Custom Vision Prompt
+                    <span class="prompt-help">(Optional - Leave blank for default)</span>
+                </label>
+                <textarea
+                    id="visionPrompt"
+                    placeholder="Describe what you see in this image. Include the setting, main elements, colors, lighting, and overall composition..."></textarea>
+            </div>
+
+            <!-- Options (same as text tab) -->
+            <div class="options">
+                <div>
+                    <label for="schema-image">HED Schema Version</label>
+                    <select id="schema-image">
+                        <option value="8.3.0">8.3.0 (Stable)</option>
+                        <option value="8.4.0" selected>8.4.0 (Latest)</option>
+                        <option value="8.2.0">8.2.0</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="maxAttempts-image">Max Validation Attempts</label>
+                    <input type="number" id="maxAttempts-image" value="3" min="1" max="10">
+                </div>
+            </div>
+
+            <div class="checkbox-container">
+                <input type="checkbox" id="runAssessment-image" />
+                <label for="runAssessment-image">Run detailed assessment (adds ~3 seconds)</label>
+                <div class="checkbox-help">Provides comprehensive completeness feedback</div>
+            </div>
+
+            <button id="generateBtn-image" onclick="generateFromImage()">Analyze Image & Generate HED Annotation</button>
+        </div>
+        <!-- End Tab 2: Image Analysis -->
+
+        <!-- Shared Progress and Results -->
         <div class="progress-status" id="progressStatus">
             <div id="progressMessage">Initializing...</div>
             <div class="progress-steps" id="progressSteps"></div>
@@ -643,7 +877,214 @@ Example: A red circle appears on the left side of the screen and the participant
         // Store last result for feedback
         let lastResultData = null;
         let lastInputDescription = null;
+        let lastImageData = null;
         let appVersion = null;
+
+        // Tab Switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            event.target.closest('.tab-button').classList.add('active');
+
+            // Hide results when switching tabs
+            document.getElementById('results').classList.remove('active');
+            document.getElementById('progressStatus').classList.remove('active');
+        }
+
+        // Image Upload Handling
+        let uploadedImageBase64 = null;
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                alert('Please upload a valid image file (PNG, JPG, JPEG, or WebP)');
+                return;
+            }
+
+            // Validate file size (10MB max)
+            const maxSize = 10 * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert('Image size must be less than 10MB');
+                return;
+            }
+
+            // Read and display image
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                uploadedImageBase64 = e.target.result;
+                displayImagePreview(e.target.result, file);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function displayImagePreview(dataUrl, file) {
+            const preview = document.getElementById('imagePreview');
+            const previewImage = document.getElementById('previewImage');
+            const metadata = document.getElementById('imageMetadata');
+            const uploadArea = document.getElementById('imageUploadArea');
+
+            // Show preview, hide upload area
+            preview.classList.add('active');
+            uploadArea.style.display = 'none';
+
+            // Set image
+            previewImage.src = dataUrl;
+
+            // Display metadata
+            const img = new Image();
+            img.onload = function() {
+                const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                metadata.innerHTML = `
+                    <div class="image-metadata-item">
+                        <strong>Format:</strong> ${file.type.split('/')[1].toUpperCase()}
+                    </div>
+                    <div class="image-metadata-item">
+                        <strong>Dimensions:</strong> ${img.width} × ${img.height}
+                    </div>
+                    <div class="image-metadata-item">
+                        <strong>Size:</strong> ${sizeMB} MB
+                    </div>
+                `;
+            };
+            img.src = dataUrl;
+        }
+
+        function clearImage() {
+            uploadedImageBase64 = null;
+            document.getElementById('imagePreview').classList.remove('active');
+            document.getElementById('imageUploadArea').style.display = 'block';
+            document.getElementById('imageInput').value = '';
+            document.getElementById('previewImage').src = '';
+            document.getElementById('imageMetadata').innerHTML = '';
+        }
+
+        // Drag and Drop Handlers
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.currentTarget.classList.remove('drag-over');
+
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('imageInput').files = files;
+                handleImageUpload({ target: { files: files } });
+            }
+        }
+
+        // Generate from Image
+        async function generateFromImage() {
+            if (!uploadedImageBase64) {
+                alert('Please upload an image first');
+                return;
+            }
+
+            const visionPrompt = document.getElementById('visionPrompt').value.trim();
+            const schema = document.getElementById('schema-image').value;
+            const maxAttempts = parseInt(document.getElementById('maxAttempts-image').value);
+            const runAssessment = document.getElementById('runAssessment-image').checked;
+
+            // Store for feedback
+            lastInputDescription = null; // No text description for image mode
+            lastImageData = uploadedImageBase64;
+
+            // Hide results and show progress
+            document.getElementById('results').classList.remove('active');
+            document.getElementById('generateBtn-image').disabled = true;
+            document.getElementById('progressStatus').classList.add('active');
+
+            updateProgress('Analyzing image...', []);
+
+            try {
+                const payload = {
+                    image: uploadedImageBase64,
+                    schema_version: schema,
+                    max_validation_attempts: maxAttempts,
+                    run_assessment: runAssessment
+                };
+
+                if (visionPrompt) {
+                    payload.prompt = visionPrompt;
+                }
+
+                const response = await fetch(`${API_URL}/annotate-from-image`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.detail || `Server error: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                // Store for feedback
+                lastResultData = result;
+                lastInputDescription = result.image_description; // Use generated description
+
+                // Display results
+                displayImageAnnotationResults(result);
+
+            } catch (error) {
+                displayError(error.message);
+            } finally {
+                document.getElementById('progressStatus').classList.remove('active');
+                document.getElementById('generateBtn-image').disabled = false;
+            }
+        }
+
+        function displayImageAnnotationResults(result) {
+            // Show the image description first
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.classList.add('active');
+
+            // Add image description section before annotation
+            const annotationBox = resultsDiv.querySelector('.annotation-box');
+            let descriptionBox = document.getElementById('imageDescriptionBox');
+
+            if (!descriptionBox) {
+                descriptionBox = document.createElement('div');
+                descriptionBox.id = 'imageDescriptionBox';
+                descriptionBox.className = 'annotation-box';
+                descriptionBox.style.borderLeftColor = '#2563eb';
+                annotationBox.parentNode.insertBefore(descriptionBox, annotationBox);
+            }
+
+            descriptionBox.innerHTML = `
+                <h3>Generated Image Description</h3>
+                <div class="annotation-text">${result.image_description}</div>
+            `;
+
+            // Display annotation and other results using existing function
+            displayAnnotationResults(result);
+        }
 
         async function generateAnnotation() {
             const description = document.getElementById('description').value.trim();
