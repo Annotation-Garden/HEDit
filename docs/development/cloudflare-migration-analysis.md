@@ -6,7 +6,20 @@
 
 ## Executive Summary
 
-Cloudflare Workers can significantly reduce hosting costs by eliminating the need for dedicated GPU servers. However, **a full migration to Workers is not recommended** due to critical compatibility issues with LangGraph. Instead, a **hybrid architecture** is proposed where Workers handles the API layer while offloading LLM operations to external services.
+**FINAL DECISION (Dec 2, 2025)**: Deploy to **existing HED-web server at the center** - **ZERO cost**.
+
+After comprehensive analysis of hosting options including Cloudflare Workers, Render.com, Railway, Fly.io, and Modal, the best solution is to use the **same server currently hosting HED web tools**. This provides:
+- ✅ **$0/month** - using existing infrastructure
+- ✅ **100% cost savings** vs. GPU server or paid hosting
+- ✅ **Proven deployment pattern** - same Docker approach as hed-web
+- ✅ **Cloudflare proxy already configured**
+- ✅ **Full LangGraph support** with Python runtime
+
+**Implementation**: Adapt `hed-web/deploy/` scripts for hed-bot Docker deployment on port 33427 with URL prefix `/hed-bot`.
+
+---
+
+**Research Summary Below** (Alternative options analyzed - kept for reference)
 
 ## Current Architecture
 
@@ -380,10 +393,109 @@ If full migration proves too complex:
 3. **Week 3**: Evaluate results, decide on full migration
 4. **Week 4+**: Full migration or alternative solution
 
+## Updated Recommendation (Dec 2, 2025)
+
+### Key Insight: No GPU Needed
+
+Since HED-BOT uses **OpenRouter exclusively** (not local Ollama), we don't need expensive GPU servers ($150/month). We just need a simple Python runtime for FastAPI + LangGraph.
+
+### Recommended Platform: Render.com
+
+**Why Render**:
+- ✅ **Starter Plan**: $9/month (512MB RAM, 0.5 CPU, always-on)
+- ✅ **Standard Plan**: $25/month (2GB RAM, 1 CPU, production-ready)
+- ✅ Auto-deploy from GitHub
+- ✅ Built-in monitoring and logs
+- ✅ Free PostgreSQL database
+- ✅ Zero configuration needed
+- ✅ 70-90% cost reduction vs. GPU server
+
+**Alternative Options**:
+- **Railway**: $5/month + usage (~$15-30/month)
+- **Fly.io**: Pay-as-you-go (~$5-15/month)
+- ❌ **Modal**: NOT suitable (serverless, expensive for 24/7)
+
+### Simplified Architecture
+
+```
+Cloudflare Pages (FREE)
+        ↓
+Render.com ($9-25/month)
+  - FastAPI
+  - LangGraph workflows
+  - HED validation
+        ↓
+OpenRouter ($5-20/month usage)
+  - LLM inference
+  - Already using!
+```
+
+### Cost Breakdown
+
+| Component | Current | New | Savings |
+|-----------|---------|-----|---------|
+| Infrastructure | $150 | $9-25 | 70-90% |
+| LLM API | $0 (local) | $5-20 | N/A |
+| **Total** | **$150** | **$14-45** | **70-90%** |
+
+### Implementation Plan
+
+**Week 1: Deploy to Render**
+1. Create Render account
+2. Connect GitHub repo
+3. Configure environment variables
+4. Deploy and test
+
+**Week 2: Optimize**
+1. Monitor performance
+2. Optimize memory usage
+3. Set up health checks
+4. Configure alerts
+
+**Week 3: Production**
+1. Update frontend URLs
+2. Configure custom domain
+3. Retire GPU server
+4. Migration complete!
+
+### Success Criteria
+
+- ✅ All LangGraph workflows function correctly
+- ✅ Response times <5s
+- ✅ Monthly cost <$30
+- ✅ 99% uptime
+
+### What We Learned from magland/qp
+
+The [qp repository](https://github.com/magland/qp) demonstrates an even simpler approach:
+- Uses Cloudflare Workers (TypeScript)
+- Direct OpenRouter API calls (no LangGraph)
+- D1 + R2 for storage
+- **But**: They don't have multi-agent workflows
+
+We need LangGraph for:
+- Multi-agent orchestration
+- Automatic retry loops
+- Complex state management
+- Workflow visualization
+
+Therefore, we use Render for the Python backend while taking inspiration from qp's simple OpenRouter integration.
+
+---
+
+## Original Cloudflare Workers Analysis
+
+*The sections below analyze Cloudflare Workers for Python applications. While technically feasible for simple FastAPI apps, it's not suitable for LangGraph-based workflows due to the Pyodide/WebAssembly limitations. Kept for reference.*
+
 ## References
 
 - [Cloudflare Workers Python Docs](https://developers.cloudflare.com/workers/languages/python/)
 - [Workers AI Pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/)
 - [FastAPI on Workers](https://developers.cloudflare.com/workers/languages/python/packages/fastapi/)
 - [Pyodide Packages](https://pyodide.org/en/stable/usage/packages-in-pyodide.html)
+- [Render Pricing](https://render.com/pricing)
+- [Railway Pricing](https://railway.com/pricing)
+- [Fly.io Pricing](https://fly.io/pricing)
+- [Modal Pricing](https://modal.com/pricing)
+- [magland/qp Repository](https://github.com/magland/qp)
 - [Issue #8: Cloudflare Workers Migration](https://github.com/neuromechanist/hed-bot/issues/8)
