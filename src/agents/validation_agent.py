@@ -72,7 +72,11 @@ class ValidationAgent:
         validation_attempts = state["validation_attempts"] + 1
         max_attempts = state["max_validation_attempts"]
 
-        if result.is_valid:
+        # IMPORTANT: Safeguard to ensure is_valid is only True when there are NO errors
+        # This prevents discrepancies between is_valid flag and actual validation_errors
+        is_valid = result.is_valid and len(error_messages) == 0
+
+        if is_valid:
             validation_status = "valid"
         elif validation_attempts >= max_attempts:
             validation_status = "max_attempts_reached"
@@ -85,5 +89,5 @@ class ValidationAgent:
             "validation_errors": error_messages,
             "validation_warnings": warning_messages,
             "validation_attempts": validation_attempts,
-            "is_valid": result.is_valid,
+            "is_valid": is_valid,
         }
