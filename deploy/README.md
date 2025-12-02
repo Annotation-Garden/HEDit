@@ -5,6 +5,7 @@ This directory contains deployment scripts and configuration for running HED-BOT
 ## Table of Contents
 
 - [Quick Start](#quick-start)
+- [Security Setup](#security-setup)
 - [Deployment Options](#deployment-options)
 - [Automated Deployment](#automated-deployment)
 - [Manual Deployment](#manual-deployment)
@@ -29,13 +30,80 @@ This directory contains deployment scripts and configuration for running HED-BOT
 git clone https://github.com/neuromechanist/hed-bot.git
 cd hed-bot
 
+# Generate API key for authentication
+python scripts/generate_api_key.py
+
 # Create .env file with your configuration
 cp .env.example .env
-# Edit .env with your API keys
+# Edit .env with your API keys (both OPENROUTER_API_KEY and API_KEYS)
 
 # Deploy
 ./deploy/deploy.sh prod
 ```
+
+**Important:** See [Security Setup](#security-setup) for detailed security configuration before deploying to production.
+
+---
+
+## Security Setup
+
+HED-BOT implements comprehensive security features for production deployment:
+
+- **API Key Authentication**: Protects endpoints from unauthorized access
+- **Audit Logging**: Complete request/response trail for compliance
+- **CORS Validation**: Restricts origins to approved frontends only
+- **Security Headers**: Protects against common web attacks
+
+### Quick Security Setup
+
+1. **Generate API Key:**
+   ```bash
+   python scripts/generate_api_key.py
+   ```
+
+2. **Add to .env file:**
+   ```bash
+   # API Authentication
+   API_KEYS=<your_generated_key>
+   REQUIRE_API_AUTH=true
+
+   # Audit Logging
+   ENABLE_AUDIT_LOG=true
+   AUDIT_LOG_FILE=/var/log/hed-bot/audit.log
+
+   # CORS (optional extra origins)
+   # EXTRA_CORS_ORIGINS=https://staging.hed-bot.pages.dev
+   ```
+
+3. **Use API key in requests:**
+   ```bash
+   curl -H "X-API-Key: your_key_here" \
+        https://hedtools.ucsd.edu/hed-bot/annotate
+   ```
+
+### Protected vs Public Endpoints
+
+**Protected (require API key):**
+- `POST /annotate` - Generate annotations
+- `POST /annotate-from-image` - Image annotations
+- `POST /validate` - Validate HED strings
+
+**Public (no authentication):**
+- `GET /health` - Health checks
+- `GET /version` - Version info
+- `GET /` - API documentation
+
+### Complete Security Documentation
+
+For comprehensive security information including:
+- OWASP Top 10 compliance
+- Audit log formats and retention
+- Incident response procedures
+- Security checklist for auditors
+
+**See:** [`SECURITY.md`](SECURITY.md) for complete security documentation.
+
+**See Also:** [`DEPLOYMENT_ARCHITECTURE.md`](DEPLOYMENT_ARCHITECTURE.md) for architecture details and CORS configuration.
 
 ---
 
@@ -190,9 +258,20 @@ LOCK_FILE="/tmp/hed-bot-update.lock"
 Create a `.env` file in the project root:
 
 ```bash
+# API Authentication (REQUIRED for production)
+API_KEYS=your_generated_key_here
+REQUIRE_API_AUTH=true
+
+# Audit Logging (recommended for production)
+ENABLE_AUDIT_LOG=true
+AUDIT_LOG_FILE=/var/log/hed-bot/audit.log
+
+# CORS Configuration (optional extra origins)
+# EXTRA_CORS_ORIGINS=https://staging.hed-bot.pages.dev,https://dev.hed-bot.pages.dev
+
 # LLM Configuration
 LLM_PROVIDER=openrouter
-OPENROUTER_API_KEY=your_api_key_here
+OPENROUTER_API_KEY=your_openrouter_key_here
 
 # Optional: Per-agent model configuration
 ANNOTATION_MODEL=gpt-5-mini
@@ -211,6 +290,8 @@ LLM_TEMPERATURE=0.1
 # HED_VALIDATOR_PATH=/path/to/hed-javascript
 # USE_JS_VALIDATOR=true
 ```
+
+**Security Note:** Generate API keys using `python scripts/generate_api_key.py`. Never commit `.env` to Git.
 
 ### Reverse Proxy Configuration
 
@@ -460,6 +541,9 @@ docker rm hed-bot
 | `Dockerfile` | Container build configuration |
 | `deploy.sh` | Manual deployment script |
 | `auto-update.sh` | Automated update script |
+| `nginx-hedtools.conf` | Nginx reverse proxy configuration |
+| `SECURITY.md` | Security documentation for auditors |
+| `DEPLOYMENT_ARCHITECTURE.md` | Architecture and CORS setup guide |
 | `README.md` | This documentation |
 
 ---
