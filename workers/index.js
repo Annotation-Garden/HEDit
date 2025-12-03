@@ -67,8 +67,9 @@ export default {
   async fetch(request, env, ctx) {
     const origin = request.headers.get('Origin');
 
-    // CORS validation - only allow hed-bot.pages.dev
+    // CORS validation - allow hed-bot.pages.dev and preview deployments
     const isAllowedOrigin = origin === CONFIG.ALLOWED_ORIGIN ||
+                           origin?.endsWith('.hed-bot.pages.dev') || // Preview deployments
                            origin?.startsWith('http://localhost:'); // Allow localhost for dev
 
     // CORS headers
