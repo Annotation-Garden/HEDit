@@ -282,11 +282,11 @@ curl http://localhost:33427/health
 ```bash
 # Should succeed (from allowed origin)
 curl -H "Origin: https://hed-bot.pages.dev" \
-     -I https://hedtools.ucsd.edu/hed-bot/health
+     -I https://hedtools.ucsd.edu/hed-bot-api/health
 
 # Should fail (from disallowed origin)
 curl -H "Origin: https://evil.com" \
-     -I https://hedtools.ucsd.edu/hed-bot/health
+     -I https://hedtools.ucsd.edu/hed-bot-api/health
 ```
 
 #### Step 5: Update Frontend
@@ -372,7 +372,7 @@ Reasons:
 - [ ] Docker container builds successfully
 - [ ] Container runs on port 33427
 - [ ] Nginx proxies /hed-bot correctly
-- [ ] Health check accessible: `https://hedtools.ucsd.edu/hed-bot/health`
+- [ ] Health check accessible: `https://hedtools.ucsd.edu/hed-bot-api/health`
 - [ ] CORS allows `hed-bot.pages.dev`
 - [ ] CORS blocks other origins
 - [ ] Frontend can make API requests
@@ -384,7 +384,7 @@ Reasons:
 
 ### CORS errors in browser console
 
-**Error**: `Access to fetch at 'https://hedtools.ucsd.edu/hed-bot/annotate' from origin 'https://hed-bot.pages.dev' has been blocked by CORS policy`
+**Error**: `Access to fetch at 'https://hedtools.ucsd.edu/hed-bot-api/annotate' from origin 'https://hed-bot.pages.dev' has been blocked by CORS policy`
 
 **Solutions**:
 1. Check Nginx is running and configured correctly

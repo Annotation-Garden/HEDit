@@ -78,7 +78,7 @@ HED-BOT implements comprehensive security features for production deployment:
 3. **Use API key in requests:**
    ```bash
    curl -H "X-API-Key: your_key_here" \
-        https://hedtools.ucsd.edu/hed-bot/annotate
+        https://hedtools.ucsd.edu/hed-bot-api/annotate
    ```
 
 ### Protected vs Public Endpoints
@@ -296,9 +296,9 @@ FEEDBACK_MODEL=openai/gpt-oss-120b
 Add to your Apache virtual host configuration:
 
 ```apache
-# HED-BOT Backend
-ProxyPass /hed-bot/ http://localhost:38427/
-ProxyPassReverse /hed-bot/ http://localhost:38427/
+# HED-BOT API Backend
+ProxyPass /hed-bot-api/ http://localhost:38427/
+ProxyPassReverse /hed-bot-api/ http://localhost:38427/
 ```
 
 Reload Apache:
@@ -310,7 +310,7 @@ sudo systemctl reload apache2
 #### Nginx (Alternative)
 
 ```nginx
-location /hed-bot/ {
+location /hed-bot-api/ {
     proxy_pass http://127.0.0.1:38427/;
     proxy_http_version 1.1;
     proxy_set_header Host $host;

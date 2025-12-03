@@ -15,12 +15,12 @@ if [ "$ENVIRONMENT" = "dev" ]; then
     IMAGE_NAME="hed-bot_dev:latest"
     CONTAINER_NAME="hed-bot_dev"
     HOST_PORT=38428
-    URL_PREFIX="/hed-bot-dev"
+    URL_PREFIX="/hed-bot-api-dev"
 else
     IMAGE_NAME="hed-bot:latest"
     CONTAINER_NAME="hed-bot"
     HOST_PORT=38427
-    URL_PREFIX="/hed-bot"
+    URL_PREFIX="/hed-bot-api"
 fi
 
 CONTAINER_PORT=38427

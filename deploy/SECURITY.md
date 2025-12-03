@@ -85,7 +85,7 @@ REQUIRE_API_AUTH=false  # NOT recommended for production
 
 **Frontend (JavaScript)**:
 ```javascript
-fetch('https://hedtools.ucsd.edu/hed-bot/annotate', {
+fetch('https://hedtools.ucsd.edu/hed-bot-api/annotate', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -97,7 +97,7 @@ fetch('https://hedtools.ucsd.edu/hed-bot/annotate', {
 
 **cURL**:
 ```bash
-curl -X POST https://hedtools.ucsd.edu/hed-bot/annotate \
+curl -X POST https://hedtools.ucsd.edu/hed-bot-api/annotate \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your_api_key_here" \
   -d '{"description": "person sees red circle"}'
@@ -108,7 +108,7 @@ curl -X POST https://hedtools.ucsd.edu/hed-bot/annotate \
 import requests
 
 response = requests.post(
-    'https://hedtools.ucsd.edu/hed-bot/annotate',
+    'https://hedtools.ucsd.edu/hed-bot-api/annotate',
     headers={'X-API-Key': 'your_api_key_here'},
     json={'description': 'person sees red circle'}
 )
@@ -448,28 +448,28 @@ grep "ERROR" /var/log/hed-bot/audit.log
 **Authentication Test**:
 ```bash
 # Should fail (no API key)
-curl https://hedtools.ucsd.edu/hed-bot/annotate
+curl https://hedtools.ucsd.edu/hed-bot-api/annotate
 
 # Should succeed (valid API key)
-curl -H "X-API-Key: valid_key" https://hedtools.ucsd.edu/hed-bot/annotate
+curl -H "X-API-Key: valid_key" https://hedtools.ucsd.edu/hed-bot-api/annotate
 ```
 
 **CORS Test**:
 ```bash
 # Should include CORS headers
 curl -H "Origin: https://hed-bot.pages.dev" \
-     -I https://hedtools.ucsd.edu/hed-bot/health
+     -I https://hedtools.ucsd.edu/hed-bot-api/health
 
 # Should reject invalid origin
 curl -H "Origin: https://evil.com" \
-     -I https://hedtools.ucsd.edu/hed-bot/health
+     -I https://hedtools.ucsd.edu/hed-bot-api/health
 ```
 
 **Rate Limiting Test**:
 ```bash
 # Rapid requests should trigger 429
 for i in {1..70}; do
-  curl https://hedtools.ucsd.edu/hed-bot/health
+  curl https://hedtools.ucsd.edu/hed-bot-api/health
 done
 ```
 
@@ -492,7 +492,7 @@ Use this checklist for deployment and audits:
 
 ### Post-Deployment
 
-- [ ] Health check accessible: `https://hedtools.ucsd.edu/hed-bot/health`
+- [ ] Health check accessible: `https://hedtools.ucsd.edu/hed-bot-api/health`
 - [ ] Authentication working (401 without API key)
 - [ ] CORS headers present in responses
 - [ ] Audit logs being written to `/var/log/hed-bot/audit.log`

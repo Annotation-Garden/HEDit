@@ -5,7 +5,7 @@ The Cloudflare Worker acts as a **caching proxy** to the Python FastAPI backend 
 ## Architecture
 
 ```
-User → Cloudflare Worker → hedtools.ucsd.edu/hed-bot → Docker Container
+User → Cloudflare Worker → hedtools.ucsd.edu/hed-bot-api → Docker Container
         (caching, rate limiting,       (Nginx reverse proxy)    (FastAPI backend)
          CORS validation)
 ```
@@ -98,7 +98,7 @@ Expected output:
     "llm_available": true,
     "validator_available": true
   },
-  "backend_url": "https://hedtools.ucsd.edu/hed-bot"
+  "backend_url": "https://hedtools.ucsd.edu/hed-bot-api"
 }
 ```
 
@@ -165,7 +165,7 @@ fetch(`${API_URL}/annotate`, {
 ```toml
 [vars]
 ENVIRONMENT = "production"
-BACKEND_URL = "https://hedtools.ucsd.edu/hed-bot"
+BACKEND_URL = "https://hedtools.ucsd.edu/hed-bot-api"
 ```
 
 ### Secrets (set via wrangler CLI)
@@ -197,7 +197,7 @@ cat wrangler.toml | grep BACKEND_URL
 ### "Backend unreachable" error
 ```bash
 # Test backend directly
-curl https://hedtools.ucsd.edu/hed-bot/health
+curl https://hedtools.ucsd.edu/hed-bot-api/health
 
 # Check Docker container
 docker ps | grep hed-bot

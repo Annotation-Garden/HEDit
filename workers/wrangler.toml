@@ -15,7 +15,7 @@ id = "8deb8c02177349afb1d1fe2f7d4079f4"
 # Environment variables
 [vars]
 ENVIRONMENT = "production"
-BACKEND_URL = "https://hedtools.ucsd.edu/hed-bot"
+BACKEND_URL = "https://hedtools.ucsd.edu/hed-bot-api"
 
 # Secrets (set via wrangler secret put)
 # Run: wrangler secret put BACKEND_API_KEY
