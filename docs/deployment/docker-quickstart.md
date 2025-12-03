@@ -1,4 +1,6 @@
-# Docker Quick Start
+# Docker Quick Start (Local GPU Development)
+
+> **Note**: This guide is for local development with GPU and Ollama. For production deployment to servers or cloud platforms, see **[DEPLOYMENT.md](../../DEPLOYMENT.md)** and **[deploy/README.md](../../deploy/README.md)**.
 
 ## TL;DR
 

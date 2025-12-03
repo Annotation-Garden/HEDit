@@ -10,15 +10,23 @@ const CONFIG = {
   CACHE_TTL: 3600, // 1 hour cache for identical requests
   RATE_LIMIT_PER_MINUTE: 20,
   REQUEST_TIMEOUT: 120000, // 2 minutes for long-running annotation workflows
+  ALLOWED_ORIGIN: 'https://hed-bot.pages.dev', // Production frontend only
 };
 
 export default {
   async fetch(request, env, ctx) {
+    const origin = request.headers.get('Origin');
+
+    // CORS validation - only allow hed-bot.pages.dev
+    const isAllowedOrigin = origin === CONFIG.ALLOWED_ORIGIN ||
+                           origin?.startsWith('http://localhost:'); // Allow localhost for dev
+
     // CORS headers
     const corsHeaders = {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': isAllowedOrigin ? origin : CONFIG.ALLOWED_ORIGIN,
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
+      'Access-Control-Allow-Credentials': 'true',
     };
 
     // Handle CORS preflight
@@ -222,12 +230,20 @@ async function handleAnnotate(request, env, ctx, corsHeaders) {
   }
 
   try {
+    // Prepare headers for backend request
+    const backendHeaders = {
+      'Content-Type': 'application/json',
+    };
+
+    // Add API key if configured
+    if (env.BACKEND_API_KEY) {
+      backendHeaders['X-API-Key'] = env.BACKEND_API_KEY;
+    }
+
     // Proxy request to Python backend
     const response = await fetch(`${backendUrl}/annotate`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: backendHeaders,
       body: JSON.stringify({
         description,
         schema_version,
@@ -297,12 +313,20 @@ async function handleAnnotateFromImage(request, env, corsHeaders) {
       });
     }
 
+    // Prepare headers for backend request
+    const backendHeaders = {
+      'Content-Type': 'application/json',
+    };
+
+    // Add API key if configured
+    if (env.BACKEND_API_KEY) {
+      backendHeaders['X-API-Key'] = env.BACKEND_API_KEY;
+    }
+
     // Proxy request to Python backend
     const response = await fetch(`${backendUrl}/annotate-from-image`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: backendHeaders,
       body: JSON.stringify({
         image,
         prompt,
@@ -350,12 +374,20 @@ async function handleValidate(request, env, corsHeaders) {
   try {
     const body = await request.json();
 
+    // Prepare headers for backend request
+    const backendHeaders = {
+      'Content-Type': 'application/json',
+    };
+
+    // Add API key if configured
+    if (env.BACKEND_API_KEY) {
+      backendHeaders['X-API-Key'] = env.BACKEND_API_KEY;
+    }
+
     // Proxy request to Python backend
     const response = await fetch(`${backendUrl}/validate`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: backendHeaders,
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(30000), // 30 second timeout
     });

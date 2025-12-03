@@ -1,106 +1,90 @@
-# HED-BOT Worker Proxy Setup
+# HED-BOT Cloudflare Worker Proxy Setup
 
-The Cloudflare Worker now acts as a **caching proxy** to your Python FastAPI backend, which contains all the strong prompts, real HED validation, and multi-agent workflow.
+The Cloudflare Worker acts as a **caching proxy** to the Python FastAPI backend on hedtools.ucsd.edu, providing edge caching, rate limiting, and CORS validation.
 
 ## Architecture
 
 ```
-User → Cloudflare Worker → Cloudflare Tunnel → Python Backend (localhost:38427)
-        (caching, rate limiting)                   (HED validation, LLM agents)
+User → Cloudflare Worker → hedtools.ucsd.edu/hed-bot → Docker Container
+        (caching, rate limiting,       (Nginx reverse proxy)    (FastAPI backend)
+         CORS validation)
 ```
+
+## Features
+
+### Caching
+- **1 hour TTL** for successful annotations
+- **Reduces API costs** and improves response time
+- **Cache key**: `hed:{schema_version}:{description_hash}`
+- Only caches valid annotations to avoid caching errors
+
+### Rate Limiting
+- **20 requests per minute** per IP address
+- Prevents abuse and protects backend
+- Uses Cloudflare KV for distributed rate limiting
+
+### CORS Protection
+- **Restricted to**: `https://hed-bot.pages.dev` (production frontend)
+- **Development**: Also allows `http://localhost:*` for local testing
+- Blocks all other origins
+
+### Request Timeout
+- **2 minutes** for annotation workflows
+- **30 seconds** for validation requests
+- Prevents hanging requests
 
 ## Setup Steps
 
-### 1. Expose Python Backend with Cloudflare Tunnel
+### 1. Deploy Backend to hedtools.ucsd.edu
 
-You need to create a public URL for your local Python backend running on port 38427.
-
-#### Option A: Quick Tunnel (for testing)
+Follow the deployment guide in `deploy/README.md`:
 
 ```bash
-# Start quick tunnel (gives random URL, no uptime guarantee)
-cloudflared tunnel --url http://localhost:38427
+# On hedtools.ucsd.edu server
+cd /path/to/hed-bot
+
+# Generate API key for worker
+python scripts/generate_api_key.py
+
+# Add to .env
+echo "API_KEYS=<generated_key>" >> .env
+
+# Deploy container
+./deploy/deploy.sh prod
+
+# Configure Nginx (already done if following deployment guide)
+sudo systemctl reload nginx
 ```
 
-This will output something like:
-```
-https://random-name-1234.trycloudflare.com
-```
+### 2. Configure Worker Secrets
 
-Copy this URL - you'll need it in step 2.
-
-**Note**: Quick tunnels have no uptime guarantee and are not recommended for production.
-
-#### Option B: Named Tunnel (for production)
-
-1. Login to Cloudflare:
-```bash
-cloudflared tunnel login
-```
-
-2. Create a named tunnel:
-```bash
-cloudflared tunnel create hed-bot-backend
-```
-
-3. Create config file at `~/.cloudflared/config.yml`:
-```yaml
-tunnel: hed-bot-backend
-credentials-file: /home/yahya/.cloudflared/<TUNNEL-ID>.json
-
-ingress:
-  - hostname: hed-api.your-domain.com  # Replace with your subdomain
-    service: http://localhost:38427
-  - service: http_status:404
-```
-
-4. Route DNS to your tunnel:
-```bash
-cloudflared tunnel route dns hed-bot-backend hed-api.your-domain.com
-```
-
-5. Run tunnel:
-```bash
-cloudflared tunnel run hed-bot-backend
-```
-
-Or install as a service:
-```bash
-sudo cloudflared service install
-sudo systemctl enable cloudflared
-sudo systemctl start cloudflared
-```
-
-Your backend will be available at: `https://hed-api.your-domain.com`
-
-### 2. Configure Worker with Backend URL
-
-Set the backend URL as a secret in your worker:
+Set the backend API key as a secret:
 
 ```bash
 cd /home/yahya/git/hed-bot/workers
 
-# Replace with your tunnel URL
-echo "https://your-tunnel-url.trycloudflare.com" | npx wrangler secret put BACKEND_URL
+# Set API key (use the key generated in step 1)
+echo "your-api-key-here" | npx wrangler secret put BACKEND_API_KEY
 ```
 
 ### 3. Deploy Worker
 
 ```bash
+# Deploy to Cloudflare
 npx wrangler deploy
 ```
 
 You should see output like:
 ```
-Deployed hed-bot-neuromechanist triggers
-  https://hed-bot-neuromechanist.shirazi-10f.workers.dev
+Published hed-bot-api (0.42 sec)
+  https://hed-bot-api.shirazi-10f.workers.dev
 ```
 
 ### 4. Test the Setup
 
 #### Test health endpoint:
 ```bash
-curl https://hed-bot-neuromechanist.shirazi-10f.workers.dev/health | jq .
+curl https://hed-bot-api.shirazi-10f.workers.dev/health | jq .
 ```
 
 Expected output:
@@ -110,100 +94,209 @@ Expected output:
   "proxy": "operational",
   "backend": {
     "status": "healthy",
-    "version": "0.1.0",
+    "version": "0.4.0-alpha",
     "llm_available": true,
     "validator_available": true
   },
-  "backend_url": "https://your-tunnel-url.trycloudflare.com"
+  "backend_url": "https://hedtools.ucsd.edu/hed-bot"
 }
 ```
 
 #### Test annotation:
 ```bash
-curl -X POST https://hed-bot-neuromechanist.shirazi-10f.workers.dev/annotate \
+curl -X POST https://hed-bot-api.shirazi-10f.workers.dev/annotate \
   -H "Content-Type: application/json" \
+  -H "Origin: https://hed-bot.pages.dev" \
   -d '{
-    "description": "A red circle appears on the left side of the screen and the user clicks it with the left mouse button",
-    "schema_version": "8.3.0",
+    "description": "A red circle appears on the left side of the screen",
+    "schema_version": "8.4.0",
     "max_validation_attempts": 3
   }' | jq .
 ```
 
-Expected output should include:
+Expected output:
 ```json
 {
   "annotation": "Sensory-event, Visual-presentation, ...",
   "is_valid": true,
   "is_faithful": true,
   "validation_attempts": 1,
-  ...
+  "cached": false
 }
+```
+
+#### Test caching:
+```bash
+# Run the same request again - should return cached result
+curl -X POST https://hed-bot-api.shirazi-10f.workers.dev/annotate \
+  -H "Content-Type: application/json" \
+  -H "Origin: https://hed-bot.pages.dev" \
+  -d '{
+    "description": "A red circle appears on the left side of the screen",
+    "schema_version": "8.4.0"
+  }' | jq '.cached'
+# Should return: true
 ```
 
 ### 5. Update Frontend
 
-Update `frontend/config.js`:
+Update your frontend to use the worker URL:
+
 ```javascript
-window.BACKEND_URL = 'https://hed-bot-neuromechanist.shirazi-10f.workers.dev';
+// Frontend configuration
+const API_URL = 'https://hed-bot-api.shirazi-10f.workers.dev';
+
+// All requests automatically include proper CORS headers
+fetch(`${API_URL}/annotate`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    description: 'person sees red circle',
+  }),
+});
 ```
 
-## Features
+## Configuration
 
-### Caching
-- 1 hour TTL for successful annotations
-- Reduces API costs and improves response time
-- Cache key: `hed:{schema_version}:{description}`
+### Environment Variables (wrangler.toml)
 
-### Rate Limiting
-- 20 requests per minute per IP
-- Prevents abuse
-- Uses Cloudflare KV for distributed rate limiting
+```toml
+[vars]
+ENVIRONMENT = "production"
+BACKEND_URL = "https://hedtools.ucsd.edu/hed-bot"
+```
 
-### Request Timeout
-- 2 minutes for annotation workflows
-- Prevents hanging requests
+### Secrets (set via wrangler CLI)
+
+```bash
+# Backend API key for authentication
+npx wrangler secret put BACKEND_API_KEY
+```
+
+### Worker Configuration (index.js)
+
+```javascript
+const CONFIG = {
+  CACHE_TTL: 3600,                    // 1 hour cache
+  RATE_LIMIT_PER_MINUTE: 20,          // 20 requests per minute per IP
+  REQUEST_TIMEOUT: 120000,            // 2 minutes for workflows
+  ALLOWED_ORIGIN: 'https://hed-bot.pages.dev',  // Production frontend only
+};
+```
 
 ## Troubleshooting
 
 ### "Backend not configured" error
 ```bash
-# Make sure BACKEND_URL secret is set
-npx wrangler secret list
+# Check if BACKEND_URL is set in wrangler.toml
+cat wrangler.toml | grep BACKEND_URL
 ```
 
 ### "Backend unreachable" error
 ```bash
-# Check if tunnel is running
-ps aux | grep cloudflared
-
-# Check tunnel logs
-tail -f /tmp/cloudflared-hed-backend.log
-
 # Test backend directly
-curl http://localhost:38427/health
+curl https://hedtools.ucsd.edu/hed-bot/health
+
+# Check Docker container
+docker ps | grep hed-bot
+
+# Check Nginx
+sudo systemctl status nginx
 ```
 
-### "Context deadline exceeded"
-- Tunnel creation failed due to network timeout
-- Try again or use a different network
-- Consider using a VPN if firewall is blocking tunnel creation
+### "401 Unauthorized" from backend
+```bash
+# Verify API key secret is set
+npx wrangler secret list
+
+# Should show BACKEND_API_KEY in the list
+# If not, set it:
+echo "your-api-key" | npx wrangler secret put BACKEND_API_KEY
+```
+
+### "Rate limit exceeded"
+```bash
+# Check rate limiter KV namespace
+npx wrangler kv:key list --namespace-id=8deb8c02177349afb1d1fe2f7d4079f4
+
+# Clear rate limit for specific IP (if needed)
+npx wrangler kv:key delete "ratelimit:1.2.3.4" \
+  --namespace-id=8deb8c02177349afb1d1fe2f7d4079f4
+```
+
+### CORS errors in browser
+```bash
+# Verify origin is allowed
+# Production: https://hed-bot.pages.dev
+# Development: http://localhost:*
+
+# Check browser console for actual origin being sent
+# Update CONFIG.ALLOWED_ORIGIN if needed
+```
+
+## Monitoring
+
+### View Worker Logs
+
+```bash
+# Tail logs in real-time
+npx wrangler tail
+
+# Or view in Cloudflare dashboard:
+# Workers & Pages → hed-bot-api → Logs
+```
+
+### Check Cache Hit Rate
+
+Monitor the `cached: true/false` field in responses to see caching effectiveness.
+
+### Check Rate Limiting
+
+View KV namespace metrics in Cloudflare dashboard to see rate limiting activity.
+
+## Architecture Benefits
+
+### Why Use Worker Proxy?
+
+1. **Edge Caching**: Responses served from Cloudflare's global network (faster)
+2. **Cost Reduction**: Cached responses don't hit backend (saves LLM API costs)
+3. **Rate Limiting**: Protects backend from abuse at the edge
+4. **CORS Validation**: Additional security layer at Cloudflare
+5. **Analytics**: Cloudflare provides request analytics
+6. **DDoS Protection**: Cloudflare's DDoS protection for free
+
+### Direct Access Still Possible
+
+Backend is still accessible directly at `https://hedtools.ucsd.edu/hed-bot` but:
+- Requires API key (X-API-Key header)
+- No caching
+- No edge rate limiting
+- Subject to Nginx rate limiting only
 
 ## Production Considerations
 
-1. **Use Named Tunnel**: Quick tunnels are not reliable for production
-2. **Monitor Backend**: Ensure Python backend stays running (use systemd or Docker)
-3. **Environment Variables**: Backend needs `OPENROUTER_API_KEY` set
-4. **Scaling**: For high traffic, consider deploying backend to a cloud provider
-5. **Costs**: ~$2-5/month for 10k annotations with caching
+1. **Backend Uptime**: Ensure Docker container is set for auto-restart
+2. **API Key Rotation**: Rotate backend API key quarterly
+3. **Cache Invalidation**: Deploy new worker to clear cache if needed
+4. **Monitoring**: Set up Cloudflare alerts for error rates
+5. **Costs**: Worker requests are free up to 100k/day, KV reads/writes have limits
 
-## Alternative: Deploy Backend to Cloud
+## Alternative: Direct Connection
 
-Instead of using Cloudflare Tunnel, you can deploy the Python backend to:
+If you don't need caching or edge features, frontend can connect directly to:
+```
+https://hedtools.ucsd.edu/hed-bot
+```
 
-- **Fly.io**: `fly launch` in project root
-- **Railway**: Connect GitHub repo
-- **Heroku**: Use Dockerfile for deployment
-- **Google Cloud Run**: Serverless container deployment
-- **AWS ECS/Fargate**: For production scale
+But you'll need to:
+1. Add your frontend origin to backend CORS (EXTRA_CORS_ORIGINS)
+2. Handle API key in frontend (less secure, visible in browser)
+3. No caching benefits
 
-Then set the deployed URL as `BACKEND_URL`.
+Worker proxy is recommended for production use.
+
+---
+
+**Last Updated**: December 2, 2025

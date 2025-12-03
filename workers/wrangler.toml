@@ -12,11 +12,14 @@ id = "18f0bc588a2a4e24bd1d98b51340bd5a"
 binding = "RATE_LIMITER"
 id = "8deb8c02177349afb1d1fe2f7d4079f4"
 
-# Environment variables (secrets set via wrangler secret put)
-# Run: wrangler secret put BACKEND_URL
+# Environment variables
 [vars]
 ENVIRONMENT = "production"
-# BACKEND_URL will be set as a secret (contains tunnel URL)
+BACKEND_URL = "https://hedtools.ucsd.edu/hed-bot"
+
+# Secrets (set via wrangler secret put)
+# Run: wrangler secret put BACKEND_API_KEY
+# BACKEND_API_KEY = API key for authenticating with backend (X-API-Key header)
 
 # Routes (optional - if you want custom domain)
 # routes = [
