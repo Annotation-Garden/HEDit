@@ -30,9 +30,10 @@ class APIKeyAuth:
 
     def __init__(self):
         """Initialize API key authentication."""
+        # Set require_auth first (needed by _load_api_keys)
+        self.require_auth = os.getenv("REQUIRE_API_AUTH", "true").lower() == "true"
         # Load API keys from environment
         self.api_keys = self._load_api_keys()
-        self.require_auth = os.getenv("REQUIRE_API_AUTH", "true").lower() == "true"
 
     def _load_api_keys(self) -> set[str]:
         """Load API keys from environment variables.
