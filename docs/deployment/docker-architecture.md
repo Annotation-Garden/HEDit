@@ -1,8 +1,10 @@
-# Docker Architecture
+# Docker Architecture (Local GPU Development)
+
+> **Note**: This document describes the Docker architecture for local GPU development with Ollama. For production deployment architecture, see **[deploy/DEPLOYMENT_ARCHITECTURE.md](../../deploy/DEPLOYMENT_ARCHITECTURE.md)**.
 
 ## Overview
 
-HED-BOT uses a **fully self-contained Docker architecture** that requires no external dependencies on the host system (except GPU drivers for CUDA support).
+HED-BOT uses a **fully self-contained Docker architecture** for local GPU development that requires no external dependencies on the host system (except GPU drivers for CUDA support).
 
 ## Container Architecture
 

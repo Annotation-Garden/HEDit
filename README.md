@@ -23,9 +23,27 @@ Multi-agent system for converting natural language event descriptions into valid
 
 **Quick Links**:
 - [Usage Guide](docs/guides/usage.md) - Getting started with HED-BOT
-- [Deployment Guide](docs/deployment/) - Deploy HED-BOT on your infrastructure
+- **[Deployment Guide](DEPLOYMENT.md)** - Choose your deployment option (production, local GPU, or local dev)
 - [API Reference](docs/api/) - API documentation
 - [Development Guide](docs/development/) - Contribute to HED-BOT
+
+## Deployment Options
+
+HED-BOT supports multiple deployment scenarios. Choose the one that fits your needs:
+
+### For Production (Recommended)
+Deploy to a server or cloud platform with API key authentication, audit logging, and auto-updates.
+**→ See [DEPLOYMENT.md](DEPLOYMENT.md) and [deploy/README.md](deploy/README.md)**
+
+### For Local GPU Development
+Run completely offline with Ollama and local GPU (requires NVIDIA RTX 3090/4090+).
+**→ See [docs/deployment/docker-quickstart.md](docs/deployment/docker-quickstart.md)**
+
+### For Quick Local Testing
+Use your local Python environment with OpenRouter API (no GPU needed).
+**→ See [Local Development Setup](#local-development-setup) below**
+
+**Not sure which to choose?** See the [Deployment Decision Matrix](DEPLOYMENT.md#quick-decision-matrix)
 
 ## Architecture
 
