@@ -132,17 +132,58 @@ check_for_updates() {
 deploy_update() {
     log "Deploying update..."
 
-    # Run deployment script
-    if [ -f "${SCRIPT_DIR}/deploy.sh" ]; then
-        bash "${SCRIPT_DIR}/deploy.sh" "$ENVIRONMENT" 127.0.0.1
-        if [ $? -eq 0 ]; then
-            log "✓ Deployment successful"
-            return 0
-        else
-            error_exit "Deployment failed"
-        fi
+    # Find .env file
+    ENV_FILE="${SCRIPT_DIR}/../.env"
+    if [ ! -f "$ENV_FILE" ]; then
+        ENV_FILE="${SCRIPT_DIR}/.env"
+    fi
+
+    ENV_ARGS=""
+    if [ -f "$ENV_FILE" ]; then
+        ENV_ARGS="--env-file ${ENV_FILE}"
+        log "Using env file: ${ENV_FILE}"
     else
-        error_exit "deploy.sh not found at ${SCRIPT_DIR}/deploy.sh"
+        log "Warning: No .env file found"
+    fi
+
+    # Set port based on environment
+    if [ "$ENVIRONMENT" = "dev" ]; then
+        HOST_PORT=38428
+    else
+        HOST_PORT=38427
+    fi
+
+    # Stop and remove existing container
+    log "Stopping existing container..."
+    docker stop "$CONTAINER_NAME" 2>/dev/null || true
+    docker rm "$CONTAINER_NAME" 2>/dev/null || true
+
+    # Run the new container using the pulled image
+    log "Starting new container on port ${HOST_PORT}..."
+    docker run -d \
+        --name "$CONTAINER_NAME" \
+        --restart unless-stopped \
+        -p "127.0.0.1:${HOST_PORT}:38427" \
+        ${ENV_ARGS} \
+        -v /var/log/hed-bot:/var/log/hed-bot \
+        "$REGISTRY_IMAGE"
+
+    if [ $? -eq 0 ]; then
+        log "✓ Container started successfully"
+
+        # Wait for health check
+        log "Waiting for container to be healthy..."
+        for i in {1..30}; do
+            if docker inspect --format='{{.State.Health.Status}}' "$CONTAINER_NAME" 2>/dev/null | grep -q "healthy"; then
+                log "✓ Container is healthy"
+                return 0
+            fi
+            sleep 2
+        done
+        log "Warning: Container did not become healthy within timeout, but it's running"
+        return 0
+    else
+        error_exit "Failed to start container"
     fi
 }
 
