@@ -7,6 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Cloudflare Turnstile for bot protection -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
     <style>
         * {
             margin: 0;
@@ -980,6 +982,82 @@ Example: A red circle appears on the left side of the screen and the participant
         let lastImageData = null;
         let appVersion = null;
 
+        // Turnstile widget ID (set after initialization)
+        let turnstileWidgetId = null;
+
+        // Initialize Turnstile when the script loads
+        function initTurnstile() {
+            if (typeof turnstile === 'undefined') {
+                // Turnstile script not loaded yet, retry
+                setTimeout(initTurnstile, 100);
+                return;
+            }
+
+            // Only initialize once
+            if (turnstileWidgetId !== null) return;
+
+            // Create a hidden container for Turnstile
+            let container = document.getElementById('turnstile-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'turnstile-container';
+                container.style.display = 'none';
+                document.body.appendChild(container);
+            }
+
+            // Render invisible Turnstile widget
+            turnstileWidgetId = turnstile.render('#turnstile-container', {
+                sitekey: window.TURNSTILE_SITE_KEY,
+                callback: function(token) {
+                    // Token received, stored automatically
+                    console.log('Turnstile token received');
+                },
+                'error-callback': function() {
+                    console.error('Turnstile error');
+                },
+                'expired-callback': function() {
+                    // Token expired, reset widget
+                    turnstile.reset(turnstileWidgetId);
+                },
+                execution: 'render', // Auto-execute on render
+                appearance: 'interaction-only', // Only show if interaction needed
+            });
+        }
+
+        // Get Turnstile token (with automatic refresh if needed)
+        async function getTurnstileToken() {
+            // For localhost development, skip Turnstile
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                return null;
+            }
+
+            if (typeof turnstile === 'undefined' || turnstileWidgetId === null) {
+                console.warn('Turnstile not initialized');
+                return null;
+            }
+
+            // Get current token
+            let token = turnstile.getResponse(turnstileWidgetId);
+
+            // If no token, wait a bit for challenge to complete
+            if (!token) {
+                // Reset and wait for new token
+                turnstile.reset(turnstileWidgetId);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                token = turnstile.getResponse(turnstileWidgetId);
+            }
+
+            // Reset widget for next use (tokens are single-use)
+            if (token) {
+                setTimeout(() => turnstile.reset(turnstileWidgetId), 100);
+            }
+
+            return token;
+        }
+
+        // Initialize Turnstile on page load
+        document.addEventListener('DOMContentLoaded', initTurnstile);
+
         // Tab Switching
         function switchTab(tabName) {
             // Hide all tabs
@@ -1119,6 +1197,9 @@ Example: A red circle appears on the left side of the screen and the participant
             updateProgress('Analyzing image...', []);
 
             try {
+                // Get Turnstile token for bot protection
+                const turnstileToken = await getTurnstileToken();
+
                 const payload = {
                     image: uploadedImageBase64,
                     schema_version: schema,
@@ -1128,6 +1209,11 @@ Example: A red circle appears on the left side of the screen and the participant
 
                 if (visionPrompt) {
                     payload.prompt = visionPrompt;
+                }
+
+                // Include Turnstile token if available
+                if (turnstileToken) {
+                    payload.cf_turnstile_response = turnstileToken;
                 }
 
                 const response = await fetch(`${API_URL}/annotate-from-image`, {
@@ -1226,17 +1312,27 @@ Example: A red circle appears on the left side of the screen and the participant
             updateProgress('Generating annotation...', ['annotating']);
 
             try {
+                // Get Turnstile token for bot protection
+                const turnstileToken = await getTurnstileToken();
+
+                const payload = {
+                    description: description,
+                    schema_version: schema,
+                    max_validation_attempts: maxAttempts,
+                    run_assessment: runAssessment
+                };
+
+                // Include Turnstile token if available
+                if (turnstileToken) {
+                    payload.cf_turnstile_response = turnstileToken;
+                }
+
                 const response = await fetch(`${API_URL}/annotate`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        description: description,
-                        schema_version: schema,
-                        max_validation_attempts: maxAttempts,
-                        run_assessment: runAssessment
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 if (!response.ok) {

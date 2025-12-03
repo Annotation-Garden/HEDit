@@ -20,6 +20,9 @@ BACKEND_URL = "https://hedtools.org/hed-bot-api"
 # Secrets (set via wrangler secret put)
 # Run: wrangler secret put BACKEND_API_KEY
 # BACKEND_API_KEY = API key for authenticating with backend (X-API-Key header)
+#
+# Run: wrangler secret put TURNSTILE_SECRET_KEY
+# TURNSTILE_SECRET_KEY = Cloudflare Turnstile secret key for bot protection
 
 # Routes (optional - if you want custom domain)
 # routes = [

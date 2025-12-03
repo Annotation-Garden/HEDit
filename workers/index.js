@@ -11,7 +11,57 @@ const CONFIG = {
   RATE_LIMIT_PER_MINUTE: 20,
   REQUEST_TIMEOUT: 120000, // 2 minutes for long-running annotation workflows
   ALLOWED_ORIGIN: 'https://hed-bot.pages.dev', // Production frontend only
+  TURNSTILE_VERIFY_URL: 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
 };
+
+/**
+ * Verify Cloudflare Turnstile token
+ * @param {string} token - The Turnstile response token from the client
+ * @param {string} secretKey - The Turnstile secret key
+ * @param {string} ip - The client's IP address
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
+async function verifyTurnstileToken(token, secretKey, ip) {
+  if (!token) {
+    return { success: false, error: 'Missing Turnstile token' };
+  }
+
+  if (!secretKey) {
+    // If no secret key configured, skip verification (for development)
+    console.warn('TURNSTILE_SECRET_KEY not configured, skipping verification');
+    return { success: true };
+  }
+
+  try {
+    const formData = new URLSearchParams();
+    formData.append('secret', secretKey);
+    formData.append('response', token);
+    if (ip) {
+      formData.append('remoteip', ip);
+    }
+
+    const response = await fetch(CONFIG.TURNSTILE_VERIFY_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData,
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      return { success: true };
+    } else {
+      return {
+        success: false,
+        error: `Turnstile verification failed: ${result['error-codes']?.join(', ') || 'Unknown error'}`,
+      };
+    }
+  } catch (error) {
+    return { success: false, error: `Turnstile verification error: ${error.message}` };
+  }
+}
 
 export default {
   async fetch(request, env, ctx) {
@@ -202,11 +252,30 @@ async function handleAnnotate(request, env, ctx, corsHeaders) {
     schema_version = '8.4.0',
     max_validation_attempts = 3,
     run_assessment = false,
+    cf_turnstile_response, // Turnstile token from frontend
   } = body;
 
   if (!description || description.trim() === '') {
     return new Response(JSON.stringify({ error: 'Description is required' }), {
       status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Verify Turnstile token (required in production)
+  const clientIp = request.headers.get('CF-Connecting-IP');
+  const turnstileResult = await verifyTurnstileToken(
+    cf_turnstile_response,
+    env.TURNSTILE_SECRET_KEY,
+    clientIp
+  );
+
+  if (!turnstileResult.success) {
+    return new Response(JSON.stringify({
+      error: 'Bot verification failed',
+      details: turnstileResult.error,
+    }), {
+      status: 403,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
@@ -304,11 +373,30 @@ async function handleAnnotateFromImage(request, env, corsHeaders) {
       schema_version = '8.4.0',
       max_validation_attempts = 5,
       run_assessment = false,
+      cf_turnstile_response, // Turnstile token from frontend
     } = body;
 
     if (!image || image.trim() === '') {
       return new Response(JSON.stringify({ error: 'Image is required' }), {
         status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Verify Turnstile token (required in production)
+    const clientIp = request.headers.get('CF-Connecting-IP');
+    const turnstileResult = await verifyTurnstileToken(
+      cf_turnstile_response,
+      env.TURNSTILE_SECRET_KEY,
+      clientIp
+    );
+
+    if (!turnstileResult.success) {
+      return new Response(JSON.stringify({
+        error: 'Bot verification failed',
+        details: turnstileResult.error,
+      }), {
+        status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
