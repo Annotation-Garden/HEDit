@@ -12,11 +12,15 @@ on:
   schedule:
     # Run every Monday at 9:00 AM UTC
     - cron: '0 9 * * 1'
+  workflow_dispatch:
 
 jobs:
   analyze:
     name: Analyze Code
     runs-on: ubuntu-latest
+    # Only run on public repos or repos with GHAS enabled
+    # Skip for private repos without Advanced Security to avoid errors
+    if: github.event.repository.visibility == 'public' || github.event.repository.private == false
     permissions:
       actions: read
       contents: read

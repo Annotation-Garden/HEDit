@@ -83,16 +83,33 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'hed-bot:security-scan'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+        continue-on-error: true
+
+      - name: Run Trivy for SARIF report
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'hed-bot:security-scan'
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
+        continue-on-error: true
 
       - name: Upload Trivy results to GitHub Security
+        # Only upload if this is a public repo or has GHAS enabled
+        if: github.event.repository.visibility == 'public'
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
         with:
           sarif_file: 'trivy-results.sarif'
-        continue-on-error: true  # May fail without Advanced Security
+        continue-on-error: true
+
+      - name: Upload Trivy report as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-security-report
+          path: trivy-results.sarif
 
   secrets-scan:
     name: Secrets Scan
