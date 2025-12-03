@@ -91,30 +91,39 @@ release_lock() {
 check_for_updates() {
     log "Checking for updates..."
 
-    # Get current local image digest
-    LOCAL_DIGEST=$(docker images --no-trunc --quiet "$IMAGE_NAME" 2>/dev/null)
+    # Get the image digest of the RUNNING container (not just the local tag)
+    RUNNING_IMAGE=$(docker inspect "$CONTAINER_NAME" --format='{{.Image}}' 2>/dev/null || echo "")
+    if [ -z "$RUNNING_IMAGE" ]; then
+        log "Container $CONTAINER_NAME not running, will deploy fresh"
+        RUNNING_DIGEST=""
+    else
+        RUNNING_DIGEST="$RUNNING_IMAGE"
+        log "Running container image: ${RUNNING_DIGEST:0:19}..."
+    fi
 
-    # Pull latest image metadata from registry
+    # Pull latest image from registry
     log "Pulling latest image from registry: $REGISTRY_IMAGE"
     docker pull "$REGISTRY_IMAGE" > /dev/null 2>&1
 
-    # Get new image digest
-    NEW_DIGEST=$(docker images --no-trunc --quiet "$REGISTRY_IMAGE" 2>/dev/null)
+    # Get new image digest (full sha256)
+    NEW_DIGEST=$(docker inspect "$REGISTRY_IMAGE" --format='{{.Id}}' 2>/dev/null)
 
     if [ -z "$NEW_DIGEST" ]; then
         error_exit "Failed to pull image from registry"
     fi
 
+    log "Latest registry image: ${NEW_DIGEST:0:19}..."
+
     # Tag the registry image with local name
     docker tag "$REGISTRY_IMAGE" "$IMAGE_NAME"
 
-    if [ "$LOCAL_DIGEST" = "$NEW_DIGEST" ]; then
-        log "No update available (digest: ${NEW_DIGEST:0:12})"
+    if [ "$RUNNING_DIGEST" = "$NEW_DIGEST" ]; then
+        log "No update available (container already running latest)"
         return 1
     else
         log "New image available!"
-        log "  Old digest: ${LOCAL_DIGEST:0:12}"
-        log "  New digest: ${NEW_DIGEST:0:12}"
+        log "  Running: ${RUNNING_DIGEST:0:19}..."
+        log "  Latest:  ${NEW_DIGEST:0:19}..."
         return 0
     fi
 }
