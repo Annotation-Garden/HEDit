@@ -40,7 +40,9 @@ RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12
 WORKDIR /app
 
 # Clone HED repositories (self-contained)
-RUN git clone --depth 1 https://github.com/hed-standard/hed-schemas.git /app/hed-schemas && \
+# NOTE: Using forked hed-schemas with fix for JSON inheritance attributes
+# TODO: Revert to hed-standard/hed-schemas once upstream fix is merged
+RUN git clone --depth 1 -b fix/json-inheritance-attributes https://github.com/neuromechanist/hed-schemas.git /app/hed-schemas && \
     git clone --depth 1 https://github.com/hed-standard/hed-javascript.git /app/hed-javascript
 
 # Build HED JavaScript validator

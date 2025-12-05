@@ -161,7 +161,9 @@ pip install -e ".[dev]"
 
 3. **Clone HED resources** (if not using Docker):
 ```bash
-git clone https://github.com/hed-standard/hed-schemas.git ../hed-schemas
+# NOTE: Using forked hed-schemas with fix for JSON inheritance attributes
+# TODO: Revert to hed-standard/hed-schemas once upstream fix is merged
+git clone -b fix/json-inheritance-attributes https://github.com/neuromechanist/hed-schemas.git ../hed-schemas
 git clone https://github.com/hed-standard/hed-javascript.git ../hed-javascript
 cd ../hed-javascript && npm install && npm run build && cd -
 ```
