@@ -30,7 +30,7 @@ WRONG: Item/Window, Item/Plant, Property/Red, Action/Press
 RIGHT: Window, Plant, Red, Press (if these are in vocabulary)
 
 The slash (/) is ONLY for:
-1. NEW tags NOT in vocabulary: Building/House (only if "House" NOT in vocab)
+1. NEW tags NOT in vocabulary: Building/Cottage (only if "Cottage" NOT in vocab)
 2. Values with units: Duration/2 s, Frequency/440 Hz
 3. Definitions: Definition/MyDef, Def/MyDef
 
@@ -87,14 +87,18 @@ When you MUST extend (concept not in vocabulary), extend from the MOST SPECIFIC
 applicable parent tag while preserving the is-a (taxonomic) relationship.
 
 ### WRONG: Extending from overly general parents
-- Item/House (too general; House is-a Building, not just Item)
-- Action/Squeeze (too general; Squeeze is-a finger movement)
-- Property/Turquoise (could be more specific)
+- Item/Cottage (too general; Cottage is-a Building, not just Item)
+- Action/Cartwheel (too general; Cartwheel is-a Move-body action)
+- Object/Rickshaw (too general; Rickshaw is-a Vehicle)
+- Agent/Dolphin (too general; Dolphin is-a Mammal)
+- Item/Armoire (too general; Armoire is-a Furniture)
 
 ### CORRECT: Extending from most specific parents
-- Building/House (House is-a Building - correct taxonomy)
-- Move-fingers/Squeeze (Squeeze is-a finger movement)
-- Blue-green/Turquoise or Cyan/Turquoise (more specific color category)
+- Building/Cottage (Cottage is-a Building - correct taxonomy)
+- Move-body/Cartwheel (Cartwheel is-a body movement)
+- Vehicle/Rickshaw (Rickshaw is-a vehicle)
+- Mammal/Dolphin (Dolphin is-a mammal, more specific than Animal)
+- Furniture/Armoire (Armoire is-a furniture)
 
 ### Extension Decision Process
 1. Concept not in vocabulary? Must extend.
@@ -222,24 +226,26 @@ MEANING: An auditory tone that is the experimental stimulus
 ### ITEMS (objects, things)
 IN VOCABULARY -> Use as-is: Window, Plant, Circle, Square, Button, Triangle
 
-NOT IN VOCABULARY -> Extend from specific parent:
-- Building/House (not Item/House)
-- Furniture/Sofa (not Item/Sofa)
-- Vehicle/Spaceship (not Item/Spaceship)
+NOT IN VOCABULARY -> Extend from MOST SPECIFIC parent:
+- Building/Cottage (not Item/Cottage or Object/Cottage)
+- Furniture/Armoire (not Item/Armoire or Furnishing/Armoire)
+- Vehicle/Rickshaw (not Item/Rickshaw or Object/Rickshaw)
+- Mammal/Dolphin (not Agent/Dolphin or Animal/Dolphin)
 
 ### PROPERTIES (colors, attributes)
 IN VOCABULARY -> Use as-is: Red, Blue, Green, Large
 
-NOT IN VOCABULARY -> Extend from specific parent:
-- Blue-green/Turquoise
+NOT IN VOCABULARY -> Extend from MOST SPECIFIC parent:
+- Blue-green/Turquoise (from specific color category)
 - Size/Gigantic
 
 ### ACTIONS
 IN VOCABULARY -> Use as-is: Press, Move, Click
 
-NOT IN VOCABULARY -> Extend from specific parent:
-- Move-fingers/Squeeze
-- Move-hand/Swipe
+NOT IN VOCABULARY -> Extend from MOST SPECIFIC parent:
+- Move-body/Cartwheel (not Action/Cartwheel)
+- Move-fingers/Squeeze (not Action/Squeeze)
+- Move-upper-extremity/Swipe (not Action/Swipe)
 
 ---
 
