@@ -72,9 +72,10 @@ addopts = [
     "--cov=src",
     "--cov-report=html",
     "--cov-report=term-missing",
-    "--cov-fail-under=70",
     "--strict-markers",
 ]
+# Note: Coverage threshold is enforced by Codecov (80% project, 70% patch)
+# Unit tests alone get ~18%, integration tests combined get 70%+
 markers = [
     "integration: marks tests that make real API calls (deselect with '-m \"not integration\"')",
     "timeout: marks tests with a timeout (requires pytest-timeout)",
