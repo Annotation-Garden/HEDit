@@ -44,7 +44,7 @@ async function verifyTurnstileToken(token, secretKey, ip) {
       formData.append('remoteip', ip);
     }
 
-    const response = await fetch(CONFIG.TURNSTILE_VERIFY_URL, {
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
