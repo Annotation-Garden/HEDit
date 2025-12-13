@@ -596,10 +596,11 @@ async def get_version():
     """Get API version information.
 
     Returns:
-        Version information
+        Version information including commit hash for deployment verification
     """
     return {
         "version": __version__,
+        "commit": os.getenv("GIT_COMMIT", "unknown"),
     }
 
 

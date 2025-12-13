@@ -34,6 +34,10 @@ RUN npm install && npm run build
 # Return to app directory
 WORKDIR /app
 
+# Build argument for commit hash (set during CI build)
+ARG GIT_COMMIT=unknown
+ENV GIT_COMMIT=${GIT_COMMIT}
+
 # Copy requirements and install Python dependencies
 COPY pyproject.toml README.md /app/
 RUN pip install --no-cache-dir --upgrade pip && \

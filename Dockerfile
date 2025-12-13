@@ -51,6 +51,10 @@ RUN npm install && npm run build
 # Return to app directory
 WORKDIR /app
 
+# Build argument for commit hash (set during CI build)
+ARG GIT_COMMIT=unknown
+ENV GIT_COMMIT=${GIT_COMMIT}
+
 # Copy project files
 COPY pyproject.toml README.md ./
 COPY src/ ./src/
