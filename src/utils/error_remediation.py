@@ -22,18 +22,48 @@ class ErrorRemediator:
             "description": "A tag was extended from the schema (this is a warning, not an error).",
             "guidance": """IMPORTANT: When extending tags, extend from the MOST SPECIFIC applicable parent tag.
 
-BAD: Item/House (too general)
-GOOD: Building/House (Building is the most specific parent with an 'is-a' relationship to House)
+The extension should preserve the taxonomic (is-a) relationship. Find the most specific
+existing tag where your new concept IS-A type of that tag.
 
-The extension should preserve the taxonomic (is-a) relationship:
-- A House IS-A Building, so extend from Building
-- A Squeeze IS-A Move-fingers, so extend from Move-fingers
+EXAMPLES FROM DIFFERENT SCHEMA AREAS:
+
+1. BUILDINGS (Item/Object/Building tree):
+   BAD:  Item/Cottage, Object/Cottage
+   GOOD: Building/Cottage (a cottage IS-A building)
+
+2. ACTIONS (Action/Move tree):
+   BAD:  Action/Cartwheel, Move/Cartwheel
+   GOOD: Move-body/Cartwheel (a cartwheel IS-A body movement)
+
+3. FURNITURE (Item/Object/Furnishing/Furniture tree):
+   BAD:  Item/Armoire, Furnishing/Armoire
+   GOOD: Furniture/Armoire (an armoire IS-A furniture)
+
+4. VEHICLES (Item/Object/Vehicle tree):
+   BAD:  Item/Rickshaw, Object/Rickshaw
+   GOOD: Vehicle/Rickshaw (a rickshaw IS-A vehicle)
+
+5. ANIMALS (Agent/Animal tree):
+   BAD:  Agent/Dolphin, Animal/Dolphin
+   GOOD: Mammal/Dolphin (a dolphin IS-A mammal, which is more specific than Animal)
 
 Before extending, check if the tag already exists in the schema vocabulary.
 If it exists, use it directly without any parent path.""",
             "examples": {
-                "wrong": ["Item/House", "Item/Object/House", "Action/Squeeze"],
-                "correct": ["Building/House", "Move-fingers/Squeeze"],
+                "wrong": [
+                    "Item/Cottage",
+                    "Action/Cartwheel",
+                    "Item/Armoire",
+                    "Object/Rickshaw",
+                    "Agent/Dolphin",
+                ],
+                "correct": [
+                    "Building/Cottage",
+                    "Move-body/Cartwheel",
+                    "Furniture/Armoire",
+                    "Vehicle/Rickshaw",
+                    "Mammal/Dolphin",
+                ],
             },
         },
         "TAG_EXTENSION_INVALID": {

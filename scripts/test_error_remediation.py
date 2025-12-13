@@ -25,9 +25,9 @@ def test_error_remediation():
 
     remediator = ErrorRemediator()
 
-    # Test cases: simulated validation errors
+    # Test cases: simulated validation errors with diverse examples
     test_errors = [
-        "[TAG_EXTENDED] Tag 'Item/House' is an extension",
+        "[TAG_EXTENDED] Tag 'Item/Cottage' is an extension",
         "[TAG_EXTENSION_INVALID] Extension term 'Red' already exists in schema",
         "[TAG_INVALID] Tag 'Fake-tag' not found in schema",
         "[DEFINITION_INVALID] Definition not in top-level tag group",
@@ -35,7 +35,7 @@ def test_error_remediation():
     ]
 
     test_warnings = [
-        "[TAG_EXTENDED] Tag 'Building/House' is an extension from schema",
+        "[TAG_EXTENDED] Tag 'Move-body/Cartwheel' is an extension from schema",
     ]
 
     print("\n--- Original Errors ---")
@@ -74,11 +74,15 @@ def test_specific_guidance():
     print("\n--- TAG_EXTENDED Guidance ---")
     print(guidance)
 
-    # Verify key content
+    # Verify key content - check for diverse examples across schema trees
     checks = [
         ("MOST SPECIFIC", "Contains guidance about most specific parent"),
-        ("Building/House", "Contains correct example"),
         ("is-a", "Mentions is-a relationship"),
+        ("Building/Cottage", "Contains building example (Item tree)"),
+        ("Move-body/Cartwheel", "Contains action example (Action tree)"),
+        ("Furniture/Armoire", "Contains furniture example (Item tree)"),
+        ("Vehicle/Rickshaw", "Contains vehicle example (Item tree)"),
+        ("Mammal/Dolphin", "Contains animal example (Agent tree)"),
     ]
 
     print("\n--- Content Checks ---")

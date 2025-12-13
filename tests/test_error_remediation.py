@@ -31,7 +31,24 @@ def test_get_remediation_tag_extended(remediator):
 
     assert "REMEDIATION for TAG_EXTENDED" in guidance
     assert "MOST SPECIFIC" in guidance
-    assert "Building/House" in guidance or "is-a" in guidance
+    assert "is-a" in guidance.lower()
+
+
+def test_tag_extended_has_diverse_examples(remediator):
+    """Test that TAG_EXTENDED guidance has diverse examples from different schema trees."""
+    guidance = remediator.get_remediation("TAG_EXTENDED")
+
+    # Check for examples from different schema areas
+    diverse_examples = [
+        ("Building/Cottage", "buildings (Item tree)"),
+        ("Move-body/Cartwheel", "actions (Action tree)"),
+        ("Furniture/Armoire", "furniture (Item tree)"),
+        ("Vehicle/Rickshaw", "vehicles (Item tree)"),
+        ("Mammal/Dolphin", "animals (Agent tree)"),
+    ]
+
+    for example, tree in diverse_examples:
+        assert example in guidance, f"Missing {tree} example: {example}"
 
 
 def test_get_remediation_tag_extension_invalid(remediator):
