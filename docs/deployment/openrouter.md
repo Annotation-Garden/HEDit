@@ -99,13 +99,13 @@ export LLM_PROVIDER=ollama
 | Agent | Model | Provider |
 |-------|-------|----------|
 | Annotation | `openai/gpt-oss-120b` | Cerebras |
-| Evaluation | `qwen/qwen3-235b-a22b-2507` | Default |
+| Evaluation | `qwen/qwen3-235b-a22b-2507` | Cerebras |
 | Assessment | `openai/gpt-oss-120b` | Cerebras |
 | Feedback | `openai/gpt-oss-120b` | Cerebras |
 
 ### Provider Preference
 
-The `LLM_PROVIDER_PREFERENCE=Cerebras` setting routes `gpt-oss-120b` requests through Cerebras for ultra-fast inference.
+The `LLM_PROVIDER_PREFERENCE=Cerebras` setting routes all model requests through Cerebras for ultra-fast inference.
 
 ## Troubleshooting
 
