@@ -55,16 +55,19 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
           flags: unittests
           name: codecov-unit
-        continue-on-error: true
+          fail_ci_if_error: false
+          verbose: true
 
   integration-tests:
     name: Integration Tests (Real LLM)
     runs-on: ubuntu-latest
-    # Only run integration tests on push to main/develop, not on PRs from forks
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    # Only run integration tests on push (after merge), not on PRs
+    # This saves ~5-10 cents per run by avoiding LLM calls on every PR update
+    if: github.event_name == 'push'
 
     steps:
       - uses: actions/checkout@v4
