@@ -43,3 +43,9 @@ flags:
     paths:
       - src/
     carryforward: true
+  integration:
+    paths:
+      - src/
+    carryforward: true
+    # Integration tests run less frequently (only on merge)
+    # so carry forward previous results

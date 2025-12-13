@@ -89,10 +89,20 @@ jobs:
           # Only run if the secret is available
           if [ -n "$OPENROUTER_API_KEY_FOR_TESTING" ]; then
             echo "Running integration tests with OpenRouter..."
-            pytest tests/test_integration_openrouter.py -v -m integration --timeout=180
+            pytest tests/test_integration_openrouter.py -v -m integration --timeout=180 --cov=src --cov-report=xml --cov-report=term-missing
           else
             echo "OPENROUTER_API_KEY_FOR_TESTING not set, skipping integration tests"
           fi
+
+      - name: Upload integration coverage to Codecov
+        if: success()
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          flags: integration
+          name: codecov-integration
+          fail_ci_if_error: false
 
   all-tests:
     name: All Tests Summary
