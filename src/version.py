@@ -1,7 +1,7 @@
 """Version information for HED-BOT."""
 
-__version__ = "0.4.5-alpha"
-__version_info__ = (0, 4, 5, "alpha")
+__version__ = "0.5.0-dev"
+__version_info__ = (0, 5, 0, "dev")
 
 
 def get_version() -> str:
