@@ -69,15 +69,45 @@ If it exists, use it directly without any parent path.""",
         "TAG_EXTENSION_INVALID": {
             "description": "The tag extension is invalid.",
             "guidance": """Extension errors occur when:
-1. The extension term already exists in the schema (use the tag directly)
-2. The extension term has invalid characters (use only alphanumeric and hyphens)
-3. The parent tag doesn't allow extension
 
-FIX: Check if the tag exists in the vocabulary. If it does, use it AS-IS.
-Example: Use 'Red' instead of 'Property/Red' if 'Red' is in the vocabulary.""",
+1. PARENT DOESN'T ALLOW EXTENSION (most common with Event/Agent subtrees):
+   The Event subtree (7 tags) and Agent subtree (6 tags) do NOT allow extension.
+
+   NON-EXTENDABLE TAGS:
+   - Event: Sensory-event, Agent-action, Data-feature, Experiment-control,
+            Experiment-procedure, Experiment-structure, Measurement-event
+   - Agent: Human-agent, Animal-agent, Avatar-agent, Controller-agent,
+            Robotic-agent, Software-agent
+
+   FIX: Instead of extending, GROUP the agent/event with descriptive tags:
+
+   WRONG: Animal-agent/Marmoset (Animal-agent doesn't allow extension!)
+   RIGHT: (Animal-agent, Mammal/Marmoset) - group agent type with Item description
+
+   WRONG: Human-agent/Experimenter
+   RIGHT: (Human-agent, Experiment-participant)
+
+   WRONG: Sensory-event/Custom-stimulus
+   RIGHT: Sensory-event, Visual-presentation, (descriptive tags...)
+
+2. EXTENSION TERM ALREADY EXISTS (use the tag directly):
+   FIX: Use 'Red' instead of 'Property/Red' if 'Red' is in the vocabulary.
+
+3. INVALID CHARACTERS (use only alphanumeric, hyphens, underscores):
+   FIX: Use 'My-custom-tag' not 'My$custom#tag'""",
             "examples": {
-                "wrong": ["Property/Red", "Item/Circle", "Sensory-presentation/Red"],
-                "correct": ["Red", "Circle", "Red-color/Red/Redish"],
+                "wrong": [
+                    "Animal-agent/Marmoset",
+                    "Human-agent/Experimenter",
+                    "Property/Red",
+                    "Sensory-event/Custom",
+                ],
+                "correct": [
+                    "(Animal-agent, Mammal/Marmoset)",
+                    "(Human-agent, Experiment-participant)",
+                    "Red",
+                    "Sensory-event, Visual-presentation",
+                ],
             },
         },
         "TAG_INVALID": {

@@ -81,34 +81,74 @@ WRONG: (Triangle, Mouse-button) - Stimulus shape and response device unrelated
 
 ---
 
-## EXTENSION RULES (TAG_EXTENDED Warning)
+## CRITICAL: EVENT AND AGENT SUBTREES CANNOT BE EXTENDED
 
-When you MUST extend (concept not in vocabulary), extend from the MOST SPECIFIC
-applicable parent tag while preserving the is-a (taxonomic) relationship.
+The Event subtree (7 tags) and Agent subtree (6 tags) do NOT allow extension.
+Instead of extending, you must GROUP these tags with descriptive Items/Properties.
+
+### NON-EXTENDABLE TAGS (memorize these!):
+EVENT SUBTREE:
+- Event, Sensory-event, Agent-action, Data-feature
+- Experiment-control, Experiment-procedure, Experiment-structure, Measurement-event
+
+AGENT SUBTREE:
+- Agent, Human-agent, Animal-agent, Avatar-agent
+- Controller-agent, Robotic-agent, Software-agent
+
+### PATTERN: Group agents with descriptive Items, don't extend!
+
+WRONG: Animal-agent/Marmoset (CANNOT extend Animal-agent!)
+RIGHT: (Animal-agent, Mammal/Marmoset)
+
+WRONG: Animal-agent/Dolphin
+RIGHT: (Animal-agent, Mammal/Dolphin)
+
+WRONG: Human-agent/Experimenter
+RIGHT: (Human-agent, Experiment-participant)
+
+WRONG: Human-agent/Subject
+RIGHT: (Human-agent, Experiment-participant)
+
+### How to describe agents:
+1. Pick the agent TYPE from Agent subtree: Human-agent, Animal-agent, etc.
+2. GROUP it with descriptive tags from Item/Property subtrees
+3. If the animal/person type doesn't exist in vocab, extend from Item subtree
+
+EXAMPLE: A marmoset performs an action
+WRONG: Agent-action, ((Animal-agent/Marmoset), (Reach, Target))
+RIGHT: Agent-action, ((Animal-agent, Mammal/Marmoset), (Reach, Target))
+
+EXAMPLE: Participant responds
+RIGHT: Agent-action, Participant-response, ((Human-agent, Experiment-participant), (Press, Button))
+
+---
+
+## EXTENSION RULES (for extendable tags)
+
+When you MUST extend (concept not in vocabulary AND parent allows extension),
+extend from the MOST SPECIFIC applicable parent tag.
 
 ### WRONG: Extending from overly general parents
 - Item/Cottage (too general; Cottage is-a Building, not just Item)
 - Action/Cartwheel (too general; Cartwheel is-a Move-body action)
 - Object/Rickshaw (too general; Rickshaw is-a Vehicle)
-- Agent/Dolphin (too general; Dolphin is-a Mammal)
-- Item/Armoire (too general; Armoire is-a Furniture)
 
 ### CORRECT: Extending from most specific parents
 - Building/Cottage (Cottage is-a Building - correct taxonomy)
 - Move-body/Cartwheel (Cartwheel is-a body movement)
 - Vehicle/Rickshaw (Rickshaw is-a vehicle)
-- Mammal/Dolphin (Dolphin is-a mammal, more specific than Animal)
+- Mammal/Marmoset (Marmoset is-a mammal)
 - Furniture/Armoire (Armoire is-a furniture)
 
 ### Extension Decision Process
-1. Concept not in vocabulary? Must extend.
-2. Find the schema path to similar concepts.
-3. Extend from the DEEPEST (most specific) parent that maintains is-a relationship.
-4. The extended tag should logically "be a type of" its parent.
+1. Is concept in vocabulary? Use it directly.
+2. Is parent in Event or Agent subtree? DO NOT EXTEND - use grouping instead.
+3. Find the schema path to similar concepts.
+4. Extend from the DEEPEST (most specific) parent that maintains is-a relationship.
 
-### Cannot Extend These
-- Event subtree (Sensory-event, Agent-action, etc.) - use existing event types
-- Agent subtree - use existing agent types
+### Cannot Extend These (use grouping instead)
+- Event subtree - group with modality tags (Visual-presentation, etc.)
+- Agent subtree - group with Item tags (Mammal/X, Experiment-participant, etc.)
 - Value-taking nodes (tags with # child) - cannot extend after #
 
 ---
@@ -247,6 +287,22 @@ NOT IN VOCABULARY -> Extend from MOST SPECIFIC parent:
 - Move-fingers/Squeeze (not Action/Squeeze)
 - Move-upper-extremity/Swipe (not Action/Swipe)
 
+### AGENTS (CANNOT extend - use grouping!)
+Agent subtree tags CANNOT be extended. Group with descriptive Items instead.
+
+FOR HUMANS:
+- (Human-agent, Experiment-participant) - human in experiment
+- Agent-action, ((Human-agent, Experiment-participant), (Press, Button))
+
+FOR ANIMALS:
+- (Animal-agent, Mammal/Marmoset) - a marmoset
+- (Animal-agent, Mammal/Dolphin) - a dolphin
+- (Animal-agent, Bird/Parrot) - a parrot (if Bird is extendable)
+- Agent-action, ((Animal-agent, Mammal/Marmoset), (Reach, Target))
+
+WRONG: Animal-agent/Marmoset, Human-agent/Subject (CANNOT extend!)
+RIGHT: (Animal-agent, Mammal/Marmoset), (Human-agent, Experiment-participant)
+
 ---
 
 ## COMMON PATTERNS
@@ -254,8 +310,11 @@ NOT IN VOCABULARY -> Extend from MOST SPECIFIC parent:
 ### Visual stimulus
 Sensory-event, Experimental-stimulus, Visual-presentation, (Red, Circle)
 
-### Participant response
+### Human participant response
 Agent-action, Participant-response, ((Human-agent, Experiment-participant), (Press, (Left, Mouse-button)))
+
+### Animal agent action
+Agent-action, ((Animal-agent, Mammal/Marmoset), (Reach, Target))
 
 ### Spatial relationship
 Sensory-event, Visual-presentation, ((Red, Circle), (To-left-of, (Green, Square)))
