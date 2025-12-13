@@ -6,22 +6,22 @@ coverage:
   status:
     project:
       default:
-        # Target 70% coverage (current baseline ~18%)
-        target: 70%
+        # Target 80% coverage
+        target: 80%
         # Allow coverage to drop by 2% without failing
         threshold: 2%
-        # Only check coverage on files changed in PR
         if_ci_failed: error
     patch:
       default:
-        # New code should have at least 50% coverage
-        target: 50%
+        # New code must have at least 70% coverage
+        target: 70%
         threshold: 5%
 
   # Coverage precision (2 decimal places)
   precision: 2
   round: down
-  range: "50...100"
+  # Highlight files below 70% as critical
+  range: "70...100"
 
 # Comment settings for PRs
 comment:
