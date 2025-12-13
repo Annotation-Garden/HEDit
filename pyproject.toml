@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hed-bot"
-version = "0.4.5-dev"
+version = "0.4.5-alpha"
 description = "Multi-agent system for HED annotation generation and validation"
 readme = "README.md"
 requires-python = ">=3.12"

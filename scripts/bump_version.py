@@ -3,17 +3,20 @@
 
 This script helps manage semantic versioning with support for:
 - major.minor.patch version bumping
-- Pre-release labels (alpha, beta, rc)
+- Pre-release labels (alpha, beta, rc, dev)
+- Changing prerelease label without version bump
 - Automatic git tagging and GitHub release creation
 
 Usage:
-    python scripts/bump_version.py [major|minor|patch] [--prerelease alpha|beta|rc|stable]
+    python scripts/bump_version.py [major|minor|patch] [--prerelease alpha|beta|rc|dev|stable]
+    python scripts/bump_version.py --prerelease alpha  # Change only prerelease label
     python scripts/bump_version.py --current  # Show current version
 
 Examples:
-    python scripts/bump_version.py patch              # 0.3.0-alpha -> 0.3.1-alpha
-    python scripts/bump_version.py minor --prerelease beta  # 0.3.0-alpha -> 0.4.0-beta
+    python scripts/bump_version.py patch                      # 0.3.0-alpha -> 0.3.1-alpha
+    python scripts/bump_version.py minor --prerelease beta    # 0.3.0-alpha -> 0.4.0-beta
     python scripts/bump_version.py major --prerelease stable  # 0.3.0-alpha -> 1.0.0
+    python scripts/bump_version.py --prerelease alpha         # 0.4.5-dev -> 0.4.5-alpha
 """
 
 import argparse
@@ -57,12 +60,12 @@ class VersionBumper:
             version += f"-{prerelease}"
         return version
 
-    def bump_version(self, bump_type: str, new_prerelease: str = None) -> tuple[str, str]:
+    def bump_version(self, bump_type: str | None, new_prerelease: str = None) -> tuple[str, str]:
         """Bump version and return (old_version, new_version)."""
         major, minor, patch, prerelease = self.get_current_version()
         old_version = self.format_version(major, minor, patch, prerelease)
 
-        # Apply bump type
+        # Apply bump type (if specified)
         if bump_type == "major":
             major += 1
             minor = 0
@@ -72,7 +75,7 @@ class VersionBumper:
             patch = 0
         elif bump_type == "patch":
             patch += 1
-        else:
+        elif bump_type is not None:
             raise ValueError(f"Invalid bump type: {bump_type}")
 
         # Apply prerelease change if specified
@@ -283,8 +286,8 @@ def main():
         print(f"Current version: {version}")
         return 0
 
-    # Validate arguments
-    if not args.bump_type:
+    # Validate arguments - need either bump_type or prerelease
+    if not args.bump_type and not args.prerelease:
         parser.print_help()
         return 1
 
