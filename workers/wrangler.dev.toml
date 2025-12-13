@@ -20,8 +20,6 @@ id = "REPLACE_WITH_DEV_RATE_LIMITER_ID"
 # Environment variables
 [vars]
 ENVIRONMENT = "development"
-# Backend URL will be set after tunnel is configured
-# For now, using placeholder - update after dev tunnel setup
 BACKEND_URL = "https://hedtools.org/hed-bot-dev-api"
 
 # Secrets (set via wrangler secret put --config wrangler.dev.toml)

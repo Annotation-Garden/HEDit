@@ -1,0 +1,49 @@
+# Docker Compose for HED-BOT Development Environment
+# Pulls from GHCR :develop tag instead of building locally
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml pull
+#   docker compose -f docker-compose.dev.yml up -d
+#
+# Auto-update:
+#   ./deploy/auto-update-dev.sh
+
+services:
+  # HED-BOT Dev API service
+  hed-bot-dev:
+    image: ghcr.io/neuromechanist/hed-bot:develop
+    container_name: hed-bot-dev
+    environment:
+      # LLM Provider Configuration
+      - LLM_PROVIDER=${LLM_PROVIDER:-openrouter}
+
+      # OpenRouter Configuration
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - LLM_PROVIDER_PREFERENCE=${LLM_PROVIDER_PREFERENCE:-Cerebras}
+      - ANNOTATION_MODEL=${ANNOTATION_MODEL:-openai/gpt-oss-120b}
+      - EVALUATION_MODEL=${EVALUATION_MODEL:-qwen/qwen3-235b-a22b-2507}
+      - ASSESSMENT_MODEL=${ASSESSMENT_MODEL:-openai/gpt-oss-120b}
+      - FEEDBACK_MODEL=${FEEDBACK_MODEL:-openai/gpt-oss-120b}
+
+      # LLM Settings
+      - LLM_TEMPERATURE=${LLM_TEMPERATURE:-0.1}
+
+      # HED Configuration
+      - HED_SCHEMA_VERSION=${HED_SCHEMA_VERSION:-8.4.0}
+      - USE_JS_VALIDATOR=${USE_JS_VALIDATOR:-true}
+
+      # API Security
+      - API_KEYS=${API_KEYS}
+      - REQUIRE_API_AUTH=${REQUIRE_API_AUTH:-true}
+
+      # Dev-specific settings
+      - LOG_LEVEL=DEBUG
+    ports:
+      - "127.0.0.1:38428:38427"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:38427/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

@@ -48,9 +48,9 @@ done
 
 # Set environment-specific variables
 if [ "$ENVIRONMENT" = "dev" ]; then
-    IMAGE_NAME="hed-bot_dev:latest"
-    CONTAINER_NAME="hed-bot_dev"
-    REGISTRY_IMAGE="ghcr.io/neuromechanist/hed-bot:main"
+    IMAGE_NAME="hed-bot-dev:latest"
+    CONTAINER_NAME="hed-bot-dev"
+    REGISTRY_IMAGE="ghcr.io/neuromechanist/hed-bot:develop"
 else
     IMAGE_NAME="hed-bot:latest"
     CONTAINER_NAME="hed-bot"
