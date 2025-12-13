@@ -6,16 +6,14 @@ main = "index.js"
 compatibility_date = "2024-01-01"
 
 # KV Namespaces for caching (dev-specific)
-# Create with: wrangler kv:namespace create "HED_CACHE_DEV"
 [[kv_namespaces]]
 binding = "HED_CACHE"
-id = "REPLACE_WITH_DEV_CACHE_ID"
+id = "4f9f591d9dc34806973efd069d29230b"
 
 # KV Namespace for rate limiting (dev-specific)
-# Create with: wrangler kv:namespace create "RATE_LIMITER_DEV"
 [[kv_namespaces]]
 binding = "RATE_LIMITER"
-id = "REPLACE_WITH_DEV_RATE_LIMITER_ID"
+id = "cceec1ae15754a7a946273b97eb488a3"
 
 # Environment variables
 [vars]
