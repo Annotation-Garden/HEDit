@@ -64,7 +64,8 @@ async def lifespan(app: FastAPI):
             local_path: Path to use in local development
 
         Returns:
-            Appropriate default path
+            Appropriate default path, or None if no paths exist
+            (HED library will fetch from GitHub when None)
         """
         # Check if running in Docker (look for Docker-specific paths)
         if Path("/app").exists() and Path(docker_path).exists():
@@ -72,8 +73,8 @@ async def lifespan(app: FastAPI):
         # Check if local development path exists
         elif Path(local_path).exists():
             return local_path
-        # Fall back to Docker path (will fail gracefully if not available)
-        return docker_path
+        # Return None to trigger HED library to fetch from GitHub
+        return None
 
     # Get configuration from environment with smart defaults
     llm_provider = os.getenv("LLM_PROVIDER", "ollama")  # "ollama" or "openrouter"
@@ -100,8 +101,8 @@ async def lifespan(app: FastAPI):
     use_js_validator = os.getenv("USE_JS_VALIDATOR", "true").lower() == "true"
 
     print(f"Environment: {'Docker' if Path('/app').exists() else 'Local'}")
-    print(f"Schema directory: {schema_dir}")
-    print(f"Validator path: {validator_path}")
+    print(f"Schema directory: {schema_dir or 'GitHub (dynamic fetch)'}")
+    print(f"Validator path: {validator_path or 'None (using Python validator)'}")
 
     # Initialize LLM based on provider
     if llm_provider == "openrouter":
@@ -176,13 +177,14 @@ async def lifespan(app: FastAPI):
         print(f"Using Ollama: {llm_model} at {llm_base_url}")
 
     # Initialize workflow with per-agent LLMs
+    # schema_dir=None triggers HED library to fetch from GitHub dynamically
     workflow = HedAnnotationWorkflow(
         llm=annotation_llm,
         evaluation_llm=evaluation_llm if llm_provider == "openrouter" else None,
         assessment_llm=assessment_llm if llm_provider == "openrouter" else None,
         feedback_llm=feedback_llm if llm_provider == "openrouter" else None,
-        schema_dir=Path(schema_dir),
-        validator_path=Path(validator_path) if use_js_validator else None,
+        schema_dir=Path(schema_dir) if schema_dir else None,
+        validator_path=Path(validator_path) if use_js_validator and validator_path else None,
         use_js_validator=use_js_validator,
     )
 

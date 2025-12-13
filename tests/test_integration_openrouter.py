@@ -236,6 +236,191 @@ class TestWorkflowIntegration:
 
 @pytest.mark.integration
 @pytest.mark.skipif(not OPENROUTER_TEST_KEY, reason=SKIP_REASON)
+class TestVisionAgentIntegration:
+    """Test the vision agent with real vision LLM calls.
+
+    Note: These tests use example images from the examples/ directory.
+    Vision model calls may take longer than text-only calls.
+    """
+
+    @pytest.fixture
+    def vision_agent(self, test_api_key: str):
+        """Create a vision agent for testing."""
+        from src.agents.vision_agent import VisionAgent
+        from src.utils.openrouter_llm import create_openrouter_llm
+
+        # Use default vision model
+        vision_model = os.getenv("VISION_MODEL", "qwen/qwen3-vl-30b-a3b-instruct")
+
+        llm = create_openrouter_llm(
+            model=vision_model,
+            api_key=test_api_key,
+            temperature=0.1,
+            max_tokens=500,
+            # Vision models don't use Cerebras provider
+            provider=None,
+        )
+
+        return VisionAgent(llm=llm)
+
+    @pytest.fixture
+    def example_image_base64(self) -> str:
+        """Load example image as base64 data URI."""
+        import base64
+        from io import BytesIO
+        from pathlib import Path
+
+        from PIL import Image
+
+        # Use the first example image
+        image_path = Path(__file__).parent.parent / "examples" / "shared0001_nsd02951.jpg"
+        if not image_path.exists():
+            pytest.skip(f"Example image not found: {image_path}")
+
+        img = Image.open(image_path)
+        buffer = BytesIO()
+        img_format = img.format or "JPEG"
+        img.save(buffer, format=img_format)
+        buffer.seek(0)
+
+        base64_str = base64.b64encode(buffer.read()).decode("utf-8")
+        mime_type = f"image/{img_format.lower()}"
+        return f"data:{mime_type};base64,{base64_str}"
+
+    @pytest.mark.asyncio
+    async def test_vision_agent_describes_image(self, vision_agent, example_image_base64) -> None:
+        """Test that vision agent generates a description from an image."""
+        result = await vision_agent.describe_image(example_image_base64)
+
+        assert result is not None
+        assert "description" in result
+        assert "prompt_used" in result
+        assert "metadata" in result
+
+        # Description should be non-empty
+        description = result["description"]
+        assert description is not None
+        assert len(description) > 20  # Should be a meaningful description
+
+        # Metadata should have image info
+        metadata = result["metadata"]
+        assert "width" in metadata
+        assert "height" in metadata
+        assert "format" in metadata
+
+    @pytest.mark.asyncio
+    async def test_vision_agent_with_custom_prompt(
+        self, vision_agent, example_image_base64
+    ) -> None:
+        """Test vision agent with a custom prompt."""
+        custom_prompt = "List the main objects visible in this image in a comma-separated list."
+
+        result = await vision_agent.describe_image(
+            example_image_base64,
+            custom_prompt=custom_prompt,
+        )
+
+        assert result is not None
+        assert result["prompt_used"] == custom_prompt
+        assert "description" in result
+        # Custom prompt response should contain commas (list format)
+        assert len(result["description"]) > 0
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(not OPENROUTER_TEST_KEY, reason=SKIP_REASON)
+class TestImageProcessingIntegration:
+    """Test image processing utilities with real images."""
+
+    @pytest.fixture
+    def example_image_path(self):
+        """Get path to example image."""
+        from pathlib import Path
+
+        image_path = Path(__file__).parent.parent / "examples" / "shared0060_nsd06432.jpg"
+        if not image_path.exists():
+            pytest.skip(f"Example image not found: {image_path}")
+        return image_path
+
+    def test_decode_base64_image(self, example_image_path) -> None:
+        """Test decoding a real image from base64."""
+        import base64
+        from io import BytesIO
+
+        from PIL import Image
+
+        from src.utils.image_processing import decode_base64_image
+
+        # Load and encode image
+        img = Image.open(example_image_path)
+        buffer = BytesIO()
+        img.save(buffer, format=img.format or "JPEG")
+        buffer.seek(0)
+        base64_str = base64.b64encode(buffer.read()).decode("utf-8")
+
+        # Decode and validate
+        decoded_img, metadata = decode_base64_image(base64_str)
+
+        assert decoded_img is not None
+        assert metadata["width"] == img.width
+        assert metadata["height"] == img.height
+        assert metadata["format"] in ["JPEG", "JPG"]
+
+    def test_validate_image_data(self, example_image_path) -> None:
+        """Test image validation with a real image."""
+        import base64
+        from io import BytesIO
+
+        from PIL import Image
+
+        from src.utils.image_processing import validate_image_data
+
+        # Load and encode image as data URI
+        img = Image.open(example_image_path)
+        buffer = BytesIO()
+        img_format = img.format or "JPEG"
+        img.save(buffer, format=img_format)
+        buffer.seek(0)
+        base64_str = base64.b64encode(buffer.read()).decode("utf-8")
+        data_uri = f"data:image/{img_format.lower()};base64,{base64_str}"
+
+        # Validate
+        result = validate_image_data(data_uri)
+
+        assert result["valid"] is True
+        assert result["error"] is None
+        assert result["metadata"] is not None
+        assert result["metadata"]["width"] > 0
+        assert result["metadata"]["height"] > 0
+
+    def test_prepare_image_for_vision_model(self, example_image_path) -> None:
+        """Test preparing an image for vision model processing."""
+        import base64
+        from io import BytesIO
+
+        from PIL import Image
+
+        from src.utils.image_processing import prepare_image_for_vision_model
+
+        # Load and encode image
+        img = Image.open(example_image_path)
+        buffer = BytesIO()
+        img_format = img.format or "JPEG"
+        img.save(buffer, format=img_format)
+        buffer.seek(0)
+        base64_str = base64.b64encode(buffer.read()).decode("utf-8")
+
+        # Prepare for vision model
+        data_uri, metadata = prepare_image_for_vision_model(base64_str)
+
+        assert data_uri.startswith("data:image/")
+        assert ";base64," in data_uri
+        assert metadata["width"] == img.width
+        assert metadata["height"] == img.height
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(not OPENROUTER_TEST_KEY, reason=SKIP_REASON)
 class TestAPIEndpointIntegration:
     """Test API endpoints with real LLM calls.
 
@@ -246,15 +431,11 @@ class TestAPIEndpointIntegration:
     @pytest.fixture
     def client(self, test_api_key: str):
         """Create a test client for the API using env-configured models."""
-        import os
-
         from fastapi.testclient import TestClient
 
         # Set environment variables for the test BEFORE importing app
-        # Use the testing API key but keep other env settings
         os.environ["LLM_PROVIDER"] = "openrouter"
         os.environ["OPENROUTER_API_KEY"] = test_api_key
-        # Use env-configured models (loaded from .env via dotenv)
         os.environ["ANNOTATION_MODEL"] = TEST_MODEL
         os.environ["EVALUATION_MODEL"] = os.getenv("EVALUATION_MODEL", TEST_MODEL)
         os.environ["ASSESSMENT_MODEL"] = os.getenv("ASSESSMENT_MODEL", TEST_MODEL)
@@ -264,11 +445,13 @@ class TestAPIEndpointIntegration:
         os.environ["REQUIRE_API_AUTH"] = "false"
         os.environ["USE_JS_VALIDATOR"] = "false"
 
-        # Don't set schema paths - let API use HED library to fetch from GitHub
+        # Clear schema paths - app now handles None gracefully and fetches from GitHub
+        for key in ["HED_SCHEMA_DIR", "HED_VALIDATOR_PATH"]:
+            if key in os.environ:
+                del os.environ[key]
 
         from src.api.main import app
 
-        # Use context manager to ensure lifespan events are triggered
         with TestClient(app) as client:
             yield client
 
