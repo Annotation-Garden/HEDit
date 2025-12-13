@@ -130,7 +130,7 @@ def get_version_info() -> tuple:
             r'(\[project\][^\[]*?version\s*=\s*)"[^"]+"',
             f'\\1"{version}"',
             content,
-            flags=re.DOTALL
+            flags=re.DOTALL,
         )
 
         self.pyproject_file.write_text(updated_content)
@@ -140,10 +140,7 @@ def get_version_info() -> tuple:
         """Commit version bump and create Git tag."""
         # Check if we're in a git repository
         result = subprocess.run(
-            ["git", "rev-parse", "--git-dir"],
-            cwd=self.project_root,
-            capture_output=True,
-            text=True
+            ["git", "rev-parse", "--git-dir"], cwd=self.project_root, capture_output=True, text=True
         )
 
         if result.returncode != 0:
@@ -152,14 +149,12 @@ def get_version_info() -> tuple:
 
         # Check for uncommitted changes (excluding version files)
         result = subprocess.run(
-            ["git", "diff", "--name-only"],
-            cwd=self.project_root,
-            capture_output=True,
-            text=True
+            ["git", "diff", "--name-only"], cwd=self.project_root, capture_output=True, text=True
         )
 
         uncommitted_files = [
-            f for f in result.stdout.strip().split("\n")
+            f
+            for f in result.stdout.strip().split("\n")
             if f and not f.startswith("src/version.py") and not f.startswith("pyproject.toml")
         ]
 
@@ -172,18 +167,12 @@ def get_version_info() -> tuple:
 
         # Stage version files
         subprocess.run(
-            ["git", "add", "src/version.py", "pyproject.toml"],
-            cwd=self.project_root,
-            check=True
+            ["git", "add", "src/version.py", "pyproject.toml"], cwd=self.project_root, check=True
         )
 
         # Commit
         commit_message = f"Bump version to {version}"
-        subprocess.run(
-            ["git", "commit", "-m", commit_message],
-            cwd=self.project_root,
-            check=True
-        )
+        subprocess.run(["git", "commit", "-m", commit_message], cwd=self.project_root, check=True)
         print(f"✓ Committed version bump: {commit_message}")
 
         # Create tag
@@ -191,7 +180,7 @@ def get_version_info() -> tuple:
         subprocess.run(
             ["git", "tag", "-a", tag_name, "-m", f"Release {version}"],
             cwd=self.project_root,
-            check=True
+            check=True,
         )
         print(f"✓ Created tag: {tag_name}")
 
@@ -200,11 +189,7 @@ def get_version_info() -> tuple:
     def create_github_release(self, version: str):
         """Create GitHub release using gh CLI."""
         # Check if gh CLI is available
-        result = subprocess.run(
-            ["gh", "--version"],
-            capture_output=True,
-            text=True
-        )
+        result = subprocess.run(["gh", "--version"], capture_output=True, text=True)
 
         if result.returncode != 0:
             print("⚠ GitHub CLI (gh) not found. Install it to create releases automatically.")
@@ -218,7 +203,7 @@ def get_version_info() -> tuple:
             ["git", "log", "--oneline", "--no-decorate", "-10"],
             cwd=self.project_root,
             capture_output=True,
-            text=True
+            text=True,
         )
         recent_commits = result.stdout.strip()
 
@@ -232,24 +217,24 @@ For full changelog, see commit history.
 
         # Build release command
         release_cmd = [
-            "gh", "release", "create", tag_name,
-            "--title", f"Release {version}",
-            "--notes", release_notes
+            "gh",
+            "release",
+            "create",
+            tag_name,
+            "--title",
+            f"Release {version}",
+            "--notes",
+            release_notes,
         ]
 
-        # Add --prerelease flag for alpha/beta/rc versions
-        if any(label in version.lower() for label in ["alpha", "beta", "rc"]):
+        # Add --prerelease flag for alpha/beta/rc/dev versions
+        if any(label in version.lower() for label in ["alpha", "beta", "rc", "dev"]):
             release_cmd.append("--prerelease")
-            print(f"  (Marking as pre-release since version contains alpha/beta/rc)")
+            print("  (Marking as pre-release since version contains alpha/beta/rc/dev)")
 
         # Create release
         print(f"\nCreating GitHub release for {tag_name}...")
-        result = subprocess.run(
-            release_cmd,
-            cwd=self.project_root,
-            capture_output=True,
-            text=True
-        )
+        result = subprocess.run(release_cmd, cwd=self.project_root, capture_output=True, text=True)
 
         if result.returncode == 0:
             print(f"✓ Created GitHub release: {tag_name}")
@@ -264,32 +249,23 @@ def main():
     parser = argparse.ArgumentParser(
         description="Bump HED-BOT version and create Git tag/release",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__
+        epilog=__doc__,
     )
 
     parser.add_argument(
-        "bump_type",
-        nargs="?",
-        choices=["major", "minor", "patch"],
-        help="Type of version bump"
+        "bump_type", nargs="?", choices=["major", "minor", "patch"], help="Type of version bump"
     )
 
     parser.add_argument(
         "--prerelease",
-        choices=["alpha", "beta", "rc", "stable"],
-        help="Set pre-release label (omit for stable release)"
+        choices=["alpha", "beta", "rc", "dev", "stable"],
+        help="Set pre-release label (dev for develop branch, omit for stable release)",
     )
 
-    parser.add_argument(
-        "--current",
-        action="store_true",
-        help="Show current version and exit"
-    )
+    parser.add_argument("--current", action="store_true", help="Show current version and exit")
 
     parser.add_argument(
-        "--no-git",
-        action="store_true",
-        help="Skip Git operations (commit, tag, release)"
+        "--no-git", action="store_true", help="Skip Git operations (commit, tag, release)"
     )
 
     args = parser.parse_args()
@@ -322,10 +298,10 @@ def main():
             if bumper.git_commit_and_tag(new_version):
                 print("\nNext steps:")
                 print(f"  1. Review the changes: git show v{new_version}")
-                print(f"  2. Push to remote: git push origin feature/your-branch")
+                print("  2. Push to remote: git push origin feature/your-branch")
                 print(f"  3. Push tag: git push origin v{new_version}")
-                print(f"  4. Create PR and merge to main")
-                print(f"  5. After merge, the GitHub release will be created automatically")
+                print("  4. Create PR and merge to main")
+                print("  5. After merge, the GitHub release will be created automatically")
 
                 # Optionally create GitHub release
                 response = input("\nCreate GitHub release now? (y/N): ")
