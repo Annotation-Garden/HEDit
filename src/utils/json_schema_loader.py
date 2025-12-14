@@ -126,20 +126,24 @@ class HedJsonSchemaLoader:
         return suggestions[:5]
 
 
-def load_latest_schema(schema_dir: Path | str = None) -> HedJsonSchemaLoader:
+def load_latest_schema(schema_dir: Path | str) -> HedJsonSchemaLoader:
     """Load the latest HED standard schema.
 
     Args:
-        schema_dir: Directory containing JSON schemas
-                   Defaults to HED schemas repository location
+        schema_dir: Directory containing JSON schemas (required)
 
     Returns:
         Loaded HedJsonSchemaLoader
+
+    Raises:
+        ValueError: If schema_dir is None or invalid
     """
     if schema_dir is None:
-        schema_dir = Path("/Users/yahya/Documents/git/HED/hed-schemas/schemas_latest_json")
-    else:
-        schema_dir = Path(schema_dir)
+        raise ValueError(
+            "schema_dir is required for load_latest_schema. "
+            "Use HedSchemaLoader for dynamic schema fetching from GitHub."
+        )
 
+    schema_dir = Path(schema_dir)
     latest_schema = schema_dir / "HEDLatest.json"
     return HedJsonSchemaLoader(latest_schema)

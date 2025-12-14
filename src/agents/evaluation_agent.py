@@ -117,8 +117,8 @@ Provide a thorough evaluation following the specified format."""
         Returns:
             State update with evaluation feedback
         """
-        # Load schema if needed
-        if self.json_schema_loader is None:
+        # Load schema if needed (only if schema_dir provided)
+        if self.json_schema_loader is None and self.schema_dir is not None:
             self.json_schema_loader = load_latest_schema(self.schema_dir)
 
         # Check for potentially invalid tags and suggest matches

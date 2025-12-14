@@ -82,9 +82,9 @@ class HedSchemaLoader:
             List of all tag names (short form) in the schema
         """
         tags = []
-        for tag_entry in schema.get_all_schema_tags(True):
+        for _name, entry in schema.tags.items():
             # Get short form tag name
-            tags.append(tag_entry.short_tag_name)
+            tags.append(entry.short_tag_name)
         return sorted(tags)
 
     def clear_cache(self) -> None:

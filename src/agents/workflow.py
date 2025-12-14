@@ -54,10 +54,8 @@ class HedAnnotationWorkflow:
             validator_path: Path to hed-javascript for validation
             use_js_validator: Whether to use JavaScript validator
         """
-        # Store schema directory
-        self.schema_dir = schema_dir or Path(
-            "/Users/yahya/Documents/git/HED/hed-schemas/schemas_latest_json"
-        )
+        # Store schema directory (None means use HED library to fetch from GitHub)
+        self.schema_dir = schema_dir
 
         # Initialize legacy schema loader for validation
         self.schema_loader = HedSchemaLoader()
