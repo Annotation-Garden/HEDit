@@ -23,6 +23,8 @@ from src.agents.workflow import HedAnnotationWorkflow
 from src.api.models import (
     AnnotationRequest,
     AnnotationResponse,
+    FeedbackRequest,
+    FeedbackResponse,
     HealthResponse,
     ImageAnnotationRequest,
     ImageAnnotationResponse,
@@ -64,7 +66,8 @@ async def lifespan(app: FastAPI):
             local_path: Path to use in local development
 
         Returns:
-            Appropriate default path
+            Appropriate default path, or None if no paths exist
+            (HED library will fetch from GitHub when None)
         """
         # Check if running in Docker (look for Docker-specific paths)
         if Path("/app").exists() and Path(docker_path).exists():
@@ -72,8 +75,8 @@ async def lifespan(app: FastAPI):
         # Check if local development path exists
         elif Path(local_path).exists():
             return local_path
-        # Fall back to Docker path (will fail gracefully if not available)
-        return docker_path
+        # Return None to trigger HED library to fetch from GitHub
+        return None
 
     # Get configuration from environment with smart defaults
     llm_provider = os.getenv("LLM_PROVIDER", "ollama")  # "ollama" or "openrouter"
@@ -100,8 +103,8 @@ async def lifespan(app: FastAPI):
     use_js_validator = os.getenv("USE_JS_VALIDATOR", "true").lower() == "true"
 
     print(f"Environment: {'Docker' if Path('/app').exists() else 'Local'}")
-    print(f"Schema directory: {schema_dir}")
-    print(f"Validator path: {validator_path}")
+    print(f"Schema directory: {schema_dir or 'GitHub (dynamic fetch)'}")
+    print(f"Validator path: {validator_path or 'None (using Python validator)'}")
 
     # Initialize LLM based on provider
     if llm_provider == "openrouter":
@@ -176,13 +179,14 @@ async def lifespan(app: FastAPI):
         print(f"Using Ollama: {llm_model} at {llm_base_url}")
 
     # Initialize workflow with per-agent LLMs
+    # schema_dir=None triggers HED library to fetch from GitHub dynamically
     workflow = HedAnnotationWorkflow(
         llm=annotation_llm,
         evaluation_llm=evaluation_llm if llm_provider == "openrouter" else None,
         assessment_llm=assessment_llm if llm_provider == "openrouter" else None,
         feedback_llm=feedback_llm if llm_provider == "openrouter" else None,
-        schema_dir=Path(schema_dir),
-        validator_path=Path(validator_path) if use_js_validator else None,
+        schema_dir=Path(schema_dir) if schema_dir else None,
+        validator_path=Path(validator_path) if use_js_validator and validator_path else None,
         use_js_validator=use_js_validator,
     )
 
@@ -231,6 +235,9 @@ app = FastAPI(
 # Development: Allow all localhost ports for easy local testing
 allowed_origins = [
     "https://hed-bot.pages.dev",  # Production frontend
+    "https://develop.hed-bot.pages.dev",  # Development frontend
+    "https://hed-bot-api.shirazi-10f.workers.dev",  # Production Worker proxy
+    "https://hed-bot-dev-api.shirazi-10f.workers.dev",  # Development Worker proxy
 ]
 
 # Add common localhost ports for development
@@ -591,6 +598,157 @@ async def validate(
         ) from e
 
 
+@app.post("/feedback", response_model=FeedbackResponse)
+async def submit_feedback(request: FeedbackRequest) -> FeedbackResponse:
+    """Submit user feedback about an annotation.
+
+    This endpoint is public (no authentication required) to allow feedback
+    from frontend and CLI users without requiring API keys.
+
+    The feedback is saved and optionally processed immediately if GITHUB_TOKEN
+    is available in the environment. Otherwise, feedback is saved for later
+    processing via CI workflow.
+
+    Args:
+        request: Feedback submission with annotation data and user comment
+
+    Returns:
+        FeedbackResponse with feedback ID and status
+    """
+    from datetime import datetime
+    from uuid import uuid4
+
+    try:
+        # Generate unique feedback ID
+        feedback_id = str(uuid4())[:8]
+        timestamp = datetime.now().isoformat()
+
+        # Create feedback record
+        feedback_record = {
+            "feedback_id": feedback_id,
+            "timestamp": timestamp,
+            "version": __version__,
+            "type": request.type,
+            "description": request.description,
+            "image_description": request.image_description,
+            "annotation": request.annotation,
+            "is_valid": request.is_valid,
+            "is_faithful": request.is_faithful,
+            "is_complete": request.is_complete,
+            "validation_errors": request.validation_errors,
+            "validation_warnings": request.validation_warnings,
+            "evaluation_feedback": request.evaluation_feedback,
+            "assessment_feedback": request.assessment_feedback,
+            "user_comment": request.user_comment,
+        }
+
+        # Save to feedback/unprocessed directory (always save for backup/audit)
+        feedback_dir = Path("feedback/unprocessed")
+        feedback_dir.mkdir(parents=True, exist_ok=True)
+
+        filename = f"feedback-{timestamp.replace(':', '-').replace('.', '-')}.jsonl"
+        filepath = feedback_dir / filename
+
+        with open(filepath, "w") as f:
+            f.write(json.dumps(feedback_record) + "\n")
+
+        # Log the feedback submission
+        audit_logger.log(
+            event="feedback_submitted",
+            data={"feedback_id": feedback_id, "type": request.type},
+        )
+
+        # Try to process immediately if GitHub token and OpenRouter key are available
+        # Use OPENROUTER_API_KEY_FOR_TESTING to track feedback processing costs separately
+        processing_result = None
+        github_token = os.getenv("GITHUB_TOKEN")
+        openrouter_key = os.getenv("OPENROUTER_API_KEY_FOR_TESTING") or os.getenv(
+            "OPENROUTER_API_KEY"
+        )
+
+        if github_token and openrouter_key:
+            try:
+                from src.agents.feedback_triage_agent import (
+                    FeedbackRecord as FeedbackRecordModel,
+                )
+                from src.agents.feedback_triage_agent import (
+                    FeedbackTriageAgent,
+                    save_processed_feedback,
+                )
+                from src.utils.github_client import GitHubClient
+
+                # Create feedback record model
+                record = FeedbackRecordModel.from_json(feedback_record)
+
+                # Create GitHub client
+                github_client = GitHubClient(
+                    token=github_token,
+                    owner=os.getenv("GITHUB_REPOSITORY_OWNER", "hed-standard"),
+                    repo=os.getenv("GITHUB_REPOSITORY", "hed-bot").split("/")[-1],
+                )
+
+                # Create LLM for triage
+                model = os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b")
+                provider = os.getenv("LLM_PROVIDER_PREFERENCE", "Cerebras")
+                llm = create_openrouter_llm(
+                    model=model,
+                    api_key=openrouter_key,
+                    temperature=0.1,
+                    max_tokens=1000,
+                    provider=provider if provider else None,
+                )
+
+                # Create and run triage agent
+                agent = FeedbackTriageAgent(llm=llm, github_client=github_client)
+                processing_result = await agent.process_and_execute(record, dry_run=False)
+
+                # Save processed result
+                save_processed_feedback(record, processing_result, Path("feedback/processed"))
+
+                # Remove the original feedback file since it's been processed
+                filepath.unlink(missing_ok=True)
+
+                audit_logger.log(
+                    event="feedback_processed",
+                    data={
+                        "feedback_id": feedback_id,
+                        "action": processing_result.get("action"),
+                        "issue_number": processing_result.get("issue_number"),
+                    },
+                )
+
+            except Exception as e:
+                # Log error but don't fail the request - feedback is still saved
+                audit_logger.log(
+                    event="feedback_processing_error",
+                    data={"feedback_id": feedback_id, "error": str(e)},
+                )
+
+        # Build response message
+        if processing_result:
+            action = processing_result.get("action", "unknown")
+            if action == "create_issue":
+                message = f"Thank you! Your feedback has been submitted as issue #{processing_result.get('issue_number')}."
+            elif action == "comment":
+                message = f"Thank you! Your feedback has been added to existing issue #{processing_result.get('issue_number')}."
+            else:
+                message = "Thank you for your feedback! It has been archived for review."
+        else:
+            message = "Thank you for your feedback! It will be reviewed and processed."
+
+        return FeedbackResponse(
+            success=True,
+            feedback_id=feedback_id,
+            message=message,
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to save feedback: {str(e)}",
+        ) from e
+
+
 @app.get("/version")
 async def get_version():
     """Get API version information.
@@ -620,6 +778,7 @@ async def root():
             "POST /annotate-from-image": "Generate HED annotation from image",
             "POST /annotate/stream": "Generate HED annotation with streaming",
             "POST /validate": "Validate HED annotation string",
+            "POST /feedback": "Submit user feedback about annotation",
             "GET /health": "Health check",
             "GET /version": "Get version information",
         },

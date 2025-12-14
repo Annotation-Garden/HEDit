@@ -158,6 +158,11 @@ deploy_update() {
     docker stop "$CONTAINER_NAME" 2>/dev/null || true
     docker rm "$CONTAINER_NAME" 2>/dev/null || true
 
+    # Create persistent feedback directory
+    FEEDBACK_DIR="/var/lib/hed-bot/${CONTAINER_NAME}/feedback"
+    mkdir -p "${FEEDBACK_DIR}/unprocessed" "${FEEDBACK_DIR}/processed" 2>/dev/null || true
+    log "Feedback directory: ${FEEDBACK_DIR}"
+
     # Run the new container using the pulled image
     log "Starting new container on port ${HOST_PORT}..."
     docker run -d \
@@ -166,6 +171,7 @@ deploy_update() {
         -p "127.0.0.1:${HOST_PORT}:38427" \
         ${ENV_ARGS} \
         -v /var/log/hed-bot:/var/log/hed-bot \
+        -v "${FEEDBACK_DIR}:/app/feedback" \
         "$REGISTRY_IMAGE"
 
     if [ $? -eq 0 ]; then

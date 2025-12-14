@@ -48,10 +48,16 @@ run_container() {
         ENV_ARGS="--env-file ${ENV_FILE}"
     fi
 
+    # Create persistent feedback directory on host
+    FEEDBACK_DIR="/var/lib/hed-bot/${CONTAINER_NAME}/feedback"
+    mkdir -p "${FEEDBACK_DIR}/unprocessed" "${FEEDBACK_DIR}/processed" 2>/dev/null || \
+        echo "Warning: Could not create ${FEEDBACK_DIR}, feedback may not persist"
+
     docker run -d \
         --name "${CONTAINER_NAME}" \
         --restart unless-stopped \
         -p "127.0.0.1:${HOST_PORT}:${CONTAINER_PORT}" \
+        -v "${FEEDBACK_DIR}:/app/feedback" \
         ${ENV_ARGS} \
         "${REGISTRY_IMAGE}" || error_exit "Failed to start container"
 }

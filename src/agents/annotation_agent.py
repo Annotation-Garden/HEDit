@@ -36,15 +36,18 @@ class AnnotationAgent:
         self.schema_dir = schema_dir
         self.json_schema_loader: HedJsonSchemaLoader | None = None
 
-    def _load_json_schema(self, schema_version: str) -> HedJsonSchemaLoader:
+    def _load_json_schema(self, schema_version: str) -> HedJsonSchemaLoader | None:
         """Load JSON schema for given version.
 
         Args:
             schema_version: Schema version (currently uses latest)
 
         Returns:
-            Loaded JSON schema
+            Loaded JSON schema, or None if schema_dir not provided
         """
+        if self.schema_dir is None:
+            # No local schema directory - will use HED library for vocabulary
+            return None
         # For now, always load latest
         # TODO: Support version-specific loading
         return load_latest_schema(self.schema_dir)
@@ -119,14 +122,25 @@ Just output the HED string directly."""
         Returns:
             State update with new annotation
         """
-        # Load JSON schema
+        # Load JSON schema (if schema_dir provided) or use HED library
         if self.json_schema_loader is None:
             self.json_schema_loader = self._load_json_schema(state["schema_version"])
 
         # Get vocabulary and extensionAllowed tags
-        vocabulary = self.json_schema_loader.get_vocabulary()
-        extendable_tags_dict = self.json_schema_loader.get_extendable_tags()
-        extendable_tags = list(extendable_tags_dict.keys())
+        if self.json_schema_loader is not None:
+            vocabulary = self.json_schema_loader.get_vocabulary()
+            extendable_tags_dict = self.json_schema_loader.get_extendable_tags()
+            extendable_tags = list(extendable_tags_dict.keys())
+        else:
+            # Use HED library to get vocabulary when no local schemas
+            from src.utils.schema_loader import get_schema_loader
+
+            schema_loader = get_schema_loader()
+            schema = schema_loader.load_schema(state["schema_version"])
+            vocabulary = schema_loader.get_schema_vocabulary(schema)
+            # Without JSON schema, we don't know which tags are extendable
+            # Use empty list - LLM will still generate valid annotations
+            extendable_tags = []
 
         # Build prompts with complete HED rules
         system_prompt = self._build_system_prompt(vocabulary, extendable_tags)

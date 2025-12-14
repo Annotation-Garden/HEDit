@@ -1,0 +1,15 @@
+# Feedback Directory
+
+This directory stores user feedback submissions.
+
+## Structure
+- `unprocessed/` - Incoming feedback awaiting processing
+- `processed/` - Feedback that has been triaged
+
+## File Format
+- JSONL files (one JSON object per line)
+- Named: `feedback-{timestamp}.jsonl`
+
+## Processing
+- Feedback is automatically processed if GitHub token is available
+- Otherwise, files remain in `unprocessed/` for manual review

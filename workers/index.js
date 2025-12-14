@@ -104,6 +104,8 @@ export default {
         return await handleAnnotateFromImage(request, env, corsHeaders, CONFIG);
       } else if (url.pathname === '/validate' && request.method === 'POST') {
         return await handleValidate(request, env, corsHeaders, CONFIG);
+      } else if (url.pathname === '/feedback' && request.method === 'POST') {
+        return await handleFeedback(request, env, corsHeaders, CONFIG);
       } else if (url.pathname === '/') {
         return handleRoot(corsHeaders, CONFIG);
       }
@@ -501,6 +503,62 @@ async function handleValidate(request, env, corsHeaders, CONFIG) {
   } catch (error) {
     return new Response(JSON.stringify({
       error: 'Validation request failed',
+      details: error.message,
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+}
+
+/**
+ * Feedback endpoint (proxies to backend)
+ * This endpoint is public (no Turnstile required) to allow feedback submission
+ */
+async function handleFeedback(request, env, corsHeaders, CONFIG) {
+  const backendUrl = env.BACKEND_URL;
+
+  if (!backendUrl) {
+    return new Response(JSON.stringify({ error: 'Backend not configured' }), {
+      status: 503,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  try {
+    const body = await request.json();
+
+    // Prepare headers for backend request
+    const backendHeaders = {
+      'Content-Type': 'application/json',
+    };
+
+    // Add API key if configured (feedback endpoint may not require it, but include for consistency)
+    if (env.BACKEND_API_KEY) {
+      backendHeaders['X-API-Key'] = env.BACKEND_API_KEY;
+    }
+
+    // Proxy request to Python backend
+    const response = await fetch(`${backendUrl}/feedback`, {
+      method: 'POST',
+      headers: backendHeaders,
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(30000), // 30 second timeout
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Backend error: ${error}`);
+    }
+
+    const result = await response.json();
+
+    return new Response(JSON.stringify(result), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({
+      error: 'Feedback submission failed',
       details: error.message,
     }), {
       status: 500,

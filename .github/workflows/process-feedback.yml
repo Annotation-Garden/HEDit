@@ -1,0 +1,102 @@
+name: Process Feedback
+
+on:
+  push:
+    paths:
+      - 'feedback/**'
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (do not create issues or comments)'
+        required: false
+        default: 'true'
+        type: boolean
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Get previous commit to detect new files
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Find new feedback files
+        id: feedback
+        run: |
+          # Get list of new/modified files in feedback/unprocessed/
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # For manual runs, process all unprocessed files
+            FILES=$(find feedback/unprocessed -name "*.jsonl" -o -name "*.json" 2>/dev/null | head -20)
+          else
+            # For push events, only process newly added files
+            FILES=$(git diff --name-only --diff-filter=A HEAD~1 HEAD -- 'feedback/unprocessed/*.jsonl' 'feedback/unprocessed/*.json' 2>/dev/null || echo "")
+          fi
+
+          if [ -z "$FILES" ]; then
+            echo "No new feedback files to process"
+            echo "has_files=false" >> $GITHUB_OUTPUT
+          else
+            echo "Found feedback files:"
+            echo "$FILES"
+            echo "has_files=true" >> $GITHUB_OUTPUT
+            # Store files as JSON array for the next step
+            echo "files<<EOF" >> $GITHUB_OUTPUT
+            echo "$FILES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Process feedback
+        if: steps.feedback.outputs.has_files == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY_FOR_TESTING }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: |
+          # Process each feedback file
+          echo "${{ steps.feedback.outputs.files }}" | while read file; do
+            if [ -n "$file" ] && [ -f "$file" ]; then
+              echo "Processing: $file"
+              python -m src.scripts.process_feedback "$file" --dry-run=$DRY_RUN
+            fi
+          done
+
+      - name: Commit processed files
+        if: steps.feedback.outputs.has_files == 'true' && github.event.inputs.dry_run != 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          # Move processed files from unprocessed to processed
+          for file in feedback/unprocessed/*.jsonl feedback/unprocessed/*.json; do
+            if [ -f "$file" ]; then
+              mv "$file" feedback/processed/
+            fi
+          done
+
+          # Check if there are changes to commit
+          if git diff --quiet feedback/; then
+            echo "No changes to commit"
+          else
+            git add feedback/
+            git commit -m "Move processed feedback"
+            git push
+          fi

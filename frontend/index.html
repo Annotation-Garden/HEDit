@@ -942,8 +942,8 @@ Example: A red circle appears on the left side of the screen and the participant
             <div id="assessmentSection"></div>
 
             <div class="feedback-section">
-                <button class="feedback-btn" onclick="provideFeedback()" title="Opens email with annotation data in JSON format. Add your comments and send.">
-                    📧 Provide Feedback
+                <button class="feedback-btn" onclick="provideFeedback()" title="Submit feedback about this annotation to help improve HED-BOT">
+                    💬 Provide Feedback
                 </button>
                 <p style="color: #64748b; font-size: 12px; margin-top: 8px;">
                     Found an issue or have suggestions? Click to send feedback.
@@ -1507,120 +1507,113 @@ Example: A red circle appears on the left side of the screen and the participant
             }
         }
 
-        function provideFeedback() {
-            if (!lastResultData || !lastInputDescription) {
+        async function provideFeedback() {
+            if (!lastResultData) {
                 alert('No annotation results available. Please generate an annotation first.');
                 return;
             }
 
+            // Declare variables outside try block so they're accessible in catch
+            let isImageMode = false;
+            let feedbackPayload = null;
+
             try {
                 // Determine if this is text or image mode
-                const isImageMode = lastImageData !== null;
+                isImageMode = lastImageData !== null;
 
-                // Create flat JSONL record (one JSON object per line)
-                const feedbackRecord = {
+                // Prompt for optional user comment
+                const userComment = prompt('Optional: Add your feedback or comments about this annotation:');
+
+                // Create feedback request payload
+                feedbackPayload = {
                     type: isImageMode ? 'image' : 'text',
-                    timestamp: new Date().toISOString(),
                     version: appVersion || 'unknown',
+                    annotation: lastResultData.annotation,
+                    is_valid: lastResultData.is_valid,
+                    is_faithful: lastResultData.is_faithful,
+                    is_complete: lastResultData.is_complete,
+                    validation_errors: lastResultData.validation_errors || [],
+                    validation_warnings: lastResultData.validation_warnings || [],
+                    evaluation_feedback: lastResultData.evaluation_feedback || '',
+                    assessment_feedback: lastResultData.assessment_feedback || '',
+                    user_comment: userComment && userComment.trim() ? userComment.trim() : null
                 };
 
                 // Add mode-specific fields
                 if (isImageMode) {
-                    feedbackRecord.image = lastImageData;
-                    feedbackRecord.image_description = lastResultData.image_description || '';
-
-                    // Check if custom prompt was used
-                    const customPrompt = document.getElementById('visionPrompt')?.value?.trim();
-                    if (customPrompt) {
-                        feedbackRecord.custom_prompt = customPrompt;
-                    }
+                    feedbackPayload.image_description = lastResultData.image_description || '';
+                    // Note: We don't send the full image to reduce payload size
+                    // The image_description captures the relevant content
                 } else {
-                    feedbackRecord.description = lastInputDescription;
+                    feedbackPayload.description = lastInputDescription;
                 }
 
-                // Add common annotation fields
-                feedbackRecord.annotation = lastResultData.annotation;
-                feedbackRecord.is_valid = lastResultData.is_valid;
-                feedbackRecord.is_faithful = lastResultData.is_faithful;
-                feedbackRecord.is_complete = lastResultData.is_complete;
-                feedbackRecord.validation_errors = lastResultData.validation_errors || [];
-                feedbackRecord.validation_warnings = lastResultData.validation_warnings || [];
-                feedbackRecord.evaluation_feedback = lastResultData.evaluation_feedback || '';
-                feedbackRecord.assessment_feedback = lastResultData.assessment_feedback || '';
+                // Show submitting state
+                const feedbackBtn = document.querySelector('.feedback-btn');
+                const originalBtnText = feedbackBtn.innerHTML;
+                feedbackBtn.innerHTML = '⏳ Submitting...';
+                feedbackBtn.disabled = true;
 
-                // Prompt for optional user comment
-                const userComment = prompt('Optional: Add your feedback or comments about this annotation:');
-                if (userComment && userComment.trim()) {
-                    feedbackRecord.user_comment = userComment.trim();
-                }
+                // Submit to backend API
+                const response = await fetch(`${API_URL}/feedback`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(feedbackPayload)
+                });
 
-                // Handle feedback differently based on mode
-                if (isImageMode) {
-                    // IMAGE MODE: Download JSONL file + open email asking to attach it
-                    const jsonlContent = JSON.stringify(feedbackRecord);
+                if (response.ok) {
+                    const result = await response.json();
+                    feedbackBtn.innerHTML = '✓ Submitted!';
+                    feedbackBtn.style.background = 'linear-gradient(135deg, #059669 0%, #10b981 100%)';
 
-                    // Download JSONL file
-                    const blob = new Blob([jsonlContent + '\n'], { type: 'application/x-ndjson' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-
-                    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-                    const filename = `hed-feedback-image-${timestamp}.jsonl`;
-                    a.download = filename;
-
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-
-                    // Open email asking to attach the downloaded file
-                    // Use setTimeout to ensure download completes before opening email
+                    // Show success message
                     setTimeout(() => {
-                        const emailSubject = `[HED-BOT Feedback] Image Annotation Feedback - ${new Date().toLocaleString()}`;
-                        const emailBody = `Please add your feedback comments below:
-
-========================================
-YOUR COMMENTS HERE:
-
-
-========================================
-
-IMPORTANT: Please attach the recently downloaded JSONL file:
-${filename}
-
-This file contains your image annotation data in JSONL format, which is too large to include in the email body.
-
-Thank you for your feedback!`;
-
-                        const mailtoLink = `mailto:shirazi@ieee.org?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
-                        window.location.href = mailtoLink;
-                    }, 500); // 500ms delay to ensure download starts
-
+                        alert('Thank you for your feedback! It has been recorded and will help improve HED-BOT.');
+                        feedbackBtn.innerHTML = originalBtnText;
+                        feedbackBtn.style.background = '';
+                        feedbackBtn.disabled = false;
+                    }, 500);
                 } else {
-                    // TEXT MODE: Email with JSON in body (like before)
-                    const jsonContent = JSON.stringify(feedbackRecord, null, 2);
-
-                    const emailSubject = `[HED-BOT Feedback] Text Annotation Feedback - ${new Date().toLocaleString()}`;
-                    const emailBody = `Please add your feedback comments below:
-
-========================================
-YOUR COMMENTS HERE:
-
-
-========================================
-
-ANNOTATION DATA (JSON):
-${jsonContent}`;
-
-                    const mailtoLink = `mailto:shirazi@ieee.org?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
-                    window.location.href = mailtoLink;
+                    // API failed, fall back to email
+                    console.error('Feedback API failed:', response.status);
+                    feedbackBtn.innerHTML = originalBtnText;
+                    feedbackBtn.disabled = false;
+                    fallbackToEmail(feedbackPayload, isImageMode);
                 }
 
             } catch (error) {
-                console.error('Error generating feedback:', error);
-                alert('Failed to generate feedback. Please try again or contact support.');
+                console.error('Error submitting feedback:', error);
+                // Fall back to email on network error
+                const feedbackBtn = document.querySelector('.feedback-btn');
+                feedbackBtn.innerHTML = '📧 Provide Feedback';
+                feedbackBtn.disabled = false;
+
+                // Fall back to email with the payload (if available)
+                if (feedbackPayload) {
+                    fallbackToEmail(feedbackPayload, isImageMode);
+                } else {
+                    alert('Failed to prepare feedback. Please try again.');
+                }
             }
+        }
+
+        function fallbackToEmail(feedbackPayload, isImageMode) {
+            alert('Could not submit feedback to server. Opening email as fallback...');
+
+            const jsonContent = JSON.stringify(feedbackPayload, null, 2);
+            const userComment = feedbackPayload.user_comment || '(No comment provided)';
+            const emailSubject = `[HED-BOT Feedback] ${isImageMode ? 'Image' : 'Text'} Annotation Feedback - ${new Date().toLocaleString()}`;
+            const emailBody = `USER FEEDBACK:
+${userComment}
+
+========================================
+ANNOTATION DATA (JSON):
+${jsonContent}`;
+
+            const mailtoLink = `mailto:shirazi@ieee.org?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+            window.location.href = mailtoLink;
         }
 
         // Allow Enter to submit (with Shift for new line)

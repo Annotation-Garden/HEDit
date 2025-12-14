@@ -32,6 +32,8 @@ services:
     container_name: hed-bot-api
     depends_on:
       - ollama
+    volumes:
+      - feedback_data:/app/feedback
     environment:
       # LLM Provider Configuration
       - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
@@ -68,4 +70,6 @@ services:
 
 volumes:
   ollama_data:
+    driver: local
+  feedback_data:
     driver: local

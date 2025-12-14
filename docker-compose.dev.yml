@@ -13,6 +13,8 @@ services:
   hed-bot-dev:
     image: ghcr.io/neuromechanist/hed-bot:dev
     container_name: hed-bot-dev
+    volumes:
+      - feedback_data_dev:/app/feedback
     environment:
       # LLM Provider Configuration
       - LLM_PROVIDER=${LLM_PROVIDER:-openrouter}
@@ -47,3 +49,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
+volumes:
+  feedback_data_dev:
+    driver: local

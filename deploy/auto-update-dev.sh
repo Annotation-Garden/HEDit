@@ -33,10 +33,15 @@ if [ "$RUNNING_ID" != "$NEW_ID" ]; then
     ENV_ARGS=""
     [ -f "$ENV_FILE" ] && ENV_ARGS="--env-file $ENV_FILE"
 
+    # Create persistent feedback directory
+    FEEDBACK_DIR="/var/lib/hed-bot/${CONTAINER_NAME}/feedback"
+    mkdir -p "${FEEDBACK_DIR}/unprocessed" "${FEEDBACK_DIR}/processed" 2>/dev/null || true
+
     docker run -d \
         --name "$CONTAINER_NAME" \
         --restart unless-stopped \
         -p "127.0.0.1:${HOST_PORT}:38427" \
+        -v "${FEEDBACK_DIR}:/app/feedback" \
         $ENV_ARGS \
         "$REGISTRY_IMAGE" > /dev/null
 

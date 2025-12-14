@@ -1,0 +1,188 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install linting tools
+        run: |
+          pip install ruff
+
+      - name: Lint with Ruff
+        run: ruff check src tests
+
+      - name: Format check with Ruff
+        run: ruff format --check src tests
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev]"
+
+      - name: Run unit tests (excluding integration)
+        run: |
+          pytest tests/ -v -m "not integration" --cov=src --cov-report=xml:coverage-unit.xml --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage-unit.xml
+          flags: unittests
+          name: codecov-unit
+          fail_ci_if_error: false
+          verbose: true
+
+  # Check which files changed to decide if integration tests should run
+  check-changes:
+    name: Check Changed Files
+    runs-on: ubuntu-latest
+    outputs:
+      integration_needed: ${{ steps.changes.outputs.integration_needed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for integration-related changes
+        id: changes
+        run: |
+          # For push events, compare with previous commit
+          # For PRs, compare with base branch
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE=${{ github.event.pull_request.base.sha }}
+          else
+            BASE=${{ github.event.before }}
+          fi
+
+          # Get changed files
+          CHANGED=$(git diff --name-only $BASE ${{ github.sha }} 2>/dev/null || echo "")
+          echo "Changed files:"
+          echo "$CHANGED"
+
+          # Integration tests should run if these paths change:
+          # - Integration test file itself
+          # - Agent code (workflow, annotation, evaluation, etc.)
+          # - Validation code
+          # - OpenRouter LLM utility
+          INTEGRATION_PATTERNS="tests/test_integration|src/agents/|src/validation/|src/utils/openrouter"
+
+          if echo "$CHANGED" | grep -qE "$INTEGRATION_PATTERNS"; then
+            echo "integration_needed=true" >> $GITHUB_OUTPUT
+            echo "Integration-related files changed - tests will run"
+          else
+            echo "integration_needed=false" >> $GITHUB_OUTPUT
+            echo "No integration-related files changed - tests will be skipped"
+          fi
+
+  integration-tests:
+    name: Integration Tests (Real LLM)
+    runs-on: ubuntu-latest
+    needs: [check-changes]
+    # Only run integration tests when:
+    # 1. Push event (after merge) or manual trigger, not on PRs
+    # 2. Integration-related files changed (agents, validation, openrouter, or test file itself)
+    if: |
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      (needs.check-changes.outputs.integration_needed == 'true' || github.event_name == 'workflow_dispatch')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev]"
+          pip install pytest-timeout
+
+      - name: Run integration tests
+        env:
+          OPENROUTER_API_KEY_FOR_TESTING: ${{ secrets.OPENROUTER_API_KEY_FOR_TESTING }}
+        run: |
+          # Only run if the secret is available
+          if [ -n "$OPENROUTER_API_KEY_FOR_TESTING" ]; then
+            echo "Running integration tests with OpenRouter..."
+            pytest tests/test_integration_openrouter.py -v -m integration --timeout=180 --cov=src --cov-report=xml:coverage-integration.xml --cov-report=term-missing
+          else
+            echo "OPENROUTER_API_KEY_FOR_TESTING not set, skipping integration tests"
+          fi
+
+      - name: Upload integration coverage to Codecov
+        # Always upload coverage, even if some tests fail
+        # This ensures partial coverage is still counted
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage-integration.xml
+          flags: integration
+          name: codecov-integration
+          fail_ci_if_error: false
+
+  all-tests:
+    name: All Tests Summary
+    runs-on: ubuntu-latest
+    needs: [lint, unit-tests, check-changes, integration-tests]
+    # Run even if integration-tests was skipped (on PRs or no src changes)
+    if: always()
+
+    steps:
+      - name: Check lint result
+        if: needs.lint.result == 'failure'
+        run: |
+          echo "Lint check failed"
+          exit 1
+
+      - name: Check unit tests result
+        if: needs.unit-tests.result == 'failure'
+        run: |
+          echo "Unit tests failed"
+          exit 1
+
+      - name: Check integration tests result
+        # Only fail if integration tests ran and failed (not if skipped)
+        if: needs.integration-tests.result == 'failure'
+        run: |
+          echo "Integration tests failed"
+          exit 1
+
+      - name: All checks passed
+        run: |
+          echo "All required checks passed!"
+          echo "Lint: ${{ needs.lint.result }}"
+          echo "Unit tests: ${{ needs.unit-tests.result }}"
+          echo "Integration tests: ${{ needs.integration-tests.result }}"
+          echo "Integration needed: ${{ needs.check-changes.outputs.integration_needed }}"

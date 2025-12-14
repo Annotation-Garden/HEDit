@@ -117,8 +117,8 @@ Provide a thorough evaluation following the specified format."""
         Returns:
             State update with evaluation feedback
         """
-        # Load schema if needed
-        if self.json_schema_loader is None:
+        # Load schema if needed (only if schema_dir provided)
+        if self.json_schema_loader is None and self.schema_dir is not None:
             self.json_schema_loader = load_latest_schema(self.schema_dir)
 
         # Check for potentially invalid tags and suggest matches
@@ -169,19 +169,19 @@ Provide a thorough evaluation following the specified format."""
         feedback_lower = feedback.lower()
 
         # Check for explicit DECISION line
-        decision_match = re.search(r'decision:\s*(accept|refine)', feedback_lower)
+        decision_match = re.search(r"decision:\s*(accept|refine)", feedback_lower)
         if decision_match:
-            return decision_match.group(1) == 'accept'
+            return decision_match.group(1) == "accept"
 
         # Check for FAITHFUL field - accept "yes" or "partial"
-        faithful_match = re.search(r'faithful:\s*(yes|partial|no)', feedback_lower)
+        faithful_match = re.search(r"faithful:\s*(yes|partial|no)", feedback_lower)
         if faithful_match:
             result = faithful_match.group(1)
-            return result in ['yes', 'partial']  # Accept partial as good enough!
+            return result in ["yes", "partial"]  # Accept partial as good enough!
 
         # Fallback: look for positive indicators
-        positive_indicators = ['accept', 'good', 'sufficient', 'adequate', 'captures well']
-        negative_indicators = ['refine', 'missing', 'incorrect', 'inaccurate', 'lacks']
+        positive_indicators = ["accept", "good", "sufficient", "adequate", "captures well"]
+        negative_indicators = ["refine", "missing", "incorrect", "inaccurate", "lacks"]
 
         positive_score = sum(1 for indicator in positive_indicators if indicator in feedback_lower)
         negative_score = sum(1 for indicator in negative_indicators if indicator in feedback_lower)
