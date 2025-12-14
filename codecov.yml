@@ -47,9 +47,9 @@ flags:
     paths:
       - src/
     carryforward: true
-  combined:
+  integration:
     paths:
       - src/
     carryforward: true
-    # Combined flag has full coverage from all tests run together
-    # This is the authoritative coverage number
+    # Integration tests run less frequently (only when related files change)
+    # Carryforward ensures previous coverage is used when skipped
