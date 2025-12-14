@@ -27,7 +27,7 @@ This document helps you choose the right deployment option for your use case.
 - ✅ API key authentication & audit logging
 - ✅ CI/CD with GitHub Actions
 - ✅ Auto-deployment with hourly updates
-- ✅ Cloudflare Turnstile bot protection
+- ✅ Cloudflare Worker proxy (optional caching)
 - ✅ OWASP Top 10 compliant security
 
 **Setup:**

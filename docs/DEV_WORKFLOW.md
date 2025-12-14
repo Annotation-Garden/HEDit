@@ -118,8 +118,8 @@ After local testing passes, create a PR to the `develop` branch.
 | Component | URL/Location |
 |-----------|--------------|
 | Docker Image | `ghcr.io/neuromechanist/hed-bot:develop` |
-| Dev API | `hedtools.org/hed-bot-dev-api` |
-| Frontend Preview | `develop.hed-bot.pages.dev` |
+| Dev API | `hed-bot-dev-api.workers.dev` (when configured) |
+| Frontend Preview | Cloudflare Pages preview deployments |
 
 ## Level 4: Production (main branch)
 
@@ -134,7 +134,7 @@ gh pr create --base main --head develop --title "Release: feature description"
 | Component | URL/Location |
 |-----------|--------------|
 | Docker Image | `ghcr.io/neuromechanist/hed-bot:latest` |
-| Prod API | `hedtools.org/hed-bot-api` |
+| Prod API | `hed-bot-api.workers.dev` |
 | Frontend | `hed-bot.pages.dev` |
 
 ## Testing the Error Remediation Feature

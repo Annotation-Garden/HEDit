@@ -128,11 +128,11 @@ See [`deploy/SECURITY.md`](deploy/SECURITY.md) for complete security documentati
 - Keys are not logged in audit logs
 - Rotate keys if compromised
 
-### Cloudflare Turnstile (Bot Protection)
-- Silent CAPTCHA for bot protection
-- Turnstile secret key stored on backend
-- Turnstile site key visible in frontend (by design)
-- Verifies human users without friction
+### Cloudflare Worker Proxy
+- Worker authenticates to backend with API key
+- API key stored as Cloudflare Worker secret
+- Not visible in frontend JavaScript
+- Recommended for production deployments
 
 ### Local GPU Deployment
 - Ollama runs locally (no API key needed)

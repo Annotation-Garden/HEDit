@@ -67,3 +67,27 @@ updates:
       prefix: "docker"
       include: "scope"
 
+  # Cloudflare Workers (npm)
+  - package-ecosystem: "npm"
+    directory: "/workers"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "neuromechanist"
+    labels:
+      - "dependencies"
+      - "workers"
+    commit-message:
+      prefix: "deps(workers)"
+      include: "scope"
+    # Group minor and patch updates
+    groups:
+      workers-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
