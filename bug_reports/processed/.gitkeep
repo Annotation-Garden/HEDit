@@ -1,0 +1,8 @@
+# Processed Feedback
+
+This directory stores feedback that has been processed and either:
+- Added as a comment to an existing issue
+- Created as a new issue
+- Archived for manual review
+
+Each file contains the original feedback plus processing metadata.

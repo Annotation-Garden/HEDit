@@ -183,3 +183,75 @@ class HealthResponse(BaseModel):
     version: str = Field(..., examples=["0.1.0"])
     llm_available: bool
     validator_available: bool
+
+
+class FeedbackRequest(BaseModel):
+    """Request model for submitting user feedback.
+
+    Attributes:
+        type: Feedback type (text or image annotation)
+        description: Original input description (for text mode)
+        image_description: Image description (for image mode)
+        annotation: Generated HED annotation
+        is_valid: Whether the annotation was valid
+        is_faithful: Whether the annotation was faithful
+        is_complete: Whether the annotation was complete
+        validation_errors: List of validation errors
+        validation_warnings: List of validation warnings
+        evaluation_feedback: Evaluation agent feedback
+        assessment_feedback: Assessment agent feedback
+        user_comment: Optional user comment about the annotation
+    """
+
+    type: str = Field(
+        default="text",
+        description="Feedback type",
+        examples=["text", "image"],
+    )
+    description: str | None = Field(
+        default=None,
+        description="Original input description (for text mode)",
+    )
+    image_description: str | None = Field(
+        default=None,
+        description="Image description (for image mode)",
+    )
+    annotation: str = Field(
+        ...,
+        description="Generated HED annotation",
+        min_length=1,
+    )
+    is_valid: bool = Field(
+        default=False,
+        description="Whether the annotation was valid",
+    )
+    is_faithful: bool | None = Field(
+        default=None,
+        description="Whether the annotation was faithful",
+    )
+    is_complete: bool | None = Field(
+        default=None,
+        description="Whether the annotation was complete",
+    )
+    validation_errors: list[str] = Field(default_factory=list)
+    validation_warnings: list[str] = Field(default_factory=list)
+    evaluation_feedback: str = Field(default="")
+    assessment_feedback: str = Field(default="")
+    user_comment: str | None = Field(
+        default=None,
+        description="Optional user comment about the annotation",
+    )
+
+
+class FeedbackResponse(BaseModel):
+    """Response model for feedback submission.
+
+    Attributes:
+        success: Whether feedback was saved successfully
+        feedback_id: Unique identifier for the feedback
+        message: Status message
+    """
+
+    success: bool = Field(..., description="Whether feedback was saved")
+    feedback_id: str = Field(..., description="Unique identifier for the feedback")
+    message: str = Field(..., description="Status message")

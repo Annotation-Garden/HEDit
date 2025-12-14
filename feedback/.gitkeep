@@ -1,0 +1,12 @@
+# Feedback Directory
+
+This directory stores incoming user feedback submissions.
+Files are automatically processed by the CI workflow.
+
+## File Format
+- JSONL files (one JSON object per line)
+- Named: `feedback-{timestamp}.jsonl`
+
+## Processing
+- CI workflow triggers on new files
+- Processed files are moved to `bug_reports/processed/`

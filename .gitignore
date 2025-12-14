@@ -69,4 +69,15 @@ schemas_cache/
 
 # Docker
 .dockerignore
-bug_reports/
+
+# Feedback directories (only keep .gitkeep)
+feedback/*.jsonl
+feedback/*.json
+!feedback/.gitkeep
+bug_reports/*.json
+bug_reports/processed/*.json
+!bug_reports/.gitkeep
+!bug_reports/processed/.gitkeep
+
+# Coverage
+coverage.xml
