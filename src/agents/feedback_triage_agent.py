@@ -119,6 +119,19 @@ class TriageResult:
 
 CLASSIFICATION_PROMPT = """You are analyzing user feedback for HED-BOT, a multi-agent system that converts natural language descriptions into HED (Hierarchical Event Descriptors) annotations.
 
+IMPORTANT: Be CONSERVATIVE in your classification. Most feedback should be archived for manual review rather than automatically creating GitHub issues. Users can always open issues manually if they believe something is important.
+
+Only classify as HIGH severity if:
+- The system is completely broken or unusable
+- There is data loss or corruption
+- There is a security vulnerability
+- A core feature is fundamentally not working
+
+Only mark as "actionable" if:
+- The feedback clearly describes a specific, reproducible problem
+- The feedback contains a concrete, well-defined feature request
+- There is enough detail to act on without further clarification
+
 Analyze the following feedback and classify it:
 
 {feedback_summary}
@@ -131,10 +144,10 @@ Classify as one of:
 - duplicate: Similar to an existing issue
 - noise: Not actionable (spam, unclear, off-topic)
 
-Determine severity:
-- high: System not working, data loss, security issue
-- medium: Feature not working as expected, workaround available
-- low: Minor inconvenience, cosmetic issue
+Determine severity (be conservative - when in doubt, use "low"):
+- high: System completely broken, data loss, security issue, core feature unusable
+- medium: Feature not working as expected, but workaround available
+- low: Minor inconvenience, cosmetic issue, unclear feedback, general comments
 
 Extract:
 - Key concepts (as tags/labels)
@@ -424,10 +437,18 @@ class FeedbackTriageAgent:
             )
 
         # Check if serious enough to create issue
+        # Be stringent: only create issues for critical bugs or explicit feature requests
+        # Users can always open issues manually if they think it's important
         severity = classification.get("severity", "low")
         category = classification.get("category", "")
+        is_actionable = classification.get("actionable", False)
 
-        should_create_issue = severity in ["high", "medium"] or category in ["bug", "feature"]
+        # Only create issues for:
+        # 1. High severity bugs (critical issues that break functionality)
+        # 2. Explicit, actionable feature requests with high severity
+        should_create_issue = (category == "bug" and severity == "high") or (
+            category == "feature" and severity == "high" and is_actionable
+        )
 
         if should_create_issue:
             # Generate issue content
