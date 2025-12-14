@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: HED Resources
+    url: https://www.hed-resources.org/
+    about: HED documentation and tutorials
+  - name: HED Specification
+    url: https://hed-specification.readthedocs.io/
+    about: Official HED specification
