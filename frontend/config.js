@@ -9,14 +9,14 @@
                   hostname.includes('127.0.0.1');
 
     if (isDev) {
-        // Dev backend (direct connection to dev API)
-        window.BACKEND_URL = 'https://hedtools.org/hed-bot-dev-api';
+        // Dev backend (Cloudflare Worker proxy to dev container)
+        window.BACKEND_URL = 'https://hed-bot-dev-api.shirazi-10f.workers.dev';
         // Turnstile testing key (always passes) - pairs with testing secret key
         window.TURNSTILE_SITE_KEY = '1x00000000000000000000AA';
         console.log('[HED-BOT] Using DEV backend:', window.BACKEND_URL);
     } else {
-        // Production backend (direct connection to prod API)
-        window.BACKEND_URL = 'https://hedtools.org/hed-bot-api';
+        // Production backend (Cloudflare Worker proxy to prod container)
+        window.BACKEND_URL = 'https://hed-bot-api.shirazi-10f.workers.dev';
         // Production Turnstile site key
         window.TURNSTILE_SITE_KEY = '0x4AAAAAACEkzthaT1R2kLIF';
     }

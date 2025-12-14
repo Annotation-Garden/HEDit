@@ -1,0 +1,30 @@
+name = "hed-bot-api"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# KV Namespaces for caching
+[[kv_namespaces]]
+binding = "HED_CACHE"
+id = "18f0bc588a2a4e24bd1d98b51340bd5a"
+
+# KV Namespace for rate limiting
+[[kv_namespaces]]
+binding = "RATE_LIMITER"
+id = "8deb8c02177349afb1d1fe2f7d4079f4"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "production"
+BACKEND_URL = "https://hedtools.org/hed-bot-api"
+
+# Secrets (set via wrangler secret put)
+# Run: wrangler secret put BACKEND_API_KEY
+# BACKEND_API_KEY = API key for authenticating with backend (X-API-Key header)
+#
+# Run: wrangler secret put TURNSTILE_SECRET_KEY
+# TURNSTILE_SECRET_KEY = Cloudflare Turnstile secret key for bot protection
+
+# Routes (optional - if you want custom domain)
+# routes = [
+#   { pattern = "api.your-domain.com/*", zone_name = "your-domain.com" }
+# ]

@@ -1,0 +1,23 @@
+{
+  "name": "hed-bot-workers",
+  "version": "1.0.0",
+  "description": "Cloudflare Workers backend for HED-BOT",
+  "main": "index.js",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "tail": "wrangler tail"
+  },
+  "keywords": [
+    "hed",
+    "annotation",
+    "cloudflare",
+    "workers",
+    "serverless"
+  ],
+  "author": "neuromechanist",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^4.47.0"
+  }
+}

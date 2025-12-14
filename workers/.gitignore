@@ -1,0 +1,18 @@
+# Environment files with secrets
+.env
+.env.local
+.env.*.local
+
+# Node modules
+node_modules/
+
+# Wrangler output
+dist/
+.wrangler/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
