@@ -1,5 +1,8 @@
 # HED-BOT
 
+[![Tests](https://github.com/neuromechanist/hed-bot/actions/workflows/test.yml/badge.svg)](https://github.com/neuromechanist/hed-bot/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/neuromechanist/hed-bot/graph/badge.svg?token=NbpQ38cVaM)](https://codecov.io/gh/neuromechanist/hed-bot)
+
 Multi-agent system for converting natural language event descriptions into valid HED (Hierarchical Event Descriptors) annotations.
 
 ## Features

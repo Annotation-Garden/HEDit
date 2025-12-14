@@ -9,7 +9,6 @@ from langchain_core.messages import HumanMessage
 
 from src.utils.image_processing import prepare_image_for_vision_model
 
-
 DEFAULT_VISION_PROMPT = """Describe what you see in this image. Include the setting, main elements, colors, lighting, and overall composition. Be specific and detailed. Form the response as a continuous paragraph. Maximum 200 words."""
 
 

@@ -4,13 +4,10 @@ This module provides authentication, authorization, and audit logging
 for API endpoints to ensure compliance with security best practices.
 """
 
-import hashlib
-import hmac
 import logging
 import os
 import secrets
 from datetime import datetime
-from typing import Optional
 
 from fastapi import HTTPException, Request, Security, status
 from fastapi.security import APIKeyHeader
@@ -62,18 +59,7 @@ class APIKeyAuth:
 
         return keys
 
-    def _hash_key(self, key: str) -> str:
-        """Hash an API key for secure comparison.
-
-        Args:
-            key: API key to hash
-
-        Returns:
-            Hexadecimal hash of the key
-        """
-        return hashlib.sha256(key.encode()).hexdigest()
-
-    def verify_api_key(self, api_key: Optional[str]) -> bool:
+    def verify_api_key(self, api_key: str | None) -> bool:
         """Verify if an API key is valid.
 
         Args:
@@ -91,7 +77,7 @@ class APIKeyAuth:
         # Check if key exists in configured keys
         return api_key in self.api_keys
 
-    async def __call__(self, api_key: Optional[str] = Security(API_KEY_HEADER)) -> str:
+    async def __call__(self, api_key: str | None = Security(API_KEY_HEADER)) -> str:
         """FastAPI dependency for API key authentication.
 
         Args:
@@ -118,7 +104,9 @@ class APIKeyAuth:
 
         # Verify API key
         if not self.verify_api_key(api_key):
-            logger.warning(f"Request rejected: Invalid API key (key hash: {self._hash_key(api_key)[:8]}...)")
+            logger.warning(
+                f"Request rejected: Invalid API key (key hash: {self._hash_key(api_key)[:8]}...)"
+            )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid API key",
@@ -153,8 +141,8 @@ class AuditLogger:
     def log_request(
         self,
         request: Request,
-        api_key_hash: Optional[str] = None,
-        user_id: Optional[str] = None,
+        api_key_hash: str | None = None,
+        user_id: str | None = None,
     ):
         """Log an API request for audit purposes.
 
@@ -216,7 +204,7 @@ class AuditLogger:
         self,
         request: Request,
         error: Exception,
-        api_key_hash: Optional[str] = None,
+        api_key_hash: str | None = None,
     ):
         """Log an error for audit purposes.
 

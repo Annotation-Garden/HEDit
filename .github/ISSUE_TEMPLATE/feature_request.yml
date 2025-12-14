@@ -1,0 +1,46 @@
+name: Feature Request
+description: Suggest a new feature for HED-bot
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Feature Description
+      description: A clear description of the feature you'd like
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation / Use Case
+      description: Why is this feature needed? What problem does it solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: How do you envision this working?
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any alternative solutions or workarounds you've considered
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Annotation Agent
+        - Validation Agent
+        - Evaluation Agent
+        - Vision Agent
+        - API Endpoints
+        - CLI
+        - Documentation
+        - Other

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hed-bot"
-version = "0.4.5-alpha"
+version = "0.5.0-dev"
 description = "Multi-agent system for HED annotation generation and validation"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -74,6 +74,13 @@ addopts = [
     "--cov-report=term-missing",
     "--strict-markers",
 ]
+# Note: Coverage threshold is enforced by Codecov (80% project, 70% patch)
+# Unit tests alone get ~18%, integration tests combined get 70%+
+markers = [
+    "integration: marks tests that make real API calls (deselect with '-m \"not integration\"')",
+    "timeout: marks tests with a timeout (requires pytest-timeout)",
+]
+asyncio_mode = "auto"
 
 [tool.mypy]
 python_version = "3.12"

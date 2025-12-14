@@ -1,0 +1,69 @@
+name: Bug Report
+description: Report a bug in HED-bot
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear description of the bug
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      placeholder: |
+        1. Run command '...'
+        2. Provide input '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Annotation Agent
+        - Validation Agent
+        - Evaluation Agent
+        - Vision Agent
+        - API Endpoints
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: HED-bot Version
+      placeholder: "0.5.0"
+
+  - type: input
+    id: schema
+    attributes:
+      label: HED Schema Version
+      placeholder: "8.3.0"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Error Messages
+      render: shell
