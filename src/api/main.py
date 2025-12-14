@@ -658,10 +658,11 @@ async def submit_feedback(request: FeedbackRequest) -> FeedbackResponse:
         )
 
         # Try to process immediately if GitHub token and OpenRouter key are available
+        # Use OPENROUTER_API_KEY_FOR_TESTING to track feedback processing costs separately
         processing_result = None
         github_token = os.getenv("GITHUB_TOKEN")
-        openrouter_key = os.getenv("OPENROUTER_API_KEY") or os.getenv(
-            "OPENROUTER_API_KEY_FOR_TESTING"
+        openrouter_key = os.getenv("OPENROUTER_API_KEY_FOR_TESTING") or os.getenv(
+            "OPENROUTER_API_KEY"
         )
 
         if github_token and openrouter_key:
