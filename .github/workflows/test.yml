@@ -128,21 +128,19 @@ jobs:
           pip install -e ".[dev]"
           pip install pytest-timeout
 
-      - name: Run integration tests
+      - name: Run integration tests only
         env:
           OPENROUTER_API_KEY_FOR_TESTING: ${{ secrets.OPENROUTER_API_KEY_FOR_TESTING }}
         run: |
           # Only run if the secret is available
           if [ -n "$OPENROUTER_API_KEY_FOR_TESTING" ]; then
             echo "Running integration tests with OpenRouter..."
-            pytest tests/test_integration_openrouter.py -v -m integration --timeout=180 --cov=src --cov-report=xml:coverage-integration.xml --cov-report=term-missing
+            pytest tests/ -v -m integration --timeout=180 --cov=src --cov-report=xml:coverage-integration.xml --cov-report=term-missing
           else
             echo "OPENROUTER_API_KEY_FOR_TESTING not set, skipping integration tests"
           fi
 
       - name: Upload integration coverage to Codecov
-        # Always upload coverage, even if some tests fail
-        # This ensures partial coverage is still counted
         if: always()
         uses: codecov/codecov-action@v4
         with:

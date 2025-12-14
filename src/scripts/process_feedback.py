@@ -47,12 +47,12 @@ async def process_feedback_file(
     from src.utils.github_client import GitHubClient
     from src.utils.openrouter_llm import create_openrouter_llm
 
-    # Get API keys from environment
-    openrouter_key = os.getenv("OPENROUTER_API_KEY")
+    # Get API keys from environment (prefer testing key for CI/tests)
+    openrouter_key = os.getenv("OPENROUTER_API_KEY_FOR_TESTING") or os.getenv("OPENROUTER_API_KEY")
     github_token = os.getenv("GITHUB_TOKEN")
 
     if not openrouter_key:
-        logger.error("OPENROUTER_API_KEY not set")
+        logger.error("OPENROUTER_API_KEY or OPENROUTER_API_KEY_FOR_TESTING not set")
         sys.exit(1)
 
     # Get model configuration from environment
