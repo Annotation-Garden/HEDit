@@ -105,16 +105,16 @@ class APIKeyAuth:
         # Verify API key
         if not self.verify_api_key(api_key):
             # Log only first 8 chars for debugging without revealing full key
-            key_prefix = api_key[:8] if len(api_key) > 8 else api_key[:4]
-            logger.warning(f"Request rejected: Invalid API key (prefix: {key_prefix}...)")
+            # Do not log any part of the API key for security reasons
+            logger.warning("Request rejected: Invalid API key")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid API key",
                 headers={"WWW-Authenticate": "ApiKey"},
             )
 
-        key_prefix = api_key[:8] if len(api_key) > 8 else api_key[:4]
-        logger.info(f"Request authenticated with API key (prefix: {key_prefix}...)")
+        # Do not log any part of the API key for security reasons
+        logger.info("Request authenticated with API key")
         return api_key
 
 
