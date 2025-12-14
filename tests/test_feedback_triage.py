@@ -378,3 +378,161 @@ class TestSaveProcessedFeedback:
         assert saved["original_feedback"]["annotation"] == "Sensory-event"
         assert saved["original_feedback"]["user_comment"] == "Nice!"
         assert saved["processing_result"]["action"] == "archive"
+
+
+class TestGenerateCommentBody:
+    """Tests for FeedbackTriageAgent._generate_comment_body method."""
+
+    def test_generate_comment_with_all_fields(self):
+        """Test comment generation with all fields populated."""
+        from src.agents.feedback_triage_agent import FeedbackTriageAgent
+
+        agent = FeedbackTriageAgent(llm=None, github_client=None)
+
+        record = FeedbackRecord(
+            timestamp="2025-01-01T12:00:00Z",
+            type="text",
+            version="0.5.0",
+            description="Test description for comment",
+            image_description=None,
+            annotation="Event",
+            is_valid=True,
+            is_faithful=True,
+            is_complete=True,
+            validation_errors=["Error 1", "Error 2"],
+            validation_warnings=[],
+            evaluation_feedback="",
+            assessment_feedback="",
+            user_comment="This is my feedback comment.",
+        )
+
+        similar_item = GitHubItem(
+            number=42,
+            title="Related Issue",
+            body="Issue body",
+            state="open",
+            item_type="issue",
+            labels=["bug"],
+            url="https://github.com/test/repo/issues/42",
+            created_at="2025-01-01T00:00:00Z",
+            updated_at="2025-01-02T00:00:00Z",
+        )
+
+        result = TriageResult(
+            action="comment",
+            reason="Similar to existing issue",
+            category="bug",
+            severity="medium",
+            similar_item=similar_item,
+            issue_title=None,
+            issue_body=None,
+            labels=[],
+        )
+
+        comment = agent._generate_comment_body(record, result)
+
+        assert "Related User Feedback" in comment
+        assert "text" in comment
+        assert "0.5.0" in comment
+        assert "Test description for comment" in comment
+        assert "This is my feedback comment" in comment
+        assert "2 errors" in comment
+        assert "Similar to existing issue" in comment
+
+    def test_generate_comment_minimal_fields(self):
+        """Test comment generation with minimal fields."""
+        from src.agents.feedback_triage_agent import FeedbackTriageAgent
+
+        agent = FeedbackTriageAgent(llm=None, github_client=None)
+
+        record = FeedbackRecord(
+            timestamp="2025-01-01T12:00:00Z",
+            type="image",
+            version="0.5.0",
+            description=None,
+            image_description="An image",
+            annotation="Visual-presentation",
+            is_valid=True,
+            is_faithful=True,
+            is_complete=True,
+            validation_errors=[],
+            validation_warnings=[],
+            evaluation_feedback="",
+            assessment_feedback="",
+            user_comment=None,
+        )
+
+        result = TriageResult(
+            action="comment",
+            reason="Related to existing PR",
+            category="feature",
+            severity="low",
+            similar_item=None,
+            issue_title=None,
+            issue_body=None,
+            labels=[],
+        )
+
+        comment = agent._generate_comment_body(record, result)
+
+        assert "Related User Feedback" in comment
+        assert "image" in comment
+        assert "0.5.0" in comment
+        # Should not contain description or user comment since they're None
+        assert "Related to existing PR" in comment
+
+
+class TestFeedbackRecordToSummary:
+    """Tests for FeedbackRecord.to_summary method."""
+
+    def test_to_summary_text_mode(self):
+        """Test to_summary for text mode feedback."""
+        record = FeedbackRecord(
+            timestamp="2025-01-01T12:00:00Z",
+            type="text",
+            version="0.5.0",
+            description="A participant presses a button",
+            image_description=None,
+            annotation="Action, Agent-action",
+            is_valid=True,
+            is_faithful=True,
+            is_complete=True,
+            validation_errors=[],
+            validation_warnings=["Minor warning"],
+            evaluation_feedback="Good annotation",
+            assessment_feedback="Complete",
+            user_comment="Works great!",
+        )
+
+        summary = record.to_summary()
+
+        assert "text" in summary
+        assert "A participant presses a button" in summary
+        assert "Action, Agent-action" in summary
+        assert "Works great!" in summary
+
+    def test_to_summary_image_mode(self):
+        """Test to_summary for image mode feedback."""
+        record = FeedbackRecord(
+            timestamp="2025-01-01T12:00:00Z",
+            type="image",
+            version="0.5.0",
+            description=None,
+            image_description="A red circle on white background",
+            annotation="Visual-presentation",
+            is_valid=False,
+            is_faithful=None,
+            is_complete=None,
+            validation_errors=["Invalid tag"],
+            validation_warnings=[],
+            evaluation_feedback="",
+            assessment_feedback="",
+            user_comment="The annotation is wrong",
+        )
+
+        summary = record.to_summary()
+
+        assert "image" in summary
+        assert "A red circle on white background" in summary
+        assert "Invalid tag" in summary
+        assert "The annotation is wrong" in summary
