@@ -201,6 +201,25 @@ class AuditLogger:
             f"duration_ms={processing_time_ms:.2f}"
         )
 
+    def log(
+        self,
+        event: str,
+        data: dict | None = None,
+    ):
+        """Log a general event for audit purposes.
+
+        Args:
+            event: Event name/type
+            data: Optional event data dictionary
+        """
+        if not self.enabled:
+            return
+
+        timestamp = datetime.utcnow().isoformat()
+        data_str = ", ".join(f"{k}={v}" for k, v in (data or {}).items())
+
+        self.logger.info(f"EVENT - timestamp={timestamp}, event={event}, {data_str}")
+
     def log_error(
         self,
         request: Request,
