@@ -11,10 +11,6 @@ coverage:
         # Allow coverage to drop by 2% without failing
         threshold: 2%
         if_ci_failed: error
-        # Only report status after all flags are uploaded
-        flags:
-          - unittests
-          - integration
     patch:
       default:
         # New code should have coverage, but be lenient
@@ -51,9 +47,9 @@ flags:
     paths:
       - src/
     carryforward: true
-  integration:
+  combined:
     paths:
       - src/
     carryforward: true
-    # Integration tests run less frequently (only on merge with src changes)
-    # Carry forward ensures previous results are used when skipped
+    # Combined flag has full coverage from all tests run together
+    # This is the authoritative coverage number
