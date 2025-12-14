@@ -6,7 +6,6 @@ validating images, and preparing them for vision model processing.
 
 import base64
 import io
-import re
 
 from PIL import Image
 
@@ -51,15 +50,33 @@ def parse_data_uri(data_uri: str) -> tuple[str, str]:
     Raises:
         InvalidBase64Error: If data URI format is invalid
     """
-    # Match data URI pattern: data:[<mime-type>][;base64],<data>
-    match = re.match(r"data:([^;]+);base64,(.+)", data_uri)
-    if not match:
+    # Parse data URI using string operations (safer than regex for large inputs)
+    if not data_uri.startswith("data:"):
         raise InvalidBase64Error(
             "Invalid data URI format. Expected: data:image/<type>;base64,<data>"
         )
 
-    mime_type = match.group(1)
-    base64_data = match.group(2)
+    # Find the separator between metadata and data
+    base64_marker = ";base64,"
+    marker_pos = data_uri.find(base64_marker)
+    if marker_pos == -1:
+        raise InvalidBase64Error(
+            "Invalid data URI format. Expected: data:image/<type>;base64,<data>"
+        )
+
+    # Extract mime type (between "data:" and ";base64,")
+    mime_type = data_uri[5:marker_pos]  # 5 = len("data:")
+    if not mime_type:
+        raise InvalidBase64Error(
+            "Invalid data URI format. Expected: data:image/<type>;base64,<data>"
+        )
+
+    # Extract base64 data (after ";base64,")
+    base64_data = data_uri[marker_pos + len(base64_marker) :]
+    if not base64_data:
+        raise InvalidBase64Error(
+            "Invalid data URI format. Expected: data:image/<type>;base64,<data>"
+        )
 
     return mime_type, base64_data
 

@@ -4,7 +4,6 @@ This module provides authentication, authorization, and audit logging
 for API endpoints to ensure compliance with security best practices.
 """
 
-import hashlib
 import logging
 import os
 import secrets
@@ -59,17 +58,6 @@ class APIKeyAuth:
             )
 
         return keys
-
-    def _hash_key(self, key: str) -> str:
-        """Hash an API key for secure comparison.
-
-        Args:
-            key: API key to hash
-
-        Returns:
-            Hexadecimal hash of the key
-        """
-        return hashlib.sha256(key.encode()).hexdigest()
 
     def verify_api_key(self, api_key: str | None) -> bool:
         """Verify if an API key is valid.
