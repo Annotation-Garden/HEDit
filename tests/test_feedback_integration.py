@@ -8,6 +8,7 @@ Skip with: pytest -v -m "not integration"
 """
 
 import os
+from urllib.parse import urlparse
 
 import pytest
 from dotenv import load_dotenv
@@ -260,7 +261,8 @@ class TestGitHubClientIntegration:
             assert pr.item_type == "pull_request"
             assert pr.number > 0
             assert pr.title
-            assert pr.url.startswith("https://github.com")
+            assert urlparse(pr.url).scheme in ("http", "https")
+            assert urlparse(pr.url).hostname == "github.com"
 
     @pytest.mark.asyncio
     async def test_get_all_open_items(self, github_client):
