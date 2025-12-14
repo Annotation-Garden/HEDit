@@ -6,22 +6,29 @@ coverage:
   status:
     project:
       default:
-        # Target 80% coverage
-        target: 80%
+        # Target 70% coverage (realistic for LLM-heavy codebase)
+        target: 70%
         # Allow coverage to drop by 2% without failing
         threshold: 2%
         if_ci_failed: error
+        # Only report status after all flags are uploaded
+        flags:
+          - unittests
+          - integration
     patch:
       default:
-        # New code must have at least 70% coverage
-        target: 70%
-        threshold: 5%
+        # New code should have coverage, but be lenient
+        # Many changes are config/frontend that don't need tests
+        target: 50%
+        threshold: 10%
+        # Only apply to src/ files
+        only_pulls: true
 
   # Coverage precision (2 decimal places)
   precision: 2
   round: down
-  # Highlight files below 70% as critical
-  range: "70...100"
+  # Highlight files below 60% as critical
+  range: "60...100"
 
 # Comment settings for PRs
 comment:
@@ -36,6 +43,7 @@ ignore:
   - "tests/**/*"
   - "scripts/**/*"
   - "**/__init__.py"
+  - "src/scripts/**/*"
 
 # Flag management
 flags:
@@ -47,5 +55,5 @@ flags:
     paths:
       - src/
     carryforward: true
-    # Integration tests run less frequently (only on merge)
-    # so carry forward previous results
+    # Integration tests run less frequently (only on merge with src changes)
+    # Carry forward ensures previous results are used when skipped

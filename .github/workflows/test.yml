@@ -50,24 +50,59 @@ jobs:
 
       - name: Run unit tests (excluding integration)
         run: |
-          pytest tests/ -v -m "not integration" --cov=src --cov-report=xml --cov-report=term-missing
+          pytest tests/ -v -m "not integration" --cov=src --cov-report=xml:coverage-unit.xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.xml
+          files: ./coverage-unit.xml
           flags: unittests
           name: codecov-unit
           fail_ci_if_error: false
           verbose: true
 
+  # Check which files changed to decide if integration tests should run
+  check-changes:
+    name: Check Changed Files
+    runs-on: ubuntu-latest
+    outputs:
+      src_changed: ${{ steps.changes.outputs.src }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for src changes
+        id: changes
+        run: |
+          # For push events, compare with previous commit
+          # For PRs, compare with base branch
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE=${{ github.event.pull_request.base.sha }}
+          else
+            BASE=${{ github.event.before }}
+          fi
+
+          # Check if any src/ files changed
+          if git diff --name-only $BASE ${{ github.sha }} | grep -q "^src/"; then
+            echo "src=true" >> $GITHUB_OUTPUT
+            echo "Source files changed - integration tests will run"
+          else
+            echo "src=false" >> $GITHUB_OUTPUT
+            echo "No source files changed - integration tests will be skipped"
+          fi
+
   integration-tests:
     name: Integration Tests (Real LLM)
     runs-on: ubuntu-latest
-    # Only run integration tests on push (after merge) or manual trigger, not on PRs
-    # This saves ~5-10 cents per run by avoiding LLM calls on every PR update
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: [check-changes]
+    # Only run integration tests when:
+    # 1. Push event (after merge) or manual trigger, not on PRs
+    # 2. Source code actually changed (skip for docs/config only changes)
+    if: |
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      (needs.check-changes.outputs.src_changed == 'true' || github.event_name == 'workflow_dispatch')
 
     steps:
       - uses: actions/checkout@v4
@@ -89,7 +124,7 @@ jobs:
           # Only run if the secret is available
           if [ -n "$OPENROUTER_API_KEY_FOR_TESTING" ]; then
             echo "Running integration tests with OpenRouter..."
-            pytest tests/test_integration_openrouter.py -v -m integration --timeout=180 --cov=src --cov-report=xml --cov-report=term-missing
+            pytest tests/test_integration_openrouter.py -v -m integration --timeout=180 --cov=src --cov-report=xml:coverage-integration.xml --cov-report=term-missing
           else
             echo "OPENROUTER_API_KEY_FOR_TESTING not set, skipping integration tests"
           fi
@@ -101,7 +136,7 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.xml
+          files: ./coverage-integration.xml
           flags: integration
           name: codecov-integration
           fail_ci_if_error: false
@@ -109,8 +144,8 @@ jobs:
   all-tests:
     name: All Tests Summary
     runs-on: ubuntu-latest
-    needs: [lint, unit-tests, integration-tests]
-    # Run even if integration-tests was skipped (on PRs)
+    needs: [lint, unit-tests, check-changes, integration-tests]
+    # Run even if integration-tests was skipped (on PRs or no src changes)
     if: always()
 
     steps:
@@ -139,3 +174,4 @@ jobs:
           echo "Lint: ${{ needs.lint.result }}"
           echo "Unit tests: ${{ needs.unit-tests.result }}"
           echo "Integration tests: ${{ needs.integration-tests.result }}"
+          echo "Source changed: ${{ needs.check-changes.outputs.src_changed }}"
