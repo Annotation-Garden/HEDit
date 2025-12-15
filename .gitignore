@@ -80,3 +80,7 @@ feedback/processed/*.json
 
 # Coverage
 coverage.xml
+coverage-*.xml
+
+# UV package manager
+uv.lock
