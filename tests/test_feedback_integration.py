@@ -229,8 +229,8 @@ class TestGitHubClientIntegration:
 
         return GitHubClient(
             token=GITHUB_TOKEN,
-            owner="neuromechanist",
-            repo="hed-bot",
+            owner="Annotation-Garden",
+            repo="hedit",
         )
 
     @pytest.mark.asyncio
@@ -308,8 +308,8 @@ class TestTriageWithGitHub:
 
         github_client = GitHubClient(
             token=GITHUB_TOKEN,
-            owner="neuromechanist",
-            repo="hed-bot",
+            owner="Annotation-Garden",
+            repo="hedit",
         )
 
         return FeedbackTriageAgent(llm=llm, github_client=github_client)

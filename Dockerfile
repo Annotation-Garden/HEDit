@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for HED-BOT with GPU support
+# Multi-stage Dockerfile for HEDit with GPU support
 FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 AS base
 
 # Set environment variables

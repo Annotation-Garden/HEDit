@@ -1,4 +1,4 @@
-name = "hed-bot-api"
+name = "hedit-api"
 main = "index.js"
 compatibility_date = "2024-01-01"
 
@@ -15,7 +15,7 @@ id = "8deb8c02177349afb1d1fe2f7d4079f4"
 # Environment variables
 [vars]
 ENVIRONMENT = "production"
-BACKEND_URL = "https://hedtools.org/hed-bot-api"
+BACKEND_URL = "https://api.annotation.garden/hedit"
 
 # Secrets (set via wrangler secret put)
 # Run: wrangler secret put BACKEND_API_KEY

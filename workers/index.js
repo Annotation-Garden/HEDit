@@ -1,5 +1,5 @@
 /**
- * HED-BOT Cloudflare Worker (Proxy Mode)
+ * HEDit Cloudflare Worker (Proxy Mode)
  *
  * This worker acts as a caching proxy to the Python FastAPI backend,
  * which has all the strong prompts, real HED validation, and multi-agent workflow.
@@ -12,7 +12,7 @@ function getConfig(env) {
     CACHE_TTL: isDev ? 300 : 3600, // 5 min for dev, 1 hour for prod
     RATE_LIMIT_PER_MINUTE: isDev ? 60 : 20, // Higher limit for dev testing
     REQUEST_TIMEOUT: 120000, // 2 minutes for long-running annotation workflows
-    ALLOWED_ORIGIN: 'https://hed-bot.pages.dev', // Production frontend
+    ALLOWED_ORIGIN: 'https://hedit.pages.dev', // Production frontend
     TURNSTILE_VERIFY_URL: 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
     IS_DEV: isDev,
   };
@@ -72,9 +72,11 @@ export default {
     const CONFIG = getConfig(env);
     const origin = request.headers.get('Origin');
 
-    // CORS validation - allow hed-bot.pages.dev and preview deployments
+    // CORS validation - allow hedit.pages.dev, annotation.garden, and preview deployments
     const isAllowedOrigin = origin === CONFIG.ALLOWED_ORIGIN ||
-                           origin?.endsWith('.hed-bot.pages.dev') || // Preview deployments
+                           origin?.endsWith('.hedit.pages.dev') || // Preview deployments
+                           origin === 'https://annotation.garden' || // Main AGI site
+                           origin?.endsWith('.annotation.garden') || // AGI subdomains
                            origin?.startsWith('http://localhost:'); // Allow localhost for dev
 
     // CORS headers
@@ -125,7 +127,7 @@ export default {
  */
 function handleRoot(corsHeaders, CONFIG) {
   return new Response(JSON.stringify({
-    name: 'HED-BOT API (Cloudflare Workers Proxy)',
+    name: 'HEDit API (Cloudflare Workers Proxy)',
     version: '2.0.0',
     description: 'Proxy to Python FastAPI backend with caching and rate limiting',
     mode: 'proxy',

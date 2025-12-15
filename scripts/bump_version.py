@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Version bumping script for HED-BOT.
+"""Version bumping script for HEDit.
 
 This script helps manage semantic versioning with support for:
 - major.minor.patch version bumping
@@ -99,7 +99,7 @@ class VersionBumper:
         else:
             version_info = f"({major}, {minor}, {patch})"
 
-        content = f'''"""Version information for HED-BOT."""
+        content = f'''"""Version information for HEDit."""
 
 __version__ = "{version_str}"
 __version_info__ = {version_info}
@@ -250,7 +250,7 @@ For full changelog, see commit history.
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Bump HED-BOT version and create Git tag/release",
+        description="Bump HEDit version and create Git tag/release",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )

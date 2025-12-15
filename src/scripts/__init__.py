@@ -1,1 +1,1 @@
-"""CLI scripts for HED-BOT."""
+"""CLI scripts for HEDit."""

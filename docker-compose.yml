@@ -2,7 +2,7 @@ services:
   # Ollama LLM serving with GPU support
   ollama:
     image: ollama/ollama:latest
-    container_name: hed-bot-ollama
+    container_name: hedit-ollama
     volumes:
       - ollama_data:/root/.ollama
       - ./docker/ollama-entrypoint.sh:/entrypoint.sh
@@ -24,12 +24,12 @@ services:
       retries: 3
       start_period: 120s
 
-  # HED-BOT API service
-  hed-bot:
+  # HEDit API service
+  hedit:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: hed-bot-api
+    container_name: hedit-api
     depends_on:
       - ollama
     volumes:

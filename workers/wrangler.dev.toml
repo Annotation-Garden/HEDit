@@ -1,7 +1,7 @@
 # Dev environment Cloudflare Worker configuration
 # Deploy with: wrangler deploy --config wrangler.dev.toml
 
-name = "hed-bot-dev-api"
+name = "hedit-dev-api"
 main = "index.js"
 compatibility_date = "2024-01-01"
 
@@ -18,7 +18,7 @@ id = "cceec1ae15754a7a946273b97eb488a3"
 # Environment variables
 [vars]
 ENVIRONMENT = "development"
-BACKEND_URL = "https://hedtools.org/hed-bot-dev-api"
+BACKEND_URL = "https://api.annotation.garden/hedit-dev"
 
 # Secrets (set via wrangler secret put --config wrangler.dev.toml)
 # Run: wrangler secret put BACKEND_API_KEY --config wrangler.dev.toml

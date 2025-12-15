@@ -3,8 +3,8 @@ requires = ["setuptools>=65.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "hed-bot"
-version = "0.5.2-alpha"
+name = "hedit"
+version = "0.6.0-dev"
 description = "Multi-agent system for HED annotation generation and validation"
 readme = "README.md"
 requires-python = ">=3.12"

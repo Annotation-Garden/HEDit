@@ -1,4 +1,4 @@
-"""Security middleware and utilities for HED-BOT API.
+"""Security middleware and utilities for HEDit API.
 
 This module provides authentication, authorization, and audit logging
 for API endpoints to ensure compliance with security best practices.
@@ -123,12 +123,12 @@ class AuditLogger:
 
     def __init__(self):
         """Initialize audit logger."""
-        self.logger = logging.getLogger("hed_bot.audit")
+        self.logger = logging.getLogger("hedit.audit")
         self.enabled = os.getenv("ENABLE_AUDIT_LOG", "true").lower() == "true"
 
         # Configure audit log file if enabled
         if self.enabled:
-            log_file = os.getenv("AUDIT_LOG_FILE", "/var/log/hed-bot/audit.log")
+            log_file = os.getenv("AUDIT_LOG_FILE", "/var/log/hedit/audit.log")
             try:
                 handler = logging.FileHandler(log_file)
                 handler.setFormatter(logging.Formatter(AUDIT_LOG_FORMAT))

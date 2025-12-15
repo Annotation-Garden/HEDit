@@ -1,4 +1,4 @@
-"""FastAPI application for HED-BOT annotation service.
+"""FastAPI application for HEDit annotation service.
 
 This module provides REST API endpoints for HED annotation generation
 and validation using the multi-agent workflow.
@@ -55,7 +55,7 @@ async def lifespan(app: FastAPI):
     global workflow, vision_agent, schema_loader
 
     # Startup: Initialize workflow
-    print("Initializing HED-BOT annotation workflow...")
+    print("Initializing HEDit annotation workflow...")
 
     # Auto-detect environment (Docker vs local)
     def get_default_path(docker_path: str, local_path: str) -> str:
@@ -219,12 +219,12 @@ async def lifespan(app: FastAPI):
     yield
 
     # Shutdown
-    print("Shutting down HED-BOT...")
+    print("Shutting down HEDit...")
 
 
 # Create FastAPI app
 app = FastAPI(
-    title="HED-BOT API",
+    title="HEDit API",
     description="Multi-agent system for HED annotation generation and validation",
     version=__version__,
     lifespan=lifespan,
@@ -234,10 +234,11 @@ app = FastAPI(
 # Production: Strict origin validation
 # Development: Allow all localhost ports for easy local testing
 allowed_origins = [
-    "https://hed-bot.pages.dev",  # Production frontend
-    "https://develop.hed-bot.pages.dev",  # Development frontend
-    "https://hed-bot-api.shirazi-10f.workers.dev",  # Production Worker proxy
-    "https://hed-bot-dev-api.shirazi-10f.workers.dev",  # Development Worker proxy
+    "https://hedit.pages.dev",  # Production frontend
+    "https://develop.hedit.pages.dev",  # Development frontend
+    "https://hedit-api.shirazi-10f.workers.dev",  # Production Worker proxy
+    "https://hedit-dev-api.shirazi-10f.workers.dev",  # Development Worker proxy
+    "https://annotation.garden",  # Main AGI website
 ]
 
 # Add common localhost ports for development
@@ -683,8 +684,8 @@ async def submit_feedback(request: FeedbackRequest) -> FeedbackResponse:
                 # Create GitHub client
                 github_client = GitHubClient(
                     token=github_token,
-                    owner=os.getenv("GITHUB_REPOSITORY_OWNER", "hed-standard"),
-                    repo=os.getenv("GITHUB_REPOSITORY", "hed-bot").split("/")[-1],
+                    owner=os.getenv("GITHUB_REPOSITORY_OWNER", "Annotation-Garden"),
+                    repo=os.getenv("GITHUB_REPOSITORY", "hedit").split("/")[-1],
                 )
 
                 # Create LLM for triage
@@ -770,7 +771,7 @@ async def root():
         API information
     """
     return {
-        "name": "HED-BOT API",
+        "name": "HEDit API",
         "version": __version__,
         "description": "Multi-agent system for HED annotation generation",
         "endpoints": {

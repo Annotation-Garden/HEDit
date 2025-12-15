@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HED-BOT - HED Annotation Generator</title>
+    <title>HEDit - HED Annotation Generator</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -790,7 +790,7 @@
     <div class="container">
         <div class="header">
             <div class="header-left">
-                <h1>HED-BOT</h1>
+                <h1>HEDit</h1>
                 <p class="subtitle">Multi-Agent System for HED Annotation Generation</p>
             </div>
             <div class="header-right">
@@ -942,7 +942,7 @@ Example: A red circle appears on the left side of the screen and the participant
             <div id="assessmentSection"></div>
 
             <div class="feedback-section">
-                <button class="feedback-btn" onclick="provideFeedback()" title="Submit feedback about this annotation to help improve HED-BOT">
+                <button class="feedback-btn" onclick="provideFeedback()" title="Submit feedback about this annotation to help improve HEDit">
                     💬 Provide Feedback
                 </button>
                 <p style="color: #64748b; font-size: 12px; margin-top: 8px;">
@@ -1570,7 +1570,7 @@ Example: A red circle appears on the left side of the screen and the participant
 
                     // Show success message
                     setTimeout(() => {
-                        alert('Thank you for your feedback! It has been recorded and will help improve HED-BOT.');
+                        alert('Thank you for your feedback! It has been recorded and will help improve HEDit.');
                         feedbackBtn.innerHTML = originalBtnText;
                         feedbackBtn.style.background = '';
                         feedbackBtn.disabled = false;
@@ -1604,7 +1604,7 @@ Example: A red circle appears on the left side of the screen and the participant
 
             const jsonContent = JSON.stringify(feedbackPayload, null, 2);
             const userComment = feedbackPayload.user_comment || '(No comment provided)';
-            const emailSubject = `[HED-BOT Feedback] ${isImageMode ? 'Image' : 'Text'} Annotation Feedback - ${new Date().toLocaleString()}`;
+            const emailSubject = `[HEDit Feedback] ${isImageMode ? 'Image' : 'Text'} Annotation Feedback - ${new Date().toLocaleString()}`;
             const emailBody = `USER FEEDBACK:
 ${userComment}
 

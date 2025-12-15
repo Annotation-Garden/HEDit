@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Generate secure API key for HED-BOT authentication.
+"""Generate secure API key for HEDit authentication.
 
 This script generates a cryptographically secure 64-character hexadecimal
-API key suitable for use with the HED-BOT API authentication system.
+API key suitable for use with the HEDit API authentication system.
 
 Usage:
     python scripts/generate_api_key.py
@@ -33,16 +33,16 @@ if __name__ == "__main__":
     api_key = generate_api_key()
 
     print("=" * 70)
-    print("HED-BOT API Key Generated")
+    print("HEDit API Key Generated")
     print("=" * 70)
     print(f"\nAPI Key: {api_key}")
     print(f"\nLength: {len(api_key)} characters")
     print("\n" + "-" * 70)
     print("Add to your .env file:")
     print("-" * 70)
-    print(f"\n# Option 1: Comma-separated list (recommended)")
+    print("\n# Option 1: Comma-separated list (recommended)")
     print(f"API_KEYS={api_key}")
-    print(f"\n# Option 2: Individual key")
+    print("\n# Option 2: Individual key")
     print(f"API_KEY_1={api_key}")
     print("\n" + "-" * 70)
     print("SECURITY REMINDERS:")

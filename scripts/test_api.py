@@ -117,7 +117,7 @@ def display_result(result: dict):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Test HED-BOT API")
+    parser = argparse.ArgumentParser(description="Test HEDit API")
     parser.add_argument("--url", default="http://localhost:38427", help="API base URL")
     parser.add_argument("--api-key", help="API key for authentication")
     parser.add_argument(
@@ -128,7 +128,7 @@ def main():
     args = parser.parse_args()
 
     print("=" * 60)
-    print("HED-BOT API Test")
+    print("HEDit API Test")
     print("=" * 60)
     print(f"Endpoint: {args.url}")
 

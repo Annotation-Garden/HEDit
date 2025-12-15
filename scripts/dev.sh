@@ -1,5 +1,5 @@
 #!/bin/bash
-# Local development server for hed-bot
+# Local development server for HEDit
 # Usage: ./scripts/dev.sh [--no-auth]
 
 set -e
@@ -14,7 +14,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}HED-BOT Local Development Server${NC}"
+echo -e "${GREEN}HEDit Local Development Server${NC}"
 echo -e "${GREEN}========================================${NC}"
 
 # Parse arguments
