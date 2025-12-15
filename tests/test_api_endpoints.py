@@ -242,7 +242,7 @@ class TestRootEndpoint:
         assert response.status_code == 200
         data = response.json()
         assert "name" in data
-        assert data["name"] == "HED-BOT API"
+        assert data["name"] == "HEDit API"
         assert "version" in data
         assert "description" in data
         assert "endpoints" in data
