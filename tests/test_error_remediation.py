@@ -186,3 +186,163 @@ def test_remediation_for_common_errors(remediator):
         guidance = remediator.get_remediation(code)
         assert "REMEDIATION" in guidance, f"No remediation for {code}"
         assert code in guidance, f"Code {code} not in its own remediation"
+
+
+def test_remediator_with_tests_json(tmp_path):
+    """Test ErrorRemediator with test JSON file."""
+    # Create a test JSON file
+    test_data = [
+        {
+            "error_code": "TEST_ERROR",
+            "description": "A test error for testing",
+            "tests": {
+                "string_tests": {
+                    "passes": ["Valid/Tag", "Another/Valid"],
+                    "fails": ["Invalid/Tag", "Bad/Syntax"],
+                }
+            },
+        }
+    ]
+
+    import json
+
+    test_file = tmp_path / "test_errors.json"
+    with open(test_file, "w") as f:
+        json.dump(test_data, f)
+
+    remediator = ErrorRemediator(test_file)
+    assert len(remediator.tests_data) == 1
+
+    # Test getting remediation from loaded test data
+    guidance = remediator.get_remediation("TEST_ERROR")
+    assert "TEST_ERROR" in guidance
+    assert "A test error for testing" in guidance
+
+
+def test_remediator_with_nonexistent_file():
+    """Test ErrorRemediator with nonexistent file path."""
+    remediator = ErrorRemediator("/nonexistent/path/to/file.json")
+    assert remediator.tests_data == []
+
+
+def test_format_test_entry_with_string_examples(tmp_path):
+    """Test _format_test_entry with string examples."""
+    import json
+
+    test_data = [
+        {
+            "error_code": "FORMAT_TEST",
+            "description": "Testing format",
+            "tests": {
+                "string_tests": {
+                    "passes": ["Pass1", "Pass2", "Pass3"],
+                    "fails": ["Fail1", "Fail2", "Fail3"],
+                }
+            },
+        }
+    ]
+
+    test_file = tmp_path / "format_test.json"
+    with open(test_file, "w") as f:
+        json.dump(test_data, f)
+
+    remediator = ErrorRemediator(test_file)
+    guidance = remediator.get_remediation("FORMAT_TEST")
+
+    assert "EXAMPLES THAT FAIL" in guidance
+    assert "EXAMPLES THAT PASS" in guidance
+    assert "Fail1" in guidance
+    assert "Pass1" in guidance
+
+
+def test_format_test_entry_with_non_string_examples(tmp_path):
+    """Test _format_test_entry handles non-string examples gracefully."""
+    import json
+
+    test_data = [
+        {
+            "error_code": "MIXED_TEST",
+            "description": "Mixed examples",
+            "tests": {
+                "string_tests": {
+                    "passes": ["ValidString", {"not": "a string"}, "AnotherValid"],
+                    "fails": [{"complex": "object"}, "InvalidString"],
+                }
+            },
+        }
+    ]
+
+    test_file = tmp_path / "mixed_test.json"
+    with open(test_file, "w") as f:
+        json.dump(test_data, f)
+
+    remediator = ErrorRemediator(test_file)
+    guidance = remediator.get_remediation("MIXED_TEST")
+    # Should not crash and should include string examples
+    assert "MIXED_TEST" in guidance
+
+
+def test_augment_validation_errors_with_warnings(remediator):
+    """Test augmenting both errors and warnings."""
+    errors = ["[TAG_INVALID] Invalid tag found"]
+    warnings = [
+        "[TAG_EXTENDED] Tag was extended",
+        "[VALUE_INVALID] Value format issue",
+    ]
+
+    aug_errors, aug_warnings = remediator.augment_validation_errors(errors, warnings)
+
+    assert len(aug_errors) == 1
+    assert len(aug_warnings) == 2
+    assert "REMEDIATION" in aug_errors[0]
+    assert "REMEDIATION" in aug_warnings[0]
+    assert "REMEDIATION" in aug_warnings[1]
+
+
+def test_augment_errors_without_code_format(remediator):
+    """Test augmenting errors that don't match the [CODE] format."""
+    errors = [
+        "Plain error without code format",
+        "Another plain error",
+    ]
+
+    aug_errors, aug_warnings = remediator.augment_validation_errors(errors, None)
+
+    # Errors without code format should pass through unchanged
+    assert len(aug_errors) == 2
+    assert aug_errors[0] == "Plain error without code format"
+    assert aug_errors[1] == "Another plain error"
+
+
+def test_augment_warnings_without_code_format(remediator):
+    """Test augmenting warnings that don't match the [CODE] format."""
+    errors = []
+    warnings = ["Warning without brackets"]
+
+    aug_errors, aug_warnings = remediator.augment_validation_errors(errors, warnings)
+
+    assert len(aug_warnings) == 1
+    assert aug_warnings[0] == "Warning without brackets"
+
+
+def test_fallback_to_test_data_for_unknown_code(tmp_path):
+    """Test that unknown codes fall back to test data if available."""
+    import json
+
+    test_data = [
+        {
+            "error_code": "CUSTOM_CODE",
+            "description": "Custom error from test file",
+            "tests": {"string_tests": {"passes": ["Good"], "fails": ["Bad"]}},
+        }
+    ]
+
+    test_file = tmp_path / "custom.json"
+    with open(test_file, "w") as f:
+        json.dump(test_data, f)
+
+    remediator = ErrorRemediator(test_file)
+    guidance = remediator.get_remediation("CUSTOM_CODE")
+
+    assert "CUSTOM_CODE" in guidance
+    assert "Custom error from test file" in guidance

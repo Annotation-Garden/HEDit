@@ -231,3 +231,140 @@ class TestRequestValidation:
         }
         response = client.post("/validate", json=request_data, headers=TEST_AUTH_HEADERS)
         assert response.status_code == 422  # Validation error
+
+
+class TestRootEndpoint:
+    """Tests for root endpoint."""
+
+    def test_root_returns_api_info(self, client):
+        """Test root endpoint returns API information."""
+        response = client.get("/")
+        assert response.status_code == 200
+        data = response.json()
+        assert "name" in data
+        assert data["name"] == "HED-BOT API"
+        assert "version" in data
+        assert "description" in data
+        assert "endpoints" in data
+
+    def test_root_lists_endpoints(self, client):
+        """Test root endpoint lists all available endpoints."""
+        response = client.get("/")
+        data = response.json()
+        endpoints = data["endpoints"]
+        assert "POST /annotate" in endpoints
+        assert "POST /validate" in endpoints
+        assert "GET /health" in endpoints
+        assert "GET /version" in endpoints
+
+
+class TestFeedbackEndpoint:
+    """Tests for feedback endpoint."""
+
+    def test_feedback_submission(self, client):
+        """Test basic feedback submission (no auth required)."""
+        request_data = {
+            "type": "text",
+            "description": "Test event description",
+            "annotation": "Sensory-event, Visual-presentation",
+            "is_valid": True,
+            "is_faithful": True,
+            "is_complete": True,
+            "validation_errors": [],
+            "validation_warnings": [],
+            "user_comment": "This annotation looks good!",
+        }
+        response = client.post("/feedback", json=request_data)
+        # Should succeed (200) - no auth required for feedback
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert "feedback_id" in data
+        assert "message" in data
+
+    def test_feedback_minimal_submission(self, client):
+        """Test feedback with minimal required fields."""
+        request_data = {
+            "type": "text",
+            "description": "Test description",
+            "annotation": "Test-annotation",
+            "user_comment": "Test comment",
+        }
+        response = client.post("/feedback", json=request_data)
+        assert response.status_code == 200
+
+    def test_feedback_image_type(self, client):
+        """Test feedback submission for image type."""
+        request_data = {
+            "type": "image",
+            "description": "Image description",
+            "image_description": "A cat sitting on a mat",
+            "annotation": "Animal/Cat, Furnishing/Mat",
+            "user_comment": "Image annotation feedback",
+        }
+        response = client.post("/feedback", json=request_data)
+        assert response.status_code == 200
+
+    def test_feedback_missing_fields(self, client):
+        """Test feedback with missing required fields."""
+        request_data = {
+            "type": "text",
+            # Missing description, annotation, user_comment
+        }
+        response = client.post("/feedback", json=request_data)
+        assert response.status_code == 422  # Validation error
+
+
+class TestMoreSecurityHeaders:
+    """Additional tests for security headers."""
+
+    def test_all_security_headers(self, client):
+        """Test all security headers are present."""
+        response = client.get("/health")
+        headers = response.headers
+
+        # Check all security headers
+        assert "x-content-type-options" in headers
+        assert headers["x-content-type-options"] == "nosniff"
+
+        assert "x-frame-options" in headers
+        assert headers["x-frame-options"] == "DENY"
+
+        assert "x-xss-protection" in headers
+        assert headers["x-xss-protection"] == "1; mode=block"
+
+    def test_security_headers_on_all_endpoints(self, client):
+        """Test security headers on different endpoints."""
+        endpoints = ["/health", "/version", "/"]
+
+        for endpoint in endpoints:
+            response = client.get(endpoint)
+            assert "x-content-type-options" in response.headers
+
+
+class TestStreamingEndpoint:
+    """Tests for streaming annotation endpoint."""
+
+    def test_stream_endpoint_returns_sse(self, client):
+        """Test that streaming endpoint returns SSE format."""
+        request_data = {
+            "description": "A red circle appears",
+            "schema_version": "8.3.0",
+        }
+        # Note: streaming tests are limited without async test support
+        # This verifies the endpoint exists and responds
+        response = client.post("/annotate/stream", json=request_data)
+        # May be 503 if workflow not initialized, or 200 with streaming
+        assert response.status_code in [200, 503]
+
+
+class TestVersionEndpointExtended:
+    """Extended tests for version endpoint."""
+
+    def test_version_includes_commit(self, client):
+        """Test version endpoint includes commit hash."""
+        response = client.get("/version")
+        assert response.status_code == 200
+        data = response.json()
+        assert "version" in data
+        assert "commit" in data
