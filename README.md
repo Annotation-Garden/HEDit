@@ -1,9 +1,9 @@
-# HED-BOT
+# HEDit
 
-[![Tests](https://github.com/neuromechanist/hed-bot/actions/workflows/test.yml/badge.svg)](https://github.com/neuromechanist/hed-bot/actions/workflows/test.yml)
-[![codecov](https://codecov.io/gh/neuromechanist/hed-bot/graph/badge.svg?token=NbpQ38cVaM)](https://codecov.io/gh/neuromechanist/hed-bot)
+[![Tests](https://github.com/Annotation-Garden/hedit/actions/workflows/test.yml/badge.svg)](https://github.com/Annotation-Garden/hedit/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/Annotation-Garden/hedit/graph/badge.svg?token=NbpQ38cVaM)](https://codecov.io/gh/Annotation-Garden/hedit)
 
-Multi-agent system for converting natural language event descriptions into valid HED (Hierarchical Event Descriptors) annotations.
+Multi-agent system for converting natural language event descriptions into valid HED (Hierarchical Event Descriptors) annotations. Part of the [Annotation Garden Initiative](https://annotation.garden).
 
 ## Features
 
@@ -25,14 +25,14 @@ Multi-agent system for converting natural language event descriptions into valid
 📚 **[Full Documentation](docs/)** - Comprehensive guides for users, deployers, and developers
 
 **Quick Links**:
-- [Usage Guide](docs/guides/usage.md) - Getting started with HED-BOT
+- [Usage Guide](docs/guides/usage.md) - Getting started with HEDit
 - **[Deployment Guide](DEPLOYMENT.md)** - Choose your deployment option (production, local GPU, or local dev)
 - [API Reference](docs/api/) - API documentation
-- [Development Guide](docs/development/) - Contribute to HED-BOT
+- [Development Guide](docs/development/) - Contribute to HEDit
 
 ## Deployment Options
 
-HED-BOT supports multiple deployment scenarios. Choose the one that fits your needs:
+HEDit supports multiple deployment scenarios. Choose the one that fits your needs:
 
 ### For Production (Recommended)
 Deploy to a server or cloud platform with API key authentication, audit logging, and auto-updates.
@@ -133,7 +133,7 @@ flowchart LR
 
 ```bash
 # Clone repository
-cd /path/to/hed-bot
+cd /path/to/hedit
 
 # Build and start (auto-pulls model and includes all HED resources)
 docker-compose up -d
@@ -153,8 +153,8 @@ open frontend/index.html
 1. **Create conda environment**:
 ```bash
 source ~/miniconda3/etc/profile.d/conda.sh
-conda create -n hed-bot python=3.11 -y
-conda activate hed-bot
+conda create -n hedit python=3.11 -y
+conda activate hedit
 ```
 
 2. **Install dependencies**:
@@ -207,7 +207,7 @@ pytest --cov=src --cov-report=html
 ## Project Structure
 
 ```
-hed-bot/
+hedit/
 ├── src/
 │   ├── agents/         # LangGraph agent implementations
 │   ├── validation/     # HED validation integration
