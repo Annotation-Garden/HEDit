@@ -73,8 +73,8 @@ async def process_feedback_file(
     if github_token:
         github_client = GitHubClient(
             token=github_token,
-            owner=os.getenv("GITHUB_REPOSITORY_OWNER", "hed-standard"),
-            repo=os.getenv("GITHUB_REPOSITORY", "hed-bot").split("/")[-1],
+            owner=os.getenv("GITHUB_REPOSITORY_OWNER", "Annotation-Garden"),
+            repo=os.getenv("GITHUB_REPOSITORY", "hedit").split("/")[-1],
         )
         logger.info("GitHub client initialized")
     else:

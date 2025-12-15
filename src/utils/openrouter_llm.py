@@ -26,8 +26,8 @@ def create_openrouter_llm(
     # OpenRouter requires these headers for app identification
     # Using default_headers (not model_kwargs) to ensure headers are sent
     default_headers = {
-        "HTTP-Referer": "https://github.com/hed-standard/hed-bot",
-        "X-Title": "HED-BOT",
+        "HTTP-Referer": "https://github.com/Annotation-Garden/hedit",
+        "X-Title": "HEDit",
     }
 
     # Build extra_body for provider preference

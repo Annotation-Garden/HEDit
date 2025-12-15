@@ -1,4 +1,4 @@
-name: hed-bot
+name: hedit
 channels:
   - conda-forge
   - defaults

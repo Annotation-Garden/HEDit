@@ -1,1 +1,1 @@
-"""Test suite for HED-BOT."""
+"""Test suite for HEDit."""

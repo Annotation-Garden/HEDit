@@ -1,7 +1,7 @@
 {
-  "name": "hed-bot-workers",
+  "name": "hedit-workers",
   "version": "1.0.0",
-  "description": "Cloudflare Workers backend for HED-BOT",
+  "description": "Cloudflare Workers backend for HEDit",
   "main": "index.js",
   "scripts": {
     "deploy": "wrangler deploy",

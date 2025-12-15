@@ -41,15 +41,15 @@ class GitHubClient:
     def __init__(
         self,
         token: str,
-        owner: str = "hed-standard",
-        repo: str = "hed-bot",
+        owner: str = "Annotation-Garden",
+        repo: str = "hedit",
     ):
         """Initialize GitHub client.
 
         Args:
             token: GitHub personal access token or GITHUB_TOKEN
-            owner: Repository owner (default: hed-standard)
-            repo: Repository name (default: hed-bot)
+            owner: Repository owner (default: Annotation-Garden)
+            repo: Repository name (default: hedit)
         """
         self.token = token
         self.owner = owner

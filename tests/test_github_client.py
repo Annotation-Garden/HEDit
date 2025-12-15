@@ -100,8 +100,8 @@ class TestGitHubClient:
     def test_client_default_values(self):
         """Test client uses default owner and repo."""
         client = GitHubClient(token="test-token")
-        assert client.owner == "hed-standard"
-        assert client.repo == "hed-bot"
+        assert client.owner == "Annotation-Garden"
+        assert client.repo == "hedit"
 
     def test_client_headers(self):
         """Test client sets correct headers."""

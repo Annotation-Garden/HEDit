@@ -1,1 +1,1 @@
-"""FastAPI backend for HED-BOT."""
+"""FastAPI backend for HEDit."""

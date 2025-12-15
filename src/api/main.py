@@ -684,8 +684,8 @@ async def submit_feedback(request: FeedbackRequest) -> FeedbackResponse:
                 # Create GitHub client
                 github_client = GitHubClient(
                     token=github_token,
-                    owner=os.getenv("GITHUB_REPOSITORY_OWNER", "hed-standard"),
-                    repo=os.getenv("GITHUB_REPOSITORY", "hed-bot").split("/")[-1],
+                    owner=os.getenv("GITHUB_REPOSITORY_OWNER", "Annotation-Garden"),
+                    repo=os.getenv("GITHUB_REPOSITORY", "hedit").split("/")[-1],
                 )
 
                 # Create LLM for triage
