@@ -6,8 +6,8 @@ coverage:
   status:
     project:
       default:
-        # Target 70% coverage (current: 76%+)
-        target: 70%
+        # Target 76% coverage (unit tests; combined with integration reaches 80%+)
+        target: 76%
         # Allow coverage to drop by 2% without failing
         threshold: 2%
         if_ci_failed: error
