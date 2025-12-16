@@ -37,6 +37,9 @@ class HEDitClient:
         self,
         api_url: str,
         api_key: str | None = None,
+        model: str | None = None,
+        provider: str | None = None,
+        temperature: float | None = None,
         timeout: httpx.Timeout = DEFAULT_TIMEOUT,
     ):
         """Initialize client.
@@ -44,14 +47,20 @@ class HEDitClient:
         Args:
             api_url: Base API URL
             api_key: OpenRouter API key for BYOK mode
+            model: Model to use for annotation
+            provider: Provider preference (e.g., "Cerebras")
+            temperature: LLM temperature (0.0-1.0)
             timeout: Request timeout settings
         """
         self.api_url = api_url.rstrip("/")
         self.api_key = api_key
+        self.model = model
+        self.provider = provider
+        self.temperature = temperature
         self.timeout = timeout
 
     def _get_headers(self) -> dict[str, str]:
-        """Get request headers with API key if available."""
+        """Get request headers with BYOK configuration."""
         headers = {
             "Content-Type": "application/json",
             "User-Agent": "hedit-cli",
@@ -59,6 +68,13 @@ class HEDitClient:
         if self.api_key:
             # Use X-OpenRouter-Key header for BYOK mode
             headers["X-OpenRouter-Key"] = self.api_key
+        # Include model configuration in headers for BYOK
+        if self.model:
+            headers["X-OpenRouter-Model"] = self.model
+        if self.provider:
+            headers["X-OpenRouter-Provider"] = self.provider
+        if self.temperature is not None:
+            headers["X-OpenRouter-Temperature"] = str(self.temperature)
         return headers
 
     def _handle_response(self, response: httpx.Response) -> dict[str, Any]:
@@ -260,4 +276,7 @@ def create_client(config: CLIConfig, api_key: str | None = None) -> HEDitClient:
     return HEDitClient(
         api_url=config.api.url,
         api_key=api_key,
+        model=config.models.default,
+        provider=config.models.provider,
+        temperature=config.models.temperature,
     )

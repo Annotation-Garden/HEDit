@@ -56,8 +56,8 @@ class TestCLIConfig:
         config = CLIConfig()
         assert config.api.url == "https://api.annotation.garden/hedit"
         assert config.models.default == "openai/gpt-oss-120b"
+        assert config.models.temperature == 0.1
         assert config.settings.schema_version == "8.4.0"
-        assert config.settings.temperature == 0.1
         assert config.output.format == "text"
 
     def test_custom_config(self):
@@ -66,13 +66,13 @@ class TestCLIConfig:
 
         config = CLIConfig(
             api=APIConfig(url="https://custom.api.com"),
-            models=ModelsConfig(default="gpt-4o", provider="OpenAI"),
-            settings=SettingsConfig(temperature=0.5, schema_version="8.3.0"),
+            models=ModelsConfig(default="gpt-4o", provider="OpenAI", temperature=0.5),
+            settings=SettingsConfig(schema_version="8.3.0"),
             output=OutputConfig(format="json"),
         )
         assert config.api.url == "https://custom.api.com"
         assert config.models.default == "gpt-4o"
-        assert config.settings.temperature == 0.5
+        assert config.models.temperature == 0.5
         assert config.output.format == "json"
 
 
@@ -91,12 +91,12 @@ class TestConfigPersistence:
         """Test saving and loading config."""
         config = CLIConfig()
         config.models.default = "test-model"
-        config.settings.temperature = 0.7
+        config.models.temperature = 0.7
         save_config(config)
 
         loaded = load_config()
         assert loaded.models.default == "test-model"
-        assert loaded.settings.temperature == 0.7
+        assert loaded.models.temperature == 0.7
 
     def test_load_missing_config(self, temp_config_dir):
         """Test loading config when file doesn't exist."""
@@ -165,10 +165,10 @@ class TestUpdateConfig:
 
     def test_update_temperature(self, temp_config_dir):
         """Test updating temperature (float coercion)."""
-        update_config("settings.temperature", "0.5")
+        update_config("models.temperature", "0.5")
 
         config = load_config()
-        assert config.settings.temperature == 0.5
+        assert config.models.temperature == 0.5
 
     def test_update_boolean(self, temp_config_dir):
         """Test updating boolean setting."""
@@ -205,7 +205,7 @@ class TestEffectiveConfig:
         assert key == "test-key"
         assert config.api.url == "https://custom.api.com"
         assert config.models.default == "custom-model"
-        assert config.settings.temperature == 0.8
+        assert config.models.temperature == 0.8
         assert config.settings.schema_version == "8.3.0"
         assert config.output.format == "json"
 
@@ -221,4 +221,4 @@ class TestEffectiveConfig:
         # Model should be from saved config
         assert config.models.default == "saved-model"
         # Temperature should be overridden
-        assert config.settings.temperature == 0.5
+        assert config.models.temperature == 0.5

@@ -90,6 +90,32 @@ VerboseOption = Annotated[
     ),
 ]
 
+ModelOption = Annotated[
+    str | None,
+    typer.Option(
+        "--model",
+        "-m",
+        help="Model to use (e.g., openai/gpt-oss-120b, gpt-4o-mini)",
+    ),
+]
+
+ProviderOption = Annotated[
+    str | None,
+    typer.Option(
+        "--provider",
+        help="Provider preference (e.g., Cerebras for fast inference)",
+    ),
+]
+
+TemperatureOption = Annotated[
+    float | None,
+    typer.Option(
+        "--temperature",
+        "-t",
+        help="LLM temperature (0.0-1.0, lower = more consistent)",
+    ),
+]
+
 
 def version_callback(value: bool) -> None:
     """Print version and exit."""
@@ -148,8 +174,15 @@ def init(
         str | None,
         typer.Option(
             "--provider",
-            "-p",
             help="Provider preference (e.g., Cerebras for fast inference)",
+        ),
+    ] = None,
+    temperature: Annotated[
+        float | None,
+        typer.Option(
+            "--temperature",
+            "-t",
+            help="LLM temperature (0.0-1.0, lower = more consistent)",
         ),
     ] = None,
 ) -> None:
@@ -173,6 +206,8 @@ def init(
         config.models.default = model
     if provider:
         config.models.provider = provider
+    if temperature is not None:
+        config.models.temperature = temperature
 
     # Save
     save_credentials(creds)
@@ -206,6 +241,9 @@ def annotate(
     ],
     api_key: ApiKeyOption = None,
     api_url: ApiUrlOption = None,
+    model: ModelOption = None,
+    provider: ProviderOption = None,
+    temperature: TemperatureOption = None,
     schema_version: SchemaVersionOption = None,
     output_format: OutputFormatOption = "text",
     max_attempts: Annotated[
@@ -230,10 +268,14 @@ def annotate(
         hedit annotate "A red circle appears on the left side of the screen"
         hedit annotate "Participant pressed the spacebar" --schema 8.4.0
         hedit annotate "Audio beep plays" -o json > result.json
+        hedit annotate "..." --model gpt-4o-mini --temperature 0.2
     """
     config, effective_key = get_effective_config(
         api_key=api_key,
         api_url=api_url,
+        model=model,
+        provider=provider,
+        temperature=temperature,
         schema_version=schema_version,
         output_format=output_format,
     )
@@ -278,12 +320,14 @@ def annotate_image(
         str | None,
         typer.Option(
             "--prompt",
-            "-p",
             help="Custom prompt for vision model",
         ),
     ] = None,
     api_key: ApiKeyOption = None,
     api_url: ApiUrlOption = None,
+    model: ModelOption = None,
+    provider: ProviderOption = None,
+    temperature: TemperatureOption = None,
     schema_version: SchemaVersionOption = None,
     output_format: OutputFormatOption = "text",
     max_attempts: Annotated[
@@ -319,6 +363,9 @@ def annotate_image(
     config, effective_key = get_effective_config(
         api_key=api_key,
         api_url=api_url,
+        model=model,
+        provider=provider,
+        temperature=temperature,
         schema_version=schema_version,
         output_format=output_format,
     )

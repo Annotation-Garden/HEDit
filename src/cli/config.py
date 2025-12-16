@@ -48,13 +48,13 @@ class ModelsConfig(BaseModel):
     default: str = Field(default=DEFAULT_MODEL, description="Default model for annotation")
     vision: str = Field(default=DEFAULT_VISION_MODEL, description="Vision model for images")
     provider: str | None = Field(default=DEFAULT_PROVIDER, description="Provider preference")
+    temperature: float = Field(default=0.1, ge=0.0, le=1.0, description="Model temperature")
 
 
 class SettingsConfig(BaseModel):
     """General settings."""
 
     schema_version: str = Field(default="8.4.0", description="HED schema version")
-    temperature: float = Field(default=0.1, ge=0.0, le=1.0, description="LLM temperature")
     max_validation_attempts: int = Field(default=5, ge=1, le=10, description="Max retries")
     run_assessment: bool = Field(default=False, description="Run assessment by default")
 
@@ -167,6 +167,7 @@ def get_effective_config(
     api_key: str | None = None,
     api_url: str | None = None,
     model: str | None = None,
+    provider: str | None = None,
     temperature: float | None = None,
     schema_version: str | None = None,
     output_format: str | None = None,
@@ -176,13 +177,19 @@ def get_effective_config(
     Args:
         api_key: Override API key
         api_url: Override API URL
-        model: Override model
+        model: Override model (if non-default, clears provider unless explicitly set)
+        provider: Override provider preference (e.g., "Cerebras")
         temperature: Override temperature
         schema_version: Override schema version
         output_format: Override output format
 
     Returns:
         Tuple of (effective config, effective API key)
+
+    Note:
+        When a custom model is specified without an explicit provider, the provider
+        is cleared. This is because the default provider (Cerebras) only supports
+        specific models.
     """
     config = load_config()
     effective_key = get_api_key(api_key)
@@ -190,10 +197,20 @@ def get_effective_config(
     # Apply overrides
     if api_url:
         config.api.url = api_url
+
+    # Handle model/provider interaction:
+    # If user specifies a model different from default but doesn't specify provider,
+    # clear the provider (since Cerebras only supports specific models)
     if model:
         config.models.default = model
+        # Clear provider if model changed and provider not explicitly set
+        if provider is None and model != DEFAULT_MODEL:
+            config.models.provider = None
+    if provider is not None:  # Allow empty string to clear provider
+        config.models.provider = provider if provider else None
+
     if temperature is not None:
-        config.settings.temperature = temperature
+        config.models.temperature = temperature
     if schema_version:
         config.settings.schema_version = schema_version
     if output_format:

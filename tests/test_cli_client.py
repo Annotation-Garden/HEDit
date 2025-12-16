@@ -38,6 +38,19 @@ class TestHEDitClient:
         assert client.api_url == "https://api.example.com/hedit"
         assert client.api_key == "test-key"
 
+    def test_client_initialization_with_model_settings(self):
+        """Test client initializes with model settings."""
+        client = HEDitClient(
+            api_url="https://api.example.com/hedit",
+            api_key="test-key",
+            model="gpt-4o",
+            provider="OpenAI",
+            temperature=0.5,
+        )
+        assert client.model == "gpt-4o"
+        assert client.provider == "OpenAI"
+        assert client.temperature == 0.5
+
     def test_client_strips_trailing_slash(self):
         """Test client strips trailing slash from URL."""
         client = HEDitClient(api_url="https://api.example.com/hedit/")
@@ -53,6 +66,20 @@ class TestHEDitClient:
         assert headers["X-OpenRouter-Key"] == "sk-or-test-key"
         assert headers["Content-Type"] == "application/json"
         assert headers["User-Agent"] == "hedit-cli"
+
+    def test_headers_with_model_settings(self):
+        """Test headers include model configuration."""
+        client = HEDitClient(
+            api_url="https://api.example.com",
+            api_key="sk-or-test-key",
+            model="gpt-4o",
+            provider="Cerebras",
+            temperature=0.3,
+        )
+        headers = client._get_headers()
+        assert headers["X-OpenRouter-Model"] == "gpt-4o"
+        assert headers["X-OpenRouter-Provider"] == "Cerebras"
+        assert headers["X-OpenRouter-Temperature"] == "0.3"
 
     def test_headers_without_api_key(self):
         """Test headers without API key."""
