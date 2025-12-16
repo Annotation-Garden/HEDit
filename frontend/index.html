@@ -75,49 +75,36 @@
             border-bottom: 4px solid #E99852;
         }
 
-        /* Theme Selector */
-        .theme-selector {
-            display: flex;
-            align-items: center;
-            gap: 4px;
+        /* Theme Toggle Button */
+        .theme-toggle {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(233, 152, 82, 0.3);
-            border-radius: 10px;
-            padding: 4px;
-            margin-right: 16px;
-        }
-
-        .theme-btn {
-            background: transparent;
-            border: none;
-            border-radius: 6px;
-            padding: 6px 8px;
+            border-radius: 8px;
+            padding: 8px;
             cursor: pointer;
             transition: all 0.2s ease;
+            margin-right: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .theme-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
             color: white;
         }
 
-        .theme-btn.active {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(233, 152, 82, 0.5);
         }
 
-        .theme-btn svg {
-            width: 18px;
-            height: 18px;
+        .theme-toggle svg {
+            width: 20px;
+            height: 20px;
+            display: none;
         }
 
-        .theme-btn:hover svg {
-            transform: scale(1.1);
-        }
+        /* Show appropriate icon based on theme mode */
+        .theme-toggle[data-theme="light"] .sun-icon { display: block; }
+        .theme-toggle[data-theme="system"] .system-icon { display: block; }
+        .theme-toggle[data-theme="dark"] .moon-icon { display: block; }
 
         .header-left h1 {
             color: white;
@@ -950,23 +937,17 @@
                 <p class="subtitle">Multi-Agent System for HED Annotation Generation</p>
             </div>
             <div class="header-right">
-                <div class="theme-selector">
-                    <button class="theme-btn" id="theme-light" onclick="setTheme('light')" title="Light mode">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                    </button>
-                    <button class="theme-btn" id="theme-system" onclick="setTheme('system')" title="System preference">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                    </button>
-                    <button class="theme-btn" id="theme-dark" onclick="setTheme('dark')" title="Dark mode">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                        </svg>
-                    </button>
-                </div>
+                <button class="theme-toggle" id="themeToggle" onclick="cycleTheme()" title="Toggle theme (Light/System/Dark)" data-theme="system">
+                    <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <svg class="system-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </button>
                 <a href="https://annotation.garden" target="_blank" rel="noopener noreferrer" class="logo-link" title="Visit Annotation Garden">
                     <div class="logo-container">
                         <img src="assets/AGI-square.svg" alt="Annotation Garden Logo">
@@ -1142,7 +1123,8 @@ Example: A red circle appears on the left side of the screen and the participant
 
     <script src="config.js"></script>
     <script>
-        // Theme Selector Functionality
+        // Theme Toggle Functionality (cycles: light -> system -> dark -> light)
+        const themes = ['light', 'system', 'dark'];
         let currentTheme = 'system';
 
         function getSystemTheme() {
@@ -1156,31 +1138,22 @@ Example: A red circle appears on the left side of the screen and the participant
             } else {
                 document.documentElement.classList.remove('dark');
             }
+            // Update button icon
+            const toggle = document.getElementById('themeToggle');
+            if (toggle) toggle.setAttribute('data-theme', theme);
         }
 
-        function updateThemeButtons() {
-            document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
-            const activeBtn = document.getElementById(`theme-${currentTheme}`);
-            if (activeBtn) activeBtn.classList.add('active');
-        }
-
-        function setTheme(theme) {
-            currentTheme = theme;
-            localStorage.setItem('theme', theme);
-            applyTheme(theme);
-            updateThemeButtons();
+        function cycleTheme() {
+            const currentIndex = themes.indexOf(currentTheme);
+            currentTheme = themes[(currentIndex + 1) % themes.length];
+            localStorage.setItem('theme', currentTheme);
+            applyTheme(currentTheme);
         }
 
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
-            currentTheme = savedTheme || 'system';
+            currentTheme = savedTheme || 'system'; // Default to system
             applyTheme(currentTheme);
-            // Update buttons after DOM is ready
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', updateThemeButtons);
-            } else {
-                updateThemeButtons();
-            }
         }
 
         // Listen for system theme changes when in system mode
@@ -1190,7 +1163,7 @@ Example: A red circle appears on the left side of the screen and the participant
             }
         });
 
-        // Initialize theme on page load (before DOM ready to prevent flash)
+        // Initialize theme on page load
         initTheme();
 
         // Backend API URL - Automatically detect based on environment
