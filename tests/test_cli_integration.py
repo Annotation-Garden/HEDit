@@ -275,7 +275,7 @@ class TestCLIImageAnnotateIntegration:
             return image_path
         except ImportError:
             pytest.skip("PIL not available for image tests")
-            return
+            return None  # Never reached, but satisfies type checker
 
     def test_annotate_image(self, test_api_key, temp_config_dir, test_image):
         """Test annotating an image."""

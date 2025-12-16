@@ -84,8 +84,11 @@ class TestConfigPersistence:
         creds = CredentialsConfig(openrouter_api_key="test-key-12345")
         save_credentials(creds)
 
-        loaded = load_credentials()
-        assert loaded.openrouter_api_key == "test-key-12345"
+        # Clear env var to test file loading (env vars take precedence)
+        with patch.dict(os.environ, {}, clear=True):
+            os.environ.pop("OPENROUTER_API_KEY", None)
+            loaded = load_credentials()
+            assert loaded.openrouter_api_key == "test-key-12345"
 
     def test_save_and_load_config(self, temp_config_dir):
         """Test saving and loading config."""
@@ -112,9 +115,11 @@ class TestConfigPersistence:
 
         clear_credentials()
 
-        # Should return empty credentials
-        loaded = load_credentials()
-        assert loaded.openrouter_api_key is None
+        # Should return empty credentials (clear env var for test)
+        with patch.dict(os.environ, {}, clear=True):
+            os.environ.pop("OPENROUTER_API_KEY", None)
+            loaded = load_credentials()
+            assert loaded.openrouter_api_key is None
 
 
 class TestAPIKeyResolution:

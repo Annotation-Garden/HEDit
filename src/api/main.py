@@ -93,9 +93,9 @@ def create_byok_workflow(openrouter_key: str) -> HedAnnotationWorkflow:
 
     # Create and return workflow
     return HedAnnotationWorkflow(
-        annotation_model=annotation_llm,
-        evaluation_model=evaluation_llm,
-        assessment_model=assessment_llm,
+        llm=annotation_llm,
+        evaluation_llm=evaluation_llm,
+        assessment_llm=assessment_llm,
         schema_dir=schema_dir,
         validator_path=validator_path,
         use_js_validator=use_js_validator,
