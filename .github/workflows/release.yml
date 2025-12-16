@@ -54,7 +54,7 @@ jobs:
           tag_name: ${{ github.ref_name }}
           release_name: Release ${{ steps.get_version.outputs.VERSION }}
           body: |
-            ## HED-BOT ${{ steps.get_version.outputs.VERSION }}
+            ## HEDit ${{ steps.get_version.outputs.VERSION }}
 
             ${{ steps.changelog.outputs.CHANGELOG }}
 
@@ -62,7 +62,12 @@ jobs:
 
             ### Installation
 
-            **Docker (Recommended):**
+            **PyPI (Recommended for CLI):**
+            ```bash
+            pip install hedit
+            ```
+
+            **Docker (for API server):**
             ```bash
             docker pull ghcr.io/${{ github.repository }}:${{ steps.get_version.outputs.VERSION }}
             ```
@@ -70,9 +75,18 @@ jobs:
             **From Source:**
             ```bash
             git clone https://github.com/${{ github.repository }}.git
-            cd hed-bot
+            cd hedit
             git checkout v${{ steps.get_version.outputs.VERSION }}
             pip install -e .
+            ```
+
+            ### Quick Start
+            ```bash
+            # Initialize with your OpenRouter API key
+            hedit init --api-key YOUR_KEY
+
+            # Generate HED annotation
+            hedit annotate "A red circle appears on screen"
             ```
 
             ### Documentation
