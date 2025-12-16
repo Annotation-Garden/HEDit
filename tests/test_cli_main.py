@@ -1,11 +1,14 @@
 """Tests for CLI main commands."""
 
+import os
 from unittest.mock import patch
 
 from typer.testing import CliRunner
 
 from src.cli.main import app
 
+# Set NO_COLOR to disable Rich formatting and prevent terminal width issues in CI
+os.environ["NO_COLOR"] = "1"
 runner = CliRunner()
 
 
