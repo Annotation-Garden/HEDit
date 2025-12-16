@@ -15,20 +15,28 @@ from fastapi.security import APIKeyHeader
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# API Key header name
+# API Key header names
 API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=False)
+OPENROUTER_KEY_HEADER = APIKeyHeader(name="X-OpenRouter-Key", auto_error=False)
 
 # Audit log format
 AUDIT_LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - [AUDIT] %(message)s"
 
 
 class APIKeyAuth:
-    """API Key authentication handler."""
+    """API Key authentication handler.
+
+    Supports two authentication modes:
+    1. Server API key (X-API-Key header) - for server-level access control
+    2. BYOK mode (X-OpenRouter-Key header) - users provide their own OpenRouter key
+    """
 
     def __init__(self):
         """Initialize API key authentication."""
         # Set require_auth first (needed by _load_api_keys)
         self.require_auth = os.getenv("REQUIRE_API_AUTH", "true").lower() == "true"
+        # Allow BYOK mode (users can provide their own OpenRouter key)
+        self.allow_byok = os.getenv("ALLOW_BYOK", "true").lower() == "true"
         # Load API keys from environment
         self.api_keys = self._load_api_keys()
 
@@ -50,8 +58,8 @@ class APIKeyAuth:
             keys.add(api_key.strip())
             i += 1
 
-        # If no keys configured, generate a warning
-        if not keys and self.require_auth:
+        # If no keys configured and BYOK disabled, generate a warning
+        if not keys and self.require_auth and not self.allow_byok:
             logger.warning(
                 "No API keys configured! Set API_KEYS environment variable. "
                 "Authentication is enabled but no keys are set."
@@ -77,14 +85,37 @@ class APIKeyAuth:
         # Check if key exists in configured keys
         return api_key in self.api_keys
 
-    async def __call__(self, api_key: str | None = Security(API_KEY_HEADER)) -> str:
-        """FastAPI dependency for API key authentication.
+    def is_valid_openrouter_key(self, key: str | None) -> bool:
+        """Check if an OpenRouter key appears valid (basic format check).
 
         Args:
-            api_key: API key from request header
+            key: OpenRouter API key to check
 
         Returns:
-            The validated API key
+            True if key has valid format
+        """
+        if not key:
+            return False
+        # OpenRouter keys typically start with "sk-or-" and are reasonably long
+        return key.startswith("sk-or-") and len(key) > 20
+
+    async def __call__(
+        self,
+        api_key: str | None = Security(API_KEY_HEADER),
+        openrouter_key: str | None = Security(OPENROUTER_KEY_HEADER),
+    ) -> str:
+        """FastAPI dependency for API key authentication.
+
+        Supports two modes:
+        1. X-API-Key header - server-level authentication
+        2. X-OpenRouter-Key header - BYOK mode (users provide their own key)
+
+        Args:
+            api_key: API key from X-API-Key header
+            openrouter_key: OpenRouter key from X-OpenRouter-Key header
+
+        Returns:
+            The validated API key or "byok" for BYOK mode
 
         Raises:
             HTTPException: If authentication fails
@@ -93,29 +124,42 @@ class APIKeyAuth:
         if not self.require_auth:
             return "auth_disabled"
 
-        # If no API key provided
-        if not api_key:
-            logger.warning("Request rejected: No API key provided")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="API key required. Include X-API-Key header.",
-                headers={"WWW-Authenticate": "ApiKey"},
-            )
+        # Check for BYOK mode first (X-OpenRouter-Key header)
+        if self.allow_byok and openrouter_key:
+            if self.is_valid_openrouter_key(openrouter_key):
+                logger.info("Request authenticated via BYOK (X-OpenRouter-Key)")
+                return "byok"
+            else:
+                logger.warning("Request rejected: Invalid OpenRouter key format")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid OpenRouter key format. Keys should start with 'sk-or-'.",
+                    headers={"WWW-Authenticate": "ApiKey"},
+                )
 
-        # Verify API key
-        if not self.verify_api_key(api_key):
-            # Log only first 8 chars for debugging without revealing full key
-            # Do not log any part of the API key for security reasons
-            logger.warning("Request rejected: Invalid API key")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid API key",
-                headers={"WWW-Authenticate": "ApiKey"},
-            )
+        # Check for server API key (X-API-Key header)
+        if api_key:
+            if self.verify_api_key(api_key):
+                logger.info("Request authenticated with server API key")
+                return api_key
+            else:
+                logger.warning("Request rejected: Invalid API key")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid API key",
+                    headers={"WWW-Authenticate": "ApiKey"},
+                )
 
-        # Do not log any part of the API key for security reasons
-        logger.info("Request authenticated with API key")
-        return api_key
+        # No valid authentication provided
+        logger.warning("Request rejected: No API key provided")
+        hint = "Include X-OpenRouter-Key header with your OpenRouter API key"
+        if self.api_keys:
+            hint = "Include X-API-Key or X-OpenRouter-Key header"
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Authentication required. {hint}.",
+            headers={"WWW-Authenticate": "ApiKey"},
+        )
 
 
 class AuditLogger:

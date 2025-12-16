@@ -56,10 +56,11 @@ class TestAPIKeyAuth:
         assert auth.require_auth is False
 
     def test_init_no_keys_configured_warning(self, monkeypatch, caplog):
-        """Test warning when no keys configured but auth enabled."""
+        """Test warning when no keys configured but auth enabled and BYOK disabled."""
         monkeypatch.delenv("API_KEYS", raising=False)
         monkeypatch.delenv("API_KEY_1", raising=False)
         monkeypatch.setenv("REQUIRE_API_AUTH", "true")
+        monkeypatch.setenv("ALLOW_BYOK", "false")  # Warning only shown when BYOK disabled
 
         auth = APIKeyAuth()
         assert len(auth.api_keys) == 0
@@ -114,10 +115,10 @@ class TestAPIKeyAuth:
 
         auth = APIKeyAuth()
         with pytest.raises(HTTPException) as exc_info:
-            await auth(api_key=None)
+            await auth(api_key=None, openrouter_key=None)
 
         assert exc_info.value.status_code == 401
-        assert "API key required" in exc_info.value.detail
+        assert "Authentication required" in exc_info.value.detail
 
     @pytest.mark.asyncio
     async def test_call_invalid_key_raises(self, monkeypatch):
@@ -127,7 +128,7 @@ class TestAPIKeyAuth:
 
         auth = APIKeyAuth()
         with pytest.raises(HTTPException) as exc_info:
-            await auth(api_key="wrong_key")
+            await auth(api_key="wrong_key", openrouter_key=None)
 
         assert exc_info.value.status_code == 401
         assert "Invalid API key" in exc_info.value.detail
@@ -139,8 +140,32 @@ class TestAPIKeyAuth:
         monkeypatch.setenv("REQUIRE_API_AUTH", "true")
 
         auth = APIKeyAuth()
-        result = await auth(api_key="valid_key")
+        result = await auth(api_key="valid_key", openrouter_key=None)
         assert result == "valid_key"
+
+    @pytest.mark.asyncio
+    async def test_call_byok_valid_key(self, monkeypatch):
+        """Test __call__ accepts valid OpenRouter key in BYOK mode."""
+        monkeypatch.setenv("REQUIRE_API_AUTH", "true")
+        monkeypatch.setenv("ALLOW_BYOK", "true")
+        monkeypatch.delenv("API_KEYS", raising=False)
+
+        auth = APIKeyAuth()
+        result = await auth(api_key=None, openrouter_key="sk-or-v1-validkey12345678901234567890")
+        assert result == "byok"
+
+    @pytest.mark.asyncio
+    async def test_call_byok_invalid_key_format(self, monkeypatch):
+        """Test __call__ rejects invalid OpenRouter key format."""
+        monkeypatch.setenv("REQUIRE_API_AUTH", "true")
+        monkeypatch.setenv("ALLOW_BYOK", "true")
+
+        auth = APIKeyAuth()
+        with pytest.raises(HTTPException) as exc_info:
+            await auth(api_key=None, openrouter_key="invalid-key")
+
+        assert exc_info.value.status_code == 401
+        assert "Invalid OpenRouter key format" in exc_info.value.detail
 
 
 class TestAuditLogger:

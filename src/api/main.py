@@ -44,6 +44,85 @@ workflow: HedAnnotationWorkflow | None = None
 vision_agent: VisionAgent | None = None
 schema_loader: HedSchemaLoader | None = None
 
+# Cache for BYOK configuration
+_byok_config: dict = {}
+
+
+def create_byok_workflow(openrouter_key: str) -> HedAnnotationWorkflow:
+    """Create a workflow instance using the user's OpenRouter key (BYOK mode).
+
+    Args:
+        openrouter_key: User's OpenRouter API key
+
+    Returns:
+        Configured HedAnnotationWorkflow using the user's key
+    """
+    global _byok_config
+
+    # Get configuration (cached from server startup)
+    llm_temperature = _byok_config.get("temperature", 0.1)
+    provider_preference = _byok_config.get("provider_preference")
+    schema_dir = _byok_config.get("schema_dir")
+    validator_path = _byok_config.get("validator_path")
+    use_js_validator = _byok_config.get("use_js_validator", True)
+
+    # Get model configuration from headers or use defaults
+    annotation_model = get_model_name(os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b"))
+    evaluation_model = get_model_name(os.getenv("EVALUATION_MODEL", "qwen/qwen3-235b-a22b-2507"))
+    assessment_model = get_model_name(os.getenv("ASSESSMENT_MODEL", "openai/gpt-oss-120b"))
+
+    # Create LLMs with user's key
+    annotation_llm = create_openrouter_llm(
+        model=annotation_model,
+        api_key=openrouter_key,
+        temperature=llm_temperature,
+        provider=provider_preference,
+    )
+    evaluation_llm = create_openrouter_llm(
+        model=evaluation_model,
+        api_key=openrouter_key,
+        temperature=llm_temperature,
+        provider=provider_preference,
+    )
+    assessment_llm = create_openrouter_llm(
+        model=assessment_model,
+        api_key=openrouter_key,
+        temperature=llm_temperature,
+        provider=provider_preference,
+    )
+
+    # Create and return workflow
+    return HedAnnotationWorkflow(
+        llm=annotation_llm,
+        evaluation_llm=evaluation_llm,
+        assessment_llm=assessment_llm,
+        schema_dir=schema_dir,
+        validator_path=validator_path,
+        use_js_validator=use_js_validator,
+    )
+
+
+def create_byok_vision_agent(openrouter_key: str) -> VisionAgent:
+    """Create a vision agent instance using the user's OpenRouter key (BYOK mode).
+
+    Args:
+        openrouter_key: User's OpenRouter API key
+
+    Returns:
+        Configured VisionAgent using the user's key
+    """
+    vision_model = os.getenv("VISION_MODEL", "qwen/qwen3-vl-30b-a3b-instruct")
+    vision_provider = os.getenv("VISION_PROVIDER", "deepinfra/fp8")
+
+    vision_llm = create_openrouter_llm(
+        model=vision_model,
+        api_key=openrouter_key,
+        temperature=0.3,
+        provider=vision_provider,
+    )
+
+    return VisionAgent(llm=vision_llm)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -101,6 +180,16 @@ async def lifespan(app: FastAPI):
     )
 
     use_js_validator = os.getenv("USE_JS_VALIDATOR", "true").lower() == "true"
+
+    # Cache BYOK configuration for on-demand workflow creation
+    global _byok_config
+    _byok_config = {
+        "temperature": llm_temperature,
+        "provider_preference": os.getenv("LLM_PROVIDER_PREFERENCE"),
+        "schema_dir": schema_dir,
+        "validator_path": validator_path,
+        "use_js_validator": use_js_validator,
+    }
 
     print(f"Environment: {'Docker' if Path('/app').exists() else 'Local'}")
     print(f"Schema directory: {schema_dir or 'GitHub (dynamic fetch)'}")
@@ -270,7 +359,13 @@ app.add_middleware(
     allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "X-Requested-With", "X-API-Key"],
+    allow_headers=[
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "X-API-Key",
+        "X-OpenRouter-Key",  # BYOK mode
+    ],
     max_age=3600,  # Cache preflight requests for 1 hour
 )
 
@@ -329,15 +424,20 @@ async def health_check() -> HealthResponse:
 
 @app.post("/annotate", response_model=AnnotationResponse)
 async def annotate(
-    request: AnnotationRequest, api_key: str = Depends(api_key_auth)
+    request: AnnotationRequest,
+    req: Request,
+    api_key: str = Depends(api_key_auth),
 ) -> AnnotationResponse:
     """Generate HED annotation from natural language description.
 
-    Requires API key authentication via X-API-Key header.
+    Supports two authentication modes:
+    - X-API-Key header: Server-level authentication
+    - X-OpenRouter-Key header: BYOK mode (uses your OpenRouter key for billing)
 
     Args:
         request: Annotation request with description and parameters
-        api_key: API key for authentication (injected by dependency)
+        req: FastAPI request to extract headers
+        api_key: Authentication result (injected by dependency)
 
     Returns:
         Generated annotation with validation and assessment feedback
@@ -345,15 +445,30 @@ async def annotate(
     Raises:
         HTTPException: If workflow fails or authentication fails
     """
-    if workflow is None:
-        raise HTTPException(status_code=503, detail="Workflow not initialized")
+    # Determine which workflow to use
+    if api_key == "byok":
+        # BYOK mode: Create workflow with user's key
+        openrouter_key = req.headers.get("x-openrouter-key")
+        if not openrouter_key:
+            raise HTTPException(status_code=401, detail="Missing X-OpenRouter-Key header")
+        try:
+            active_workflow = create_byok_workflow(openrouter_key)
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to initialize BYOK workflow: {str(e)}"
+            ) from e
+    else:
+        # Server mode: Use pre-initialized workflow
+        if workflow is None:
+            raise HTTPException(status_code=503, detail="Workflow not initialized")
+        active_workflow = workflow
 
     try:
         # Run annotation workflow with increased recursion limit for long descriptions
         # LangGraph default is 25, increase to 100 for complex workflows
         config = {"recursion_limit": 100}
 
-        final_state = await workflow.run(
+        final_state = await active_workflow.run(
             input_description=request.description,
             schema_version=request.schema_version,
             max_validation_attempts=request.max_validation_attempts,
@@ -389,18 +504,23 @@ async def annotate(
 
 @app.post("/annotate-from-image", response_model=ImageAnnotationResponse)
 async def annotate_from_image(
-    request: ImageAnnotationRequest, api_key: str = Depends(api_key_auth)
+    request: ImageAnnotationRequest,
+    req: Request,
+    api_key: str = Depends(api_key_auth),
 ) -> ImageAnnotationResponse:
     """Generate HED annotation from an image.
 
-    Requires API key authentication via X-API-Key header.
+    Supports two authentication modes:
+    - X-API-Key header: Server-level authentication
+    - X-OpenRouter-Key header: BYOK mode (uses your OpenRouter key for billing)
 
     This endpoint uses a vision-language model to generate a description of the image,
     then passes that description through the standard HED annotation workflow.
 
     Args:
         request: Image annotation request with base64 image and parameters
-        api_key: API key for authentication (injected by dependency)
+        req: FastAPI request to extract headers
+        api_key: Authentication result (injected by dependency)
 
     Returns:
         Generated annotation with image description and validation feedback
@@ -408,17 +528,34 @@ async def annotate_from_image(
     Raises:
         HTTPException: If workflow or vision agent fails or authentication fails
     """
-    if workflow is None:
-        raise HTTPException(status_code=503, detail="Workflow not initialized")
-
-    if vision_agent is None:
-        raise HTTPException(
-            status_code=503, detail="Vision model not available. Please use OpenRouter provider."
-        )
+    # Determine which workflow and vision agent to use
+    if api_key == "byok":
+        # BYOK mode: Create workflow and vision agent with user's key
+        openrouter_key = req.headers.get("x-openrouter-key")
+        if not openrouter_key:
+            raise HTTPException(status_code=401, detail="Missing X-OpenRouter-Key header")
+        try:
+            active_workflow = create_byok_workflow(openrouter_key)
+            active_vision_agent = create_byok_vision_agent(openrouter_key)
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to initialize BYOK agents: {str(e)}"
+            ) from e
+    else:
+        # Server mode: Use pre-initialized workflow and vision agent
+        if workflow is None:
+            raise HTTPException(status_code=503, detail="Workflow not initialized")
+        if vision_agent is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Vision model not available. Please use OpenRouter provider.",
+            )
+        active_workflow = workflow
+        active_vision_agent = vision_agent
 
     try:
         # Step 1: Generate image description using vision model
-        vision_result = await vision_agent.describe_image(
+        vision_result = await active_vision_agent.describe_image(
             image_data=request.image,
             custom_prompt=request.prompt,
         )
@@ -429,7 +566,7 @@ async def annotate_from_image(
         # Step 2: Pass description through HED annotation workflow
         config = {"recursion_limit": 100}
 
-        final_state = await workflow.run(
+        final_state = await active_workflow.run(
             input_description=image_description,
             schema_version=request.schema_version,
             max_validation_attempts=request.max_validation_attempts,
