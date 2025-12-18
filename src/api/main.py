@@ -48,30 +48,49 @@ schema_loader: HedSchemaLoader | None = None
 _byok_config: dict = {}
 
 
-def create_byok_workflow(openrouter_key: str) -> HedAnnotationWorkflow:
+def create_byok_workflow(
+    openrouter_key: str,
+    model: str | None = None,
+    provider: str | None = None,
+    temperature: float | None = None,
+) -> HedAnnotationWorkflow:
     """Create a workflow instance using the user's OpenRouter key (BYOK mode).
 
     Args:
         openrouter_key: User's OpenRouter API key
+        model: Override model for all agents (uses server default if None)
+        provider: Override provider preference (uses server default if None)
+        temperature: Override LLM temperature (uses server default if None)
 
     Returns:
-        Configured HedAnnotationWorkflow using the user's key
+        Configured HedAnnotationWorkflow using the user's key and model settings
     """
     global _byok_config
 
     # Get configuration (cached from server startup)
-    llm_temperature = _byok_config.get("temperature", 0.1)
-    provider_preference = _byok_config.get("provider_preference")
     schema_dir = _byok_config.get("schema_dir")
     validator_path = _byok_config.get("validator_path")
     use_js_validator = _byok_config.get("use_js_validator", True)
 
-    # Get model configuration from headers or use defaults
-    annotation_model = get_model_name(os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b"))
-    evaluation_model = get_model_name(os.getenv("EVALUATION_MODEL", "qwen/qwen3-235b-a22b-2507"))
-    assessment_model = get_model_name(os.getenv("ASSESSMENT_MODEL", "openai/gpt-oss-120b"))
+    # Use user-provided settings or fall back to server defaults
+    llm_temperature = (
+        temperature if temperature is not None else _byok_config.get("temperature", 0.1)
+    )
+    provider_preference = (
+        provider if provider is not None else _byok_config.get("provider_preference")
+    )
 
-    # Create LLMs with user's key
+    # Get model configuration: user override > server env var > default
+    default_annotation_model = os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b")
+    default_evaluation_model = os.getenv("EVALUATION_MODEL", "qwen/qwen3-235b-a22b-2507")
+    default_assessment_model = os.getenv("ASSESSMENT_MODEL", "openai/gpt-oss-120b")
+
+    # If user provides a model, use it for all agents (default override)
+    annotation_model = get_model_name(model if model else default_annotation_model)
+    evaluation_model = get_model_name(model if model else default_evaluation_model)
+    assessment_model = get_model_name(model if model else default_assessment_model)
+
+    # Create LLMs with user's key and settings
     annotation_llm = create_openrouter_llm(
         model=annotation_model,
         api_key=openrouter_key,
@@ -102,23 +121,36 @@ def create_byok_workflow(openrouter_key: str) -> HedAnnotationWorkflow:
     )
 
 
-def create_byok_vision_agent(openrouter_key: str) -> VisionAgent:
+def create_byok_vision_agent(
+    openrouter_key: str,
+    vision_model: str | None = None,
+    provider: str | None = None,
+    temperature: float | None = None,
+) -> VisionAgent:
     """Create a vision agent instance using the user's OpenRouter key (BYOK mode).
 
     Args:
         openrouter_key: User's OpenRouter API key
+        vision_model: Override vision model (uses server default if None)
+        provider: Override provider preference (uses server default if None)
+        temperature: Override temperature (uses 0.3 default if None)
 
     Returns:
-        Configured VisionAgent using the user's key
+        Configured VisionAgent using the user's key and model settings
     """
-    vision_model = os.getenv("VISION_MODEL", "qwen/qwen3-vl-30b-a3b-instruct")
-    vision_provider = os.getenv("VISION_PROVIDER", "deepinfra/fp8")
+    # Use user-provided settings or fall back to server defaults
+    default_vision_model = os.getenv("VISION_MODEL", "qwen/qwen3-vl-30b-a3b-instruct")
+    default_vision_provider = os.getenv("VISION_PROVIDER", "deepinfra/fp8")
+
+    actual_model = vision_model if vision_model else default_vision_model
+    actual_provider = provider if provider is not None else default_vision_provider
+    actual_temperature = temperature if temperature is not None else 0.3
 
     vision_llm = create_openrouter_llm(
-        model=vision_model,
+        model=actual_model,
         api_key=openrouter_key,
-        temperature=0.3,
-        provider=vision_provider,
+        temperature=actual_temperature,
+        provider=actual_provider,
     )
 
     return VisionAgent(llm=vision_llm)
@@ -365,6 +397,10 @@ app.add_middleware(
         "X-Requested-With",
         "X-API-Key",
         "X-OpenRouter-Key",  # BYOK mode
+        "X-OpenRouter-Model",  # BYOK model override
+        "X-OpenRouter-Vision-Model",  # BYOK vision model override
+        "X-OpenRouter-Provider",  # BYOK provider preference
+        "X-OpenRouter-Temperature",  # BYOK temperature override
     ],
     max_age=3600,  # Cache preflight requests for 1 hour
 )
@@ -447,12 +483,29 @@ async def annotate(
     """
     # Determine which workflow to use
     if api_key == "byok":
-        # BYOK mode: Create workflow with user's key
+        # BYOK mode: Create workflow with user's key and model settings
         openrouter_key = req.headers.get("x-openrouter-key")
         if not openrouter_key:
             raise HTTPException(status_code=401, detail="Missing X-OpenRouter-Key header")
+
+        # Get model config: request body > headers > server defaults
+        model = request.model or req.headers.get("x-openrouter-model")
+        provider = request.provider or req.headers.get("x-openrouter-provider")
+        temp_header = req.headers.get("x-openrouter-temperature")
+        temperature = request.temperature
+        if temperature is None and temp_header:
+            try:
+                temperature = float(temp_header)
+            except ValueError:
+                pass  # Invalid header value, use default
+
         try:
-            active_workflow = create_byok_workflow(openrouter_key)
+            active_workflow = create_byok_workflow(
+                openrouter_key,
+                model=model,
+                provider=provider,
+                temperature=temperature,
+            )
         except Exception as e:
             raise HTTPException(
                 status_code=500, detail=f"Failed to initialize BYOK workflow: {str(e)}"
@@ -530,13 +583,36 @@ async def annotate_from_image(
     """
     # Determine which workflow and vision agent to use
     if api_key == "byok":
-        # BYOK mode: Create workflow and vision agent with user's key
+        # BYOK mode: Create workflow and vision agent with user's key and model settings
         openrouter_key = req.headers.get("x-openrouter-key")
         if not openrouter_key:
             raise HTTPException(status_code=401, detail="Missing X-OpenRouter-Key header")
+
+        # Get model config: request body > headers > server defaults
+        model = request.model or req.headers.get("x-openrouter-model")
+        vision_model = request.vision_model or req.headers.get("x-openrouter-vision-model")
+        provider = request.provider or req.headers.get("x-openrouter-provider")
+        temp_header = req.headers.get("x-openrouter-temperature")
+        temperature = request.temperature
+        if temperature is None and temp_header:
+            try:
+                temperature = float(temp_header)
+            except ValueError:
+                pass  # Invalid header value, use default
+
         try:
-            active_workflow = create_byok_workflow(openrouter_key)
-            active_vision_agent = create_byok_vision_agent(openrouter_key)
+            active_workflow = create_byok_workflow(
+                openrouter_key,
+                model=model,
+                provider=provider,
+                temperature=temperature,
+            )
+            active_vision_agent = create_byok_vision_agent(
+                openrouter_key,
+                vision_model=vision_model,
+                provider=provider,
+                temperature=temperature,
+            )
         except Exception as e:
             raise HTTPException(
                 status_code=500, detail=f"Failed to initialize BYOK agents: {str(e)}"

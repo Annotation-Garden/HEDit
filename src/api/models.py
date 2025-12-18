@@ -11,6 +11,9 @@ class AnnotationRequest(BaseModel):
         schema_version: HED schema version to use
         max_validation_attempts: Maximum validation retry attempts
         run_assessment: Whether to run final assessment (adds extra time)
+        model: Override model for annotation (BYOK mode only)
+        provider: Override provider preference (BYOK mode only)
+        temperature: Override LLM temperature (BYOK mode only)
     """
 
     description: str = Field(
@@ -33,6 +36,24 @@ class AnnotationRequest(BaseModel):
     run_assessment: bool = Field(
         default=False,
         description="Run final assessment for completeness (adds extra processing time)",
+    )
+    # BYOK model configuration (optional, only used when X-OpenRouter-Key is provided)
+    model: str | None = Field(
+        default=None,
+        description="Override model for annotation (BYOK mode only, e.g., 'openai/gpt-4o')",
+        examples=["openai/gpt-4o", "anthropic/claude-3.5-sonnet", "qwen/qwen3-235b-a22b-2507"],
+    )
+    provider: str | None = Field(
+        default=None,
+        description="Override provider preference (BYOK mode only, e.g., 'Cerebras')",
+        examples=["Cerebras", "deepinfra/fp8", None],
+    )
+    temperature: float | None = Field(
+        default=None,
+        description="Override LLM temperature (BYOK mode only, 0.0-1.0)",
+        ge=0.0,
+        le=1.0,
+        examples=[0.1, 0.3, 0.7],
     )
 
 
@@ -108,6 +129,10 @@ class ImageAnnotationRequest(BaseModel):
         schema_version: HED schema version to use
         max_validation_attempts: Maximum validation retry attempts
         run_assessment: Whether to run final assessment (adds extra time)
+        model: Override model for annotation (BYOK mode only)
+        vision_model: Override vision model for image description (BYOK mode only)
+        provider: Override provider preference (BYOK mode only)
+        temperature: Override LLM temperature (BYOK mode only)
     """
 
     image: str = Field(
@@ -134,6 +159,29 @@ class ImageAnnotationRequest(BaseModel):
     run_assessment: bool = Field(
         default=False,
         description="Run final assessment for completeness (adds extra processing time)",
+    )
+    # BYOK model configuration (optional, only used when X-OpenRouter-Key is provided)
+    model: str | None = Field(
+        default=None,
+        description="Override model for annotation (BYOK mode only, e.g., 'openai/gpt-4o')",
+        examples=["openai/gpt-4o", "anthropic/claude-3.5-sonnet"],
+    )
+    vision_model: str | None = Field(
+        default=None,
+        description="Override vision model for image description (BYOK mode only)",
+        examples=["qwen/qwen3-vl-30b-a3b-instruct", "openai/gpt-4o"],
+    )
+    provider: str | None = Field(
+        default=None,
+        description="Override provider preference (BYOK mode only, e.g., 'Cerebras')",
+        examples=["Cerebras", "deepinfra/fp8", None],
+    )
+    temperature: float | None = Field(
+        default=None,
+        description="Override LLM temperature (BYOK mode only, 0.0-1.0)",
+        ge=0.0,
+        le=1.0,
+        examples=[0.1, 0.3, 0.7],
     )
 
 
