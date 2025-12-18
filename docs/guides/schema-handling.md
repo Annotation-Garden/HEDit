@@ -139,7 +139,7 @@ def find_closest_match(invalid_tag: str) -> list[str]:
 - `Squar` → `Square`
 - `Vis` → `Visual-presentation`, `Viseme`, `Visible`
 
-## Extenstion Allowed Tags
+## Extension Allowed Tags
 
 Common extensionAllowed tags include:
 - `Action` - For specific actions not in schema

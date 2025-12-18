@@ -127,3 +127,10 @@ python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+
+[tool.codespell]
+# Ref: https://github.com/codespell-project/codespell#using-a-config-file
+skip = '.git*,*.svg,package-lock.json'
+check-hidden = true
+# ignore-regex = ''
+# ignore-words-list = ''
