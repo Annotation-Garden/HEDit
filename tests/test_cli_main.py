@@ -67,14 +67,20 @@ class TestAnnotateCommand:
 
     def test_annotate_no_api_key(self, tmp_path):
         """Test annotate fails without API key."""
-        with (
-            patch("src.cli.config.CONFIG_DIR", tmp_path),
-            patch("src.cli.config.CONFIG_FILE", tmp_path / "config.yaml"),
-            patch("src.cli.config.CREDENTIALS_FILE", tmp_path / "credentials.yaml"),
-        ):
-            result = runner.invoke(app, ["annotate", "test description"])
-            assert result.exit_code == 1
-            assert "No API key" in result.output or "api key" in result.output.lower()
+        # Clear any env vars that might leak from other tests
+        env_backup = os.environ.pop("OPENROUTER_API_KEY", None)
+        try:
+            with (
+                patch("src.cli.config.CONFIG_DIR", tmp_path),
+                patch("src.cli.config.CONFIG_FILE", tmp_path / "config.yaml"),
+                patch("src.cli.config.CREDENTIALS_FILE", tmp_path / "credentials.yaml"),
+            ):
+                result = runner.invoke(app, ["annotate", "test description"])
+                assert result.exit_code == 1
+                assert "No API key" in result.output or "api key" in result.output.lower()
+        finally:
+            if env_backup:
+                os.environ["OPENROUTER_API_KEY"] = env_backup
 
     def test_annotate_with_api_key(self, tmp_path):
         """Test annotate with API key makes request."""
