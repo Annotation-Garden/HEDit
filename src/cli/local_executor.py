@@ -326,14 +326,25 @@ class LocalExecutionBackend(ExecutionBackend):
         self._ensure_deps()
 
         try:
+            from hed.schema import load_schema_version
+
             from src.validation.hed_validator import HedPythonValidator
 
-            validator = HedPythonValidator(schema_version=schema_version)
+            # Load schema from version string
+            schema = load_schema_version(schema_version)
+            validator = HedPythonValidator(schema=schema)
             result = validator.validate(hed_string)
+
+            # Convert ValidationResult to dict format
+            messages = []
+            for error in result.errors:
+                messages.append(f"[ERROR] {error.message}")
+            for warning in result.warnings:
+                messages.append(f"[WARNING] {warning.message}")
 
             return {
                 "is_valid": result.is_valid,
-                "messages": result.messages,
+                "messages": messages,
             }
         except ImportError:
             # hedtools not installed, return a warning
