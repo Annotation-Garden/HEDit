@@ -51,6 +51,15 @@ class ModelsConfig(BaseModel):
     temperature: float = Field(default=0.1, ge=0.0, le=1.0, description="Model temperature")
 
 
+class ExecutionMode(BaseModel):
+    """Execution mode configuration."""
+
+    mode: str = Field(
+        default="api",
+        description="Execution mode: 'api' (use backend) or 'standalone' (run locally)",
+    )
+
+
 class SettingsConfig(BaseModel):
     """General settings."""
 
@@ -80,6 +89,7 @@ class CLIConfig(BaseModel):
     models: ModelsConfig = Field(default_factory=ModelsConfig)
     settings: SettingsConfig = Field(default_factory=SettingsConfig)
     output: OutputConfig = Field(default_factory=OutputConfig)
+    execution: ExecutionMode = Field(default_factory=ExecutionMode)
 
 
 def ensure_config_dir() -> None:
@@ -171,6 +181,7 @@ def get_effective_config(
     temperature: float | None = None,
     schema_version: str | None = None,
     output_format: str | None = None,
+    mode: str | None = None,
 ) -> tuple[CLIConfig, str | None]:
     """Get effective config with command-line overrides applied.
 
@@ -182,6 +193,7 @@ def get_effective_config(
         temperature: Override temperature
         schema_version: Override schema version
         output_format: Override output format
+        mode: Override execution mode ("api" or "standalone")
 
     Returns:
         Tuple of (effective config, effective API key)
@@ -215,6 +227,10 @@ def get_effective_config(
         config.settings.schema_version = schema_version
     if output_format:
         config.output.format = output_format
+    if mode:
+        if mode not in ("api", "standalone"):
+            raise ValueError(f"Invalid mode: {mode}. Must be 'api' or 'standalone'")
+        config.execution.mode = mode
 
     return config, effective_key
 

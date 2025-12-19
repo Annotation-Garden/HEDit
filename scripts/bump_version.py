@@ -3,9 +3,16 @@
 
 This script helps manage semantic versioning with support for:
 - major.minor.patch version bumping
-- Pre-release labels (alpha, beta, rc, dev)
+- Pre-release labels (alpha, beta, rc, dev) in PEP 440 format
 - Changing prerelease label without version bump
 - Automatic git tagging and GitHub release creation
+
+PEP 440 Version Format:
+    - dev:   0.6.3.dev0  (development pre-release)
+    - alpha: 0.6.3a0     (alpha pre-release)
+    - beta:  0.6.3b0     (beta pre-release)
+    - rc:    0.6.3rc0    (release candidate)
+    - stable: 0.6.3      (final release)
 
 Usage:
     python scripts/bump_version.py [major|minor|patch] [--prerelease alpha|beta|rc|dev|stable]
@@ -13,10 +20,10 @@ Usage:
     python scripts/bump_version.py --current  # Show current version
 
 Examples:
-    python scripts/bump_version.py patch                      # 0.3.0-alpha -> 0.3.1-alpha
-    python scripts/bump_version.py minor --prerelease beta    # 0.3.0-alpha -> 0.4.0-beta
-    python scripts/bump_version.py major --prerelease stable  # 0.3.0-alpha -> 1.0.0
-    python scripts/bump_version.py --prerelease alpha         # 0.4.5-dev -> 0.4.5-alpha
+    python scripts/bump_version.py patch                      # 0.3.0a0 -> 0.3.1a0
+    python scripts/bump_version.py minor --prerelease beta    # 0.3.0a0 -> 0.4.0b0
+    python scripts/bump_version.py major --prerelease stable  # 0.3.0a0 -> 1.0.0
+    python scripts/bump_version.py --prerelease alpha         # 0.4.5.dev0 -> 0.4.5a0
 """
 
 import argparse
@@ -34,6 +41,23 @@ class VersionBumper:
         self.version_file = project_root / "src" / "version.py"
         self.pyproject_file = project_root / "pyproject.toml"
 
+    # PEP 440 prerelease suffix mapping
+    PRERELEASE_SUFFIXES = {
+        "dev": ".dev0",
+        "alpha": "a0",
+        "beta": "b0",
+        "rc": "rc0",
+        "stable": "",
+    }
+
+    # Reverse mapping for parsing
+    PRERELEASE_PATTERNS = {
+        r"\.dev\d*": "dev",
+        r"a\d*": "alpha",
+        r"b\d*": "beta",
+        r"rc\d*": "rc",
+    }
+
     def get_current_version(self) -> tuple[int, int, int, str]:
         """Read the current version from version.py."""
         content = self.version_file.read_text()
@@ -45,20 +69,36 @@ class VersionBumper:
 
         version_str = version_match.group(1)
 
-        # Parse version string (e.g., "0.3.0-alpha" or "1.0.0")
-        match = re.match(r"(\d+)\.(\d+)\.(\d+)(?:-(\w+))?", version_str)
+        # Parse PEP 440 version string
+        # Handles: 0.6.3, 0.6.3a0, 0.6.3b0, 0.6.3rc0, 0.6.3.dev0
+        # Also handles legacy format: 0.6.3-alpha, 0.6.3-dev
+        match = re.match(r"(\d+)\.(\d+)\.(\d+)(?:[-.]?(.+))?", version_str)
         if not match:
             raise ValueError(f"Invalid version format: {version_str}")
 
-        major, minor, patch, prerelease = match.groups()
-        return int(major), int(minor), int(patch), prerelease or "stable"
+        major, minor, patch, suffix = match.groups()
+
+        # Determine prerelease type from suffix
+        prerelease = "stable"
+        if suffix:
+            # Check for PEP 440 suffixes
+            for pattern, label in self.PRERELEASE_PATTERNS.items():
+                if re.match(pattern, suffix):
+                    prerelease = label
+                    break
+            else:
+                # Legacy format (e.g., -alpha, -dev)
+                suffix_lower = suffix.lower()
+                if suffix_lower in self.PRERELEASE_SUFFIXES:
+                    prerelease = suffix_lower
+
+        return int(major), int(minor), int(patch), prerelease
 
     def format_version(self, major: int, minor: int, patch: int, prerelease: str) -> str:
-        """Format version tuple into version string."""
+        """Format version tuple into PEP 440 compliant version string."""
         version = f"{major}.{minor}.{patch}"
-        if prerelease and prerelease != "stable":
-            version += f"-{prerelease}"
-        return version
+        suffix = self.PRERELEASE_SUFFIXES.get(prerelease, "")
+        return version + suffix
 
     def bump_version(self, bump_type: str | None, new_prerelease: str = None) -> tuple[str, str]:
         """Bump version and return (old_version, new_version)."""

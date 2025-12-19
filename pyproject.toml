@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hedit"
-version = "0.6.2-alpha"
+version = "0.6.3a0"
 description = "Multi-agent system for HED annotation generation and validation"
-readme = "README.md"
+readme = "PKG_README.md"
 requires-python = ">=3.12"
 license = "MIT"
 authors = [
@@ -23,27 +23,18 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 
+# Core CLI dependencies (lightweight, ~100MB)
+# For full standalone mode, install with: pip install hedit[standalone]
 dependencies = [
-    "langgraph>=0.2.0",
-    "langchain>=0.3.0",
-    "langchain-community>=0.3.0",
-    "langchain-core>=0.3.0",
-    "langchain-openai>=0.3.0",
-    "fastapi>=0.121.0",
-    "uvicorn[standard]>=0.38.0",
-    "pydantic>=2.12.0",
-    "python-multipart>=0.0.17",
-    "aiofiles>=25.1.0",
-    "httpx>=0.28.0",
-    "hedtools>=0.5.0",
-    "lxml>=5.3.0",
-    "beautifulsoup4>=4.12.3",
-    "pillow>=11.0.0",
-    # CLI dependencies
+    # CLI framework
     "typer>=0.20.0",
     "rich>=14.0.0",
     "platformdirs>=4.5.0",
     "pyyaml>=6.0.2",
+    # HTTP client for API mode
+    "httpx>=0.28.0",
+    # Data validation
+    "pydantic>=2.12.0",
 ]
 
 [project.scripts]
@@ -51,18 +42,46 @@ hedit = "src.cli.main:cli"
 
 [project.urls]
 Homepage = "https://annotation.garden/hedit"
-Documentation = "https://github.com/Annotation-Garden/hedit#readme"
+Documentation = "https://docs.annotation.garden/hedit"
 Repository = "https://github.com/Annotation-Garden/hedit"
 Issues = "https://github.com/Annotation-Garden/hedit/issues"
 
 [project.optional-dependencies]
+# Standalone mode: run LangGraph workflow locally without backend (~2GB)
+standalone = [
+    "langgraph>=0.2.0",
+    "langchain>=0.3.0",
+    "langchain-community>=0.3.0",
+    "langchain-core>=0.3.0",
+    "langchain-openai>=0.3.0",
+    "hedtools>=0.5.0",
+    "lxml>=5.3.0",
+    "beautifulsoup4>=4.12.3",
+    "pillow>=11.0.0",
+    "nest-asyncio>=1.6.0",
+]
+# API server: run the HEDit backend server
+api = [
+    "hedit[standalone]",  # Server needs workflow capabilities
+    "fastapi>=0.121.0",
+    "uvicorn[standard]>=0.38.0",
+    "python-multipart>=0.0.17",
+    "aiofiles>=25.1.0",
+    "python-dotenv>=1.0.0",
+]
+# Development dependencies
 dev = [
+    "hedit[api]",  # Dev needs full installation
     "pytest>=8.3.0",
     "pytest-cov>=5.0.0",
     "pytest-asyncio>=0.24.0",
     "ruff>=0.7.0",
     "black>=24.8.0",
     "mypy>=1.11.0",
+]
+# All dependencies
+all = [
+    "hedit[api,dev]",
 ]
 
 [tool.ruff]

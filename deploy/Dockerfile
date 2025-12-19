@@ -38,10 +38,10 @@ WORKDIR /app
 ARG GIT_COMMIT=unknown
 ENV GIT_COMMIT=${GIT_COMMIT}
 
-# Copy requirements and install Python dependencies
+# Copy requirements and install Python dependencies with API extras
 COPY pyproject.toml README.md /app/
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir .
+    pip install --no-cache-dir ".[api]"
 
 # Copy the application code
 COPY src /app/src

@@ -1,7 +1,9 @@
 """HEDit CLI - Main entry point.
 
 Command-line interface for generating HED annotations from natural language.
-Uses the HEDit API (api.annotation.garden/hedit) with bring-your-own-key (BYOK) support.
+Supports two execution modes:
+- API mode (default): Uses api.annotation.garden backend
+- Standalone mode: Runs LangGraph workflow locally (requires hedit[standalone])
 """
 
 from pathlib import Path
@@ -11,10 +13,11 @@ import typer
 from rich.console import Console
 
 from src.cli import output
-from src.cli.client import APIError, create_client
+from src.cli.client import APIError
 from src.cli.config import (
     CONFIG_FILE,
     CREDENTIALS_FILE,
+    CLIConfig,
     clear_credentials,
     get_config_paths,
     get_effective_config,
@@ -24,6 +27,7 @@ from src.cli.config import (
     save_credentials,
     update_config,
 )
+from src.cli.executor import ExecutionBackend, ExecutionError
 from src.version import __version__
 
 # Main app
@@ -116,6 +120,72 @@ TemperatureOption = Annotated[
     ),
 ]
 
+StandaloneOption = Annotated[
+    bool,
+    typer.Option(
+        "--standalone",
+        help="Run locally without backend (requires hedit[standalone])",
+    ),
+]
+
+ApiModeOption = Annotated[
+    bool,
+    typer.Option(
+        "--api",
+        help="Use API backend (default)",
+    ),
+]
+
+
+def get_executor(
+    config: CLIConfig, api_key: str | None, mode_override: str | None = None
+) -> ExecutionBackend:
+    """Get the appropriate execution backend based on configuration.
+
+    Args:
+        config: CLI configuration
+        api_key: OpenRouter API key
+        mode_override: Override mode from --standalone/--api flags
+
+    Returns:
+        Configured ExecutionBackend instance
+
+    Raises:
+        typer.Exit: If standalone mode requested but dependencies not available
+    """
+    mode = mode_override or config.execution.mode
+
+    if mode == "standalone":
+        from src.cli.local_executor import LocalExecutionBackend
+
+        executor = LocalExecutionBackend(
+            api_key=api_key,
+            model=config.models.default,
+            vision_model=config.models.vision,
+            provider=config.models.provider,
+            temperature=config.models.temperature,
+        )
+
+        if not executor.is_available():
+            output.print_error(
+                "Standalone mode requires additional dependencies",
+                hint="Install with: pip install hedit[standalone]",
+            )
+            raise typer.Exit(1)
+
+        return executor
+    else:
+        from src.cli.api_executor import APIExecutionBackend
+
+        return APIExecutionBackend(
+            api_url=config.api.url,
+            api_key=api_key,
+            model=config.models.default,
+            vision_model=config.models.vision,
+            provider=config.models.provider,
+            temperature=config.models.temperature,
+        )
+
 
 def version_callback(value: bool) -> None:
     """Print version and exit."""
@@ -185,6 +255,13 @@ def init(
             help="LLM temperature (0.0-1.0, lower = more consistent)",
         ),
     ] = None,
+    standalone: Annotated[
+        bool,
+        typer.Option(
+            "--standalone",
+            help="Set default mode to standalone (run locally without backend)",
+        ),
+    ] = False,
 ) -> None:
     """Initialize HEDit CLI with your API key and preferences.
 
@@ -192,6 +269,10 @@ def init(
     to provide the API key for every command.
 
     Get an OpenRouter API key at: https://openrouter.ai/keys
+
+    Examples:
+        hedit init --api-key YOUR_KEY           # API mode (default)
+        hedit init --api-key YOUR_KEY --standalone  # Standalone mode
     """
     # Load existing config
     config = load_config()
@@ -208,6 +289,8 @@ def init(
         config.models.provider = provider
     if temperature is not None:
         config.models.temperature = temperature
+    if standalone:
+        config.execution.mode = "standalone"
 
     # Save
     save_credentials(creds)
@@ -216,21 +299,42 @@ def init(
     output.print_success("Configuration saved!")
     output.print_info(f"Config file: {CONFIG_FILE}")
     output.print_info(f"Credentials: {CREDENTIALS_FILE}")
+    output.print_info(f"Execution mode: {config.execution.mode}")
 
-    # Test connection
+    # Test connection based on mode
     if creds.openrouter_api_key:
-        output.print_progress("Testing API connection")
-        try:
-            client = create_client(config, creds.openrouter_api_key)
-            health = client.health()
-            if health.get("status") == "healthy":
-                output.print_success("API connection successful!")
-            else:
-                output.print_info(f"API status: {health.get('status', 'unknown')}")
-        except APIError as e:
-            output.print_error(f"Could not connect to API: {e}", hint="Check your API key and URL")
-        except Exception as e:
-            output.print_error(f"Connection test failed: {e}")
+        if config.execution.mode == "standalone":
+            output.print_progress("Checking standalone mode dependencies")
+            try:
+                executor = get_executor(config, creds.openrouter_api_key)
+                health = executor.health()
+                if health.get("status") == "healthy":
+                    output.print_success("Standalone mode ready!")
+                    if not health.get("validator_available"):
+                        output.print_info(
+                            "Note: hedtools not installed; local validation unavailable"
+                        )
+                else:
+                    output.print_info(f"Status: {health.get('status', 'unknown')}")
+            except ExecutionError as e:
+                output.print_error(f"Standalone mode issue: {e}", hint=e.detail)
+        else:
+            output.print_progress("Testing API connection")
+            try:
+                executor = get_executor(config, creds.openrouter_api_key)
+                health = executor.health()
+                if health.get("status") == "healthy":
+                    output.print_success("API connection successful!")
+                else:
+                    output.print_info(f"API status: {health.get('status', 'unknown')}")
+            except ExecutionError as e:
+                output.print_error(f"Could not connect to API: {e}", hint=e.detail)
+            except APIError as e:
+                output.print_error(
+                    f"Could not connect to API: {e}", hint="Check your API key and URL"
+                )
+            except Exception as e:
+                output.print_error(f"Connection test failed: {e}")
 
 
 @app.command()
@@ -260,6 +364,8 @@ def annotate(
             help="Run completeness assessment",
         ),
     ] = False,
+    standalone: StandaloneOption = False,
+    api_mode: ApiModeOption = False,
     verbose: VerboseOption = False,
 ) -> None:
     """Generate HED annotation from a text description.
@@ -269,7 +375,15 @@ def annotate(
         hedit annotate "Participant pressed the spacebar" --schema 8.4.0
         hedit annotate "Audio beep plays" -o json > result.json
         hedit annotate "..." --model gpt-4o-mini --temperature 0.2
+        hedit annotate "..." --standalone  # Run locally
     """
+    # Determine mode override
+    mode_override = None
+    if standalone:
+        mode_override = "standalone"
+    elif api_mode:
+        mode_override = "api"
+
     config, effective_key = get_effective_config(
         api_key=api_key,
         api_url=api_url,
@@ -288,12 +402,13 @@ def annotate(
         raise typer.Exit(1)
 
     # Show progress if not piped
+    mode_name = mode_override or config.execution.mode
     if not output.is_piped():
-        output.print_progress("Generating HED annotation")
+        output.print_progress(f"Generating HED annotation ({mode_name} mode)")
 
     try:
-        client = create_client(config, effective_key)
-        result = client.annotate(
+        executor = get_executor(config, effective_key, mode_override)
+        result = executor.annotate(
             description=description,
             schema_version=schema_version or config.settings.schema_version,
             max_validation_attempts=max_attempts,
@@ -305,6 +420,9 @@ def annotate(
         if result.get("status") != "success" or not result.get("is_valid"):
             raise typer.Exit(1)
 
+    except ExecutionError as e:
+        output.print_error(str(e), hint=e.detail)
+        raise typer.Exit(1) from None
     except APIError as e:
         output.print_error(str(e), hint=e.detail)
         raise typer.Exit(1) from None
@@ -344,6 +462,8 @@ def annotate_image(
             help="Run completeness assessment",
         ),
     ] = False,
+    standalone: StandaloneOption = False,
+    api_mode: ApiModeOption = False,
     verbose: VerboseOption = False,
 ) -> None:
     """Generate HED annotation from an image.
@@ -354,11 +474,19 @@ def annotate_image(
         hedit annotate-image stimulus.png
         hedit annotate-image photo.jpg --prompt "Describe the experimental setup"
         hedit annotate-image screen.png -o json > result.json
+        hedit annotate-image stimulus.png --standalone  # Run locally
     """
     # Validate image exists
     if not image.exists():
         output.print_error(f"Image file not found: {image}")
         raise typer.Exit(1)
+
+    # Determine mode override
+    mode_override = None
+    if standalone:
+        mode_override = "standalone"
+    elif api_mode:
+        mode_override = "api"
 
     config, effective_key = get_effective_config(
         api_key=api_key,
@@ -377,12 +505,13 @@ def annotate_image(
         )
         raise typer.Exit(1)
 
+    mode_name = mode_override or config.execution.mode
     if not output.is_piped():
-        output.print_progress("Analyzing image and generating HED annotation")
+        output.print_progress(f"Analyzing image and generating HED annotation ({mode_name} mode)")
 
     try:
-        client = create_client(config, effective_key)
-        result = client.annotate_image(
+        executor = get_executor(config, effective_key, mode_override)
+        result = executor.annotate_image(
             image_path=image,
             prompt=prompt,
             schema_version=schema_version or config.settings.schema_version,
@@ -394,6 +523,9 @@ def annotate_image(
         if result.get("status") != "success" or not result.get("is_valid"):
             raise typer.Exit(1)
 
+    except ExecutionError as e:
+        output.print_error(str(e), hint=e.detail)
+        raise typer.Exit(1) from None
     except APIError as e:
         output.print_error(str(e), hint=e.detail)
         raise typer.Exit(1) from None
@@ -409,6 +541,8 @@ def validate(
     api_url: ApiUrlOption = None,
     schema_version: SchemaVersionOption = None,
     output_format: OutputFormatOption = "text",
+    standalone: StandaloneOption = False,
+    api_mode: ApiModeOption = False,
 ) -> None:
     """Validate a HED annotation string.
 
@@ -419,7 +553,15 @@ def validate(
         hedit validate "Sensory-event, Visual-presentation"
         hedit validate "(Red, Circle)" --schema 8.4.0
         hedit validate "Event" -o json
+        hedit validate "Event" --standalone  # Validate locally with hedtools
     """
+    # Determine mode override
+    mode_override = None
+    if standalone:
+        mode_override = "standalone"
+    elif api_mode:
+        mode_override = "api"
+
     config, effective_key = get_effective_config(
         api_key=api_key,
         api_url=api_url,
@@ -427,19 +569,21 @@ def validate(
         output_format=output_format,
     )
 
-    if not effective_key:
+    # For standalone validation, we don't need an API key (uses hedtools locally)
+    effective_mode = mode_override or config.execution.mode
+    if effective_mode != "standalone" and not effective_key:
         output.print_error(
             "No API key configured",
-            hint="Run 'hedit init' or provide --api-key",
+            hint="Run 'hedit init' or provide --api-key, or use --standalone for local validation",
         )
         raise typer.Exit(1)
 
     if not output.is_piped():
-        output.print_progress("Validating HED string")
+        output.print_progress(f"Validating HED string ({effective_mode} mode)")
 
     try:
-        client = create_client(config, effective_key)
-        result = client.validate(
+        executor = get_executor(config, effective_key, mode_override)
+        result = executor.validate(
             hed_string=hed_string,
             schema_version=schema_version or config.settings.schema_version,
         )
@@ -448,6 +592,9 @@ def validate(
         if not result.get("is_valid"):
             raise typer.Exit(1)
 
+    except ExecutionError as e:
+        output.print_error(str(e), hint=e.detail)
+        raise typer.Exit(1) from None
     except APIError as e:
         output.print_error(str(e), hint=e.detail)
         raise typer.Exit(1) from None
@@ -540,30 +687,60 @@ def config_clear_credentials(
 @app.command()
 def health(
     api_url: ApiUrlOption = None,
+    standalone: StandaloneOption = False,
+    api_mode: ApiModeOption = False,
 ) -> None:
-    """Check API health status."""
+    """Check health status of the execution backend.
+
+    Examples:
+        hedit health                 # Check API health
+        hedit health --standalone    # Check standalone mode dependencies
+    """
+    # Determine mode override
+    mode_override = None
+    if standalone:
+        mode_override = "standalone"
+    elif api_mode:
+        mode_override = "api"
+
     config, _ = get_effective_config(api_url=api_url)
+    effective_mode = mode_override or config.execution.mode
 
     try:
-        client = create_client(config)
-        result = client.health()
+        # For health check, we don't require an API key
+        executor = get_executor(config, api_key=None, mode_override=mode_override)
+        result = executor.health()
 
         status = result.get("status", "unknown")
         version = result.get("version", "unknown")
+        mode = result.get("mode", effective_mode)
         llm = "[green][x][/]" if result.get("llm_available") else "[red][ ][/]"
         validator = "[green][x][/]" if result.get("validator_available") else "[red][ ][/]"
 
-        console.print(f"API: {config.api.url}")
+        console.print(f"Mode: [bold]{mode}[/]")
+        if mode == "api":
+            console.print(f"API: {config.api.url}")
         console.print(f"Status: [bold]{status}[/]")
         console.print(f"Version: {version}")
         console.print(f"LLM: {llm}")
         console.print(f"Validator: {validator}")
 
+        # Show dependency details for standalone mode
+        if mode == "standalone" and "dependencies" in result:
+            deps = result["dependencies"]
+            console.print("\nDependencies:")
+            for dep, available in deps.items():
+                status_icon = "[green][x][/]" if available else "[red][ ][/]"
+                console.print(f"  {status_icon} {dep}")
+
+    except ExecutionError as e:
+        output.print_error(str(e), hint=e.detail)
+        raise typer.Exit(1) from None
     except APIError as e:
         output.print_error(str(e), hint=e.detail)
         raise typer.Exit(1) from None
     except Exception as e:
-        output.print_error(f"Could not connect to API: {e}")
+        output.print_error(f"Health check failed: {e}")
         raise typer.Exit(1) from None
 
 

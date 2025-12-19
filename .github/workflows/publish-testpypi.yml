@@ -1,0 +1,113 @@
+name: Publish to TestPyPI (Dev)
+
+# Triggers on push to develop branch when version changes
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'src/version.py'
+
+permissions:
+  contents: read
+
+jobs:
+  check-version:
+    name: Check version change
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+      should_publish: ${{ steps.check.outputs.should_publish }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+
+      - name: Get current version
+        id: get_version
+        run: |
+          VERSION=$(grep -oP '__version__\s*=\s*"\K[^"]+' src/version.py)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $VERSION"
+
+      - name: Check if version changed
+        id: check
+        run: |
+          # Get previous version from parent commit
+          git show HEAD~1:src/version.py > /tmp/prev_version.py 2>/dev/null || echo '__version__ = "0.0.0"' > /tmp/prev_version.py
+          PREV_VERSION=$(grep -oP '__version__\s*=\s*"\K[^"]+' /tmp/prev_version.py || echo "0.0.0")
+          CURR_VERSION=$(grep -oP '__version__\s*=\s*"\K[^"]+' src/version.py)
+
+          echo "Previous version: $PREV_VERSION"
+          echo "Current version: $CURR_VERSION"
+
+          if [ "$PREV_VERSION" != "$CURR_VERSION" ]; then
+            echo "Version changed! Will publish to TestPyPI."
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+          else
+            echo "Version unchanged. Skipping publish."
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    name: Build distribution
+    needs: check-version
+    if: needs.check-version.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build package
+        run: python -m build
+
+      - name: Check package
+        run: twine check dist/*
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+  publish:
+    name: Publish to TestPyPI
+    needs: [check-version, build]
+    if: needs.check-version.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/hedit
+    permissions:
+      id-token: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+      - name: Summary
+        run: |
+          echo "## Published to TestPyPI" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.check-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Install with:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "pip install -i https://test.pypi.org/simple/ hedit==${{ needs.check-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
