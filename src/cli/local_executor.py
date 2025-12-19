@@ -322,17 +322,25 @@ class LocalExecutionBackend(ExecutionBackend):
         hed_string: str,
         schema_version: str = "8.4.0",
     ) -> dict[str, Any]:
-        """Validate HED string locally using hed-python."""
+        """Validate HED string locally.
+
+        Uses JavaScript validator if available (Node.js + hed-javascript),
+        otherwise falls back to Python validator (hedtools).
+        """
         self._ensure_deps()
 
         try:
-            from hed.schema import load_schema_version
+            from src.validation.hed_validator import (
+                get_validator,
+                is_js_validator_available,
+            )
 
-            from src.validation.hed_validator import HedPythonValidator
-
-            # Load schema from version string
-            schema = load_schema_version(schema_version)
-            validator = HedPythonValidator(schema=schema)
+            # Get validator (prefers JS if available, falls back to Python)
+            validator = get_validator(
+                schema_version=schema_version,
+                prefer_js=True,
+                require_js=False,  # Allow fallback to Python
+            )
             result = validator.validate(hed_string)
 
             # Convert ValidationResult to dict format
@@ -342,9 +350,13 @@ class LocalExecutionBackend(ExecutionBackend):
             for warning in result.warnings:
                 messages.append(f"[WARNING] {warning.message}")
 
+            # Note which validator was used
+            validator_type = "javascript" if is_js_validator_available() else "python"
+
             return {
                 "is_valid": result.is_valid,
                 "messages": messages,
+                "validator": validator_type,
             }
         except ImportError:
             # hedtools not installed, return a warning
@@ -353,6 +365,7 @@ class LocalExecutionBackend(ExecutionBackend):
                 "messages": [
                     "Local validation requires hedtools. Install with: pip install hedtools"
                 ],
+                "validator": None,
             }
         except Exception as e:
             raise ExecutionError(
@@ -374,15 +387,34 @@ class LocalExecutionBackend(ExecutionBackend):
         except ImportError:
             pass
 
+        # Check JS validator availability
+        js_validator_available = False
+        try:
+            from src.validation.hed_validator import is_js_validator_available
+
+            js_validator_available = is_js_validator_available()
+        except ImportError:
+            pass
+
+        # Determine which validator will be used
+        if js_validator_available:
+            validator_type = "javascript"
+        elif hedtools_available:
+            validator_type = "python"
+        else:
+            validator_type = None
+
         return {
             "status": "healthy" if deps_available else "unhealthy",
             "version": __version__,
             "mode": "standalone",
-            "llm_available": deps_available,  # LLM is available if deps are
-            "validator_available": hedtools_available,
+            "llm_available": deps_available,
+            "validator_available": hedtools_available or js_validator_available,
+            "validator_type": validator_type,
             "dependencies": {
                 "langgraph": deps_available,
                 "langchain": deps_available,
                 "hedtools": hedtools_available,
+                "hed_javascript": js_validator_available,
             },
         }
