@@ -51,8 +51,9 @@ echo "========================================"
 # Note: --index-strategy unsafe-best-match allows finding hedit on TestPyPI
 # even though it also exists on PyPI (with different versions)
 if [ -n "$VERSION" ]; then
-    # Normalize version: 0.6.3-dev -> 0.6.3.dev0 (PEP 440)
-    NORMALIZED_VERSION=$(echo "$VERSION" | sed 's/-dev/.dev0/; s/-alpha/.a0/; s/-beta/.b0/')
+    # Normalize version to PEP 440 format
+    # 0.6.3-dev -> 0.6.3.dev0, 0.6.3-alpha -> 0.6.3a0, 0.6.3-beta -> 0.6.3b0
+    NORMALIZED_VERSION=$(echo "$VERSION" | sed 's/-dev/.dev0/; s/-alpha/a0/; s/-beta/b0/; s/-rc/rc0/')
     echo "Installing hedit==$NORMALIZED_VERSION (from $VERSION)..."
     uv pip install \
         --index-url https://test.pypi.org/simple/ \
