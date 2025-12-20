@@ -40,8 +40,8 @@ ENV GIT_COMMIT=${GIT_COMMIT}
 
 # Copy requirements and install Python dependencies with API extras
 COPY pyproject.toml README.md /app/
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir ".[api]"
+RUN pip install uv && \
+    uv pip install --system --no-cache ".[api]"
 
 # Copy the application code
 COPY src /app/src

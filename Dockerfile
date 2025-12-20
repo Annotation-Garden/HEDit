@@ -61,7 +61,8 @@ COPY src/ ./src/
 COPY scripts/ ./scripts/
 
 # Install Python dependencies with API extras (includes uvicorn, FastAPI, etc.)
-RUN pip install --no-cache-dir ".[api]"
+RUN pip install uv && \
+    uv pip install --system --no-cache ".[api]"
 
 # Set environment variables for HED resources (internal paths)
 ENV HED_SCHEMA_DIR=/app/hed-schemas/schemas_latest_json \
