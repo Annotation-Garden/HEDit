@@ -21,8 +21,10 @@ from src.cli.config import (
     clear_credentials,
     get_config_paths,
     get_effective_config,
+    is_first_run,
     load_config,
     load_credentials,
+    mark_first_run_complete,
     save_config,
     save_credentials,
     update_config,
@@ -274,6 +276,11 @@ def init(
         hedit init --api-key YOUR_KEY           # API mode (default)
         hedit init --api-key YOUR_KEY --standalone  # Standalone mode
     """
+    # Show telemetry disclosure on first run
+    if is_first_run():
+        show_telemetry_disclosure()
+        mark_first_run_complete()
+
     # Load existing config
     config = load_config()
     creds = load_credentials()
@@ -377,6 +384,11 @@ def annotate(
         hedit annotate "..." --model gpt-4o-mini --temperature 0.2
         hedit annotate "..." --standalone  # Run locally
     """
+    # Show telemetry disclosure on first run
+    if is_first_run():
+        show_telemetry_disclosure()
+        mark_first_run_complete()
+
     # Determine mode override
     mode_override = None
     if standalone:
@@ -476,6 +488,11 @@ def annotate_image(
         hedit annotate-image screen.png -o json > result.json
         hedit annotate-image stimulus.png --standalone  # Run locally
     """
+    # Show telemetry disclosure on first run
+    if is_first_run():
+        show_telemetry_disclosure()
+        mark_first_run_complete()
+
     # Validate image exists
     if not image.exists():
         output.print_error(f"Image file not found: {image}")
@@ -555,6 +572,11 @@ def validate(
         hedit validate "Event" -o json
         hedit validate "Event" --standalone  # Validate locally with hedtools
     """
+    # Show telemetry disclosure on first run
+    if is_first_run():
+        show_telemetry_disclosure()
+        mark_first_run_complete()
+
     # Determine mode override
     mode_override = None
     if standalone:
@@ -742,6 +764,36 @@ def health(
     except Exception as e:
         output.print_error(f"Health check failed: {e}")
         raise typer.Exit(1) from None
+
+
+def show_telemetry_disclosure() -> None:
+    """Display first-run telemetry disclosure notice."""
+    from rich.panel import Panel
+
+    disclosure_text = (
+        "[bold]Welcome to HEDit![/]\n\n"
+        "HEDit collects anonymous usage data to improve the annotation service:\n"
+        "  • Input descriptions and generated annotations\n"
+        "  • Model performance metrics (latency, iterations)\n"
+        "  • Validation results\n\n"
+        "[dim]What is NOT collected:[/]\n"
+        "  • API keys or credentials\n"
+        "  • Personal information\n"
+        "  • File paths or system details\n\n"
+        "[bold cyan]To disable:[/] hedit config set telemetry.enabled false\n"
+        "[bold cyan]To view config:[/] hedit config show"
+    )
+
+    panel = Panel(
+        disclosure_text,
+        title="[bold]Privacy & Data Collection[/]",
+        border_style="cyan",
+        padding=(1, 2),
+    )
+
+    console.print()
+    console.print(panel)
+    console.print()
 
 
 def cli() -> None:

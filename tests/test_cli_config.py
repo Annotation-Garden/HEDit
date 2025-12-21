@@ -12,8 +12,10 @@ from src.cli.config import (
     get_api_key,
     get_effective_config,
     get_machine_id,
+    is_first_run,
     load_config,
     load_credentials,
+    mark_first_run_complete,
     save_config,
     save_credentials,
     update_config,
@@ -32,6 +34,7 @@ def temp_config_dir(tmp_path):
         patch("src.cli.config.CONFIG_FILE", config_dir / "config.yaml"),
         patch("src.cli.config.CREDENTIALS_FILE", config_dir / "credentials.yaml"),
         patch("src.cli.config.MACHINE_ID_FILE", config_dir / "machine_id"),
+        patch("src.cli.config.FIRST_RUN_FILE", config_dir / ".first_run"),
     ):
         yield config_dir
 
@@ -287,3 +290,50 @@ class TestMachineID:
         assert len(new_id) == 16
         assert all(c in "0123456789abcdef" for c in new_id)
         assert new_id != "invalid-id-format"
+
+
+class TestFirstRunDisclosure:
+    """Tests for first-run disclosure tracking."""
+
+    def test_is_first_run_when_file_missing(self, temp_config_dir):
+        """Test that is_first_run returns True when marker file doesn't exist."""
+        assert is_first_run() is True
+
+    def test_is_first_run_when_file_exists(self, temp_config_dir):
+        """Test that is_first_run returns False when marker file exists."""
+        from src.cli.config import FIRST_RUN_FILE
+
+        # Create the marker file
+        FIRST_RUN_FILE.touch()
+
+        assert is_first_run() is False
+
+    def test_mark_first_run_complete(self, temp_config_dir):
+        """Test that mark_first_run_complete creates the marker file."""
+        from src.cli.config import FIRST_RUN_FILE
+
+        # Initially should be first run
+        assert is_first_run() is True
+
+        # Mark as complete
+        mark_first_run_complete()
+
+        # File should exist
+        assert FIRST_RUN_FILE.exists()
+
+        # Should no longer be first run
+        assert is_first_run() is False
+
+    def test_mark_first_run_complete_idempotent(self, temp_config_dir):
+        """Test that marking first run complete multiple times is safe."""
+        from src.cli.config import FIRST_RUN_FILE
+
+        # Mark as complete twice
+        mark_first_run_complete()
+        mark_first_run_complete()
+
+        # File should exist
+        assert FIRST_RUN_FILE.exists()
+
+        # Should not be first run
+        assert is_first_run() is False

@@ -27,6 +27,7 @@ except ImportError:
 CONFIG_FILE = CONFIG_DIR / "config.yaml"
 CREDENTIALS_FILE = CONFIG_DIR / "credentials.yaml"
 MACHINE_ID_FILE = CONFIG_DIR / "machine_id"
+FIRST_RUN_FILE = CONFIG_DIR / ".first_run"
 
 # Default API endpoint
 DEFAULT_API_URL = "https://api.annotation.garden/hedit"
@@ -329,6 +330,24 @@ def get_machine_id() -> str:
         pass  # If we can't write, still return the ID for this session
 
     return machine_id
+
+
+def is_first_run() -> bool:
+    """Check if this is the first time HEDit is run.
+
+    Returns:
+        True if first run, False otherwise
+    """
+    return not FIRST_RUN_FILE.exists()
+
+
+def mark_first_run_complete() -> None:
+    """Mark first run as complete by creating the marker file."""
+    ensure_config_dir()
+    try:
+        FIRST_RUN_FILE.touch()
+    except OSError:
+        pass  # Ignore write errors
 
 
 def get_config_paths() -> dict[str, Path]:
