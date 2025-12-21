@@ -931,7 +931,7 @@
         /* Telemetry Notice - fixed at absolute bottom */
         .telemetry-notice {
             display: flex;
-            align-items: center;
+            align-items: baseline;
             justify-content: center;
             gap: 8px;
             padding: 4px 16px;
@@ -941,17 +941,11 @@
             background: var(--bg-tertiary);
             transition: all 0.3s ease;
             margin: 0;
-            line-height: 1;
-        }
-
-        .telemetry-notice span {
-            line-height: 14px;
         }
 
         .telemetry-notice a {
             color: var(--text-secondary);
             text-decoration: underline;
-            line-height: 14px;
         }
 
         .telemetry-notice a:hover {
@@ -964,20 +958,20 @@
 
         .telemetry-toggle {
             display: inline-flex;
-            align-items: center;
+            align-items: baseline;
             gap: 4px;
             cursor: pointer;
             user-select: none;
-            line-height: 14px;
         }
 
         .telemetry-toggle input[type="checkbox"] {
-            width: 14px;
-            height: 14px;
+            width: 12px;
+            height: 12px;
             margin: 0;
             cursor: pointer;
             accent-color: #184A3D;
-            vertical-align: middle;
+            position: relative;
+            top: 1px;
         }
 
         html.dark .telemetry-toggle input[type="checkbox"] {
@@ -987,7 +981,6 @@
         .telemetry-toggle-label {
             font-size: 11px;
             color: var(--text-muted);
-            line-height: 14px;
         }
     </style>
 </head>

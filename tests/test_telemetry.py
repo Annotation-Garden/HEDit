@@ -619,3 +619,239 @@ class TestTelemetryCollectorCreateEvent:
 
         assert event.session_id == "test-session-123"
         assert event.source == "web"
+
+
+class TestTelemetryFullIntegration:
+    """Full integration tests for telemetry with real file I/O."""
+
+    def test_stored_event_can_be_read_back(self, tmp_path):
+        """Test that stored events can be read back and verified."""
+        storage = LocalFileStorage(storage_dir=tmp_path / "telemetry")
+        collector = TelemetryCollector(storage=storage, enabled=True)
+
+        event = TelemetryEvent.create(
+            description="A red circle appears on the left side of the screen",
+            schema_version="8.3.0",
+            hed_string="Sensory-event, Visual-presentation, (Red, Circle)",
+            iterations=3,
+            validation_errors=["Warning: Consider adding temporal info"],
+            model="anthropic/claude-haiku-4.5",
+            provider="Cerebras",
+            temperature=0.1,
+            latency_ms=1250,
+            source="api",
+        )
+
+        collector.collect_sync(event)
+
+        # Read back the stored event
+        event_file = storage.storage_dir / f"{event.event_id}.json"
+        assert event_file.exists()
+
+        with open(event_file) as f:
+            stored_data = json.load(f)
+
+        # Verify all fields were stored correctly
+        assert stored_data["input"]["description"] == event.input.description
+        assert stored_data["input"]["schema_version"] == "8.3.0"
+        assert stored_data["output"]["hed_string"] == event.output.hed_string
+        assert stored_data["output"]["iterations"] == 3
+        assert stored_data["output"]["validation_errors"] == [
+            "Warning: Consider adding temporal info"
+        ]
+        assert stored_data["model"]["model"] == "anthropic/claude-haiku-4.5"
+        assert stored_data["model"]["provider"] == "Cerebras"
+        assert stored_data["performance"]["latency_ms"] == 1250
+        assert stored_data["source"] == "api"
+
+    def test_multiple_sources_stored_correctly(self, tmp_path):
+        """Test events from different sources are stored correctly."""
+        storage = LocalFileStorage(storage_dir=tmp_path / "telemetry")
+        collector = TelemetryCollector(storage=storage, enabled=True)
+
+        sources = ["cli", "api", "api-image", "web"]
+        stored_events = []
+
+        for source in sources:
+            event = TelemetryEvent.create(
+                description=f"Event from {source}",
+                schema_version="8.4.0",
+                hed_string=f"Test-{source}",
+                iterations=1,
+                validation_errors=[],
+                model="test/model",
+                provider=None,
+                temperature=0.1,
+                latency_ms=100,
+                source=source,
+            )
+            collector.collect_sync(event)
+            stored_events.append(event)
+
+        # Verify each event was stored with correct source
+        for event in stored_events:
+            event_file = storage.storage_dir / f"{event.event_id}.json"
+            with open(event_file) as f:
+                data = json.load(f)
+            assert data["source"] == event.source
+
+    def test_deduplication_persists_across_restarts(self, tmp_path):
+        """Test that deduplication works across storage restarts."""
+        storage_dir = tmp_path / "telemetry"
+
+        # First session: store an event
+        storage1 = LocalFileStorage(storage_dir=storage_dir)
+        collector1 = TelemetryCollector(storage=storage1, enabled=True)
+
+        event1 = TelemetryEvent.create(
+            description="persistent dedup test",
+            schema_version="8.4.0",
+            hed_string="Test",
+            iterations=1,
+            validation_errors=[],
+            model="test/model",
+            provider=None,
+            temperature=0.1,
+            latency_ms=100,
+            source="cli",
+        )
+        assert collector1.collect_sync(event1) is True
+
+        # Second session: create new storage instance (simulating restart)
+        storage2 = LocalFileStorage(storage_dir=storage_dir)
+        collector2 = TelemetryCollector(storage=storage2, enabled=True)
+
+        # Try to store event with same description
+        event2 = TelemetryEvent.create(
+            description="persistent dedup test",  # Same description
+            schema_version="8.4.0",
+            hed_string="Different output",
+            iterations=2,
+            validation_errors=[],
+            model="test/model",
+            provider=None,
+            temperature=0.1,
+            latency_ms=200,
+            source="api",
+        )
+        # Should be rejected due to deduplication
+        assert collector2.collect_sync(event2) is False
+
+    def test_validation_errors_stored_correctly(self, tmp_path):
+        """Test that validation errors are stored and retrieved correctly."""
+        storage = LocalFileStorage(storage_dir=tmp_path / "telemetry")
+        collector = TelemetryCollector(storage=storage, enabled=True)
+
+        errors = [
+            "[TAG_INVALID] Unknown tag 'Foo'",
+            "[PARENTHESES] Unmatched parentheses",
+            "[REQUIRED_TAG] Missing required tag",
+        ]
+
+        event = TelemetryEvent.create(
+            description="validation error test",
+            schema_version="8.3.0",
+            hed_string="Invalid-tag",
+            iterations=5,
+            validation_errors=errors,
+            model="test/model",
+            provider=None,
+            temperature=0.1,
+            latency_ms=500,
+            source="cli",
+        )
+
+        collector.collect_sync(event)
+
+        # Read back and verify errors
+        event_file = storage.storage_dir / f"{event.event_id}.json"
+        with open(event_file) as f:
+            data = json.load(f)
+
+        assert data["output"]["validation_errors"] == errors
+        assert len(data["output"]["validation_errors"]) == 3
+
+    def test_kv_key_format(self):
+        """Test that KV key format is correct for Cloudflare storage."""
+        event = TelemetryEvent.create(
+            description="kv key test",
+            schema_version="8.4.0",
+            hed_string="Test",
+            iterations=1,
+            validation_errors=[],
+            model="test/model",
+            provider=None,
+            temperature=0.1,
+            latency_ms=100,
+            source="api",
+        )
+
+        kv_key = event.to_kv_key()
+
+        # Key format: telemetry:{input_hash}:{event_id}
+        assert kv_key.startswith("telemetry:")
+        parts = kv_key.split(":")
+        assert len(parts) == 3
+        assert parts[0] == "telemetry"
+        assert parts[1] == event.input_hash
+        assert parts[2] == event.event_id
+
+    def test_high_latency_events_stored(self, tmp_path):
+        """Test that high latency events are stored correctly."""
+        storage = LocalFileStorage(storage_dir=tmp_path / "telemetry")
+        collector = TelemetryCollector(storage=storage, enabled=True)
+
+        # Simulate a slow annotation (30 seconds)
+        event = TelemetryEvent.create(
+            description="slow annotation test",
+            schema_version="8.4.0",
+            hed_string="Test",
+            iterations=10,
+            validation_errors=[],
+            model="slow/model",
+            provider=None,
+            temperature=0.1,
+            latency_ms=30000,  # 30 seconds
+            source="api",
+        )
+
+        collector.collect_sync(event)
+
+        event_file = storage.storage_dir / f"{event.event_id}.json"
+        with open(event_file) as f:
+            data = json.load(f)
+
+        assert data["performance"]["latency_ms"] == 30000
+
+    @pytest.mark.asyncio
+    async def test_async_full_flow(self, tmp_path):
+        """Test complete async flow from creation to storage."""
+        storage = LocalFileStorage(storage_dir=tmp_path / "telemetry")
+        collector = TelemetryCollector(storage=storage, enabled=True)
+
+        event = TelemetryEvent.create(
+            description="async full flow test",
+            schema_version="8.4.0",
+            hed_string="Sensory-event, Visual-presentation",
+            iterations=2,
+            validation_errors=[],
+            model="anthropic/claude-haiku-4.5",
+            provider="Cerebras",
+            temperature=0.1,
+            latency_ms=800,
+            source="api",
+        )
+
+        # Use async collect
+        result = await collector.collect(event)
+        assert result is True
+
+        # Verify stored
+        event_file = storage.storage_dir / f"{event.event_id}.json"
+        assert event_file.exists()
+
+        with open(event_file) as f:
+            data = json.load(f)
+
+        assert data["source"] == "api"
+        assert data["model"]["provider"] == "Cerebras"
