@@ -5,6 +5,7 @@ and validation using the multi-agent workflow.
 """
 
 import asyncio
+import hashlib
 import json
 import os
 import time
@@ -46,6 +47,21 @@ schema_loader: HedSchemaLoader | None = None
 
 # Cache for BYOK configuration
 _byok_config: dict = {}
+
+
+def _derive_user_id(api_key: str) -> str:
+    """Derive a stable user ID from API key for cache optimization.
+
+    Uses SHA-256 hash of the API key to create an anonymous identifier.
+    Each unique API key gets its own cache lane in OpenRouter.
+
+    Args:
+        api_key: OpenRouter API key
+
+    Returns:
+        16-character hexadecimal user ID
+    """
+    return hashlib.sha256(api_key.encode()).hexdigest()[:16]
 
 
 def create_byok_workflow(
@@ -101,24 +117,30 @@ def create_byok_workflow(
     evaluation_model = get_model_name(model if model else default_evaluation_model)
     assessment_model = get_model_name(model if model else default_assessment_model)
 
+    # Derive user ID for cache optimization (each API key gets own cache lane)
+    user_id = _derive_user_id(openrouter_key)
+
     # Create LLMs with user's key and settings
     annotation_llm = create_openrouter_llm(
         model=annotation_model,
         api_key=openrouter_key,
         temperature=llm_temperature,
         provider=provider_preference,
+        user_id=user_id,
     )
     evaluation_llm = create_openrouter_llm(
         model=evaluation_model,
         api_key=openrouter_key,
         temperature=llm_temperature,
         provider=provider_preference,
+        user_id=user_id,
     )
     assessment_llm = create_openrouter_llm(
         model=assessment_model,
         api_key=openrouter_key,
         temperature=llm_temperature,
         provider=provider_preference,
+        user_id=user_id,
     )
 
     # Create and return workflow
@@ -167,11 +189,15 @@ def create_byok_vision_agent(
     else:
         actual_provider = default_vision_provider
 
+    # Derive user ID for cache optimization
+    user_id = _derive_user_id(openrouter_key)
+
     vision_llm = create_openrouter_llm(
         model=actual_model,
         api_key=openrouter_key,
         temperature=actual_temperature,
         provider=actual_provider,
+        user_id=user_id,
     )
 
     return VisionAgent(llm=vision_llm)
