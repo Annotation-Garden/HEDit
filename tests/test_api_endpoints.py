@@ -368,3 +368,37 @@ class TestVersionEndpointExtended:
         data = response.json()
         assert "version" in data
         assert "commit" in data
+
+
+class TestUserIDDerivation:
+    """Tests for user ID derivation from API keys."""
+
+    def test_derive_user_id(self):
+        """Test that user ID is derived consistently from API key."""
+        from src.api.main import _derive_user_id
+
+        api_key = "sk-or-test-key-12345"
+        user_id = _derive_user_id(api_key)
+
+        # Should be 16 hex characters
+        assert len(user_id) == 16
+        assert all(c in "0123456789abcdef" for c in user_id)
+
+    def test_derive_user_id_consistency(self):
+        """Test that same API key produces same user ID."""
+        from src.api.main import _derive_user_id
+
+        api_key = "sk-or-test-key-12345"
+        user_id1 = _derive_user_id(api_key)
+        user_id2 = _derive_user_id(api_key)
+
+        assert user_id1 == user_id2
+
+    def test_derive_user_id_uniqueness(self):
+        """Test that different API keys produce different user IDs."""
+        from src.api.main import _derive_user_id
+
+        user_id1 = _derive_user_id("key1")
+        user_id2 = _derive_user_id("key2")
+
+        assert user_id1 != user_id2
