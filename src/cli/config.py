@@ -5,6 +5,7 @@ Supports environment variables as fallback/override.
 """
 
 import os
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +26,7 @@ except ImportError:
 
 CONFIG_FILE = CONFIG_DIR / "config.yaml"
 CREDENTIALS_FILE = CONFIG_DIR / "credentials.yaml"
+MACHINE_ID_FILE = CONFIG_DIR / "machine_id"
 
 # Default API endpoint
 DEFAULT_API_URL = "https://api.annotation.garden/hedit"
@@ -279,10 +281,50 @@ def clear_credentials() -> None:
         CREDENTIALS_FILE.unlink()
 
 
+def get_machine_id() -> str:
+    """Get or generate a stable machine ID for cache optimization.
+
+    This ID is used by OpenRouter for sticky cache routing to reduce costs.
+    It is NOT used for telemetry and is never transmitted except to OpenRouter.
+
+    The ID is generated once and persists across pip updates.
+
+    Returns:
+        16-character hexadecimal machine ID
+    """
+    ensure_config_dir()
+
+    if MACHINE_ID_FILE.exists():
+        try:
+            machine_id = MACHINE_ID_FILE.read_text().strip()
+            # Validate format (16 hex chars)
+            if len(machine_id) == 16 and all(c in "0123456789abcdef" for c in machine_id):
+                return machine_id
+        except (OSError, UnicodeDecodeError):
+            pass  # File corrupted, regenerate
+
+    # Generate new machine ID
+    machine_id = uuid.uuid4().hex[:16]
+
+    # Save to file
+    try:
+        MACHINE_ID_FILE.write_text(machine_id)
+        # Readable by user only (Unix)
+        try:
+            os.chmod(MACHINE_ID_FILE, 0o600)
+        except (OSError, AttributeError):
+            pass  # Windows doesn't support chmod the same way
+    except OSError:
+        pass  # If we can't write, still return the ID for this session
+
+    return machine_id
+
+
 def get_config_paths() -> dict[str, Path]:
     """Get paths to config files for debugging."""
     return {
         "config_dir": CONFIG_DIR,
         "config_file": CONFIG_FILE,
         "credentials_file": CREDENTIALS_FILE,
+        "machine_id_file": MACHINE_ID_FILE,
     }

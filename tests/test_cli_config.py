@@ -11,6 +11,7 @@ from src.cli.config import (
     clear_credentials,
     get_api_key,
     get_effective_config,
+    get_machine_id,
     load_config,
     load_credentials,
     save_config,
@@ -30,6 +31,7 @@ def temp_config_dir(tmp_path):
         patch("src.cli.config.CONFIG_DIR", config_dir),
         patch("src.cli.config.CONFIG_FILE", config_dir / "config.yaml"),
         patch("src.cli.config.CREDENTIALS_FILE", config_dir / "credentials.yaml"),
+        patch("src.cli.config.MACHINE_ID_FILE", config_dir / "machine_id"),
     ):
         yield config_dir
 
@@ -227,3 +229,61 @@ class TestEffectiveConfig:
         assert config.models.default == "saved-model"
         # Temperature should be overridden
         assert config.models.temperature == 0.5
+
+
+class TestMachineID:
+    """Tests for machine ID generation and caching."""
+
+    def test_machine_id_generation(self, temp_config_dir):
+        """Test that machine ID is generated on first call."""
+        machine_id = get_machine_id()
+
+        # Should be 16 hex characters
+        assert len(machine_id) == 16
+        assert all(c in "0123456789abcdef" for c in machine_id)
+
+    def test_machine_id_persistence(self, temp_config_dir):
+        """Test that machine ID persists across calls."""
+        first_id = get_machine_id()
+        second_id = get_machine_id()
+
+        # Should return same ID
+        assert first_id == second_id
+
+    def test_machine_id_file_creation(self, temp_config_dir):
+        """Test that machine ID is saved to file."""
+        from src.cli.config import MACHINE_ID_FILE
+
+        machine_id = get_machine_id()
+
+        # File should exist
+        assert MACHINE_ID_FILE.exists()
+
+        # File should contain the ID
+        saved_id = MACHINE_ID_FILE.read_text().strip()
+        assert saved_id == machine_id
+
+    def test_machine_id_loads_from_file(self, temp_config_dir):
+        """Test that machine ID is loaded from existing file."""
+        from src.cli.config import MACHINE_ID_FILE
+
+        # Manually create a machine ID file
+        test_id = "a1b2c3d4e5f67890"
+        MACHINE_ID_FILE.write_text(test_id)
+
+        # Should load the existing ID
+        loaded_id = get_machine_id()
+        assert loaded_id == test_id
+
+    def test_machine_id_regenerates_on_corruption(self, temp_config_dir):
+        """Test that corrupted machine ID file is regenerated."""
+        from src.cli.config import MACHINE_ID_FILE
+
+        # Create corrupted file (invalid format)
+        MACHINE_ID_FILE.write_text("invalid-id-format")
+
+        # Should regenerate a valid ID
+        new_id = get_machine_id()
+        assert len(new_id) == 16
+        assert all(c in "0123456789abcdef" for c in new_id)
+        assert new_id != "invalid-id-format"
