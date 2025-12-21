@@ -135,7 +135,11 @@ class LocalExecutionBackend(ExecutionBackend):
             self._ensure_api_key()
 
             from src.agents.workflow import HedAnnotationWorkflow
+            from src.cli.config import get_machine_id
             from src.utils.openrouter_llm import create_openrouter_llm
+
+            # Get machine ID for cache optimization
+            user_id = get_machine_id()
 
             # Create LLMs with user's key
             annotation_llm = create_openrouter_llm(
@@ -143,6 +147,7 @@ class LocalExecutionBackend(ExecutionBackend):
                 api_key=self._api_key,
                 temperature=self._temperature,
                 provider=self._provider,
+                user_id=user_id,
             )
 
             # Use same settings for all agents in standalone mode
@@ -164,13 +169,18 @@ class LocalExecutionBackend(ExecutionBackend):
             self._ensure_api_key()
 
             from src.agents.vision_agent import VisionAgent
+            from src.cli.config import get_machine_id
             from src.utils.openrouter_llm import create_openrouter_llm
+
+            # Get machine ID for cache optimization
+            user_id = get_machine_id()
 
             vision_llm = create_openrouter_llm(
                 model=self._vision_model,
                 api_key=self._api_key,
                 temperature=0.3,  # Slightly higher for vision tasks
                 provider=self._provider,
+                user_id=user_id,
             )
 
             self._vision_agent = VisionAgent(llm=vision_llm)
