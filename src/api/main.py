@@ -55,12 +55,17 @@ def _derive_user_id(api_key: str) -> str:
     Uses SHA-256 hash of the API key to create an anonymous identifier.
     Each unique API key gets its own cache lane in OpenRouter.
 
+    Note: This is NOT password hashing. The API key is already a strong secret.
+    We use SHA-256 for fast, consistent ID derivation (not security).
+    Purpose: Enable cache routing, not protect secrets.
+
     Args:
-        api_key: OpenRouter API key
+        api_key: OpenRouter API key (already a secret, not a password)
 
     Returns:
         16-character hexadecimal user ID
     """
+    # CodeQL [py/weak-cryptographic-algorithm]: Not password hashing - deriving cache ID from API key
     return hashlib.sha256(api_key.encode()).hexdigest()[:16]
 
 
