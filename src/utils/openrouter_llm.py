@@ -10,6 +10,7 @@ def create_openrouter_llm(
     temperature: float = 0.1,
     max_tokens: int | None = None,
     provider: str | None = None,
+    user_id: str | None = None,
 ) -> BaseChatModel:
     """Create an OpenRouter LLM instance.
 
@@ -19,6 +20,7 @@ def create_openrouter_llm(
         temperature: Sampling temperature (0.0-1.0)
         max_tokens: Maximum tokens to generate
         provider: Specific provider to use (e.g., "Cerebras")
+        user_id: User identifier for cache optimization (sticky routing)
 
     Returns:
         ChatOpenAI instance configured for OpenRouter
@@ -34,9 +36,13 @@ def create_openrouter_llm(
     }
 
     # Build extra_body for provider preference
-    extra_body = None
+    extra_body = {}
     if provider:
-        extra_body = {"provider": {"only": [provider]}}
+        extra_body["provider"] = {"only": [provider]}
+
+    # Add user ID for sticky cache routing (reduces costs via prompt caching)
+    if user_id:
+        extra_body["user"] = user_id
 
     return ChatOpenAI(
         model=model,
@@ -45,7 +51,7 @@ def create_openrouter_llm(
         temperature=temperature,
         max_tokens=max_tokens,
         default_headers=default_headers,
-        extra_body=extra_body,
+        extra_body=extra_body if extra_body else None,
     )
 
 
