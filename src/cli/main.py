@@ -72,7 +72,7 @@ OutputFormatOption = Annotated[
     typer.Option(
         "--output",
         "-o",
-        help="Output format",
+        help="Output format: 'text' (human-readable) or 'json' (machine-readable)",
     ),
 ]
 
