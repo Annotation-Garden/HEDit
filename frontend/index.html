@@ -928,23 +928,30 @@
             opacity: 1;
         }
 
-        /* Telemetry Notice */
+        /* Telemetry Notice - fixed at absolute bottom */
         .telemetry-notice {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            padding: 8px 16px;
+            padding: 4px 16px;
             font-size: 11px;
             color: var(--text-muted);
             border-top: 1px solid var(--border-color);
             background: var(--bg-tertiary);
             transition: all 0.3s ease;
+            margin: 0;
+            line-height: 1;
+        }
+
+        .telemetry-notice span {
+            line-height: 14px;
         }
 
         .telemetry-notice a {
             color: var(--text-secondary);
             text-decoration: underline;
+            line-height: 14px;
         }
 
         .telemetry-notice a:hover {
@@ -961,6 +968,7 @@
             gap: 4px;
             cursor: pointer;
             user-select: none;
+            line-height: 14px;
         }
 
         .telemetry-toggle input[type="checkbox"] {
@@ -969,6 +977,7 @@
             margin: 0;
             cursor: pointer;
             accent-color: #184A3D;
+            vertical-align: middle;
         }
 
         html.dark .telemetry-toggle input[type="checkbox"] {
@@ -978,6 +987,7 @@
         .telemetry-toggle-label {
             font-size: 11px;
             color: var(--text-muted);
+            line-height: 14px;
         }
     </style>
 </head>
@@ -1170,17 +1180,16 @@ Example: A red circle appears on the left side of the screen and the participant
                 &copy; 2025, <a href="https://neuromechanist.github.io" target="_blank" rel="noopener noreferrer">neuromechanist</a> and the HED Working Group
             </div>
         </div>
+    </div>
 
-        <!-- Telemetry Notice -->
-        <div class="telemetry-notice">
-            <span>Annotations may be recorded to improve the service.</span>
-            <label class="telemetry-toggle" title="Toggle telemetry collection">
-                <input type="checkbox" id="telemetryOptIn" checked onchange="toggleTelemetry(this.checked)">
-                <span class="telemetry-toggle-label">Allow</span>
-            </label>
-            <a href="https://github.com/Annotation-Garden/HEDit#telemetry" target="_blank" rel="noopener noreferrer" title="Learn more about telemetry">Learn more</a>
-        </div>
-        </div>
+    <!-- Telemetry Notice - outside container for absolute bottom positioning -->
+    <div class="telemetry-notice">
+        <span>Annotations may be recorded to improve the service.</span>
+        <label class="telemetry-toggle" title="Toggle telemetry collection">
+            <input type="checkbox" id="telemetryOptIn" checked onchange="toggleTelemetry(this.checked)">
+            <span class="telemetry-toggle-label">Allow</span>
+        </label>
+        <a href="https://docs.annotation.garden/projects/hedit/telemetry" target="_blank" rel="noopener noreferrer" title="Learn more about telemetry">Learn more</a>
     </div>
 
     <script src="config.js"></script>
