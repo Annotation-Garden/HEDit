@@ -55,6 +55,10 @@ class AnnotationRequest(BaseModel):
         le=1.0,
         examples=[0.1, 0.3, 0.7],
     )
+    telemetry_enabled: bool = Field(
+        default=True,
+        description="Allow telemetry collection for this request",
+    )
 
 
 class AnnotationResponse(BaseModel):
@@ -182,6 +186,10 @@ class ImageAnnotationRequest(BaseModel):
         ge=0.0,
         le=1.0,
         examples=[0.1, 0.3, 0.7],
+    )
+    telemetry_enabled: bool = Field(
+        default=True,
+        description="Allow telemetry collection for this request",
     )
 
 

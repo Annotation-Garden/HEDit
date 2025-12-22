@@ -34,6 +34,7 @@ services:
       - ollama
     volumes:
       - feedback_data:/app/feedback
+      - telemetry_data:/app/telemetry
     environment:
       # LLM Provider Configuration
       - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
@@ -72,4 +73,6 @@ volumes:
   ollama_data:
     driver: local
   feedback_data:
+    driver: local
+  telemetry_data:
     driver: local

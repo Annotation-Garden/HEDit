@@ -927,6 +927,61 @@
             visibility: visible;
             opacity: 1;
         }
+
+        /* Telemetry Notice - fixed at absolute bottom */
+        .telemetry-notice {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 8px;
+            padding: 4px 16px;
+            font-size: 11px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            transition: all 0.3s ease;
+            margin: 0;
+        }
+
+        .telemetry-notice a {
+            color: var(--text-secondary);
+            text-decoration: underline;
+        }
+
+        .telemetry-notice a:hover {
+            color: #184A3D;
+        }
+
+        html.dark .telemetry-notice a:hover {
+            color: #9bc2b6;
+        }
+
+        .telemetry-toggle {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 4px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .telemetry-toggle input[type="checkbox"] {
+            width: 12px;
+            height: 12px;
+            margin: 0;
+            cursor: pointer;
+            accent-color: #184A3D;
+            position: relative;
+            top: 1px;
+        }
+
+        html.dark .telemetry-toggle input[type="checkbox"] {
+            accent-color: #9bc2b6;
+        }
+
+        .telemetry-toggle-label {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
     </style>
 </head>
 <body>
@@ -1118,7 +1173,16 @@ Example: A red circle appears on the left side of the screen and the participant
                 &copy; 2025, <a href="https://neuromechanist.github.io" target="_blank" rel="noopener noreferrer">neuromechanist</a> and the HED Working Group
             </div>
         </div>
-        </div>
+    </div>
+
+    <!-- Telemetry Notice - outside container for absolute bottom positioning -->
+    <div class="telemetry-notice">
+        <span>Annotations may be recorded to improve the service.</span>
+        <label class="telemetry-toggle" title="Toggle telemetry collection">
+            <input type="checkbox" id="telemetryOptIn" checked onchange="toggleTelemetry(this.checked)">
+            <span class="telemetry-toggle-label">Allow</span>
+        </label>
+        <a href="https://docs.annotation.garden/projects/hedit/telemetry" target="_blank" rel="noopener noreferrer" title="Learn more about telemetry">Learn more</a>
     </div>
 
     <script src="config.js"></script>
@@ -1165,6 +1229,31 @@ Example: A red circle appears on the left side of the screen and the participant
 
         // Initialize theme on page load
         initTheme();
+
+        // Telemetry Toggle Functionality
+        let telemetryEnabled = true;
+
+        function initTelemetry() {
+            const saved = localStorage.getItem('telemetryEnabled');
+            // Default to true (opt-out model)
+            telemetryEnabled = saved === null ? true : saved === 'true';
+            const checkbox = document.getElementById('telemetryOptIn');
+            if (checkbox) {
+                checkbox.checked = telemetryEnabled;
+            }
+        }
+
+        function toggleTelemetry(enabled) {
+            telemetryEnabled = enabled;
+            localStorage.setItem('telemetryEnabled', enabled.toString());
+        }
+
+        function isTelemetryEnabled() {
+            return telemetryEnabled;
+        }
+
+        // Initialize telemetry on page load
+        initTelemetry();
 
         // Backend API URL - Automatically detect based on environment
         // For production: Set BACKEND_URL in your environment or use Cloudflare Tunnel URL
@@ -1401,7 +1490,8 @@ Example: A red circle appears on the left side of the screen and the participant
                     image: uploadedImageBase64,
                     schema_version: schema,
                     max_validation_attempts: maxAttempts,
-                    run_assessment: runAssessment
+                    run_assessment: runAssessment,
+                    telemetry_enabled: isTelemetryEnabled()
                 };
 
                 if (visionPrompt) {
@@ -1516,7 +1606,8 @@ Example: A red circle appears on the left side of the screen and the participant
                     description: description,
                     schema_version: schema,
                     max_validation_attempts: maxAttempts,
-                    run_assessment: runAssessment
+                    run_assessment: runAssessment,
+                    telemetry_enabled: isTelemetryEnabled()
                 };
 
                 // Include Turnstile token if available

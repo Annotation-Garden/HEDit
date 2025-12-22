@@ -402,3 +402,123 @@ class TestUserIDDerivation:
         user_id2 = _derive_user_id("key2")
 
         assert user_id1 != user_id2
+
+
+class TestTelemetryEnabledField:
+    """Tests for telemetry_enabled field in request models."""
+
+    def test_annotation_request_telemetry_default_true(self):
+        """Test AnnotationRequest has telemetry_enabled=True by default."""
+        from src.api.models import AnnotationRequest
+
+        request = AnnotationRequest(description="Test description")
+        assert request.telemetry_enabled is True
+
+    def test_annotation_request_telemetry_can_be_disabled(self):
+        """Test AnnotationRequest telemetry_enabled can be set to False."""
+        from src.api.models import AnnotationRequest
+
+        request = AnnotationRequest(description="Test description", telemetry_enabled=False)
+        assert request.telemetry_enabled is False
+
+    def test_image_annotation_request_telemetry_default_true(self):
+        """Test ImageAnnotationRequest has telemetry_enabled=True by default."""
+        from src.api.models import ImageAnnotationRequest
+
+        request = ImageAnnotationRequest(image="base64data")
+        assert request.telemetry_enabled is True
+
+    def test_image_annotation_request_telemetry_can_be_disabled(self):
+        """Test ImageAnnotationRequest telemetry_enabled can be set to False."""
+        from src.api.models import ImageAnnotationRequest
+
+        request = ImageAnnotationRequest(image="base64data", telemetry_enabled=False)
+        assert request.telemetry_enabled is False
+
+    def test_annotate_endpoint_accepts_telemetry_enabled(self, client):
+        """Test annotate endpoint accepts telemetry_enabled field."""
+        request_data = {
+            "description": "A red circle appears on the screen",
+            "schema_version": "8.3.0",
+            "telemetry_enabled": False,
+        }
+        response = client.post("/annotate", json=request_data, headers=TEST_AUTH_HEADERS)
+        # May be 503 if workflow not initialized, or 200 if it is
+        # But should NOT be 422 (validation error)
+        assert response.status_code in [200, 503]
+
+    def test_image_annotate_endpoint_accepts_telemetry_enabled(self, client):
+        """Test image annotation endpoint accepts telemetry_enabled field."""
+        request_data = {
+            "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+            "telemetry_enabled": False,
+        }
+        response = client.post("/annotate-from-image", json=request_data, headers=TEST_AUTH_HEADERS)
+        # May be 503 if vision agent not initialized, or 200 if it is
+        # But should NOT be 422 (validation error)
+        assert response.status_code in [200, 503]
+
+
+class TestTelemetryCollectorIntegration:
+    """Tests for telemetry collector integration in API."""
+
+    def test_telemetry_collector_initialization(self):
+        """Test that telemetry_collector global is defined."""
+        from src.api import main
+
+        # telemetry_collector should be defined (may be None before lifespan)
+        assert hasattr(main, "telemetry_collector")
+
+    def test_telemetry_imports_available(self):
+        """Test that telemetry imports are available in main module."""
+        from src.api.main import LocalFileStorage, TelemetryCollector, TelemetryEvent
+
+        # Verify classes are importable
+        assert LocalFileStorage is not None
+        assert TelemetryCollector is not None
+        assert TelemetryEvent is not None
+
+    def test_telemetry_event_creation(self):
+        """Test creating a telemetry event with API-like data."""
+        from src.telemetry import TelemetryEvent
+
+        event = TelemetryEvent.create(
+            description="Test description from API",
+            schema_version="8.3.0",
+            hed_string="Sensory-event, Visual-presentation",
+            iterations=2,
+            validation_errors=[],
+            model="openai/gpt-oss-120b",
+            provider=None,
+            temperature=0.1,
+            latency_ms=1500,
+            source="api",
+        )
+
+        # TelemetryEvent uses nested models
+        assert event.input.description == "Test description from API"
+        assert event.input.schema_version == "8.3.0"
+        assert event.output.hed_string == "Sensory-event, Visual-presentation"
+        assert event.output.iterations == 2
+        assert event.performance.latency_ms == 1500
+        assert event.source == "api"
+
+    def test_telemetry_event_image_source(self):
+        """Test creating a telemetry event with api-image source."""
+        from src.telemetry import TelemetryEvent
+
+        event = TelemetryEvent.create(
+            description="Generated image description",
+            schema_version="8.4.0",
+            hed_string="Visual-presentation",
+            iterations=1,
+            validation_errors=[],
+            model="openai/gpt-4o",
+            provider="deepinfra/fp8",
+            temperature=0.3,
+            latency_ms=3000,
+            source="api-image",
+        )
+
+        assert event.source == "api-image"
+        assert event.model.provider == "deepinfra/fp8"

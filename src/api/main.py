@@ -33,6 +33,7 @@ from src.api.models import (
     ValidationResponse,
 )
 from src.api.security import api_key_auth, audit_logger
+from src.telemetry import LocalFileStorage, TelemetryCollector, TelemetryEvent
 from src.utils.openrouter_llm import create_openrouter_llm, get_model_name
 from src.utils.schema_loader import HedSchemaLoader
 from src.validation.hed_validator import HedPythonValidator
@@ -44,6 +45,9 @@ load_dotenv()
 workflow: HedAnnotationWorkflow | None = None
 vision_agent: VisionAgent | None = None
 schema_loader: HedSchemaLoader | None = None
+
+# Telemetry collector (initialized in lifespan)
+telemetry_collector: TelemetryCollector | None = None
 
 # Cache for BYOK configuration
 _byok_config: dict = {}
@@ -389,6 +393,18 @@ async def lifespan(app: FastAPI):
     else:
         print("Vision model not available (only supported with OpenRouter)")
 
+    # Initialize telemetry collector
+    global telemetry_collector
+    # Use /app/telemetry in Docker, otherwise use local .hedit/telemetry
+    default_telemetry_dir = "/app/telemetry" if Path("/app").exists() else ".hedit/telemetry"
+    telemetry_dir = os.getenv("TELEMETRY_DIR", default_telemetry_dir)
+    telemetry_storage = LocalFileStorage(storage_dir=telemetry_dir)
+    telemetry_collector = TelemetryCollector(
+        storage=telemetry_storage,
+        enabled=True,  # Can be configured via env var if needed
+    )
+    print(f"Telemetry collector initialized (storage: {telemetry_dir})")
+
     yield
 
     # Shutdown
@@ -573,6 +589,7 @@ async def annotate(
         # LangGraph default is 25, increase to 100 for complex workflows
         config = {"recursion_limit": 100}
 
+        start_time = time.time()
         final_state = await active_workflow.run(
             input_description=request.description,
             schema_version=request.schema_version,
@@ -580,12 +597,41 @@ async def annotate(
             run_assessment=request.run_assessment,
             config=config,
         )
+        latency_ms = int((time.time() - start_time) * 1000)
 
         # Determine overall status
         # IMPORTANT: Ensure is_valid is only True when there are NO validation errors
         # This is a safeguard to prevent inconsistencies in the workflow
         is_valid = final_state["is_valid"] and len(final_state["validation_errors"]) == 0
         status = "success" if is_valid else "failed"
+
+        # Collect telemetry if enabled
+        if request.telemetry_enabled and telemetry_collector:
+            # Get model info from request body, BYOK headers, or server config
+            model_name = (
+                request.model
+                or req.headers.get("x-openrouter-model")
+                or os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b")
+            )
+            temperature = (
+                request.temperature
+                or float(req.headers.get("x-openrouter-temperature", 0))
+                or _byok_config.get("temperature", 0.1)
+            )
+
+            event = TelemetryEvent.create(
+                description=request.description,
+                schema_version=request.schema_version,
+                hed_string=final_state["current_annotation"],
+                iterations=final_state["validation_attempts"],
+                validation_errors=final_state["validation_errors"],
+                model=model_name,
+                provider=request.provider or req.headers.get("x-openrouter-provider"),
+                temperature=temperature,
+                latency_ms=latency_ms,
+                source="api",
+            )
+            await telemetry_collector.collect(event)
 
         return AnnotationResponse(
             annotation=final_state["current_annotation"],
@@ -682,6 +728,8 @@ async def annotate_from_image(
         active_vision_agent = vision_agent
 
     try:
+        start_time = time.time()
+
         # Step 1: Generate image description using vision model
         vision_result = await active_vision_agent.describe_image(
             image_data=request.image,
@@ -701,10 +749,39 @@ async def annotate_from_image(
             run_assessment=request.run_assessment,
             config=config,
         )
+        latency_ms = int((time.time() - start_time) * 1000)
 
         # Determine overall status
         is_valid = final_state["is_valid"] and len(final_state["validation_errors"]) == 0
         status = "success" if is_valid else "failed"
+
+        # Collect telemetry if enabled
+        if request.telemetry_enabled and telemetry_collector:
+            # Get model info from request body, BYOK headers, or server config
+            model_name = (
+                request.model
+                or req.headers.get("x-openrouter-model")
+                or os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b")
+            )
+            temperature = (
+                request.temperature
+                or float(req.headers.get("x-openrouter-temperature", 0))
+                or _byok_config.get("temperature", 0.1)
+            )
+
+            event = TelemetryEvent.create(
+                description=image_description,  # Use generated image description
+                schema_version=request.schema_version,
+                hed_string=final_state["current_annotation"],
+                iterations=final_state["validation_attempts"],
+                validation_errors=final_state["validation_errors"],
+                model=model_name,
+                provider=request.provider or req.headers.get("x-openrouter-provider"),
+                temperature=temperature,
+                latency_ms=latency_ms,
+                source="api-image",  # Distinguish from text-based annotation
+            )
+            await telemetry_collector.collect(event)
 
         return ImageAnnotationResponse(
             image_description=image_description,

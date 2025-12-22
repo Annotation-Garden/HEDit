@@ -163,6 +163,11 @@ deploy_update() {
     mkdir -p "${FEEDBACK_DIR}/unprocessed" "${FEEDBACK_DIR}/processed" 2>/dev/null || true
     log "Feedback directory: ${FEEDBACK_DIR}"
 
+    # Create persistent telemetry directory
+    TELEMETRY_DIR="/var/lib/hedit/${CONTAINER_NAME}/telemetry"
+    mkdir -p "${TELEMETRY_DIR}" 2>/dev/null || true
+    log "Telemetry directory: ${TELEMETRY_DIR}"
+
     # Run the new container using the pulled image
     log "Starting new container on port ${HOST_PORT}..."
     docker run -d \
@@ -172,6 +177,7 @@ deploy_update() {
         ${ENV_ARGS} \
         -v /var/log/hedit:/var/log/hedit \
         -v "${FEEDBACK_DIR}:/app/feedback" \
+        -v "${TELEMETRY_DIR}:/app/telemetry" \
         "$REGISTRY_IMAGE"
 
     if [ $? -eq 0 ]; then

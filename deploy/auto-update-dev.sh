@@ -37,11 +37,16 @@ if [ "$RUNNING_ID" != "$NEW_ID" ]; then
     FEEDBACK_DIR="/var/lib/hedit/${CONTAINER_NAME}/feedback"
     mkdir -p "${FEEDBACK_DIR}/unprocessed" "${FEEDBACK_DIR}/processed" 2>/dev/null || true
 
+    # Create persistent telemetry directory
+    TELEMETRY_DIR="/var/lib/hedit/${CONTAINER_NAME}/telemetry"
+    mkdir -p "${TELEMETRY_DIR}" 2>/dev/null || true
+
     docker run -d \
         --name "$CONTAINER_NAME" \
         --restart unless-stopped \
         -p "127.0.0.1:${HOST_PORT}:38427" \
         -v "${FEEDBACK_DIR}:/app/feedback" \
+        -v "${TELEMETRY_DIR}:/app/telemetry" \
         $ENV_ARGS \
         "$REGISTRY_IMAGE" > /dev/null
 
