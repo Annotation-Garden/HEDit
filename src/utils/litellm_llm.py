@@ -1,8 +1,24 @@
-"""OpenRouter LLM integration for cloud model access.
+"""LiteLLM integration for OpenRouter with prompt caching support.
 
-This module uses LiteLLM under the hood for native Anthropic prompt caching support.
-Cache control is automatically enabled for Anthropic models, reducing costs by up to
-90% for repeated prompts with large static content (like the HED vocabulary guide).
+This module provides LLM access through LiteLLM, which natively supports
+Anthropic's prompt caching via the cache_control parameter. This reduces
+costs by up to 90% for repeated prompts with large static content.
+
+Usage:
+    from src.utils.litellm_llm import create_litellm_openrouter
+
+    # Create LLM with caching enabled
+    llm = create_litellm_openrouter(
+        model="anthropic/claude-haiku-4.5",
+        api_key=os.getenv("OPENROUTER_API_KEY"),
+        enable_caching=True,
+    )
+
+    # Use with LangChain messages (cache_control added automatically to system)
+    response = await llm.ainvoke([
+        SystemMessage(content=large_system_prompt),
+        HumanMessage(content=user_query),
+    ])
 """
 
 import os
@@ -12,72 +28,62 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage
 
 
-def create_openrouter_llm(
+def create_litellm_openrouter(
     model: str = "openai/gpt-oss-120b",
     api_key: str | None = None,
     temperature: float = 0.1,
     max_tokens: int | None = None,
     provider: str | None = None,
     user_id: str | None = None,
-    enable_caching: bool | None = None,
+    enable_caching: bool = False,
 ) -> BaseChatModel:
-    """Create an OpenRouter LLM instance with optional prompt caching.
-
-    Uses LiteLLM for native support of Anthropic's prompt caching feature.
-    When caching is enabled, system messages are automatically transformed
-    to include cache_control markers for 90% cost reduction on cache hits.
+    """Create a LiteLLM-backed LLM for OpenRouter with optional prompt caching.
 
     Args:
-        model: Model identifier (e.g., "openai/gpt-oss-120b", "anthropic/claude-haiku-4.5")
-        api_key: OpenRouter API key (defaults to OPENROUTER_API_KEY env var)
+        model: Model identifier (e.g., "anthropic/claude-haiku-4.5")
+        api_key: OpenRouter API key
         temperature: Sampling temperature (0.0-1.0)
         max_tokens: Maximum tokens to generate
-        provider: Specific provider to use (e.g., "Cerebras", "Anthropic")
+        provider: Specific provider to use (e.g., "Anthropic")
         user_id: User identifier for cache optimization (sticky routing)
-        enable_caching: Enable Anthropic prompt caching. If None (default),
-            auto-enables for Anthropic Claude models.
+        enable_caching: Enable Anthropic prompt caching (default: False)
 
     Returns:
-        LLM instance configured for OpenRouter
+        ChatLiteLLM instance configured for OpenRouter
     """
     from langchain_litellm import ChatLiteLLM
 
     # LiteLLM uses openrouter/ prefix for OpenRouter models
     litellm_model = f"openrouter/{model}"
 
-    # Build model_kwargs for OpenRouter-specific options
-    model_kwargs: dict[str, Any] = {
-        # OpenRouter app identification headers
+    # Build extra parameters
+    extra_params: dict[str, Any] = {
+        # OpenRouter app identification
         "extra_headers": {
             "HTTP-Referer": "https://annotation.garden/hedit",
             "X-Title": "HEDit - HED Annotation Generator",
         },
     }
 
-    # Provider routing (e.g., {"only": ["Cerebras"]})
+    # Provider routing
     if provider:
-        model_kwargs["provider"] = {"only": [provider]}
+        extra_params["provider"] = {"only": [provider]}
 
     # User ID for sticky cache routing
     if user_id:
-        model_kwargs["user"] = user_id
+        extra_params["user"] = user_id
 
-    # Create base LLM
+    # Return wrapped LLM with caching if enabled
     llm = ChatLiteLLM(
         model=litellm_model,
         api_key=api_key or os.getenv("OPENROUTER_API_KEY"),
         temperature=temperature,
         max_tokens=max_tokens,
-        model_kwargs=model_kwargs,
+        model_kwargs=extra_params,
     )
 
-    # Determine if caching should be enabled
-    if enable_caching is None:
-        # Auto-enable for Anthropic models
-        enable_caching = is_cacheable_model(model)
-
     if enable_caching:
-        return CachingLLMWrapper(llm=llm)
+        return CachingLLMWrapper(llm)
 
     return llm
 
@@ -90,9 +96,6 @@ class CachingLLMWrapper(BaseChatModel):
 
     The cache_control parameter tells Anthropic to cache the content, reducing
     costs by 90% on cache hits (after initial 25% cache write premium).
-
-    Minimum cacheable prompt: 1024 tokens for Claude Sonnet/Opus, 4096 for Haiku 4.5
-    Cache TTL: 5 minutes (refreshed on each hit)
     """
 
     llm: BaseChatModel
@@ -165,26 +168,8 @@ class CachingLLMWrapper(BaseChatModel):
         return await self.llm.ainvoke(cached_messages, **kwargs)
 
 
-# Model configuration - using gpt-oss-120b via Cerebras
-OPENROUTER_MODELS = {
-    # Primary model for all agents (fast inference via Cerebras)
-    "gpt-oss-120b": "openai/gpt-oss-120b",
-}
-
-
-def get_model_name(alias: str) -> str:
-    """Get full model name from alias.
-
-    Args:
-        alias: Model alias (e.g., "gpt-oss-120b")
-
-    Returns:
-        Full model identifier for OpenRouter
-    """
-    return OPENROUTER_MODELS.get(alias, alias)
-
-
-# Anthropic models that support prompt caching
+# Supported models that benefit from prompt caching
+# Anthropic models via OpenRouter that support cache_control
 CACHEABLE_MODELS = {
     "claude-opus-4.5": "anthropic/claude-opus-4-5",
     "claude-sonnet-4.5": "anthropic/claude-sonnet-4-5",
@@ -206,5 +191,5 @@ def is_cacheable_model(model: str) -> bool:
     # Check exact match in aliases
     if model in CACHEABLE_MODELS:
         return True
-    # Check if it's an Anthropic Claude model
+    # Check if it's an Anthropic model
     return model.startswith("anthropic/claude-")

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hedit"
-version = "0.6.4.dev3"
+version = "0.6.4.dev4"
 description = "Multi-agent system for HED annotation generation and validation"
 readme = "PKG_README.md"
 requires-python = ">=3.12"
@@ -54,6 +54,8 @@ standalone = [
     "langchain-community>=0.3.0",
     "langchain-core>=0.3.0",
     "langchain-openai>=0.3.0",
+    "litellm>=1.50.0",  # LLM proxy with native prompt caching support
+    "langchain-litellm>=0.2.0",  # LangChain integration for LiteLLM
     "hedtools>=0.5.0",
     "lxml>=5.3.0",
     "beautifulsoup4>=4.12.3",
