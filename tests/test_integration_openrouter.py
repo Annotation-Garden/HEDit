@@ -22,8 +22,8 @@ SKIP_REASON = "OPENROUTER_API_KEY_FOR_TESTING not set"
 
 # Use the same models as configured in .env for consistency
 # Default to the environment-configured models
-TEST_MODEL = os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b")
-TEST_PROVIDER = os.getenv("LLM_PROVIDER_PREFERENCE", "Cerebras")
+TEST_MODEL = os.getenv("ANNOTATION_MODEL", "mistralai/mistral-small-3.2-24b-instruct")
+TEST_PROVIDER = os.getenv("ANNOTATION_PROVIDER", "mistral")
 
 
 @pytest.fixture
