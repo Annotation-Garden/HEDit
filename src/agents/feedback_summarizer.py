@@ -43,12 +43,18 @@ Guidelines:
 5. Keep it under 100 words total
 6. Focus on WHAT to fix, not technical details
 
-Example:
-Input: "TAG_EXTENSION_INVALID: 'Red' does not have 'Property' as its parent in the schema. You tried to use Property/Red but Red is already a valid tag. TAG_EXTENSION_INVALID: 'Circle' does not have 'Item' as its parent..."
+Example 1 - Tag errors:
+Input: "TAG_EXTENSION_INVALID: 'Red' does not have 'Property' as its parent..."
 
 Output:
-- Remove parent paths from existing tags (use Red, Circle, Press - NOT Property/Red, Item/Circle, Action/Press)
-- Tags are already in short-form, use them AS-IS
+- Remove parent paths from existing tags (use Red, Circle - NOT Property/Red, Item/Circle)
+
+Example 2 - Semantic grouping:
+Input: "GROUPING: needs-improvement. Properties like Red and Circle should be grouped together..."
+
+Output:
+- Group object properties together: (Red, Circle) not Red, Circle
+- Nest agent-action relationships: ((Agent), (Action, (Object)))
 
 Be direct and actionable."""
 

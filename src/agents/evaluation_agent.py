@@ -56,12 +56,30 @@ Your task is to assess how faithfully a HED annotation captures the original nat
 - Main objects/stimuli included
 - Key actions captured (if any)
 
-### 2. Important Details (SHOULD HAVE)
+### 2. Semantic Grouping (CRITICAL)
+Check that parentheses are used correctly to group related concepts:
+
+**Object properties MUST be grouped together:**
+- CORRECT: (Red, Circle) - A single red circle
+- WRONG: Red, Circle - Ambiguous; could be two separate things
+
+**Agent-action relationships need proper nesting:**
+- CORRECT: Agent-action, ((Human-agent, Experiment-participant), (Press, (Left, Mouse-button)))
+- WRONG: Agent-action, Human-agent, Experiment-participant, Press, Left, Mouse-button
+
+**Spatial/relational patterns:**
+- CORRECT: ((Red, Circle), (To-left-of, (Green, Square)))
+- WRONG: Red, Circle, To-left-of, Green, Square
+
+**Reversibility test**: Can you translate the annotation back to coherent English?
+If properties are ungrouped, the meaning becomes ambiguous.
+
+### 3. Important Details (SHOULD HAVE)
 - Colors, shapes if explicitly mentioned
 - Spatial relationships if specified
 - Task role (Experimental-stimulus, Participant-response)
 
-### 3. Optional Enhancements (NICE TO HAVE)
+### 4. Optional Enhancements (NICE TO HAVE)
 - Fine-grained attributes
 - Implicit details
 - Additional context
@@ -69,12 +87,13 @@ Your task is to assess how faithfully a HED annotation captures the original nat
 ## Decision Guidelines
 
 **ACCEPT if**:
-- Core elements are present ✓
-- No major inaccuracies
+- Core elements are present
+- Semantic grouping is correct (properties grouped with objects)
 - Can translate back to similar English description
 
-**REFINE only if**:
+**REFINE if**:
 - Missing critical information (event type, main object, key action)
+- **Semantic grouping errors** (ungrouped properties, flat structure)
 - Contains clear errors or misrepresentations
 - Would fail reversibility test (can't translate back)
 
@@ -82,10 +101,12 @@ Your task is to assess how faithfully a HED annotation captures the original nat
 
 FAITHFUL: [yes/partial/no]
 
+GROUPING: [correct/needs-improvement]
+
 DECISION: [ACCEPT/REFINE]
 
 FEEDBACK:
-- [Brief feedback if refinement needed]
+- [Brief feedback if refinement needed, especially grouping issues]
 """
 
     def _build_user_prompt(self, description: str, annotation: str) -> str:
