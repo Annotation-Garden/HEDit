@@ -44,28 +44,33 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 SCHEMA_VERSION = "8.4.0"
 MAX_VALIDATION_ATTEMPTS = 5
 
-# Models to benchmark
-# Ordered by expected cost (lowest to highest)
+# Evaluation model - used consistently across all benchmarks for fair comparison
+# This model evaluates annotation quality (is_faithful, is_complete)
+EVAL_MODEL = "qwen/qwen3-235b-a22b-2507"
+EVAL_PROVIDER = "Cerebras"  # Use Cerebras for fast Qwen inference
+
+# Models to benchmark (from GitHub issue #64)
+# https://github.com/Annotation-Garden/HEDit/issues/64#issuecomment-3684641652
 MODELS_TO_BENCHMARK = [
-    # Current default (Cerebras - ultra fast, cheap)
+    # Baseline: Current default (Cerebras - ultra fast, cheap)
     {
         "id": "openai/gpt-oss-120b",
-        "name": "GPT-OSS-120B",
+        "name": "GPT-OSS-120B (baseline)",
         "provider": "Cerebras",
-        "category": "fast",
+        "category": "baseline",
     },
-    # Qwen large (Cerebras - fast)
+    # GPT-5.2 (OpenAI's latest)
     {
-        "id": "qwen/qwen3-235b-a22b-2507",
-        "name": "Qwen3-235B",
-        "provider": "Cerebras",
-        "category": "fast",
+        "id": "openai/gpt-5.2",
+        "name": "GPT-5.2",
+        "provider": None,
+        "category": "quality",
     },
-    # Claude Haiku (cheap, cacheable)
+    # GPT 5.1 Codex Mini
     {
-        "id": "anthropic/claude-3.5-haiku",
-        "name": "Claude Haiku 3.5",
-        "provider": None,  # OpenRouter auto-routes
+        "id": "openai/gpt-5.1-codex-mini",
+        "name": "GPT-5.1-Codex-Mini",
+        "provider": None,
         "category": "balanced",
     },
     # GPT-4o-mini (OpenAI's cheap option)
@@ -75,12 +80,33 @@ MODELS_TO_BENCHMARK = [
         "provider": None,
         "category": "balanced",
     },
-    # Claude Sonnet (high quality, cacheable)
+    # Gemini 3 Flash (Google's fast option)
     {
-        "id": "anthropic/claude-sonnet-4",
-        "name": "Claude Sonnet 4",
+        "id": "google/gemini-3-flash-preview",
+        "name": "Gemini-3-Flash",
         "provider": None,
-        "category": "quality",
+        "category": "fast",
+    },
+    # Claude Haiku 4.5 (Anthropic's fast option)
+    {
+        "id": "anthropic/claude-haiku-4.5",
+        "name": "Claude-Haiku-4.5",
+        "provider": None,
+        "category": "balanced",
+    },
+    # Mistral Small 3.2 24B
+    {
+        "id": "mistralai/mistral-small-3.2-24b-instruct",
+        "name": "Mistral-Small-3.2-24B",
+        "provider": None,
+        "category": "balanced",
+    },
+    # Nemotron 3 Nano 30B A3B (NVIDIA)
+    {
+        "id": "nvidia/nemotron-3-nano-30b-a3b",
+        "name": "Nemotron-3-Nano-30B",
+        "provider": None,
+        "category": "balanced",
     },
 ]
 
@@ -329,6 +355,8 @@ def run_hedit_annotate(
     description: str,
     model_id: str,
     provider: str | None = None,
+    eval_model: str | None = None,
+    eval_provider: str | None = None,
     schema_version: str = "8.4.0",
     max_attempts: int = 5,
     run_assessment: bool = True,
@@ -339,6 +367,8 @@ def run_hedit_annotate(
         description: Natural language event description
         model_id: Model ID (e.g., "openai/gpt-oss-120b")
         provider: Provider preference (e.g., "Cerebras")
+        eval_model: Model for evaluation/assessment (for consistent benchmarking)
+        eval_provider: Provider for evaluation model (e.g., "Cerebras")
         schema_version: HED schema version
         max_attempts: Maximum validation attempts
         run_assessment: Whether to run completeness assessment
@@ -362,6 +392,12 @@ def run_hedit_annotate(
         "--standalone",
     ]
 
+    if eval_model:
+        cmd.extend(["--eval-model", eval_model])
+
+    if eval_provider:
+        cmd.extend(["--eval-provider", eval_provider])
+
     if provider:
         cmd.extend(["--provider", provider])
 
@@ -381,10 +417,34 @@ def run_hedit_annotate(
     )
     execution_time = time.time() - start_time
 
-    # Parse JSON from stdout (filter out workflow debug messages)
+    # Parse JSON from stdout (filter out debug messages and find JSON block)
     stdout_lines = result.stdout.strip().split("\n")
-    json_lines = [line for line in stdout_lines if not line.startswith("[WORKFLOW]")]
-    json_str = "\n".join(json_lines)
+
+    # Filter out known noise patterns
+    filtered_lines = []
+    for line in stdout_lines:
+        # Skip workflow debug messages
+        if line.startswith("[WORKFLOW]"):
+            continue
+        # Skip LiteLLM provider warnings (contain ANSI codes)
+        if "Provider List" in line or "\x1b[" in line:
+            continue
+        # Skip empty lines at the start
+        if not filtered_lines and not line.strip():
+            continue
+        filtered_lines.append(line)
+
+    # Find the JSON block (starts with '{')
+    json_start = None
+    for i, line in enumerate(filtered_lines):
+        if line.strip().startswith("{"):
+            json_start = i
+            break
+
+    if json_start is not None:
+        json_str = "\n".join(filtered_lines[json_start:])
+    else:
+        json_str = "\n".join(filtered_lines)
 
     try:
         parsed = json.loads(json_str)
@@ -403,6 +463,8 @@ def run_hedit_annotate_image(
     image_path: str,
     model_id: str,
     provider: str | None = None,
+    eval_model: str | None = None,
+    eval_provider: str | None = None,
     schema_version: str = "8.4.0",
     max_attempts: int = 5,
     run_assessment: bool = True,
@@ -413,6 +475,8 @@ def run_hedit_annotate_image(
         image_path: Path to image file
         model_id: Model ID
         provider: Provider preference
+        eval_model: Model for evaluation/assessment (for consistent benchmarking)
+        eval_provider: Provider for evaluation model (e.g., "Cerebras")
         schema_version: HED schema version
         max_attempts: Maximum validation attempts
         run_assessment: Whether to run completeness assessment
@@ -436,6 +500,12 @@ def run_hedit_annotate_image(
         "--standalone",
     ]
 
+    if eval_model:
+        cmd.extend(["--eval-model", eval_model])
+
+    if eval_provider:
+        cmd.extend(["--eval-provider", eval_provider])
+
     if provider:
         cmd.extend(["--provider", provider])
 
@@ -455,10 +525,34 @@ def run_hedit_annotate_image(
     )
     execution_time = time.time() - start_time
 
-    # Parse JSON from stdout
+    # Parse JSON from stdout (filter out debug messages and find JSON block)
     stdout_lines = result.stdout.strip().split("\n")
-    json_lines = [line for line in stdout_lines if not line.startswith("[WORKFLOW]")]
-    json_str = "\n".join(json_lines)
+
+    # Filter out known noise patterns
+    filtered_lines = []
+    for line in stdout_lines:
+        # Skip workflow debug messages
+        if line.startswith("[WORKFLOW]"):
+            continue
+        # Skip LiteLLM provider warnings (contain ANSI codes)
+        if "Provider List" in line or "\x1b[" in line:
+            continue
+        # Skip empty lines at the start
+        if not filtered_lines and not line.strip():
+            continue
+        filtered_lines.append(line)
+
+    # Find the JSON block (starts with '{')
+    json_start = None
+    for i, line in enumerate(filtered_lines):
+        if line.strip().startswith("{"):
+            json_start = i
+            break
+
+    if json_start is not None:
+        json_str = "\n".join(filtered_lines[json_start:])
+    else:
+        json_str = "\n".join(filtered_lines)
 
     try:
         parsed = json.loads(json_str)
@@ -476,10 +570,44 @@ def run_hedit_annotate_image(
 class ModelBenchmark:
     """Benchmark runner for comparing HED annotation models using CLI."""
 
+    # Simple warm-up description to prime the cache
+    WARMUP_DESCRIPTION = "A visual stimulus appears on screen"
+
     def __init__(self, output_dir: Path | None = None):
         self.output_dir = output_dir or Path(__file__).parent / "benchmark_results"
         self.output_dir.mkdir(exist_ok=True)
         self.results: list[BenchmarkResult] = []
+
+    def warmup_model(self, model_config: dict) -> None:
+        """Run a warm-up call to prime the cache for fair comparison.
+
+        This ensures all models start with equally "warm" caches for the
+        system prompts and schema context.
+
+        Args:
+            model_config: Model configuration dict
+        """
+        model_id = model_config["id"]
+        model_name = model_config["name"]
+        provider = model_config.get("provider")
+
+        print(f"  Warming up cache for {model_name}...")
+
+        try:
+            # Run a simple annotation to warm up the cache
+            run_hedit_annotate(
+                description=self.WARMUP_DESCRIPTION,
+                model_id=model_id,
+                provider=provider,
+                eval_model=EVAL_MODEL,
+                eval_provider=EVAL_PROVIDER,
+                schema_version=SCHEMA_VERSION,
+                max_attempts=1,  # Single attempt for warmup
+                run_assessment=False,  # Skip assessment for speed
+            )
+            print("  Cache warmed up successfully")
+        except Exception as e:
+            print(f"  Warning: Warmup failed: {e}")
 
     def benchmark_model(
         self,
@@ -503,6 +631,9 @@ class ModelBenchmark:
         print(f"Benchmarking: {model_name} ({model_id})")
         print(f"{'=' * 80}")
 
+        # Warm up cache before benchmarking
+        self.warmup_model(model_config)
+
         results = []
 
         for test_case in test_cases:
@@ -522,6 +653,8 @@ class ModelBenchmark:
                         image_path=image_path,
                         model_id=model_id,
                         provider=provider,
+                        eval_model=EVAL_MODEL,
+                        eval_provider=EVAL_PROVIDER,
                         schema_version=SCHEMA_VERSION,
                         max_attempts=MAX_VALIDATION_ATTEMPTS,
                         run_assessment=True,
@@ -537,6 +670,8 @@ class ModelBenchmark:
                         description=description,
                         model_id=model_id,
                         provider=provider,
+                        eval_model=EVAL_MODEL,
+                        eval_provider=EVAL_PROVIDER,
                         schema_version=SCHEMA_VERSION,
                         max_attempts=MAX_VALIDATION_ATTEMPTS,
                         run_assessment=True,

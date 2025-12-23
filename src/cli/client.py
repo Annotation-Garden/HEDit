@@ -38,6 +38,8 @@ class HEDitClient:
         api_url: str,
         api_key: str | None = None,
         model: str | None = None,
+        eval_model: str | None = None,
+        eval_provider: str | None = None,
         provider: str | None = None,
         temperature: float | None = None,
         timeout: httpx.Timeout = DEFAULT_TIMEOUT,
@@ -48,6 +50,8 @@ class HEDitClient:
             api_url: Base API URL
             api_key: OpenRouter API key for BYOK mode
             model: Model to use for annotation
+            eval_model: Model for evaluation/assessment agents (for fair benchmarking)
+            eval_provider: Provider for evaluation model (e.g., Cerebras for qwen models)
             provider: Provider preference (e.g., "Cerebras")
             temperature: LLM temperature (0.0-1.0)
             timeout: Request timeout settings
@@ -55,6 +59,8 @@ class HEDitClient:
         self.api_url = api_url.rstrip("/")
         self.api_key = api_key
         self.model = model
+        self.eval_model = eval_model
+        self.eval_provider = eval_provider
         self.provider = provider
         self.temperature = temperature
         self.timeout = timeout
@@ -71,6 +77,10 @@ class HEDitClient:
         # Include model configuration in headers for BYOK
         if self.model:
             headers["X-OpenRouter-Model"] = self.model
+        if self.eval_model:
+            headers["X-OpenRouter-Eval-Model"] = self.eval_model
+        if self.eval_provider:
+            headers["X-OpenRouter-Eval-Provider"] = self.eval_provider
         if self.provider:
             headers["X-OpenRouter-Provider"] = self.provider
         if self.temperature is not None:

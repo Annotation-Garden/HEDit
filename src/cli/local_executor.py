@@ -65,6 +65,8 @@ class LocalExecutionBackend(ExecutionBackend):
         self,
         api_key: str | None = None,
         model: str | None = None,
+        eval_model: str | None = None,
+        eval_provider: str | None = None,
         vision_model: str | None = None,
         provider: str | None = None,
         temperature: float = 0.1,
@@ -75,6 +77,9 @@ class LocalExecutionBackend(ExecutionBackend):
         Args:
             api_key: OpenRouter API key (required for LLM operations, optional for health/validate)
             model: Model for text annotation (default: openai/gpt-oss-120b)
+            eval_model: Model for evaluation/assessment agents (default: same as model).
+                       Use a consistent model like qwen/qwen3-235b-a22b for fair benchmarking.
+            eval_provider: Provider for evaluation model (e.g., Cerebras for qwen models)
             vision_model: Model for image annotation (default: qwen/qwen3-vl-30b-a3b-instruct)
             provider: Provider preference (cleared if custom model specified)
             temperature: LLM temperature (0.0-1.0)
@@ -84,6 +89,8 @@ class LocalExecutionBackend(ExecutionBackend):
 
         self._api_key = api_key
         self._model = model or "openai/gpt-oss-120b"
+        self._eval_model = eval_model  # None means use same as annotation model
+        self._eval_provider = eval_provider  # Provider for eval model (e.g., Cerebras)
         self._vision_model = vision_model or "qwen/qwen3-vl-30b-a3b-instruct"
         self._temperature = temperature
         self._schema_dir = Path(schema_dir) if schema_dir else None
@@ -141,7 +148,7 @@ class LocalExecutionBackend(ExecutionBackend):
             # Get machine ID for cache optimization
             user_id = get_machine_id()
 
-            # Create LLMs with user's key
+            # Create annotation LLM with user's key
             annotation_llm = create_openrouter_llm(
                 model=self._model,
                 api_key=self._api_key,
@@ -150,12 +157,25 @@ class LocalExecutionBackend(ExecutionBackend):
                 user_id=user_id,
             )
 
-            # Use same settings for all agents in standalone mode
-            # (simplification for CLI usage)
+            # Create evaluation LLM (separate model for fair benchmarking)
+            # If eval_model is specified, use it for evaluation, assessment, and feedback
+            # Otherwise, use the same model as annotation
+            if self._eval_model:
+                evaluation_llm = create_openrouter_llm(
+                    model=self._eval_model,
+                    api_key=self._api_key,
+                    temperature=self._temperature,
+                    provider=self._eval_provider,  # Use specified provider (e.g., Cerebras)
+                    user_id=user_id,
+                )
+            else:
+                evaluation_llm = annotation_llm
+
             self._workflow = HedAnnotationWorkflow(
                 llm=annotation_llm,
-                evaluation_llm=annotation_llm,
-                assessment_llm=annotation_llm,
+                evaluation_llm=evaluation_llm,
+                assessment_llm=evaluation_llm,
+                feedback_llm=evaluation_llm,
                 schema_dir=self._schema_dir,
                 use_js_validator=False,  # Use Python validator in standalone
             )

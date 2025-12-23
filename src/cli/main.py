@@ -113,6 +113,22 @@ ProviderOption = Annotated[
     ),
 ]
 
+EvalModelOption = Annotated[
+    str | None,
+    typer.Option(
+        "--eval-model",
+        help="Model for evaluation agent (default: same as --model). Use a consistent model for benchmarking.",
+    ),
+]
+
+EvalProviderOption = Annotated[
+    str | None,
+    typer.Option(
+        "--eval-provider",
+        help="Provider for evaluation model (e.g., Cerebras for qwen models).",
+    ),
+]
+
 TemperatureOption = Annotated[
     float | None,
     typer.Option(
@@ -163,6 +179,8 @@ def get_executor(
         executor = LocalExecutionBackend(
             api_key=api_key,
             model=config.models.default,
+            eval_model=config.models.evaluation,
+            eval_provider=config.models.eval_provider,
             vision_model=config.models.vision,
             provider=config.models.provider,
             temperature=config.models.temperature,
@@ -183,6 +201,8 @@ def get_executor(
             api_url=config.api.url,
             api_key=api_key,
             model=config.models.default,
+            eval_model=config.models.evaluation,
+            eval_provider=config.models.eval_provider,
             vision_model=config.models.vision,
             provider=config.models.provider,
             temperature=config.models.temperature,
@@ -353,6 +373,8 @@ def annotate(
     api_key: ApiKeyOption = None,
     api_url: ApiUrlOption = None,
     model: ModelOption = None,
+    eval_model: EvalModelOption = None,
+    eval_provider: EvalProviderOption = None,
     provider: ProviderOption = None,
     temperature: TemperatureOption = None,
     schema_version: SchemaVersionOption = None,
@@ -400,6 +422,8 @@ def annotate(
         api_key=api_key,
         api_url=api_url,
         model=model,
+        eval_model=eval_model,
+        eval_provider=eval_provider,
         provider=provider,
         temperature=temperature,
         schema_version=schema_version,
@@ -456,6 +480,8 @@ def annotate_image(
     api_key: ApiKeyOption = None,
     api_url: ApiUrlOption = None,
     model: ModelOption = None,
+    eval_model: EvalModelOption = None,
+    eval_provider: EvalProviderOption = None,
     provider: ProviderOption = None,
     temperature: TemperatureOption = None,
     schema_version: SchemaVersionOption = None,
@@ -509,6 +535,8 @@ def annotate_image(
         api_key=api_key,
         api_url=api_url,
         model=model,
+        eval_model=eval_model,
+        eval_provider=eval_provider,
         provider=provider,
         temperature=temperature,
         schema_version=schema_version,
