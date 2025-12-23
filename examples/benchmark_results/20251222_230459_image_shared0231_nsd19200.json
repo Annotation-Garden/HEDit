@@ -1,0 +1,180 @@
+{
+  "session_id": "20251222_230459",
+  "image_name": "shared0231_nsd19200.png",
+  "description": "The image captures a sleek, modern passenger train traveling along a set of parallel railroad tracks under a clear, pale blue sky, suggesting a crisp autumn or winter day. The train, led by a locomotive with a distinctive blue, silver, and red livery, moves from left to right, its front featuring a bold red and white chevron design and the number \"401\" clearly visible. The locomotive's headlights are illuminated, casting a warm glow. Behind it, a series of silver, streamlined passenger cars extend into the distance, their reflective surfaces catching the sunlight. The tracks are laid on a bed of coarse gravel, with multiple sets of rails visible, indicating a complex rail yard or junction. In the background, a concrete overpass spans the tracks, supported by a metal framework, with signal lights mounted above. The surrounding landscape is composed of leafless trees and shrubs, their muted browns and yellows reinforcing the seasonal feel. The lighting is bright and directional, likely from a low sun, creating sharp shadows and highlighting the textures of the gravel and the train\u2019s metallic surfaces. The composition is dynamic, with the converging lines of the tracks drawing the eye toward the train, emphasizing its motion and scale within the industrial yet natural setting.",
+  "vision_model": "qwen/qwen3-vl-30b-a3b-instruct",
+  "vision_response": {
+    "description": "The image captures a sleek, modern passenger train traveling along a set of parallel railroad tracks under a clear, pale blue sky, suggesting a crisp autumn or winter day. The train, led by a locomotive with a distinctive blue, silver, and red livery, moves from left to right, its front featuring a bold red and white chevron design and the number \"401\" clearly visible. The locomotive's headlights are illuminated, casting a warm glow. Behind it, a series of silver, streamlined passenger cars extend into the distance, their reflective surfaces catching the sunlight. The tracks are laid on a bed of coarse gravel, with multiple sets of rails visible, indicating a complex rail yard or junction. In the background, a concrete overpass spans the tracks, supported by a metal framework, with signal lights mounted above. The surrounding landscape is composed of leafless trees and shrubs, their muted browns and yellows reinforcing the seasonal feel. The lighting is bright and directional, likely from a low sun, creating sharp shadows and highlighting the textures of the gravel and the train\u2019s metallic surfaces. The composition is dynamic, with the converging lines of the tracks drawing the eye toward the train, emphasizing its motion and scale within the industrial yet natural setting.",
+    "prompt_used": "Describe what you see in this image. Include the setting, main elements, colors, lighting, and overall composition. Be specific and detailed. Form the response as a continuous paragraph. Maximum 200 words.",
+    "metadata": {
+      "format": "PNG",
+      "mode": "RGB",
+      "size": [
+        425,
+        425
+      ],
+      "width": 425,
+      "height": 425,
+      "size_bytes": 389243,
+      "size_mb": 0.37121105194091797,
+      "mime_type": "image/png"
+    }
+  },
+  "schema_version": "8.4.0",
+  "eval_model": "qwen/qwen3-235b-a22b-2507",
+  "eval_provider": "Cerebras",
+  "timestamp": "2025-12-23T00:05:06.518742",
+  "results": [
+    {
+      "model_id": "openai/gpt-oss-120b",
+      "model_name": "GPT-OSS-120B",
+      "provider": "Cerebras",
+      "cli_command": "hedit annotate \"The image captures a sleek, modern passenger train...\" --model openai/gpt-oss-120b --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment --provider Cerebras",
+      "execution_time_seconds": 26.546798944473267,
+      "full_response": {
+        "status": "error",
+        "error": "JSON parse error: Expecting value: line 1 column 1 (char 0)",
+        "stdout": "[WORKFLOW] Entering annotate node (validation attempt 0, total iteration 1)\n[WORKFLOW] Annotation generated: Sensory-event, Visual-presentation, (Vehicle/Train, (Color/Blue, Color/Silver, Color/Red)), (Vehicle...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 1/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 1, total iteration 2)\n[WORKFLOW] Annotation generated: Sensory-event, Experimental-stimulus, Visual-presentation, (Vehicle/Train, ((Vehicle/Locomotive, (Bl...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 2/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 2, total iteration 3)\n[WORKFLOW] Annotation generated: Sensory-event, Experimental-stimulus, Visual-presentation, (Vehicle/Train, (Move, (Property/Left-to-...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 3/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 3, total iteration 4)\n[WORKFLOW] Annotation generated: Sensory-event, Experimental-stimulus, Visual-presentation, (Image, (Vehicle/Locomotive, (Blue, Red, ...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 4/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 4, total iteration 5)\n[WORKFLOW] Annotation generated: Sensory-event, Visual-presentation, ((Vehicle/Locomotive, Color/Blue, Color/Red, Color/Silver)), ((2...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 5/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 5, total iteration 6)\n[WORKFLOW] Annotation generated: Sensory-event, Visual-presentation, ((Vehicle/Locomotive, Blue, Silver, Red, Label/401, State/Illumi...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 6/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 6, total iteration 7)\n[WORKFLOW] Annotation generated: Sensory-event, Visual-presentation, (Vehicle/Locomotive, (Color/Blue), (Color/Silver), (Part-of, Ite...\n",
+        "stderr": "Error: Annotation failed: Recursion limit of 25 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.\nFor troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT\nHint: Recursion limit of 25 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.\nFor troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT\n"
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.2",
+      "model_name": "GPT-5.2",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a sleek, modern passenger train...\" --model openai/gpt-5.2 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 185.89666891098022,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, Photograph, Real-world, Outdoors, (Environmental-property, (Luminance, High), (Luminance-contrast, High)), (Background-view, (LightBlue, Clear)), (Train, (Move, Rightward), (Train/Locomotive, (Blue, Silver, Red), (Pattern/Chevron, (Red, White)), (Textblock, Word/401), (Device/Headlight, (LightYellow, High))), ((Group-of, (Train/Passenger-car, (Silver, Metal, Smooth))), (Behind, (Train/Locomotive)))), ((Group-of, Track), (Towards, (Train/Locomotive))), (Track, (Contained-in, (Gravel-terrain, Rough))), ((Building/Overpass, (Steel, Gray)), (Above, (Group-of, Track))), ((Group-of, Device/Signal-light), (Above, (Group-of, Track))), (Group-of, (Plant, (Brown, Yellow))), ((Visual-attribute/Shadow, (Dark-shade, Abrupt)), (Underneath, Train))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: the event type (Sensory-event, Visual-presentation, Photograph), the main object (Train), its motion (Move, Rightward), and key visual details (locomotive livery, chevron pattern, number \"401\", headlights, passenger cars).  \n- Semantic grouping is correctly applied: object properties are properly parenthesized (e.g., (Train/Locomotive, (Blue, Silver, Red)), (Pattern/Chevron, (Red, White))), and spatial relationships are well-structured (e.g., (Behind, (Train/Locomotive)), (Above, (Group-of, Track))).  \n- Important contextual details are included: environmental lighting (High luminance and contrast), track structure (on gravel), overpass with signal lights, surrounding vegetation, and shadows.  \n- The use of (Group-of, ...) for repeated elements (tracks, signal lights, passenger cars) is appropriate and enhances clarity.  \n- The annotation successfully passes the reversibility test\u2014translating it back yields a description very close to the original.  \n\nNo refinement needed. The annotation is detailed, semantically accurate, and well-structured.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements: train appearance, motion, livery, number, headlights, passenger cars, tracks, gravel, overpass, signals, vegetation, lighting, shadows, and environmental context. Semantic grouping correctly associates properties with objects and spatial relations.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.1-codex-mini",
+      "model_name": "GPT-5.1-Codex-Mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a sleek, modern passenger train...\" --model openai/gpt-5.1-codex-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 385.02630496025085,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Experimental-stimulus, Visual-presentation, Visual-perspective/Converging-lines, Motion-indication, (Lighting, Bright, Directional, (Source, (Natural-feature/Sun, Low-angle))), (Natural-feature/Sky, Clear, LightBlue), Environmental-property/Crisp, (Path/Track, Parallel-pair, (Contained-in, (Gravel-terrain, Rough))), (Group-of, (Path/Track, Parallel-pair)), (Object/Rail-yard, Complex, (Contains, (Path/Track))), (Gravel-terrain, Rough, (Interacts-with, (Lighting, Bright, Directional))), ((Vehicle/Locomotive, Blue, Silver, Red, Label/401, (Associated-with, (Path/Track)), (Interacts-with, (Lighting, Bright, Directional))), (Directional-relation, Rightward)), ((Pattern/Chevron, Red, White), (Part-of, (Vehicle/Locomotive))), ((Device/Headlight, (Lighting, Bright, Temperature/Warm)), (Part-of, (Vehicle/Locomotive))), (Group-of, (Vehicle/Passenger-car, Silver, Background-view, (Behind, (Vehicle/Locomotive)), (Interacts-with, (Lighting, Bright, Directional)))), ((Object/Overpass, Concrete, (Spans, (Group-of, (Path/Track))), (Supported-by, (Object/Metal-framework, (Constructed-of, Manufactured-material/Metal)))), ((Device/Signal-light, Lighting, Alert), (Part-of, (Object/Overpass)), (Above, (Path/Track))), (Background-view, (Group-of, (Plant/Tree, Leafless, (Color/Brown)), (Plant/Shrub, Leafless, (Color/Yellow)))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the visual event type, the train and its components, the tracks, lighting, environment, and background structures.  \n- Semantic grouping is correctly applied throughout. Properties like colors, materials, and states are appropriately nested within objects (e.g., `(Vehicle/Locomotive, Blue, Silver, Red, Label/401, ...)`), and spatial/relational concepts are properly parenthesized (e.g., `(Behind, (Vehicle/Locomotive))`, `(Spans, (Group-of, (Path/Track)))`).  \n- Key details from the description are well represented: the chevron pattern, illuminated headlights, passenger cars, overpass with signal lights, leafless vegetation, gravel terrain, and directional lighting from a low sun.  \n- The use of `Visual-perspective/Converging-lines` and `Motion-indication` effectively conveys the dynamic composition and implied movement.  \n- All main objects and their relationships (e.g., containment, support, part-whole) are modeled with correct syntactic structure.  \n- The annotation would successfully pass the reversibility test\u2014translating it back to natural language yields a description very close to the original.  \n\nNo refinement is needed. The annotation is detailed, semantically precise, and faithful to the original description.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements\u2014train, livery, motion, lighting, environment, infrastructure, and vegetation\u2014with accurate semantic grouping. Properties are properly attached to objects, and spatial/functional relations are well represented. Reversibility is strong.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-4o-mini",
+      "model_name": "GPT-4o-mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a sleek, modern passenger train...\" --model openai/gpt-4o-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 20.803624868392944,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Sensory-event, Visual-presentation, (Scene-composition, (Dynamic, (Converging-lines, (Tracks)), (Focus, (Train, (Motion, (Moving, (Direction, Left-to-right))))))), (Sky, (Clear, (Color, Pale-blue))), (Lighting, (Bright, (Directional))), (Train, (Surface, Sleek), (Livery, (Blue, Silver, Red)), (Front, (Design, (Chevron, (Color, (Red, White)))), (Number, \"401\")), (Headlights, (Illuminated, (Glow, Warm)))), (Passenger-cars, (Surface, Reflective)), (Tracks, (Laid-on, (Bed, Coarse-gravel))), (Concrete-overpass, (Spans, Tracks), (Supported-by, (Metal-framework))), (Signal-lights, (Mounted-above, Overpass)), (Landscape, (Trees, (Leafless, (Color, (Muted-brown, Muted-yellow))))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 3,
+          "total_iterations": 3,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the visual event type, main objects (train, tracks, sky, overpass, landscape), key actions (motion from left to right), and detailed attributes.  \n- Semantic grouping is correctly applied throughout: object properties (e.g., colors, materials, spatial roles) are appropriately nested within their respective parent concepts. For example, (Chevron, (Color, (Red, White))) and (Illuminated, (Glow, Warm)) preserve intended meaning.  \n- Spatial and compositional dynamics like (Converging-lines, (Tracks)) and (Focus, (Train, ...)) effectively convey the image\u2019s visual structure.  \n- Environmental context\u2014including seasonally appropriate foliage, lighting conditions, and infrastructure details\u2014is well represented with proper nesting.  \n- The annotation successfully passes the reversibility test: it can be translated back into a natural language description very close to the original.  \n\nNo refinement needed. The annotation is detailed, semantically accurate, and structurally sound.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements\u2014train appearance, motion, livery, lighting, environment, and scene composition\u2014with accurate semantic grouping. Properties are correctly nested with their objects, and spatial/functional relationships are preserved.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a sleek, modern passenger train...\" --model google/gemini-3-flash-preview --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 11.736259937286377,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Image, (Background-view, (Sky, Pale, Blue)), (Landscape, (Tree, (Muted, Brown, Yellow), (Property/Leafless)), (Shrub, (Muted, Brown, Yellow), (Property/Leafless)))), (Illumination, (Bright, Directional, (Shadow, Sharp))), ((Locomotive, (Blue, Silver, Red), (Label/401), (Front, (Pattern/Chevron, Red, White)), (Light, Illuminated)), (Move, Rightward)), (Passenger-car, (Silver, Streamlined, Repetitive, (Reflective, Sunlight))), (Railroad-track, (Parallel, (Converging, (Towards, Locomotive)))), (Gravel, Coarse, (Below, Railroad-track)), ((Overpass, Concrete, (Part-of, (Machine/Metal-framework))), (Above, Railroad-track)), (Signal-light, (Above, Railroad-track))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the original description: the visual scene, key objects (locomotive, passenger cars, tracks, overpass, etc.), their properties, spatial relationships, and motion.  \n- Semantic grouping is correctly applied throughout. Properties are appropriately nested with their respective objects (e.g., (Locomotive, (Blue, Silver, Red), ...)), and spatial relations (e.g., (Above, Railroad-track)) are properly structured.  \n- Key details such as the locomotive\u2019s livery, chevron pattern, label \"401\", illuminated headlights, direction of motion (Rightward), track convergence, gravel bed, overpass structure, signal lights, and seasonal landscape cues (leafless trees, muted colors) are all represented.  \n- Lighting conditions (bright, directional light with sharp shadows) and material properties (reflective surfaces, coarse gravel) are included and well-integrated.  \n- The structure supports reversibility: the annotation can be translated back into a natural language description very close to the original.  \n\nNo refinement is needed. The annotation is detailed, semantically accurate, and well-structured.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements: train appearance, motion, livery, lighting, environment, and spatial relations. Semantic grouping correctly nests attributes with objects and maintains proper spatial and functional relationships. Reversibility is strong\u2014original description can be accurately reconstructed.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "anthropic/claude-haiku-4.5",
+      "model_name": "Claude-Haiku-4.5",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a sleek, modern passenger train...\" --model anthropic/claude-haiku-4.5 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 17.85889196395874,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Motion, (Move, (Direction, Left-to-right)), (Agent, (Train, (Property, (Sleek, Modern)), (Livery, (Color, Blue, Silver, Red)), (Component, (Locomotive, (Headlight, (Bright, Directional), (Emit, (Light, (Warm-glow)))), (Design, (Chevron, (Color, Red, White)), (Identifier, Label/401))))))), (Passenger-car, (Multiple, (Property, (Streamlined, Reflective)), (Color, Silver), (Surface, (Catching, Sunlight))))), (Track, (Multiple, (Bed, (Gravel, (Texture, Coarse))), (Rail, (Multiple))))), (Infrastructure, (Overpass, (Material, Concrete), (Support, (Metal-framework)), (Signal-light, (Mounted-above)))), (Landscape, (Vegetation, (Type, (Tree, Shrub), (State, Leafless), (Color, Brown, Yellow))))), (Sky, (Color, Blue, Pale), (Clarity, Clear)), (Lighting, (Bright, Directional), (Source, (Sun, (Low-angle), (Illuminating, (Train, Track)))), (Effect, (Shadow, Sharp), (Highlight, (Texture, (Gravel, Metallic-surface))))), (Composition, (Dynamic, (Converging-line, (Track, (Drawing-eye, (Train, (Emphasis, (Motion, Scale), (Setting, (Industrial, Natural))))))))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 3,
+          "total_iterations": 3,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the original description: the moving train, its visual properties (livery, design, lighting), the track environment, infrastructure, landscape, lighting conditions, and compositional dynamics.  \n- Semantic grouping is correctly applied throughout. Properties are appropriately nested within objects (e.g., (Locomotive, (Headlight, ...)), (Chevron, (Color, ...))), spatial and relational concepts are well-structured (e.g., (Move, (Direction, Left-to-right))), and complex scenes are hierarchically organized (e.g., (Composition, (Dynamic, ...))).  \n- Key details such as the train\u2019s motion, livery colors, chevron design, identifier \"401\", illuminated headlights, passenger cars, gravel bed, multiple rails, overpass with signal lights, leafless vegetation, sky clarity, directional lighting, and dynamic composition are all faithfully represented.  \n- The annotation maintains clarity and reversibility\u2014translating it back to natural language would yield a description very close to the original.  \n- No critical omissions or structural errors are present. The use of parentheses ensures unambiguous interpretation of object-property and object-relation bindings.  \n\nThis is a high-quality, semantically precise HED annotation that aligns well with the original event description.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements from the description, including visual properties, motion, spatial relations, and compositional aspects, with accurate semantic grouping (e.g., properties with objects, agent-action nesting). The structure allows for reversible translation back to natural language without loss of meaning.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "mistralai/mistral-small-3.2-24b-instruct",
+      "model_name": "Mistral-Small-3.2-24B",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a sleek, modern passenger train...\" --model mistralai/mistral-small-3.2-24b-instruct --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 11.446311950683594,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, ((Train, (Modern, Passenger)), (Move, (From-left-to-right, (Speed, Fast)))), ((Livery, (Blue, Silver, Red)), (Number, 401)), (Headlight, (Illuminated, Warm)), ((Passenger-car, (Silver, Streamlined)), (Reflective, Surface)), ((Railroad-track, (Parallel, Multiple)), (Gravel, Coarse)), (Overpass, (Concrete, Metal-framework)), (Signal-light, Mounted), ((Landscape, (Leafless, Tree, Shrub)), (Color, (Brown, Yellow))), (Lighting, (Bright, Directional, Low-sun)), (Shadow, Sharp), (Texture, (Gravel, Metallic)), (Composition, (Dynamic, Converging-line, Emphasize-motion))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the event: it identifies the scene as a visual sensory event involving a train in motion, with detailed descriptions of appearance, movement, environment, and composition.  \n- Semantic grouping is correctly applied throughout. Properties are appropriately nested with their respective objects (e.g., `(Train, (Modern, Passenger))`, `(Livery, (Blue, Silver, Red))`, `(Lighting, (Bright, Directional, Low-sun))`), ensuring clarity and avoiding ambiguity.  \n- Key visual details from the original description are well represented: the train\u2019s livery and number, illuminated headlights, passenger cars, track structure, overpass, seasonal landscape, lighting conditions, shadows, textures, and compositional dynamics.  \n- The annotation successfully conveys both concrete elements (e.g., \"Number 401\", \"parallel railroad tracks\") and higher-level perceptual qualities (e.g., \"Dynamic\", \"Emphasize-motion\") in a structured and semantically sound way.  \n- It passes the reversibility test: the annotation can be translated back into a coherent natural language description closely matching the original.  \n\nNo refinement is needed. The annotation is faithful, well-structured, and adheres to HED best practices.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: Most key elements are captured, but several groupings are incorrect or ambiguous. For example, (Move, (From-left-to-right, (Speed, Fast))) incorrectly nests speed under direction; ((Livery, (Blue, Silver, Red)), (Number, 401)) fails to link livery and number to the locomotive. Properties like \"Warm\" should be grouped with \"Glow\" rather than \"Illuminated, Warm\". Reversibility is compromised due to loose groupings.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    }
+  ]
+}

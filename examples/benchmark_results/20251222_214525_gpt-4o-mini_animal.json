@@ -1,0 +1,176 @@
+{
+  "session_id": "20251222_214525",
+  "model_name": "GPT-4o-mini",
+  "domain": "animal",
+  "schema_version": "8.4.0",
+  "eval_model": "qwen/qwen3-235b-a22b-2507",
+  "eval_provider": "Cerebras",
+  "timestamp": "2025-12-22T22:09:25.012942",
+  "results": [
+    {
+      "test_id": "animal_01",
+      "domain": "animal",
+      "difficulty": "medium",
+      "input_description": "A macaque monkey reaches toward a target on a touchscreen and receives a juice reward",
+      "expected_elements": [
+        "Agent-action",
+        "Animal-agent",
+        "Reach",
+        "Target",
+        "Reward"
+      ],
+      "model_id": "openai/gpt-4o-mini",
+      "model_name": "GPT-4o-mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"A macaque monkey reaches toward a target on a touchscreen and receives a juice reward\" --model openai/gpt-4o-mini --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 11.454771995544434,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Agent-action, ((Animal-agent, Animal/Macaque), (Reach, (Toward, (Target, (On, Touchscreen))))), (Receive, (Juice, Experimental-reward)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 3,
+          "total_iterations": 3,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \nThe HED annotation accurately captures the core elements of the event:  \n- Event type is correctly identified as **Agent-action**.  \n- The agent is properly specified as **(Animal-agent, Animal/Macaque)**.  \n- The two main actions\u2014**Reach** toward a target on a touchscreen and **Receive** a juice reward\u2014are clearly represented.  \n- Semantic grouping is correct: object properties and spatial relationships are appropriately nested. For example, **(Target, (On, Touchscreen))** correctly describes the target\u2019s location, and **(Toward, ...)** is properly scoped within the **Reach** action.  \n- The reward is well-annotated as **(Juice, Experimental-reward)**, indicating both the physical item and its functional role.  \n\nThe annotation is concise, semantically precise, and passes the reversibility test\u2014it can be translated back into a natural language description very close to the original. No refinement is needed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: The annotation captures all key elements (macaque, reach toward target on touchscreen, receive juice reward), but the grouping is suboptimal. \"Juice\" should be grouped with \"Experimental-reward\" as (Juice, Experimental-reward) to indicate it is the reward, and \"Receive\" should take this as its object. Also, \"Toward\" should properly nest the target and its spatial relation: (Toward, (Target, (On, Touchscreen))).  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "animal_02",
+      "domain": "animal",
+      "difficulty": "medium",
+      "input_description": "The rat navigates through a virtual reality T-maze and turns left at the choice point",
+      "expected_elements": [
+        "Agent-action",
+        "Animal-agent",
+        "Navigate",
+        "Left"
+      ],
+      "model_id": "openai/gpt-4o-mini",
+      "model_name": "GPT-4o-mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The rat navigates through a virtual reality T-maze and turns left at the choice point\" --model openai/gpt-4o-mini --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 15.434850931167603,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Agent-action, (Animal-agent, Animal/Rat), ((Navigate, (Through, (Virtual-reality, T-maze))), (Turn, (Left), (At, (Choice-point)))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 4,
+          "total_iterations": 4,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: event type (Agent-action), main agent (Animal/Rat), and key actions (Navigate, Turn).  \n- Semantic grouping is correct: the rat is properly specified as (Animal-agent, Animal/Rat), and the actions are appropriately nested with their modifiers.  \n- The navigation path \"through a virtual reality T-maze\" is well represented as (Navigate, (Through, (Virtual-reality, T-maze))), with \"Virtual-reality\" correctly modifying \"T-maze\" in a grouped structure.  \n- The second action, turning left at the choice point, is correctly structured as (Turn, (Left), (At, (Choice-point))), preserving both direction and location.  \n- All explicitly mentioned details (virtual reality, T-maze, left turn, choice point) are included with proper syntactic grouping.  \n- The annotation is both semantically precise and reversible\u2014translating it back to natural language yields a description very close to the original.  \n\nNo refinement needed. The annotation is faithful and well-structured.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: Most key elements are present, but \"Left\" should be grouped with \"Turn\" as (Turn, Left) rather than separate arguments. \"At, (Choice-point)\" is acceptable but could be clearer as (At-location, (Choice-point)). The nesting of Navigate is overly complex and could be simplified.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "animal_03",
+      "domain": "animal",
+      "difficulty": "hard",
+      "input_description": "A rhesus monkey successfully grasps a pellet with a precision grip using thumb and index finger",
+      "expected_elements": [
+        "Agent-action",
+        "Animal-agent",
+        "Grasp"
+      ],
+      "model_id": "openai/gpt-4o-mini",
+      "model_name": "GPT-4o-mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"A rhesus monkey successfully grasps a pellet with a precision grip using thumb and index finger\" --model openai/gpt-4o-mini --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 6.364175796508789,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Agent-action, ((Animal-agent, Animal/Rhesus-monkey), (Grasp, (Pellet, (Precision-grip, (Thumb, Index-finger)))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: event type (Agent-action), agent (Animal/Rhesus-monkey), action (Grasp), object (Pellet), and manner (Precision-grip involving Thumb and Index-finger).  \n- Semantic grouping is correct: the agent is properly nested as (Animal-agent, Animal/Rhesus-monkey), and the action structure ((Grasp, (Pellet, (Precision-grip, (Thumb, Index-finger))))) clearly links the grip type and fingers to the grasping of the pellet.  \n- The use of parentheses ensures that the precision grip and its components are interpreted as modifiers of the grasp event, not as separate entities.  \n- The annotation is both semantically precise and reversible\u2014translating it back yields a description very close to the original.  \nNo refinement needed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: The annotation captures all key elements (agent, action, object, grip type, fingers used), but the grouping of \"Precision-grip\" with \"Thumb, Index-finger\" as its arguments is semantically incorrect\u2014precision grip is a type of grasp defined by the use of thumb and index finger, not a container for them. Better structure would be (Grasp, (Pellet), (Precision-grip), (Using, (Thumb, Index-finger))).  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "animal_04",
+      "domain": "animal",
+      "difficulty": "hard",
+      "input_description": "The mouse receives an air puff to the whiskers as an aversive stimulus after incorrect lever press",
+      "expected_elements": [
+        "Sensory-event",
+        "Animal-agent",
+        "Incorrect-action",
+        "Aversive"
+      ],
+      "model_id": "openai/gpt-4o-mini",
+      "model_name": "GPT-4o-mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The mouse receives an air puff to the whiskers as an aversive stimulus after incorrect lever press\" --model openai/gpt-4o-mini --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 8.914571762084961,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Sensory-event, Experimental-stimulus, Aversive-stimulus, ((Air-puff, To-whiskers)), (After, (Incorrect, (Press, (Lever)))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: the event type (Sensory-event), the nature of the stimulus (Experimental-stimulus, Aversive-stimulus), the modality (Air-puff), target location (To-whiskers), and temporal relationship (After) to the triggering action.  \n- Semantic grouping is correct: (Air-puff, To-whiskers) is properly parenthesized as a unit, and the nested structure (After, (Incorrect, (Press, (Lever)))) clearly represents the sequence and modification (incorrect lever press).  \n- Key details such as \"air puff to the whiskers\" and \"after incorrect lever press\" are faithfully represented with appropriate hierarchical structure.  \n- The annotation is both semantically precise and reversible\u2014translating it back to natural language yields a description very close to the original.  \n\nNo refinement needed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: The annotation captures all key elements (air puff to whiskers, aversive stimulus, incorrect lever press, temporal relation), but the grouping of \"To-whiskers\" should be with \"Air-puff\" as (Air-puff, (To-whiskers)) for correct spatial specification. Also, \"After\" should more clearly modify the event sequence using proper temporal nesting.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "animal_05",
+      "domain": "animal",
+      "difficulty": "hard",
+      "input_description": "A marmoset vocalizes in response to a playback of a conspecific phee call",
+      "expected_elements": [
+        "Agent-action",
+        "Animal-agent",
+        "Vocalize",
+        "Auditory-presentation"
+      ],
+      "model_id": "openai/gpt-4o-mini",
+      "model_name": "GPT-4o-mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"A marmoset vocalizes in response to a playback of a conspecific phee call\" --model openai/gpt-4o-mini --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 9.348576068878174,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Agent-action, ((Animal-agent, Animal/Marmoset), (Vocalize, (Response, (Playback, (Conspecific, (Phee, Call))))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: event type (Agent-action), main agent (Marmoset, specified as an Animal-agent), and key action (Vocalize).  \n- The hierarchical structure correctly nests the action and its context: \"Vocalize\" is appropriately linked to \"Response\", which in turn contains the stimulus (playback of a conspecific phee call).  \n- Semantic grouping is correct\u2014properties and modifiers are properly parenthesized to form coherent conceptual units (e.g., (Animal-agent, Animal/Marmoset), (Phee, Call)).  \n- The use of (Conspecific, (Phee, Call)) effectively conveys that the playback is of a call from the same species, and \"Response\" correctly frames the vocalization as reactive.  \n- The structure passes the reversibility test: it can be translated back into a natural language description very close to the original.  \n\nNo refinement needed. The annotation is semantically precise and well-structured.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: The annotation captures all key elements (marmoset, vocalizing, response, playback, conspecific phee call), but the grouping is overly nested and misrepresents the relationship. \"Phee\" should modify \"Call\" as (Phee Call), and \"Conspecific\" should be linked to the call's source, not nested within playback. Response should be tied to the agent's action more clearly.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    }
+  ]
+}

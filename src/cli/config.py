@@ -33,10 +33,21 @@ FIRST_RUN_FILE = CONFIG_DIR / ".first_run"
 DEFAULT_API_URL = "https://api.annotation.garden/hedit"
 DEFAULT_DEV_API_URL = "https://api.annotation.garden/hedit-dev"
 
-# Default models (Cerebras-optimized)
-DEFAULT_MODEL = "openai/gpt-oss-120b"
+# Default models and providers
+# Annotation model: Mistral-Small-3.2-24B chosen based on benchmark results:
+# - 100% faithful rate, 91% complete rate
+# - Fast (13s avg), low token usage
+# - Best cost efficiency ($0.18/M output)
+DEFAULT_MODEL = "mistralai/mistral-small-3.2-24b-instruct"
+DEFAULT_PROVIDER = "mistral"
+
+# Evaluation model: Qwen3-235B for consistent quality assessment
+DEFAULT_EVAL_MODEL = "qwen/qwen3-235b-a22b-2507"
+DEFAULT_EVAL_PROVIDER = "Cerebras"
+
+# Vision model: Qwen3-VL for image descriptions
 DEFAULT_VISION_MODEL = "qwen/qwen3-vl-30b-a3b-instruct"
-DEFAULT_PROVIDER = "Cerebras"
+DEFAULT_VISION_PROVIDER = "deepinfra/fp8"
 
 
 class CredentialsConfig(BaseModel):
@@ -49,8 +60,22 @@ class ModelsConfig(BaseModel):
     """Model configuration for different agents."""
 
     default: str = Field(default=DEFAULT_MODEL, description="Default model for annotation")
+    provider: str | None = Field(
+        default=DEFAULT_PROVIDER, description="Provider for annotation model"
+    )
+    evaluation: str | None = Field(
+        default=DEFAULT_EVAL_MODEL,
+        description="Model for evaluation/assessment agents",
+    )
+    eval_provider: str | None = Field(
+        default=DEFAULT_EVAL_PROVIDER,
+        description="Provider for evaluation model (Cerebras for qwen)",
+    )
     vision: str = Field(default=DEFAULT_VISION_MODEL, description="Vision model for images")
-    provider: str | None = Field(default=DEFAULT_PROVIDER, description="Provider preference")
+    vision_provider: str | None = Field(
+        default=DEFAULT_VISION_PROVIDER,
+        description="Provider for vision model (deepinfra/fp8 for qwen-vl)",
+    )
     temperature: float = Field(default=0.1, ge=0.0, le=1.0, description="Model temperature")
 
 
@@ -69,6 +94,10 @@ class SettingsConfig(BaseModel):
     schema_version: str = Field(default="8.4.0", description="HED schema version")
     max_validation_attempts: int = Field(default=5, ge=1, le=10, description="Max retries")
     run_assessment: bool = Field(default=False, description="Run assessment by default")
+    user_id: str | None = Field(
+        default=None,
+        description="Custom user ID for cache optimization (default: auto-generated machine ID)",
+    )
 
 
 class OutputConfig(BaseModel):
@@ -90,7 +119,7 @@ class TelemetryConfig(BaseModel):
 
     enabled: bool = Field(default=True, description="Enable telemetry collection")
     model_blacklist: list[str] = Field(
-        default_factory=lambda: [DEFAULT_MODEL],
+        default_factory=lambda: ["openai/gpt-oss-120b"],
         description="Models to exclude from telemetry",
     )
 
@@ -191,11 +220,14 @@ def get_effective_config(
     api_key: str | None = None,
     api_url: str | None = None,
     model: str | None = None,
+    eval_model: str | None = None,
+    eval_provider: str | None = None,
     provider: str | None = None,
     temperature: float | None = None,
     schema_version: str | None = None,
     output_format: str | None = None,
     mode: str | None = None,
+    user_id: str | None = None,
 ) -> tuple[CLIConfig, str | None]:
     """Get effective config with command-line overrides applied.
 
@@ -203,11 +235,14 @@ def get_effective_config(
         api_key: Override API key
         api_url: Override API URL
         model: Override model (if non-default, clears provider unless explicitly set)
+        eval_model: Override evaluation model (for consistent benchmarking)
+        eval_provider: Override provider for evaluation model (e.g., "Cerebras")
         provider: Override provider preference (e.g., "Cerebras")
         temperature: Override temperature
         schema_version: Override schema version
         output_format: Override output format
         mode: Override execution mode ("api" or "standalone")
+        user_id: Override user ID for cache optimization
 
     Returns:
         Tuple of (effective config, effective API key)
@@ -232,6 +267,10 @@ def get_effective_config(
         # Clear provider if model changed and provider not explicitly set
         if provider is None and model != DEFAULT_MODEL:
             config.models.provider = None
+    if eval_model:
+        config.models.evaluation = eval_model
+    if eval_provider is not None:
+        config.models.eval_provider = eval_provider if eval_provider else None
     if provider is not None:  # Allow empty string to clear provider
         config.models.provider = provider if provider else None
 
@@ -245,6 +284,8 @@ def get_effective_config(
         if mode not in ("api", "standalone"):
             raise ValueError(f"Invalid mode: {mode}. Must be 'api' or 'standalone'")
         config.execution.mode = mode
+    if user_id:
+        config.settings.user_id = user_id
 
     return config, effective_key
 

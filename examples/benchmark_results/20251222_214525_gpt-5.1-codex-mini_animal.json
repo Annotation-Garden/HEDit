@@ -1,0 +1,176 @@
+{
+  "session_id": "20251222_214525",
+  "model_name": "GPT-5.1-Codex-Mini",
+  "domain": "animal",
+  "schema_version": "8.4.0",
+  "eval_model": "qwen/qwen3-235b-a22b-2507",
+  "eval_provider": "Cerebras",
+  "timestamp": "2025-12-22T22:05:35.233688",
+  "results": [
+    {
+      "test_id": "animal_01",
+      "domain": "animal",
+      "difficulty": "medium",
+      "input_description": "A macaque monkey reaches toward a target on a touchscreen and receives a juice reward",
+      "expected_elements": [
+        "Agent-action",
+        "Animal-agent",
+        "Reach",
+        "Target",
+        "Reward"
+      ],
+      "model_id": "openai/gpt-5.1-codex-mini",
+      "model_name": "GPT-5.1-Codex-Mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"A macaque monkey reaches toward a target on a touchscreen and receives a juice reward\" --model openai/gpt-5.1-codex-mini --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 68.89718389511108,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Agent-action, (Reach, (Agent, (Animal-agent, Animal/Macaque)), (Target, (On, Touchscreen))), (Outcome, (Reward, (Ingestible-object/Food, Ingestible-object/Juice), (Delivered-to, (Animal-agent, Animal/Macaque))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: event type (Agent-action), main agent (Animal/Macaque), key action (Reach), target location (On Touchscreen), and outcome (juice reward delivered to the animal).  \n- Semantic grouping is correctly applied: properties and roles are appropriately nested (e.g., (Agent, (Animal-agent, Animal/Macaque)), (Target, (On, Touchscreen)), and (Delivered-to, ...)).  \n- Key details such as the type of reward (Ingestible-object/Juice) and its delivery to the agent are included with proper structure.  \n- The annotation is both semantically precise and structurally sound, allowing for clear reversibility to natural language.  \n- No refinement needed\u2014this is a well-formed HED annotation that faithfully represents the original event.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements\u2014agent (macaque), action (reach toward target on touchscreen), and outcome (juice reward delivered to macaque)\u2014are accurately captured with proper semantic grouping.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "animal_02",
+      "domain": "animal",
+      "difficulty": "medium",
+      "input_description": "The rat navigates through a virtual reality T-maze and turns left at the choice point",
+      "expected_elements": [
+        "Agent-action",
+        "Animal-agent",
+        "Navigate",
+        "Left"
+      ],
+      "model_id": "openai/gpt-5.1-codex-mini",
+      "model_name": "GPT-5.1-Codex-Mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The rat navigates through a virtual reality T-maze and turns left at the choice point\" --model openai/gpt-5.1-codex-mini --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 66.38018608093262,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Agent-action, ((Animal-agent, Animal/Rat), (Move, (Within, (Virtual-world, Navigational-object/T-maze)))), ((Animal-agent, Animal/Rat), (Turn, (Left, (Point/Choice-point, (Contained-in, (Virtual-world, Navigational-object/T-maze))))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: event type (Agent-action), main agent (Animal/Rat), key actions (Move, Turn), environment (Virtual-world, T-maze), and specific behavior (turning left at the choice point).  \n- Semantic grouping is correctly applied: object properties and spatial relationships are properly nested (e.g., (Turn, (Left, (Point/Choice-point, ...))) clearly links the direction, location, and context).  \n- The structure reflects the original sentence\u2019s meaning and passes the reversibility test\u2014can be translated back into a natural language description very close to the original.  \n- All important details (left turn, choice point, virtual T-maze) are included with appropriate hierarchical grouping.  \n- No errors or omissions; optional enhancements (e.g., task purpose) are not required for faithfulness.  \n\nThis is a well-formed, faithful HED annotation. ACCEPT.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements (rat, virtual T-maze, navigation, turning left, choice point) are accurately captured with proper semantic grouping. The structure correctly nests agent, actions, and spatial relations.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "animal_03",
+      "domain": "animal",
+      "difficulty": "hard",
+      "input_description": "A rhesus monkey successfully grasps a pellet with a precision grip using thumb and index finger",
+      "expected_elements": [
+        "Agent-action",
+        "Animal-agent",
+        "Grasp"
+      ],
+      "model_id": "openai/gpt-5.1-codex-mini",
+      "model_name": "GPT-5.1-Codex-Mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"A rhesus monkey successfully grasps a pellet with a precision grip using thumb and index finger\" --model openai/gpt-5.1-codex-mini --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 29.82887291908264,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Agent-action, Correct-action, ((Animal-agent, Animal/Macaque), (Move-body/Grasp, (Ingestible-object/Pellet), (Action/Precision-grip, (Thumb, Index-finger))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: event type (Agent-action, Correct-action), main agent (Animal-agent, Macaque), action (Move-body/Grasp), object (Ingestible-object/Pellet), and manner (Action/Precision-grip with Thumb and Index-finger).  \n- Semantic grouping is correct: the agent is properly nested as (Animal-agent, Animal/Macaque), the action structure groups the grasp, target, and grip type appropriately, and the fingers are correctly listed within the precision grip specification.  \n- Key details from the original description\u2014precision grip, use of thumb and index finger, success (implied by Correct-action), and the nature of the agent\u2014are all represented.  \n- The structure allows for clear reversibility: it can be translated back into a natural language sentence very close to the original.  \n\nNo refinement needed. The annotation is semantically accurate and well-structured.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: The annotation captures the agent (rhesus monkey), action (grasp), object (pellet), and precision grip with thumb and index finger, but the grouping of (Action/Precision-grip, (Thumb, Index-finger)) is ambiguous and should be nested under the grasp action. Also, \"Agent-action\" and \"Correct-action\" are vague and not semantically grounded.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "animal_04",
+      "domain": "animal",
+      "difficulty": "hard",
+      "input_description": "The mouse receives an air puff to the whiskers as an aversive stimulus after incorrect lever press",
+      "expected_elements": [
+        "Sensory-event",
+        "Animal-agent",
+        "Incorrect-action",
+        "Aversive"
+      ],
+      "model_id": "openai/gpt-5.1-codex-mini",
+      "model_name": "GPT-5.1-Codex-Mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The mouse receives an air puff to the whiskers as an aversive stimulus after incorrect lever press\" --model openai/gpt-5.1-codex-mini --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 51.90314221382141,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Experimental-stimulus, Tactile-presentation, ((Negative, Threat, Label/Air-puff, (Touch, (Hair/Whiskers, (Part-of, (Animal/Mouse))))), (After, (Incorrect-action, (Press, (Label/Lever)))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: the event type (Sensory-event), the nature of the stimulus (Experimental-stimulus, Tactile-presentation), and the aversive quality (Negative, Threat).  \n- The main stimulus (Air-puff) is correctly labeled and linked to the target body part (Whiskers) and recipient (Mouse) using proper hierarchical grouping: (Touch, (Hair/Whiskers, (Part-of, (Animal/Mouse)))).  \n- The temporal relationship \"after incorrect lever press\" is well represented with (After, (Incorrect-action, ...)), and the action is appropriately detailed as (Press, (Label/Lever)).  \n- Semantic grouping is correct: object properties and roles are nested within their respective entities, avoiding flat or ambiguous structures.  \n- The annotation is both semantically precise and reversible\u2014translating it back to natural language yields a description very close to the original.  \n\nNo refinement needed. The annotation is faithful, well-structured, and adheres to HED best practices.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements are captured: the air puff as a tactile, aversive stimulus to the whiskers, delivered to the mouse after an incorrect lever press. Grouping correctly reflects semantic relationships, including the nested agent-action and temporal sequence.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "animal_05",
+      "domain": "animal",
+      "difficulty": "hard",
+      "input_description": "A marmoset vocalizes in response to a playback of a conspecific phee call",
+      "expected_elements": [
+        "Agent-action",
+        "Animal-agent",
+        "Vocalize",
+        "Auditory-presentation"
+      ],
+      "model_id": "openai/gpt-5.1-codex-mini",
+      "model_name": "GPT-5.1-Codex-Mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"A marmoset vocalizes in response to a playback of a conspecific phee call\" --model openai/gpt-5.1-codex-mini --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 95.54853224754333,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Experimental-stimulus, Auditory-presentation, (Vocalized-sound, Label/Conspecific-phee-call), Agent-action, Participant-response, (((Animal-agent, Animal/Marmoset), (Vocalize, (Vocalized-sound, Label/Marmoset-response-call))), (Associated-with, (Vocalized-sound, Label/Conspecific-phee-call)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \nThe HED annotation accurately captures the core elements of the original description. The event type is correctly identified with *Sensory-event*, *Experimental-stimulus*, and *Participant-response*, reflecting the experimental context. The auditory stimulus is properly represented as a *Vocalized-sound* with a specific label (*Conspecific-phee-call*), and the marmoset\u2019s action is modeled as an *Agent-action* with appropriate nesting: the *Animal-agent* (marmoset) performs *Vocalize*, producing a *Vocalized-sound* labeled as the response. The relational link *(Associated-with)* correctly ties the response to the stimulus, capturing the \"in response to\" relationship.\n\nSemantic grouping is correct throughout: object types are paired with their attributes (e.g., (Animal-agent, Animal/Marmoset)), actions are properly nested with agents and outcomes, and the association between the response and stimulus is clearly structured. The annotation would pass the reversibility test\u2014translating it back yields a description very close to the original.\n\nNo refinement is needed. The annotation is both faithful and semantically well-formed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: The annotation captures all key elements (marmoset, phee call playback, vocal response, agent-action structure), but the grouping is overly complex and contains redundancy. The response call is correctly linked but could be simplified; the nesting of (Associated-with, (Vocalized-sound, Label/Conspecific-phee-call)) is ambiguous in directionality\u2014better grouping would clarify that the marmoset's vocalization is *in response to* the stimulus.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    }
+  ]
+}

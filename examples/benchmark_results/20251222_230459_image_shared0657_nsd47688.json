@@ -1,0 +1,190 @@
+{
+  "session_id": "20251222_230459",
+  "image_name": "shared0657_nsd47688.png",
+  "description": "The image captures a lively indoor buffet scene, likely at a corporate event or gathering, set against a backdrop of a warm, reddish-brown brick wall. In the foreground, several open pizza boxes are arranged on a black-clothed table, displaying rectangular pepperoni and cheese pizzas with golden-brown crusts; white paper plates hold individual slices, ready to be served. To the left, a wooden sideboard holds a basket of breadsticks and a tray of fresh vegetables like celery and carrots, alongside a bowl of white dip. A man in a light blue shirt, dark vest, and tie stands behind the food, pointing toward the right with a serious expression, while another man in a grey vest and gloves, wearing a pink watch, stands beside him, seemingly preparing to serve. The lighting is bright and even, typical of indoor event spaces, highlighting the vibrant reds of the pepperoni, the creamy white of the cheese and dip, and the green of the vegetables. The composition is dynamic, with the diagonal line of the pizza boxes leading the eye across the frame, while the figures in the background add a sense of activity and purpose to the scene.",
+  "vision_model": "qwen/qwen3-vl-30b-a3b-instruct",
+  "vision_response": {
+    "description": "The image captures a lively indoor buffet scene, likely at a corporate event or gathering, set against a backdrop of a warm, reddish-brown brick wall. In the foreground, several open pizza boxes are arranged on a black-clothed table, displaying rectangular pepperoni and cheese pizzas with golden-brown crusts; white paper plates hold individual slices, ready to be served. To the left, a wooden sideboard holds a basket of breadsticks and a tray of fresh vegetables like celery and carrots, alongside a bowl of white dip. A man in a light blue shirt, dark vest, and tie stands behind the food, pointing toward the right with a serious expression, while another man in a grey vest and gloves, wearing a pink watch, stands beside him, seemingly preparing to serve. The lighting is bright and even, typical of indoor event spaces, highlighting the vibrant reds of the pepperoni, the creamy white of the cheese and dip, and the green of the vegetables. The composition is dynamic, with the diagonal line of the pizza boxes leading the eye across the frame, while the figures in the background add a sense of activity and purpose to the scene.",
+    "prompt_used": "Describe what you see in this image. Include the setting, main elements, colors, lighting, and overall composition. Be specific and detailed. Form the response as a continuous paragraph. Maximum 200 words.",
+    "metadata": {
+      "format": "PNG",
+      "mode": "RGB",
+      "size": [
+        425,
+        425
+      ],
+      "width": 425,
+      "height": 425,
+      "size_bytes": 339387,
+      "size_mb": 0.32366466522216797,
+      "mime_type": "image/png"
+    }
+  },
+  "schema_version": "8.4.0",
+  "eval_model": "qwen/qwen3-235b-a22b-2507",
+  "eval_provider": "Cerebras",
+  "timestamp": "2025-12-23T00:50:44.202996",
+  "results": [
+    {
+      "model_id": "openai/gpt-oss-120b",
+      "model_name": "GPT-OSS-120B",
+      "provider": "Cerebras",
+      "cli_command": "hedit annotate \"The image captures a lively indoor buffet scene, l...\" --model openai/gpt-oss-120b --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment --provider Cerebras",
+      "execution_time_seconds": 19.46238088607788,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Experimental-stimulus, Visual-presentation, (Wall, (Color, Color/Reddish-brown)), (Item/Table, (Color, Black), (Contains, (Item/Pizza-box, (Contains, (Item/Pizza, (Topping, Pepperoni), (Topping, Cheese), (Crust, Color/Brown), (Shape, Rectangular)), (Item/Plate, (Color, White))))), (Item/Sideboard, (Color, Wood), (To-left-of, (Item/Table)), (Contains, (Item/Basket, (Contains, (Item/Breadsticks)))), (Contains, (Item/Tray, (Contains, (Item/Vegetable, Celery), (Item/Vegetable, Carrot)))), (Contains, (Item/Bowl, (Contains, (Item/Dip, (Color, White))))), ((Human-agent, Label/Person), (Clothing/Shirt, (Color, LightBlue)), (Clothing/Vest, (Color, Black)), (Clothing/Tie), (Point, (Direction, Right))), ((Human-agent, Label/Person), (Clothing/Vest, (Color, Grey)), (Item/Watch, (Color, Pink)), (Action/Serve))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 4,
+          "total_iterations": 4,
+          "is_faithful": true,
+          "is_complete": false,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the visual event type, main objects (pizza boxes, sideboard, people), their properties, spatial relationships, and key actions.  \n- Semantic grouping is correctly applied: object properties (e.g., color, contents) are properly nested within parentheses with their respective items, avoiding flat or ambiguous structures.  \n- Key details such as clothing colors, food items, spatial layout (To-left-of), and actions (Point, Serve) are included with appropriate labeling.  \n- The use of (Human-agent, Label/Person) for both individuals is acceptable, and their distinguishing features (clothing, watch, actions) are clearly specified.  \n- The annotation preserves the dynamic composition and sensory richness of the original description and would support a reasonable reconstruction in natural language.  \n\nNo refinement needed\u2014this is a well-structured, faithful HED annotation.",
+          "assessment_feedback": "COMPLETENESS: incomplete  \nGROUPING: needs-improvement  \nNOTES: Missing key elements such as lighting description, composition dynamics (e.g., diagonal line of pizza boxes), and man with gloves preparing to serve; some properties are correctly grouped but agent actions and spatial relations lack full nesting (e.g., gloves not properly attributed, \"seemingly preparing to serve\" not fully captured). Reversibility is compromised due to ambiguous groupings.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.2",
+      "model_name": "GPT-5.2",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a lively indoor buffet scene, l...\" --model openai/gpt-5.2 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 284.35014605522156,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Event-context, (Label/Social-gathering, Label/Corporate-event, Label/Food-service)), Indoors, (Luminance, High, Constant), (Building-part/Wall, Manufactured-material/Brick, (Red, Brown)), (Furnishing/Table, Black), (Furnishing/Tablecloth, Black), ((Furnishing/Tablecloth, Black), (Over, (Furnishing/Table, Black))), ((Furnishing/Sideboard), (To-left-of, (Furnishing/Table, Black))), ((Furnishing/Table, Black), (Includes, (Oblique, (Group-of, (Box/Pizza-box, Open))))), ((Box/Pizza-box, Open), (Includes, (Ingestible-object/Pizza, Label/Pepperoni-pizza, Rectangle, (Red, White, Brown)))), ((Box/Pizza-box, Open), (Includes, (Ingestible-object/Pizza, Label/Cheese-pizza, Rectangle, (White, Brown)))), ((Ingestible-object/Crust, (Brown, Gold)), (Part-of, (Ingestible-object/Pizza, Label/Pepperoni-pizza))), ((Ingestible-object/Crust, (Brown, Gold)), (Part-of, (Ingestible-object/Pizza, Label/Cheese-pizza))), ((Furnishing/Table, Black), (Includes, (Tool/Plate, Paper, White))), ((Tool/Plate, Paper, White), (Includes, (Ingestible-object/Pizza-slice))), ((Furnishing/Sideboard), (Includes, (Tool/Basket))), ((Tool/Basket), (Includes, (Ingestible-object/Breadstick, Tan))), ((Furnishing/Sideboard), (Includes, (Tool/Tray))), ((Tool/Tray), (Includes, (Plant/Celery, Green))), ((Tool/Tray), (Includes, (Plant/Carrot, Orange))), ((Furnishing/Sideboard), (Includes, (Tool/Bowl))), ((Tool/Bowl), (Includes, (Ingestible-object/Dip, White))), Agent-action, ((Human-agent, Male, Emotionally-neutral, (Clothing/Shirt, LightBlue), (Clothing/Vest, DarkGray), (Clothing/Tie, DarkGray)), (Point, Rightward)), Agent-action, ((Human-agent, Male, (Agent-task-role/Server), (Clothing/Vest, Gray), (Clothing/Glove, White), (Clock/Watch, Pink)), (Perform, (Task-action-type/Prepare-to-serve, (Ingestible-object/Pizza-slice))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: event type (Sensory-event, Visual-presentation), setting (Indoors, Social-gathering, Corporate-event), key objects (pizza boxes, food items, furniture), and agent actions (pointing, preparing to serve).  \n- Semantic grouping is correctly applied throughout: object properties (color, shape, material) are properly parenthesized with their respective entities (e.g., (Ingestible-object/Pizza, Label/Pepperoni-pizza, Rectangle, (Red, White, Brown))).  \n- Spatial relationships are well represented (e.g., To-left-of, Over, Includes) and enhance scene structure.  \n- Agent-action annotations correctly nest human agents with their clothing, roles, and actions using proper HED syntax.  \n- Important visual details (colors of food, clothing, lighting) are included where salient, and task roles (Server) are appropriately inferred.  \n- The annotation is rich, structured, and reversible\u2014translating it back to natural language would yield a description very close to the original.  \n\nNo refinement needed. The annotation is comprehensive, semantically precise, and faithful to the original description.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements: setting, objects, spatial relations, food items, and agent actions with proper attributes. Semantic grouping correctly links properties to objects and actions to agents.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.1-codex-mini",
+      "model_name": "GPT-5.1-Codex-Mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a lively indoor buffet scene, l...\" --model openai/gpt-5.1-codex-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 297.45785784721375,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, Indoors, Label/Bright-even-indoor-lighting, Label/Dynamic-diagonal-composition, Label/Scene-communicates-activity-and-purpose, Label/Corporate-buffet-scene, (Building-part/Wall, Label/Brick-wall, Red, Brown, Label/Warm-reddish-brown-backdrop), (Furnishing/Table, Label/Black-cloth-table, Black, Label/Diagonal-line-of-pizza-boxes, Label/Multiple-open-pizza-boxes, (Includes, (Box, Open, Label/Open-pizza-box, (Includes, (Ingestible-object/Pizza, Rectangle, Label/Pepperoni-and-cheese-pizza, (Includes, (Ingestible-object/Pepperoni, Red, Label/Pepperoni-slices)), (Includes, (Ingestible-object/Cheese, White, Label/Melted-cheese)), Brown, Gold, Label/Golden-brown-crust))))), (Includes, (Object, Label/White-paper-plate, (Includes, (Ingestible-object/Pizza-slice, Rectangle, Label/Slice-ready-to-serve)))))), (Furnishing/Sideboard, Label/Left-sideboard-with-bread-and-vegetables, (To-left-of, (Furnishing/Table, Label/Black-cloth-table)), (Includes, (Object, Label/Basket-of-breadsticks, (Includes, (Ingestible-object/Breadstick, Brown, Label/Breadstick)))), (Includes, (Object, Label/Tray-of-celery-and-carrots, (Includes, (Ingestible-object/Celery, Green, Label/Celery-stalks), (Ingestible-object/Carrot, Orange, Label/Carrot-sticks)))), (Includes, (Object, White, Label/Bowl-of-white-dip, (Includes, (Ingestible-object/Dip, White, Label/Creamy-dip))))), (Human-agent, Male, Label/Man-in-light-blue-shirt-dark-vest-and-tie, Label/Serious-expression, Label/Pointing-right, (Behind, (Furnishing/Table, Label/Black-cloth-table))), (Human-agent, Male, Label/Man-in-grey-vest-with-gloves-and-pink-watch, Label/Preparing-to-serve, (Behind, (Furnishing/Table, Label/Black-cloth-table)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: event type (Sensory-event, Visual-presentation), setting (Indoors, corporate buffet), main objects (pizza boxes, sideboard, food items), agents (two men), and key actions (pointing, preparing to serve).  \n- Semantic grouping is correctly applied: object properties (color, shape, labels) are appropriately nested within their respective objects using parentheses. For example, (Ingestible-object/Pizza, Rectangle, Label/..., (Includes, ...)) properly groups the pizza with its attributes and components.  \n- Spatial relationships are well represented (e.g., To-left-of, Behind), enhancing scene structure.  \n- Important visual and compositional details\u2014such as lighting, color emphasis (red pepperoni, green vegetables), and dynamic composition\u2014are included via Label tags, preserving the descriptive richness.  \n- The annotation maintains a clear hierarchical structure, allowing for accurate reversibility back into a coherent natural language description.  \n- No critical information is missing, and there are no misrepresentations. While some fine-grained details could be expanded (e.g., \"gloves\" as a separate object), they are sufficiently captured in labels.  \n\nOverall, this is a high-quality, faithful HED annotation that effectively represents the original description with correct syntax and semantic grouping. ACCEPT.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements\u2014scene context, objects, spatial relations, attributes, and human actions\u2014with accurate semantic grouping. Properties are properly nested with their referents, and complex structures (e.g., pizzas in boxes, sideboard items, agent positions) are correctly represented. The reversibility test passes.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-4o-mini",
+      "model_name": "GPT-4o-mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a lively indoor buffet scene, l...\" --model openai/gpt-4o-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 15.555681228637695,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Sensory-event, Visual-presentation, Scene, Corporate-gathering, (Background, (Warm, Reddish-brown, Brick-wall)), (Foreground, (Table, Black-clothed, (Pizza-boxes, Open, (Pizzas, (Type, Pepperoni-and-cheese), (Shape, Rectangular), (Crust, Golden-brown)))), (White, Paper-plates, (Content, (Slice, Individual)))), (Left, (Wooden, Sideboard, (Content, (Basket, Breadsticks), (Tray, Fresh-vegetables, (Vegetables, (Celery, Carrots))), (Bowl, (Content, (Dip, White))))))), (Agent-action, ((Human-agent, Man), (Wearing, (Light-blue, Shirt), (Dark, Vest), (Tie)), (Pointing, (Direction, Right), (Expression, Serious)))), ((Human-agent, Man), (Wearing, (Grey, Vest), (Gloves), (Pink, Watch)), (Action, Prepare-to-serve))), (Lighting, (Type, Bright), (Quality, Even), (Effect, Highlighting, (Color, Red, (Vibrancy, High)), (Color, White, (Vibrancy, Creamy)), (Color, Green))), (Composition, (Type, Dynamic), (Element, (Diagonal-line, Pizza-boxes)), (Element, (Figures, Background, (Activity, Purpose)))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: event type (Sensory-event, Visual-presentation), setting (Corporate-gathering), spatial layout (Background, Foreground, Left), key objects (pizza boxes, sideboard, lighting), and agent actions (pointing, preparing to serve).  \n- Semantic grouping is correctly applied: object properties (e.g., (Warm, Reddish-brown, Brick-wall)), nested contents (e.g., (Pizza-boxes, Open, (Pizzas, ...))), and agent descriptions with clothing and actions are properly parenthesized.  \n- Important details such as colors, textures (golden-brown crusts, creamy white cheese), spatial relationships (left, background), and emotional cues (serious expression) are included where relevant.  \n- The lighting and compositional elements are well represented with appropriate nesting (e.g., (Effect, Highlighting, (Color, Red, ...))).  \n- The structure supports reversibility\u2014translating back to natural language would yield a description very close to the original.  \n\nNo refinement is needed. The annotation is detailed, semantically accurate, and structurally sound.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements\u2014scene setting, objects, spatial layout, agent actions, clothing, lighting, and composition\u2014are accurately captured with proper semantic grouping. The annotation preserves relationships (e.g., properties with objects, agents with actions) and passes the reversibility test.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a lively indoor buffet scene, l...\" --model google/gemini-3-flash-preview --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 9.979354858398438,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, Indoors, (Image, (Background-view, (Building-part, (Red-color, Brown-color, Brick)))), (Foreground-view, (Collection, (Box, (Open, (Rectangle, (Pizza, (Pepperoni, Cheese, (Brown, (Color-shade, Light-shade)))))))), (Black, (Furnishing, Table)), (Collection, (White, (Paper, Plate, (Pizza, (Part-of, Slice)))))), (To-left-of, (Sideboard, (Wood, (Collection, (Basket, Bread), (Tray, (Vegetable, (Celery, Carrot)), (Bowl, (White, (Food, Dip)))))))), (Agent-action, ((Human-agent, (Man, (Clothing, (Blue, (Light-shade, Shirt)), (Dark-shade, Vest), Tie))), (Action, (Point, (To-right-of, Screen))), (Agent-emotional-state, (Emotionally-neutral, (Label, Serious)))), ((Human-agent, (Man, (Clothing, (Gray, Vest), (Pink, Clock-face), Glove))), (Action, (Operate, Food)))), (Environmental-property, (Luminance, High))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the indoor setting, visual presentation, key foreground and background objects, agent actions, and environmental lighting.  \n- Semantic grouping is correctly applied: object properties (e.g., colors, materials) are properly nested within their respective objects using parentheses (e.g., (Blue, (Light-shade, Shirt)), (Red-color, Brown-color, Brick)).  \n- Spatial relationships like (To-left-of, (Sideboard, ...)) are appropriately structured.  \n- Agent-action representations clearly link each human agent with their clothing, actions (pointing, operating), and emotional state (serious expression).  \n- Key visual details\u2014pizza types, crust color, serving plates, sideboard contents\u2014are all represented with sufficient specificity.  \n- The lighting condition (high luminance) is correctly annotated under Environmental-property.  \n- The annotation is rich, well-structured, and semantically precise. It passes the reversibility test: one could reconstruct a very similar natural language description from it.  \n\nNo refinement needed. The annotation is faithful, complete, and correctly structured.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: Most key elements are captured, including objects, actions, attributes, and spatial relations, but some semantic groupings are incorrect or overly nested. For example, (Pepperoni, Cheese, (Brown, (Color-shade, Light-shade)))) should associate color with crust, not toppings; emotional state \"serious\" is mislabeled as \"emotionally-neutral\"; \"Clock-face\" is an inaccurate representation of a \"watch\"; and \"Operate, Food\" is vague for \"preparing to serve.\" Spatial and agent-action groupings need refinement for clarity and reversibility.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "anthropic/claude-haiku-4.5",
+      "model_name": "Claude-Haiku-4.5",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a lively indoor buffet scene, l...\" --model anthropic/claude-haiku-4.5 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 14.419021129608154,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Image), ((Brick-wall, (Color, Reddish-brown)), (Behind)), ((Table, (Cloth, (Color, Black))), (Foreground), (Holds, ((Pizza-box, (Open), (Multiple)), (Displays, ((Pizza, (Topping, Pepperoni), (Topping, Cheese), (Crust, (Color, Golden-brown))), (Rectangular)))))), ((Paper-plate, (White), (Holds, (Pizza-slice))), (Multiple)), ((Sideboard, (Wooden), (Left)), (Holds, ((Basket, (Holds, (Breadstick))), (Tray, (Holds, ((Vegetable, (Celery)), (Vegetable, (Carrot))))), (Bowl, (White), (Holds, (Dip, (White))))))), ((Human-agent, (Clothing, (Shirt, (Color, Light-blue)), (Vest, (Color, Dark)), (Tie)), (Serious)), (Behind-food), (Point, (Direction, Right))), ((Human-agent, (Clothing, (Vest, (Color, Grey)), (Gloves), (Watch, (Color, Pink))), (Beside), (Preparing-to-serve))), (Lighting, (Bright), (Even)), (Highlights, ((Pepperoni, (Color, Red)), (Cheese, (Color, White)), (Dip, (Color, White)), (Vegetables, (Color, Green)))), (Composition, (Dynamic), (Diagonal-line, (Pizza-box)), (Figures, (Background), (Activity)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the visual event type, main objects (pizza boxes, table, sideboard, people), key actions (pointing, preparing to serve), and environmental details (lighting, composition).  \n- Semantic grouping is correctly applied throughout: object properties (color, shape, material) are properly nested within their respective objects using parentheses, ensuring unambiguous interpretation. For example, `(Pizza, (Topping, Pepperoni), (Topping, Cheese))` and `(Human-agent, (Clothing, ...))` reflect correct structure.  \n- Spatial relations like `(Behind)`, `(Foreground)`, `(Left)`, and `(Beside)` are appropriately scoped or associated.  \n- Important descriptive details\u2014such as clothing colors, food items, lighting effects, and compositional dynamics\u2014are included with sufficient specificity.  \n- The annotation maintains a coherent hierarchical structure that passes the reversibility test: it can be translated back into a natural language description very close to the original.  \n\nNo refinement is needed. The annotation is faithful, well-structured, and semantically precise.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements\u2014objects, colors, spatial relations, actions, and attributes\u2014with accurate semantic grouping. Parentheses properly link properties to entities (e.g., (Color, Reddish-brown) with Brick-wall), and agent actions are correctly nested. The structure passes the reversibility test, clearly reflecting the original description.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "mistralai/mistral-small-3.2-24b-instruct",
+      "model_name": "Mistral-Small-3.2-24B",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a lively indoor buffet scene, l...\" --model mistralai/mistral-small-3.2-24b-instruct --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 14.08803105354309,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Sensory-event, Visual-presentation, ((Indoors, (Building-part, Wall, (Color, Reddish-brown))), (Table, (Color, Black, Cloth), (Item, Pizza-box, (Open, (Pizza, (Shape, Rectangle), (Topping, Pepperoni), (Topping, Cheese), (Crust, (Color, Golden-brown))))), (Item, Plate, (Color, White, Paper), (Contains, (Pizza-slice)))), (Sideboard, (Material, Wood), (Contains, (Item, Basket, (Contains, (Food, Breadstick))), (Item, Tray, (Contains, (Food, Vegetable, (Type, Celery)), (Food, Vegetable, (Type, Carrot)))), (Item, Bowl, (Color, White), (Contains, (Food, Dip))))), (Agent, (Human-agent, (Clothing, Shirt, (Color, Light-blue)), (Clothing, Vest, (Color, Dark)), (Clothing, Tie)), (Action, Point, (Direction, Right)), (Expression, Serious)), (Agent, (Human-agent, (Clothing, Vest, (Color, Grey)), (Clothing, Glove), (Wear, (Watch, (Color, Pink)))), (Action, Prepare, (Action, Serve))), (Lighting, (Property, Bright)), (Lighting, (Property, Even)), (Color, Red, (Topping, Pepperoni)), (Color, White, (Topping, Cheese)), (Color, White, (Food, Dip)), (Color, Green, (Food, Vegetable)), (Composition, (Property, Dynamic)), (Line, (Property, Diagonal), (Connects, (Item, Pizza-box))), (Agent, (Human-agent), (Action, Add, (Property, Activity)), (Action, Add, (Property, Purpose)))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: event type (Sensory-event, Visual-presentation), main objects (pizza boxes, table, sideboard, food items, people), key actions (pointing, preparing to serve), and relevant attributes (colors, materials, spatial context).  \n- Semantic grouping is correctly applied throughout: object properties (e.g., color, shape, material) are appropriately nested within their respective objects using parentheses. For example, ((Pizza, (Shape, Rectangle), (Topping, Pepperoni), ...)) correctly groups pizza attributes.  \n- Agent-action relationships are well-structured, with clothing, actions, and expressions properly nested under each agent.  \n- Spatial and compositional elements (e.g., diagonal line of pizza boxes, dynamic composition) are included and reasonably modeled.  \n- The use of (Color, Red, (Topping, Pepperoni)) and similar constructions, while slightly repetitive, is acceptable for emphasizing salient visual features and does not violate HED principles.  \n- The final agent annotation attempting to capture \"adds activity and purpose\" is abstract but aligns with the descriptive intent and does not introduce errors.  \n\nOverall, the annotation is rich, accurate, and semantically well-structured. It can be faithfully translated back into a natural language description closely matching the original. No refinement is needed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: Most key elements are captured, including objects, actions, colors, and spatial layout. However, some semantic groupings are incorrect or overly nested\u2014e.g., \"(Color, Red, (Topping, Pepperoni))\" should be grouped as (Topping, (Type, Pepperoni), (Color, Red)); also, the final agent action \"(Add, (Property, Activity))\" misrepresents the description. Reversibility is compromised due to loose groupings.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,180 @@
+{
+  "session_id": "20251222_230459",
+  "image_name": "shared0607_nsd44721.png",
+  "description": "The image captures a man in a dark navy suit, light blue dress shirt, and loosened tie, seated on a weathered wooden park bench, engaged in a phone conversation. He holds a black flip phone to his right ear with his right hand, his expression serious and contemplative as he gazes slightly off-camera. His left hand rests in his pocket, and his posture is relaxed yet attentive. The bench, constructed of horizontal wooden slats with a dark metal frame, shows signs of wear, suggesting an outdoor public setting. In the background, a dark metal fence with chain links and a portion of a white vehicle are visible, slightly blurred, indicating a shallow depth of field that keeps the focus on the man. The lighting appears to be natural daylight, possibly overcast, casting soft, even illumination across the scene without harsh shadows. The color palette is dominated by the man\u2019s dark suit, the muted brown of the bench, and the pale blue of his shirt, contrasted by the white of the vehicle and the subtle green of grass peeking through. The composition is a medium shot, centered on the man, emphasizing his solitary moment and the contrast between his formal attire and the casual, everyday environment.",
+  "vision_model": "qwen/qwen3-vl-30b-a3b-instruct",
+  "vision_response": {
+    "description": "The image captures a man in a dark navy suit, light blue dress shirt, and loosened tie, seated on a weathered wooden park bench, engaged in a phone conversation. He holds a black flip phone to his right ear with his right hand, his expression serious and contemplative as he gazes slightly off-camera. His left hand rests in his pocket, and his posture is relaxed yet attentive. The bench, constructed of horizontal wooden slats with a dark metal frame, shows signs of wear, suggesting an outdoor public setting. In the background, a dark metal fence with chain links and a portion of a white vehicle are visible, slightly blurred, indicating a shallow depth of field that keeps the focus on the man. The lighting appears to be natural daylight, possibly overcast, casting soft, even illumination across the scene without harsh shadows. The color palette is dominated by the man\u2019s dark suit, the muted brown of the bench, and the pale blue of his shirt, contrasted by the white of the vehicle and the subtle green of grass peeking through. The composition is a medium shot, centered on the man, emphasizing his solitary moment and the contrast between his formal attire and the casual, everyday environment.",
+    "prompt_used": "Describe what you see in this image. Include the setting, main elements, colors, lighting, and overall composition. Be specific and detailed. Form the response as a continuous paragraph. Maximum 200 words.",
+    "metadata": {
+      "format": "PNG",
+      "mode": "RGB",
+      "size": [
+        425,
+        425
+      ],
+      "width": 425,
+      "height": 425,
+      "size_bytes": 264240,
+      "size_mb": 0.2519989013671875,
+      "mime_type": "image/png"
+    }
+  },
+  "schema_version": "8.4.0",
+  "eval_model": "qwen/qwen3-235b-a22b-2507",
+  "eval_provider": "Cerebras",
+  "timestamp": "2025-12-23T00:39:44.081724",
+  "results": [
+    {
+      "model_id": "openai/gpt-oss-120b",
+      "model_name": "GPT-OSS-120B",
+      "provider": "Cerebras",
+      "cli_command": "hedit annotate \"The image captures a man in a dark navy suit, ligh...\" --model openai/gpt-oss-120b --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment --provider Cerebras",
+      "execution_time_seconds": 19.922324895858765,
+      "full_response": {
+        "status": "error",
+        "error": "JSON parse error: Expecting value: line 1 column 1 (char 0)",
+        "stdout": "[WORKFLOW] Entering annotate node (validation attempt 0, total iteration 1)\n[WORKFLOW] Annotation generated: Sensory-event, Experimental-stimulus, Visual-presentation, (Human, (Clothing, Blue), (Device, Black)...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 1/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 1, total iteration 2)\n[WORKFLOW] Annotation generated: Sensory-event, Visual-presentation, Visual-presentation/Medium-shot, ((Human-agent, Experiment-parti...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 2/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 2, total iteration 3)\n[WORKFLOW] Annotation generated: Sensory-event, Experimental-stimulus, Visual-presentation, (Human-agent, (On, (Furniture/Bench))), (...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new\u001b[0m\nLiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.\n\n",
+        "stderr": "Error: Annotation failed: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Provider returned \nerror\",\"code\":429,\"metadata\":{\"raw\":\"qwen/qwen3-235b-a22b-2507 is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: \nhttps://openrouter.ai/settings/integrations\",\"provider_name\":\"Cerebras\"}},\"user_id\":\"user_2miPlSxeNpQ2ItDANE5SICoFl0H\"}\nHint: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"qwen/qwen3-235b-a22b-2507 is \ntemporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: \nhttps://openrouter.ai/settings/integrations\",\"provider_name\":\"Cerebras\"}},\"user_id\":\"user_2miPlSxeNpQ2ItDANE5SICoFl0H\"}\n"
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.2",
+      "model_name": "GPT-5.2",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a man in a dark navy suit, ligh...\" --model openai/gpt-5.2 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 80.8157000541687,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, Photograph, Outdoors, (Human, Male, Emotionally-neutral, Focused-attention, (Clothing/Suit, Navy), (Clothing/Shirt, LightBlue), Clothing/Tie), (Furnishing/Bench, Rough, (Manufactured-material/Wood, Brown), (Manufactured-material/Steel, Black)), (Building-part/Fence, Black, Pattern/Chain-link), (Car, White), (Plant/Grass, Green), ((Human, Male, Emotionally-neutral, Focused-attention, (Clothing/Suit, Navy), (Clothing/Shirt, LightBlue), Clothing/Tie), (Sit-down, (Furnishing/Bench, Rough, (Manufactured-material/Wood, Brown), (Manufactured-material/Steel, Black)))), ((Human, Male, Emotionally-neutral, Focused-attention, (Clothing/Suit, Navy), (Clothing/Shirt, LightBlue), Clothing/Tie), (Hold, (Cellphone, Black))), ((Cellphone, Black), (Near-to, (Right, Ear)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": false,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements of the scene: the man (with correct gender, clothing, and emotional state), the bench, fence, car, grass, and key actions (sitting, holding a phone).  \n- Event type is appropriately identified as a *Sensory-event* with *Visual-presentation* and *Photograph*, and the outdoor setting is correctly noted.  \n- Semantic grouping is well-structured: properties like color and material are correctly grouped with their respective objects (e.g., (Clothing/Suit, Navy), (Manufactured-material/Wood, Brown)).  \n- Key spatial and relational details are preserved, such as ((Cellphone, Black), (Near-to, (Right, Ear))) and the man sitting on the bench.  \n- The repeated use of the full human description in multiple tuples is redundant but not incorrect\u2014it preserves clarity at the cost of conciseness. This does not violate HED principles.  \n- Subtle lighting (soft, even, overcast daylight) and composition (medium shot, shallow depth of field) are omitted, but these are optional enhancements and not required for faithfulness.  \n- The expression \"serious and contemplative\" is generalized to \"Emotionally-neutral, Focused-attention\"\u2014a reasonable interpretation given HED\u2019s limited emotion vocabulary.  \n\nOverall, the annotation is semantically accurate, properly grouped, and reconstructable into a description closely matching the original. No refinement is needed.",
+          "assessment_feedback": "COMPLETENESS: incomplete  \nGROUPING: needs-improvement  \nNOTES: Key elements like the loosened tie, contemplative expression, phone type (flip phone), hand in pocket, and shallow depth of field are missing or underspecified. Grouping is inconsistent\u2014emotional state and actions should reflect described nuances (e.g., \"serious and contemplative\" not \"emotionally-neutral\"). Some spatial and agent-action groupings are correct, but reversibility is compromised due to oversimplification.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.1-codex-mini",
+      "model_name": "GPT-5.1-Codex-Mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a man in a dark navy suit, ligh...\" --model openai/gpt-5.1-codex-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 184.8710491657257,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Outdoors, Environmental-property/Natural-daylight, Sensory-event, Visual-presentation, Image, Agent-action, ((Human-agent, Male, Attentive, Think, Sitting, (Clothing/Suit, Navy), (Clothing/Dress-shirt, LightBlue), (Clothing/Tie, Label/Loosened)), (Communicate-vocally, Cellphone)), (Human-agent, (Focuses-on, (Outside-of, (Image)))), (Human-agent, (Center-of, (Image))), (Cellphone, Black, Label/Flip, (Associated-with, (Right, Hand)), (Near-to, (Right, Ear))), ((Right, Hand), (Near-to, (Right, Ear))), (Left, Hand, (Inside-of, (Clothing/Pants))), (Furnishing/Bench, Brown, Label/Weathered, Label/Park, Label/Horizontal-wooden-slats, Dark-shade, (Manufactured-material/Metal), (Associated-with, (Human-agent, Male))), (Background-view, ((Building-part/Fence, Dark-shade, Label/Chain-link, (Manufactured-material/Metal), (Behind, (Human-agent, Male))), (Vehicle, White, Label/Partial, (Behind, (Human-agent, Male))), (Plant, Green, (Near-to, (Furnishing/Bench)))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: the event type (Sensory-event, Visual-presentation, Image), the main agent (man with detailed clothing and posture), key actions (sitting, communicating vocally, focusing), and environmental context (outdoors, natural daylight, park bench, background elements).  \n- Semantic grouping is correctly applied: object properties (e.g., (Clothing/Suit, Navy), (Cellphone, Black, Label/Flip, ...)) are properly nested, and spatial/relational terms (Near-to, Behind, Inside-of) are appropriately scoped within parentheses.  \n- Important details such as the man\u2019s attire, phone use, hand positions, bench description, background objects, lighting, and composition (centered medium shot) are all represented with appropriate HED structure.  \n- The use of labels (Label/Loosened, Label/Weathered, etc.) effectively conveys qualitative details from the description.  \n- The annotation would pass the reversibility test\u2014translating it back yields a description very close to the original.  \n\nNo refinement needed. The annotation is detailed, semantically well-structured, and faithful to the original event description.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements: the man's appearance, actions, posture, clothing, phone use, environment, bench details, background objects, lighting, and composition. Semantic grouping correctly associates properties with objects and actions with agents.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-4o-mini",
+      "model_name": "GPT-4o-mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a man in a dark navy suit, ligh...\" --model openai/gpt-4o-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 37.949862003326416,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Sensory-event, Visual-presentation, (Viewing-angle, Medium-shot), (Composition, Centered-on, (Human-agent, Man)), (Expression, Serious), (Gaze, Slightly-off-camera), (Posture, Relaxed-yet-attentive), (Agent-action, (Human-agent, Man), (Hold, (Black, Flip-phone, Right-ear))), (Clothing, ((Dark, Navy), Suit), (Light, Blue, Dress-shirt), (Loosened, Tie)), (Seated-on, (Park-bench, (Constructed-of, (Horizontal, Wooden-slats), (Dark, Metal)), (Surface-property, Weathered))), (Background, ((Fence, Chain-link, (Dark, Metal)), (Vehicle, (White)))), (Lighting, (Natural-daylight, Overcast)), (Color-contrast, ((Dark, Navy), (Muted, Brown), (Pale, Blue), (White), (Subtle, Green))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 5,
+          "total_iterations": 5,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the man (as a Human-agent), his clothing, posture, expression, actions (holding a phone), seating, and environmental context.  \n- Semantic grouping is correctly applied throughout. Properties are appropriately nested with their respective objects (e.g., (Dark, Navy), Suit) grouped under Clothing; (Park-bench, (Constructed-of, ...), (Surface-property, Weathered)) properly structured).  \n- Key visual and compositional aspects such as medium shot, centered composition, gaze direction, lighting (natural daylight, overcast), and color contrast are included with correct syntactic structure.  \n- Background elements (fence, vehicle) are reasonably simplified but retain essential attributes. The shallow depth of field is implied by focus on the man, though not explicitly tagged\u2014this level of abstraction is acceptable.  \n- The annotation is both semantically precise and structurally sound, allowing for accurate reconstruction into a natural language description closely matching the original.  \n\nNo refinement needed. The annotation is faithful, well-structured, and aligns with best practices in HED tagging.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements\u2014subject, clothing, actions, setting, lighting, composition, and color\u2014are accurately captured with proper semantic grouping. The annotation preserves spatial, attributive, and relational details and passes the reversibility test.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a man in a dark navy suit, ligh...\" --model google/gemini-3-flash-preview --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 12.245589971542358,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Human-agent, Experiment-participant, Seated, Attentive, (Navy, Clothing/Suit), (LightBlue, Clothing/Dress-shirt), (Clothing/Tie, (Property/Loosened)), (Gaze, Away-from), (Serious, Agent-emotional-state), (Contemplative, Agent-cognitive-state)), (Agent-action, ((Human-agent, Experiment-participant), (Hold, (Black, Cellphone), (To, Right, Ear), (Using, (Right, Hand))))), (Agent-action, ((Human-agent, Experiment-participant), (Rest, (Left, Hand), (Inside-of, Clothing/Pocket)))), (Item/Bench, (Brown, Wood), (Property/Weathered), (Part-of, (Metal, Frame)), (Part-of, (Horizontal, Line))), (Item/Fence, (Dark, Metal), (Property/Chain-link), Behind), (Vehicle/Car, White, Behind), (Green, Plant), (Natural-light, (Property/Soft)), ((Human-agent, Experiment-participant), (Center-of, Screen)), ((Human-agent, Experiment-participant), (Seated, (On, Item/Bench))), ((Item/Bench), (Near-to, (Green, Plant))), (Outdoors, Public)",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the man (as both agent and participant), his appearance, actions, emotional and cognitive state, key objects (bench, phone, fence, vehicle), setting (outdoors, public), and lighting.  \n- Semantic grouping is correctly applied throughout: object-property pairs like (Navy, Clothing/Suit), (LightBlue, Clothing/Dress-shirt), and (Black, Cellphone) are properly parenthesized. Agent-action structures are correctly nested, such as ((Human-agent, ...), (Hold, ...)) and (Rest, ...) with spatial and instrumental modifiers.  \n- Spatial relationships (Behind, (On, Item/Bench), (Inside-of, ...), (Near-to, ...)) are appropriately used and grouped.  \n- Key visual context is preserved: the shallow depth of field is implied via \"Behind\" with background elements, and the focus on the man is captured via (Center-of, Screen).  \n- Lighting (Natural-light, Soft), color palette, and mood (Serious, Contemplative) are well represented.  \n- All major components from the original description are either explicitly included or reasonably implied. No critical information is missing, and there are no misrepresentations.  \n\nThe annotation is semantically rich, structurally sound, and reversible\u2014can be translated back into a description very close to the original. No refinement needed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements\u2014agent, attire, actions, objects, spatial relations, lighting, and setting\u2014are accurately captured with proper semantic grouping. The annotation preserves the original meaning, including emotional state, object properties, and compositional focus.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "anthropic/claude-haiku-4.5",
+      "model_name": "Claude-Haiku-4.5",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a man in a dark navy suit, ligh...\" --model anthropic/claude-haiku-4.5 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 8.228759050369263,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Agent-action, ((Human-agent, Experiment-participant), (Communicate-vocally, (Cellphone, Black, Flip-phone)))), ((Man, (Dark, Navy, Suit), (Light-blue, Dress-shirt), (Loosened, Tie)), (Seated-with-chin-rest, (Bench, (Wooden, Weathered, Park-bench), (Horizontal, Wooden-slats), (Dark, Metal-frame)))), (Right-hand, (Hold, (Cellphone, (To-right-of, (Ear))))), (Left-hand, (Inside-of, (Pocket))), (Posture, (Relaxed, Attentive)), (Facial-expression, (Serious, Contemplative)), (Gaze, (Slightly, Off-camera)), (Background, (Fence, (Dark, Metal, Chain-link)), (Vehicle, (White, Blurred))), (Depth-of-field, Shallow), (Lighting, (Natural-daylight, Possibly-overcast, Soft, Even-illumination)), (Color-palette, (Dark-suit, Muted-brown, Pale-blue, White, Subtle-green)), (Composition, (Medium-shot, Centered, (Solitary-moment, (Formal-attire, Casual-environment))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the man (as agent), his attire, actions (communicating vocally via cellphone), posture, facial expression, and environmental context.  \n- Semantic grouping is correctly applied throughout: object properties are properly parenthesized (e.g., (Man, (Dark, Navy, Suit), ...)), spatial relations are nested (e.g., (To-right-of, (Ear))), and agent-action structure is well-formed with appropriate nesting of Human-agent and Experiment-participant under Agent-action.  \n- Key details such as lighting, depth of field, color palette, and composition are included in a structured and meaningful way.  \n- The annotation maintains clarity and would pass the reversibility test\u2014translating back to natural language yields a description very close to the original.  \n- No critical information is missing, and optional enhancements (e.g., \"Possibly-overcast\", \"Solitary-moment\") add interpretive value without overreaching.  \n\nOverall, this is a high-quality, faithful HED annotation that adheres to best practices in structure and content. ACCEPT.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: Most key elements are present, including appearance, actions, setting, and visual style, but several grouping issues affect clarity\u2014e.g., \"Seated-with-chin-rest\" is incorrectly applied to the bench instead of describing posture, and properties like (Dark, Navy, Suit) should be grouped with the man using parentheses. Some semantic relationships are ambiguous due to flat or incorrect nesting.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "mistralai/mistral-small-3.2-24b-instruct",
+      "model_name": "Mistral-Small-3.2-24B",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a man in a dark navy suit, ligh...\" --model mistralai/mistral-small-3.2-24b-instruct --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 14.304907083511353,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Sensory-event, Visual-presentation, (Image, (Man, (Wear, (Clothing/Suit, Color/DarkNavy)), (Wear, (Clothing/Shirt, Color/LightBlue)), (Wear, (Clothing/Tie, Loosened)), (Hold, (Phone/Flip, Color/Black)), (Expression, Serious), (Expression, Contemplative)), (Object/Bench, (Material/Wood, Weathered), (Color/MutedBrown)), (Object/Fence, (Material/Metal, Color/Dark)), (Object/Vehicle, Color/White)), (Background, (Object/Grass, Color/Green)), (Lighting, Natural, Daylight, Overcast), (Composition, Medium-shot), (Focus, Shallow-depth-of-field))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the man, his clothing, actions (holding phone, serious/contemplative expression), the bench, background objects, lighting, and composition.  \n- Semantic grouping is correctly applied: properties like color and material are appropriately nested within their respective objects (e.g., (Clothing/Suit, Color/DarkNavy), (Material/Wood, Weathered)).  \n- Key actions and states\u2014such as holding a phone to the ear (implied by context), wearing specific clothing, and emotional expression\u2014are well represented.  \n- Environmental details (weathered bench, chain-link fence, white vehicle, grass) and perceptual qualities (natural overcast lighting, shallow depth of field, medium shot) are included with proper grouping.  \n- The annotation maintains clarity and would pass the reversibility test\u2014translating back to natural language yields a description very close to the original.  \n- No critical information is missing, and optional enhancements (e.g., \"right ear\", \"left hand in pocket\") are reasonably omitted without harming fidelity.  \n\nOverall, this is a well-structured, faithful HED annotation that balances completeness with clarity and correct syntax.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements\u2014man's attire, actions, expressions, objects, setting, lighting, and composition\u2014are accurately captured with proper semantic grouping. Properties are correctly paired with objects, and spatial and functional relationships are preserved.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    }
+  ]
+}

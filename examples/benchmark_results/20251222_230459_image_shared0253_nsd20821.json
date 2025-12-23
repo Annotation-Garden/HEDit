@@ -1,0 +1,190 @@
+{
+  "session_id": "20251222_230459",
+  "image_name": "shared0253_nsd20821.png",
+  "description": "The image captures a serene winter scene in a snowy forest, where a person is cross-country skiing along a groomed trail. The setting is a quiet woodland, likely in late afternoon, with tall, slender trees\u2014mostly bare birch or aspen\u2014lining both sides of the path, their pale trunks creating a delicate, vertical pattern against the bright sky. The ground is blanketed in white snow, with two distinct, parallel tracks carved into the snow, indicating a well-maintained ski trail. The skier, dressed in dark winter clothing including a black jacket and pants, a blue beanie, and gloves, stands centered in the frame, holding ski poles and looking toward the camera. The lighting is soft and diffused, with a warm, golden glow suggesting the sun is low in the sky, casting long shadows and highlighting the texture of the snow and the fine details of the tree bark. The overall composition is balanced and tranquil, with the skier providing a focal point against the expansive, quiet backdrop of the forest. The color palette is dominated by whites and grays of the snow and trees, contrasted by the dark clothing and the subtle blue of the hat, creating a calm, wintry atmosphere.",
+  "vision_model": "qwen/qwen3-vl-30b-a3b-instruct",
+  "vision_response": {
+    "description": "The image captures a serene winter scene in a snowy forest, where a person is cross-country skiing along a groomed trail. The setting is a quiet woodland, likely in late afternoon, with tall, slender trees\u2014mostly bare birch or aspen\u2014lining both sides of the path, their pale trunks creating a delicate, vertical pattern against the bright sky. The ground is blanketed in white snow, with two distinct, parallel tracks carved into the snow, indicating a well-maintained ski trail. The skier, dressed in dark winter clothing including a black jacket and pants, a blue beanie, and gloves, stands centered in the frame, holding ski poles and looking toward the camera. The lighting is soft and diffused, with a warm, golden glow suggesting the sun is low in the sky, casting long shadows and highlighting the texture of the snow and the fine details of the tree bark. The overall composition is balanced and tranquil, with the skier providing a focal point against the expansive, quiet backdrop of the forest. The color palette is dominated by whites and grays of the snow and trees, contrasted by the dark clothing and the subtle blue of the hat, creating a calm, wintry atmosphere.",
+    "prompt_used": "Describe what you see in this image. Include the setting, main elements, colors, lighting, and overall composition. Be specific and detailed. Form the response as a continuous paragraph. Maximum 200 words.",
+    "metadata": {
+      "format": "PNG",
+      "mode": "RGB",
+      "size": [
+        425,
+        425
+      ],
+      "width": 425,
+      "height": 425,
+      "size_bytes": 395680,
+      "size_mb": 0.377349853515625,
+      "mime_type": "image/png"
+    }
+  },
+  "schema_version": "8.4.0",
+  "eval_model": "qwen/qwen3-235b-a22b-2507",
+  "eval_provider": "Cerebras",
+  "timestamp": "2025-12-23T00:10:35.777457",
+  "results": [
+    {
+      "model_id": "openai/gpt-oss-120b",
+      "model_name": "GPT-OSS-120B",
+      "provider": "Cerebras",
+      "cli_command": "hedit annotate \"The image captures a serene winter scene in a snow...\" --model openai/gpt-oss-120b --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment --provider Cerebras",
+      "execution_time_seconds": 19.641926288604736,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Human-agent), (Clothing, (Black, Clothing/Jacket)), (Clothing, (Blue, Clothing/Beanie)), (Clothing, (Black, Clothing/Pants)), (Clothing, (Clothing/Gloves)), (Item/Snow, (Property/Track, (Property/Parallel), (Count/Two))), (Path, (Property/Use/Ski-trail), (Property/Condition/Groomed)), (Spatial-relation, (Relation/At-center-of, Human-agent)), (Property/Season-Winter), (Property/Environment-Forest), (Property/Mood-Serene), (Property/Illumination, (Color/Gold), (Property/Quality-Soft), (Property/Sun-position-Low), (Property/Shadow-Long))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 5,
+          "total_iterations": 5,
+          "is_faithful": true,
+          "is_complete": false,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: the visual event type, the human agent (skier), key clothing items with correct color-object grouping, the winter forest environment, and the groomed ski trail with parallel tracks.  \n- Semantic grouping is correctly applied: colors are properly paired with clothing items (e.g., (Black, Clothing/Jacket)), and multi-attribute concepts like illumination are coherently grouped under (Property/Illumination, ...).  \n- Important spatial and descriptive details are included: the skier\u2019s central position, the trail\u2019s condition and use, the season, lighting (low sun, long shadows, golden glow), and the serene mood.  \n- The structure allows for clear reversibility\u2014translating back yields a description closely matching the original.  \n- While some finer details (e.g., tree types, sky brightness, color contrast) are omitted, these are optional enhancements and do not detract from faithfulness.  \n- No flat or ungrouped properties; all attributes are appropriately nested.  \n\nOverall, this is a well-structured, semantically accurate HED annotation that faithfully represents the original description.",
+          "assessment_feedback": "COMPLETENESS: incomplete  \nGROUPING: needs-improvement  \nNOTES: Missing key elements such as ski poles, action of skiing, tree types (birch/aspen), and lighting effects on snow and bark. Some groupings are correct (e.g., clothing), but \"(Property/Track, (Property/Parallel), (Count/Two))\" should be nested under the path or snow more clearly. \"Spatial-relation\" lacks proper object nesting. Reversibility is compromised due to flat structure and missing actions.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.2",
+      "model_name": "GPT-5.2",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a serene winter scene in a snow...\" --model openai/gpt-5.2 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 65.42735481262207,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, Photograph, Outdoors, Quiet, (Snow, White), (Light-shade, Gold), (Plant/Tree, High, Thin), (Path, (Contained-in, Snow)), (Human, (Center-of, Field)), (Clothing, Black, (Belongs-to, Human)), (Clothing/Beanie, Blue, (Belongs-to, Human)), (Tool/Ski, (Associated-with, Human)), (Tool/Ski-pole, (Associated-with, Human)), (Move-body/Cross-country-skiing, (Performed-by, Human))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements of the scene: the visual event type (Sensory-event, Visual-presentation, Photograph), outdoor winter setting, key objects (trees, path, snow, human, clothing, tools), and the central action (cross-country skiing).  \n- Semantic grouping is correctly applied: object properties (e.g., (Snow, White), (Light-shade, Gold)) are grouped; spatial and ownership relations (e.g., (Center-of, Field), (Belongs-to, Human), (Associated-with, Human)) are properly nested.  \n- Key details from the description\u2014such as the skier\u2019s position, clothing colors, ski equipment, tree characteristics, snow-covered path, and golden lighting\u2014are all represented with appropriate HED structure.  \n- The use of (Move-body/Cross-country-skiing, (Performed-by, Human)) correctly identifies the action and agent.  \n- The overall structure allows for a coherent reverse translation into natural language that closely matches the original description.  \n\nNo refinement is needed. The annotation is faithful, semantically well-structured, and sufficiently detailed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements: setting (snowy forest, quiet, outdoors), time indicators (golden light, late afternoon), objects (trees, path, skis, poles), human action (cross-country skiing), clothing, and spatial relations (centered human, path in snow). Groupings are semantically correct, with properties properly attached to entities and agent-action relationships well-formed.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.1-codex-mini",
+      "model_name": "GPT-5.1-Codex-Mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a serene winter scene in a snow...\" --model openai/gpt-5.1-codex-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 174.62666416168213,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, ((Natural-feature/Forest, Quiet, (Contains, (Plant/Birch, White, Vertically-oriented), (Plant/Aspen, White, Vertically-oriented))), (Snow, White, (Contains, (Natural-feature/Trail, (Contains, (Group-of, (Count/2, (Natural-feature/Track, Property/Parallel)))), (Adjacent-to, Plant/Birch), (Adjacent-to, Plant/Aspen)))), (Human, (Perform, Task-activity/Cross-country-skiing), (Center-of, Image), (Clothing/Jacket, Black), (Clothing/Pants, Black), (Clothing/Beanie, Blue), (Clothing/Gloves, Black), (Interacts-with, Device/Ski-pole), (Focused-attention, Device/Camera)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the winter forest setting, the presence of a skier, key visual properties (colors, spatial layout), and relevant actions.  \n- Semantic grouping is correctly applied: object properties (e.g., White, Vertically-oriented) are appropriately nested within their respective entities (Birch, Aspen), and the skier\u2019s attributes and actions are coherently structured under the Human node.  \n- Key details such as the two parallel ski tracks, the quiet woodland, the central positioning of the skier, clothing colors, use of ski poles, and attention toward the camera are all faithfully represented.  \n- Environmental qualities like lighting (implied via context) and composition are partially conveyed through terms like \"Quiet\" and spatial relations, though subtle aspects like \"golden glow\" or \"diffused light\" are omitted\u2014but these are optional enhancements, not required for faithfulness.  \n- The use of (Contains), (Adjacent-to), and (Center-of) supports accurate spatial interpretation.  \n- The annotation passes the reversibility test: it can be translated back into a natural language description very close to the original.  \n\nNo refinement needed. The annotation is semantically sound, well-structured, and sufficiently detailed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements: setting (snowy forest, birch/aspen trees), trail features (parallel tracks), skier (clothing, action, position, attention), and visual qualities (color, lighting implied through descriptors). Semantic grouping correctly nests properties with objects and actions.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-4o-mini",
+      "model_name": "GPT-4o-mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a serene winter scene in a snow...\" --model openai/gpt-4o-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 20.250595092773438,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Sensory-event, Visual-presentation, (Serene, Winter-scene), (Snow, (Ground)), (Trees, (Tall, Slender), (Trunks, Pale)), (Two, (Distinct, Parallel-tracks)), (Skier, (Human-agent, (Dark, Winter-clothing, (Black, Jacket), (Black, Pants), (Blue, Beanie), (Gloves)))), (Agent-action, (Cross-country-skiing)), (Gaze, Toward, Camera), (Lighting, (Soft, Diffused), (Golden-glow)), (Shadows, (Long)), (Highlighting, (Texture-of, Snow)), (Color-contrast, (Dark-clothing, Blue-beanie)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 3,
+          "total_iterations": 3,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the event type (Sensory-event, Visual-presentation), main objects (trees, skier, snow, tracks), key actions (Cross-country-skiing), and visual qualities (lighting, color contrast, gaze).  \n- Semantic grouping is correctly applied: object properties are properly nested (e.g., (Skier, (Human-agent, ...)), (Black, Jacket), etc.), spatial and relational features are implied where appropriate, and complex descriptions like clothing and lighting are structured hierarchically.  \n- Important details such as the skier\u2019s attire, the parallel ski tracks, soft and golden lighting, long shadows, and color contrast are all included with appropriate grouping.  \n- The annotation maintains clarity and would pass the reversibility test\u2014translating it back to natural language yields a description very close to the original.  \n- While some minor atmospheric nuances (e.g., \"tranquil composition\", \"focal point\") are implied rather than explicit, these are interpretive and not required for faithful representation.  \n\nNo refinement needed. The annotation is semantically accurate, well-structured, and faithful to the original description.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements\u2014scene, objects, attributes, actions, and spatial/lighting details\u2014are accurately captured with proper semantic grouping. The annotation preserves relationships (e.g., clothing items with colors, agent-action, gaze direction) and passes the reversibility test.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a serene winter scene in a snow...\" --model google/gemini-3-flash-preview --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 19.51158308982849,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Woodland, (Snow, (Covered-by, (Forest, (Tree, (Bare, (Birch, (Pale, Trunk)))))))), (Path, (Groomed, Ski-trail), (Parallel, (Track, (Inside-of, Snow)))), (Agent-action, ((Human-agent, (Label/Skier, (Clothing, (Black, Jacket), (Black, Pants), (Blue, (Label/Beanie)), Gloves))), (Hold, (Label/Ski-poles)), (Look-at, (Label/Camera)))), (Environmental-property, (Late, Afternoon), (Low, Sun), (Soft, (Diffused, (Golden, Light-shade)))), (Color, (White, Gray, Black, Blue)), (Spatial-relation, ((Label/Skier), (Center-of, Screen)), ((Tree), (Adjacent-to, Path))), (Label/Tranquil, Label/Balanced-composition)",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 3,
+          "total_iterations": 3,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the winter forest setting, the skier as an agent in action, key visual properties (lighting, color, spatial layout), and the overall atmosphere.  \n- Semantic grouping is correctly applied: object properties (e.g., (Black, Jacket), (Pale, Trunk)) are properly nested within their respective objects, and agent-action structure clearly links the human agent (skier) with clothing, actions (hold, look-at), and labels.  \n- Spatial relations such as (Center-of, Screen) and (Adjacent-to, Path) are appropriately used and grouped.  \n- Environmental and lighting conditions (late afternoon, low sun, golden light) are well represented under Environmental-property.  \n- The use of Label/ tags (e.g., Label/Skier, Label/Tranquil) enhances clarity without overstepping annotation conventions.  \n- The color palette and composition notes are succinctly captured.  \n\nThe annotation is rich, well-structured, and semantically precise. It passes the reversibility test\u2014translating back to natural language yields a description highly consistent with the original. No refinement needed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: Most key elements are captured, including setting, skier, clothing, lighting, and composition. However, some semantic groupings are incorrect or ambiguous\u2014e.g., \"Bare\" should be grouped with \"Tree\", not nested under \"Birch\"; \"Parallel\" should modify \"Tracks\" more directly; and \"Golden\" should relate to \"Light\" not \"Light-shade\". Reversibility is weakened by these flat or misgrouped structures.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "anthropic/claude-haiku-4.5",
+      "model_name": "Claude-Haiku-4.5",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a serene winter scene in a snow...\" --model anthropic/claude-haiku-4.5 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 7.612726211547852,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Outdoor, Natural-feature, (Forest, Snow-terrain)), (Person, (Human-agent, Skier)), (Cross-country-skiing, Move-body), (Clothing, (Black, Jacket), (Black, Pants), (Blue, Beanie), Gloves), (Ski-poles), (Tall, Slender, (Tree, (Birch), (Aspen), Bare)), (Sky, Bright), (Snow, White, Blanketed), (Ski-trail, Groomed, (Parallel-tracks)), (Skier, Centered, (Facing, Camera)), (Lighting, Soft, Diffused, (Golden-glow), (Low-sun), (Long-shadows)), (Texture, (Snow), (Tree-bark)), (Composition, Balanced, Tranquil), (Color-palette, (White), (Gray), (Dark), (Blue)), (Atmosphere, Calm, Wintry), (Time-of-day, Late-afternoon)",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the event type (Sensory-event, Visual-presentation), main agent (Person, Skier), key action (Cross-country-skiing), setting (snowy forest, groomed trail), and rich descriptive details (clothing, lighting, composition, atmosphere).  \n- Semantic grouping is correctly applied: object-property pairs like (Black, Jacket), (Blue, Beanie), (Tall, Slender, Tree), and (Golden-glow, Low-sun) are properly nested, ensuring clarity and avoiding ambiguity.  \n- Important spatial and relational details are included: (Skier, Centered), (Facing, Camera), (Parallel-tracks), and (Snow, Blanketed) effectively convey visual structure.  \n- Temporal context (Late-afternoon), lighting (Soft, Diffused, Golden-glow, Long-shadows), and aesthetic qualities (Balanced, Tranquil, Calm, Wintry) are appropriately represented.  \n- The annotation is both comprehensive and well-structured, allowing for accurate reconstruction of the original description in natural language.  \n\nNo refinement needed. The annotation is faithful, semantically precise, and adheres to best practices in HED tagging.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements\u2014setting, person, actions, clothing, objects, lighting, composition, and atmosphere\u2014are accurately captured with proper semantic grouping. Properties are correctly attached to their respective entities, and the annotation is reversible to the original description.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "mistralai/mistral-small-3.2-24b-instruct",
+      "model_name": "Mistral-Small-3.2-24B",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a serene winter scene in a snow...\" --model mistralai/mistral-small-3.2-24b-instruct --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 16.129037857055664,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Sensory-event, Visual-presentation, ((Scene, Winter, Forest), (Time-of-day, Late-afternoon), ((Tree, Birch, Tall, Slender, Bare), (Tree, Aspen, Tall, Slender, Bare)), (Ground, Snow, Blanketed), ((Trail, Ski, Groomed), (Track, Parallel)), ((Clothing, Jacket, Dark), (Clothing, Pants, Dark), (Clothing, Beanie, Blue), (Clothing, Gloves)), (Agent-action, ((Human-agent, Experiment-participant), (Stand, (Center-of, Frame)))), (Hold, (Ski-pole)), (Look-toward, Camera)), (Lighting, (Soft, Diffused), (Warm, Golden, Glow)), (Color-palette, (White, Gray), (Dark, Clothing), (Blue, Beanie)), (Atmosphere, Calm, Tranquil)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the winter forest setting, time of day, key visual features (trees, snow, trail), the skier\u2019s appearance and actions, lighting, color palette, and overall atmosphere.  \n- Semantic grouping is correctly applied throughout. Properties are appropriately nested with their respective objects (e.g., (Tree, Birch, Tall, Slender, Bare), (Clothing, Beanie, Blue), (Trail, Ski, Groomed)), avoiding flat or ambiguous structures.  \n- Agent-action is properly structured with the human agent and specific actions (Stand, Hold, Look-toward) correctly scoped.  \n- Important details like spatial positioning (Center-of, Frame), lighting qualities, and color contrasts are included in a way that preserves meaning.  \n- The annotation is both comprehensive and semantically precise, and it passes the reversibility test\u2014translating back to natural language yields a description very close to the original.  \n- No refinement is needed; this is a high-quality, faithful HED annotation.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements\u2014scene, time, objects, agent actions, clothing, lighting, and atmosphere\u2014with accurate semantic grouping. Properties are properly attached to their referents, and the structure allows for reversible translation to the original description.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    }
+  ]
+}

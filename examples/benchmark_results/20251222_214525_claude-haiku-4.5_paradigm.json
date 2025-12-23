@@ -1,0 +1,169 @@
+{
+  "session_id": "20251222_214525",
+  "model_name": "Claude-Haiku-4.5",
+  "domain": "paradigm",
+  "schema_version": "8.4.0",
+  "eval_model": "qwen/qwen3-235b-a22b-2507",
+  "eval_provider": "Cerebras",
+  "timestamp": "2025-12-22T22:14:57.200603",
+  "results": [
+    {
+      "test_id": "para_01",
+      "domain": "paradigm",
+      "difficulty": "medium",
+      "input_description": "A rare deviant tone at 1200 Hz interrupts a sequence of standard 800 Hz tones",
+      "expected_elements": [
+        "Auditory-presentation",
+        "Frequency",
+        "Oddball"
+      ],
+      "model_id": "anthropic/claude-haiku-4.5",
+      "model_name": "Claude-Haiku-4.5",
+      "provider": null,
+      "cli_command": "hedit annotate \"A rare deviant tone at 1200 Hz interrupts a sequence of standard 800 Hz tones\" --model anthropic/claude-haiku-4.5 --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 12.006349086761475,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Oddball-task, (Sensory-event, Auditory-presentation, (Standard-stimulus, (Tone, Frequency/800 Hz))), (Sensory-event, Auditory-presentation, (Deviant-stimulus, (Tone, Frequency/1200 Hz))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: the Oddball-task context, the sequence of standard 800 Hz tones, and the rare deviant 1200 Hz tone as distinct sensory events.  \n- Semantic grouping is correct: each stimulus is properly nested within a Sensory-event, and frequency specifications are appropriately grouped with the Tone tag using Frequency/.  \n- The distinction between Standard-stimulus and Deviant-stimulus is well represented, reflecting the experimental design.  \n- The structure allows for reversibility: it can be clearly translated back into a natural language description closely matching the original.  \n- No critical information is missing, and optional enhancements (e.g., rarity of the deviant) are reasonably implied by Deviant-stimulus in the oddball context.  \n\nOverall, this is a faithful and well-structured HED annotation.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures the oddball task structure, standard and deviant tones with correct frequency specifications, and appropriate grouping of auditory sensory events.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "para_02",
+      "domain": "paradigm",
+      "difficulty": "medium",
+      "input_description": "An upright neutral face is presented for 200ms followed by a scrambled face mask",
+      "expected_elements": [
+        "Sensory-event",
+        "Visual-presentation",
+        "Face",
+        "Duration"
+      ],
+      "model_id": "anthropic/claude-haiku-4.5",
+      "model_name": "Claude-Haiku-4.5",
+      "provider": null,
+      "cli_command": "hedit annotate \"An upright neutral face is presented for 200ms followed by a scrambled face mask\" --model anthropic/claude-haiku-4.5 --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 14.796066761016846,
+      "full_response": {
+        "status": "error",
+        "error": "JSON parse error: Expecting value: line 1 column 1 (char 0)",
+        "stdout": "[WORKFLOW] Entering annotate node (validation attempt 0, total iteration 1)\n[WORKFLOW] Annotation generated: (Duration/200 ms, (Sensory-event, Experimental-stimulus, Visual-presentation, (Face, Upright, Neutra...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 1/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 1, total iteration 2)\n[WORKFLOW] Annotation generated: (Duration/200 ms, (Sensory-event, Visual-presentation, Experimental-stimulus, ((Face, Upright, Neutr...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 2/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 2, total iteration 3)\n[WORKFLOW] Annotation generated: (Duration/200 ms, (Sensory-event, Visual-presentation, Experimental-stimulus, (Face, (Orientation/Up...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=True\n[WORKFLOW] Routing to assess (annotation is valid and faithful, assessment requested)\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new\u001b[0m\nLiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.\n\n",
+        "stderr": "Error: Annotation failed: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Provider returned \nerror\",\"code\":429,\"metadata\":{\"raw\":\"qwen/qwen3-235b-a22b-2507 is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: \nhttps://openrouter.ai/settings/integrations\",\"provider_name\":\"Cerebras\"}},\"user_id\":\"user_2miPlSxeNpQ2ItDANE5SICoFl0H\"}\nHint: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"qwen/qwen3-235b-a22b-2507 is \ntemporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: \nhttps://openrouter.ai/settings/integrations\",\"provider_name\":\"Cerebras\"}},\"user_id\":\"user_2miPlSxeNpQ2ItDANE5SICoFl0H\"}\n"
+      }
+    },
+    {
+      "test_id": "para_03",
+      "domain": "paradigm",
+      "difficulty": "medium",
+      "input_description": "The participant reaches to grasp a cylinder placed 30 centimeters in front of them",
+      "expected_elements": [
+        "Agent-action",
+        "Reach",
+        "Grasp",
+        "Distance",
+        "Participant-response"
+      ],
+      "model_id": "anthropic/claude-haiku-4.5",
+      "model_name": "Claude-Haiku-4.5",
+      "provider": null,
+      "cli_command": "hedit annotate \"The participant reaches to grasp a cylinder placed 30 centimeters in front of them\" --model anthropic/claude-haiku-4.5 --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 9.384941101074219,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Agent-action, Participant-response, ((Human-agent, Experiment-participant), (Reach-to-grasp, (Cylinder, (Distance/30 cm, In-front-of))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: event type (Agent-action), role (Participant-response), agent (Human-agent as Experiment-participant), action (Reach-to-grasp), and object (Cylinder).  \n- Semantic grouping is correctly applied: the participant is properly nested as (Human-agent, Experiment-participant), and the target object (Cylinder) is modified by its spatial and quantitative properties ((Distance/30 cm, In-front-of)), grouped within parentheses to indicate they describe the same object.  \n- The structure allows for reversibility: it can be clearly translated back into a natural language description close to the original.  \n- All important details (action, object, distance, direction) are included with appropriate HED constructs.  \nNo refinement needed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements (agent, action, object, spatial relation, distance) are captured with correct semantic grouping; the structure accurately reflects the participant reaching to grasp a cylinder located 30 cm in front.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "para_04",
+      "domain": "paradigm",
+      "difficulty": "hard",
+      "input_description": "A fearful facial expression appears in the left visual field while a happy face appears on the right",
+      "expected_elements": [
+        "Sensory-event",
+        "Visual-presentation",
+        "Face",
+        "Emotion",
+        "Left",
+        "Right"
+      ],
+      "model_id": "anthropic/claude-haiku-4.5",
+      "model_name": "Claude-Haiku-4.5",
+      "provider": null,
+      "cli_command": "hedit annotate \"A fearful facial expression appears in the left visual field while a happy face appears on the right\" --model anthropic/claude-haiku-4.5 --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 6.2241370677948,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, ((Fearful, Face), (To-left-of, (Happy, Face)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": false,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \nThe HED annotation accurately captures the core elements of the event:  \n- Event type is correctly identified with **Sensory-event** and **Visual-presentation**  \n- The two main stimuli \u2014 a fearful face and a happy face \u2014 are properly represented  \n- The spatial relationship **(To-left-of)** is correctly applied between the two facial expressions  \n- Semantic grouping is correct: emotional properties are grouped with \"Face\" (e.g., (Fearful, Face)), and the spatial relation is appropriately nested  \n\nThe annotation is concise, semantically precise, and passes the reversibility test \u2014 it can be clearly translated back into a natural language description very close to the original. No refinement is needed.",
+          "assessment_feedback": "COMPLETENESS: incomplete  \nGROUPING: needs-improvement  \nNOTES: The annotation misses \"facial expression\" as a distinct concept (vs. just \"Face\") and incorrectly groups spatial relation \u2014 \"To-left-of\" should relate the two expressions, but the current structure implies a nested property rather than a spatial contrast. Also, laterality should specify visual field (e.g., Left-visual-field).  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "para_05",
+      "domain": "paradigm",
+      "difficulty": "hard",
+      "input_description": "Target letters T and L embedded among distractor letters O are searched in a visual array",
+      "expected_elements": [
+        "Sensory-event",
+        "Visual-presentation",
+        "Target",
+        "Distractor",
+        "Search"
+      ],
+      "model_id": "anthropic/claude-haiku-4.5",
+      "model_name": "Claude-Haiku-4.5",
+      "provider": null,
+      "cli_command": "hedit annotate \"Target letters T and L embedded among distractor letters O are searched in a visual array\" --model anthropic/claude-haiku-4.5 --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 6.06821608543396,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Experimental-stimulus, Visual-presentation, (Target, (Letter, T)), (Target, (Letter, L)), (Distractor, (Letter, O))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: the event type (Sensory-event), stimulus role (Experimental-stimulus), modality (Visual-presentation), and the distinction between target and distractor letters.  \n- Semantic grouping is correct: (Target, (Letter, T)) properly associates the role \"Target\" with the specific letter \"T\"; same for L and O. This preserves the intended meaning and passes the reversibility test\u2014can be translated back into a clear natural language description.  \n- Key details (letter identities and their roles) are included as required.  \n- While spatial arrangement (e.g., \"array\") isn't explicitly modeled, it's not critical for faithfulness here, as the focus is on the stimulus composition in a standard visual search paradigm.  \n- No over-annotation or errors present. The structure is concise and semantically sound.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements (target letters T/L, distractor O, visual presentation, experimental context) are accurately captured with proper semantic grouping.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,180 @@
+{
+  "session_id": "20251222_230459",
+  "image_name": "shared0060_nsd06432.jpg",
+  "description": "The image captures a dynamic moment during a baseball game, set on a sunlit field with a clear view of home plate. The main focus is on the batter, a player in a green jersey and white pants, who is mid-swing, his body coiled with effort as he swings a wooden bat. He wears a black helmet and batting gloves, and his stance is powerful and focused. Behind him, the catcher, clad in a grey uniform with red accents and protective gear including a mask and chest protector, is crouched low, ready to receive the pitch. To the left, the umpire stands in a dark blue shirt and grey pants, observing the play closely. The setting is a professional or semi-professional ballpark, evident from the green outfield grass, the dirt of the batter's box, and the advertising banners in the background, including a prominent Pepsi logo and a sign for \"VerdeGroup.net.\" The lighting is bright and natural, suggesting a daytime game, casting soft shadows on the field. The composition centers on the action at home plate, with the players arranged in a triangular formation that draws the eye to the batter. The colors are vibrant, with the green of the batter\u2019s jersey contrasting against the grey of the catcher\u2019s uniform and the brown of the dirt, creating a visually engaging scene.",
+  "vision_model": "qwen/qwen3-vl-30b-a3b-instruct",
+  "vision_response": {
+    "description": "The image captures a dynamic moment during a baseball game, set on a sunlit field with a clear view of home plate. The main focus is on the batter, a player in a green jersey and white pants, who is mid-swing, his body coiled with effort as he swings a wooden bat. He wears a black helmet and batting gloves, and his stance is powerful and focused. Behind him, the catcher, clad in a grey uniform with red accents and protective gear including a mask and chest protector, is crouched low, ready to receive the pitch. To the left, the umpire stands in a dark blue shirt and grey pants, observing the play closely. The setting is a professional or semi-professional ballpark, evident from the green outfield grass, the dirt of the batter's box, and the advertising banners in the background, including a prominent Pepsi logo and a sign for \"VerdeGroup.net.\" The lighting is bright and natural, suggesting a daytime game, casting soft shadows on the field. The composition centers on the action at home plate, with the players arranged in a triangular formation that draws the eye to the batter. The colors are vibrant, with the green of the batter\u2019s jersey contrasting against the grey of the catcher\u2019s uniform and the brown of the dirt, creating a visually engaging scene.",
+    "prompt_used": "Describe what you see in this image. Include the setting, main elements, colors, lighting, and overall composition. Be specific and detailed. Form the response as a continuous paragraph. Maximum 200 words.",
+    "metadata": {
+      "format": "JPEG",
+      "mode": "RGB",
+      "size": [
+        425,
+        425
+      ],
+      "width": 425,
+      "height": 425,
+      "size_bytes": 45127,
+      "size_mb": 0.043036460876464844,
+      "mime_type": "image/jpeg"
+    }
+  },
+  "schema_version": "8.4.0",
+  "eval_model": "qwen/qwen3-235b-a22b-2507",
+  "eval_provider": "Cerebras",
+  "timestamp": "2025-12-22T23:27:23.869888",
+  "results": [
+    {
+      "model_id": "openai/gpt-oss-120b",
+      "model_name": "GPT-OSS-120B",
+      "provider": "Cerebras",
+      "cli_command": "hedit annotate \"The image captures a dynamic moment during a baseb...\" --model openai/gpt-oss-120b --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment --provider Cerebras",
+      "execution_time_seconds": 26.380287885665894,
+      "full_response": {
+        "status": "error",
+        "error": "JSON parse error: Expecting value: line 1 column 1 (char 0)",
+        "stdout": "[WORKFLOW] Entering annotate node (validation attempt 0, total iteration 1)\n[WORKFLOW] Annotation generated: Sensory-event, Visual-presentation, ((Human-agent, Label/Batter), (Green, Label/Jersey), (White, Lab...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 1/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 1, total iteration 2)\n[WORKFLOW] Annotation generated: Sensory-event, Visual-presentation, (Human-agent, Experiment-participant), ((Green, Clothing/Jersey)...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 2/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 2, total iteration 3)\n[WORKFLOW] Annotation generated: Sensory-event, Experimental-stimulus, Visual-presentation, ((Green, Clothing/Jersey)), ((White, Clot...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 3/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 3, total iteration 4)\n[WORKFLOW] Annotation generated: Sensory-event, Experimental-stimulus, Visual-presentation, (Event, Label/Baseball-game), ((Human-age...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 4/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 4, total iteration 5)\n[WORKFLOW] Annotation generated: Sensory-event, Visual-presentation, ((Human-agent, Label/Batter), (Green, Clothing/Jersey), (White, ...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 5/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 5, total iteration 6)\n[WORKFLOW] Annotation generated: Sensory-event, Experimental-stimulus, Visual-presentation, ((Human-agent, Label/Batter), (Move-body/...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 6/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 6, total iteration 7)\n[WORKFLOW] Annotation generated: Sensory-event, Visual-presentation, (Human-agent, (Green, Item/Jersey), (White, Item/Pants), (Black,...\n",
+        "stderr": "Error: Annotation failed: Recursion limit of 25 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.\nFor troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT\nHint: Recursion limit of 25 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.\nFor troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT\n"
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.2",
+      "model_name": "GPT-5.2",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a dynamic moment during a baseb...\" --model openai/gpt-5.2 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 52.64908003807068,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, Image, Outdoors, (Field, Grassy-terrain, Dirt-terrain), ((Human, Label/Batter, Focused-attention, (Green, Clothing/Jersey), (White, Clothing/Pants), (Black, Clothing/Helmet), Clothing/Gloves), (Move, (Tool/Baseball-bat, Manufactured-material/Wood))), (Human, Label/Catcher, Crouching, (Gray, Red, Clothing/Uniform), Mask, Clothing/Chest-protector), (Human, Label/Umpire, Standing, (DarkBlue, Clothing/Shirt), (Gray, Clothing/Pants)), (Textblock, Label/Pepsi-logo), (Textblock, Label/VerdeGroup-net)",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: the event type (Sensory-event, Visual-presentation, Image), main human agents (batter, catcher, umpire), their key actions and appearances, and relevant environmental context.  \n- Semantic grouping is correctly applied: object properties (e.g., color and clothing type) are properly parenthesized with their respective entities (e.g., (Green, Clothing/Jersey) grouped under the batter).  \n- Key visual details such as the wooden bat, protective gear, uniforms, and background text elements (Pepsi logo, VerdeGroup.net) are included with appropriate labels.  \n- The spatial arrangement (e.g., triangular formation) is implied through entity inclusion and roles, though not explicitly encoded\u2014this level of abstraction is acceptable in HED for natural language fidelity.  \n- Lighting and color contrast are described in the original text but not in the annotation; however, these are considered optional enhancements rather than required details.  \n- Overall, the annotation is semantically rich, structurally sound, and reversible to a coherent natural language summary closely matching the original. No refinement needed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements\u2014players, attire, actions, setting, and visual details\u2014are captured with accurate semantic grouping, including proper nesting of attributes with objects and correct labeling of spatial roles. The annotation is reversible to the original description.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.1-codex-mini",
+      "model_name": "GPT-5.1-Codex-Mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a dynamic moment during a baseb...\" --model openai/gpt-5.1-codex-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 121.18251705169678,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Experimental-stimulus, Visual-presentation, Organizational-property/Professional, Organizational-property/Semi-professional, (Field/Baseball, (Green, Field), (Brown, Dirt-terrain)), Time-block/Daytime, (High, Luminance), (High, Saturation), (Human/Batter, (Clothing/Jersey, Green), (Clothing/Pants, White), (Object/Helmet, Black), (Object/Baseball-bat, Wooden), Attentive, Move-body/Swing), (Human/Catcher, (Clothing/Uniform, Grey), (Clothing/Accent, Red), (Object/Mask), (Object/Chest-protector), Crouching), (Human/Umpire, (Clothing/Shirt, DarkBlue), (Clothing/Pants, Grey), Standing, (Attend-to, (Object/Home-plate))), (Object/Banner, (Textblock, Label/Pepsi)), (Object/Banner, (Textblock, Label/VerdeGroupNet)), (Triangle, (Group-of, (Human/Batter, Human/Catcher, Human/Umpire))), (Focuses-on, (Object/Home-plate, Clear))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the event type (Sensory-event, Visual-presentation), key agents (batter, catcher, umpire), their actions and attire, the setting (baseball field, daytime), and notable visual details (banners, colors, lighting).  \n- Semantic grouping is correctly applied: object-property pairs (e.g., (Clothing/Jersey, Green), (Object/Baseball-bat, Wooden)) are properly nested, and agent-related attributes and actions are coherently structured.  \n- Spatial and relational information is well represented, especially the triangular formation via (Triangle, (Group-of, ...)) and the focus on home plate.  \n- Important visual qualities like luminance, saturation, and organizational level (professional/semi-professional) are included as relevant experimental or perceptual context.  \n- All explicit details from the description (Pepsi logo, VerdeGroup.net, protective gear, batting stance) are accounted for with appropriate specificity.  \n- The annotation would successfully pass the reversibility test\u2014translating it back to natural language would yield a description very close to the original.  \n\nNo refinement is needed. The annotation is comprehensive, structurally sound, and faithful to the source.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements: players, attire, actions, setting, lighting, colors, spatial arrangement, and textual details. Semantic grouping correctly associates properties with objects and agents, and complex relations like triangle formation and focus are accurately represented.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-4o-mini",
+      "model_name": "GPT-4o-mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a dynamic moment during a baseb...\" --model openai/gpt-4o-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 7.8497819900512695,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Sensory-event, Visual-presentation, (Dynamic-moment, Baseball-game), (Setting, (Professional-ballpark, (Green, Outfield-grass), (Brown, Dirt), (Advertising-banners, (Pepsi-logo), (VerdeGroup.net-sign)))), (Batter, (Human-agent, Player), (Green, Jersey), (White, Pants), (Black, Helmet), (Batting-gloves), (Swinging, Wooden-bat), (Powerful-stance, Focused)), (Catcher, (Human-agent, Player), (Grey, Uniform), (Red, Accents), (Protective-gear, (Mask), (Chest-protector)), (Crouched-low)), (Umpire, (Human-agent, Player), (Dark-blue, Shirt), (Grey, Pants), (Observing-play)), (Lighting, (Bright, Natural), (Daytime-game)), (Composition, (Triangular-formation, Action-at-home-plate)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the original description: the event type (Sensory-event, Visual-presentation), main agents (Batter, Catcher, Umpire), their appearances, actions, and roles, as well as the setting and visual composition.  \n- Semantic grouping is correctly applied: object properties (e.g., (Green, Jersey), (Crouched-low)) are appropriately paired, and complex entities like Protective-gear and Advertising-banners are properly nested.  \n- Key details such as clothing colors, equipment, spatial roles, lighting, and compositional structure are included in a structured and readable way.  \n- The annotation maintains clarity and would pass the reversibility test\u2014translating it back to natural language yields a description very close to the original.  \n- No critical information is missing, and optional enhancements (like specific brand names) are included where relevant.  \n\nOverall, this is a well-formed, faithful HED annotation that effectively represents the rich natural language description.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements\u2014event type, participants, attire, actions, setting, and visual composition\u2014are accurately captured with proper semantic grouping. The annotation preserves spatial, functional, and descriptive relationships (e.g., protective gear nested under catcher, lighting conditions correctly modified).  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a dynamic moment during a baseb...\" --model google/gemini-3-flash-preview --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 7.312782049179077,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Image, (Natural-light, (Daytime, (Sun, (Above, Field))))), (Ballpark, (Building-part/Home-plate, (Center-of, Image))), (Agent-action, ((Human-agent, (Experiment-participant, (Label/Batter, (Green, Clothing), (White, Clothing/Pants), (Black, Clothing/Helmet), Clothing/Batting-gloves))), (Swing, (Wooden, Tool/Baseball-bat)))), (Agent-action, ((Human-agent, (Experiment-participant, (Label/Catcher, (Gray, Clothing), (Red, Property/Accent), (Clothing/Mask, Clothing/Chest-protector)))), (Crouching, (Behind, (Label/Batter))))), (Agent-action, ((Human-agent, (Experiment-participant, (Label/Umpire, (DarkBlue, Clothing/Shirt), (Gray, Clothing/Pants)))), (Attend-to, (Label/Batter)))), (Grassy-terrain, (Green, Color)), (Dirt-terrain, (Brown, Color), (Center-of, (Label/Batter-box))), (Label/Advertising-banner, (Label/Pepsi-logo, Label/VerdeGroup-sign)), (Vibrant, Color)",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the event type (Sensory-event, Visual-presentation), main agents (batter, catcher, umpire), their actions, attire, spatial relationships, and key environmental features (ballpark, lighting, terrain, advertising).  \n- Semantic grouping is correctly applied: object properties (e.g., (Green, Clothing)) are appropriately nested within their respective agent or object labels, and spatial relations (e.g., Behind, Center-of) are properly scoped.  \n- Key details from the description\u2014such as the batter\u2019s swing, clothing colors, protective gear, natural daylight, field composition, and branding\u2014are all represented with correct HED structure.  \n- The use of (Label/*) for specific identifiers like \"Pepsi-logo\" and \"VerdeGroup.sign\" is acceptable for distinguishing named entities.  \n- Minor omissions (e.g., \"triangular formation\", \"soft shadows\") are acceptable as they are stylistic or implicit and do not affect the core meaning.  \n- The annotation is both semantically precise and structurally sound, and it passes the reversibility test\u2014translating back yields a description highly consistent with the original.  \n\nNo refinement needed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements\u2014players, actions, attire, setting, lighting, and visual details\u2014are accurately captured with proper semantic grouping. The spatial and relational structure (e.g., \"Behind\", \"Center-of\") reflects the description, and properties are correctly bound to objects.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "anthropic/claude-haiku-4.5",
+      "model_name": "Claude-Haiku-4.5",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a dynamic moment during a baseb...\" --model anthropic/claude-haiku-4.5 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 13.932270050048828,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, Experimental-stimulus, (Agent-action, Participant-response, ((Human-agent, Experiment-participant, (Agent-task-role, Batter)), (Move-body, (Coiled, Focused, Powerful-stance)), (Swing, (Wooden, Bat))), (Worn-by, ((Green, Jersey), (White, Pants), (Black, Helmet), (Batting-gloves)))), (Agent-action, ((Human-agent, (Agent-task-role, Catcher)), (Crouch), (Ready-indication)), (Worn-by, ((Grey, Uniform), (Red-accents), (Mask), (Chest-protector)))), (Agent-action, ((Human-agent, (Agent-task-role, Umpire)), (Observe)), (Worn-by, ((Dark-blue, Shirt), (Grey, Pants)))), (Location, Home-plate), ((Triangular-formation), (Spatial-relation, (Batter, (Center-of, (Catcher, Umpire))))), (Scene-context, Professional-ballpark), ((Green, Outfield-grass), (Dirt, Batter-box)), ((Advertising-banner, (Associated-with, (Pepsi-logo))), (Advertising-banner, (Associated-with, (VerdeGroup-net-sign)))), (Lighting, Bright, Natural, Daytime), (Shadows, Soft), (Color-contrast, ((Green, Jersey), (Grey, Uniform), (Brown, Dirt)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: event type (Sensory-event, Visual-presentation), main agents (Batter, Catcher, Umpire) with their roles, actions, attire, and spatial context.  \n- Semantic grouping is correctly applied: object properties (e.g., (Green, Jersey)) are properly parenthesized to form coherent entities, and agent-action structures are appropriately nested with Worn-by and Agent-task-role.  \n- Key spatial and contextual details are included: triangular formation, centering on the batter, home plate location, advertising banners, lighting, shadows, and color contrast.  \n- All important details from the original description\u2014such as attire, stance, equipment, setting, and visual dynamics\u2014are represented with correct syntactic structure.  \n- The annotation is both semantically precise and structurally sound, allowing for reliable reverse translation into natural language.  \n\nNo refinement needed. The annotation is faithful, well-structured, and comprehensive.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements\u2014agents (batter, catcher, umpire), their actions, attire, spatial relations, scene context, and visual properties\u2014and groups them semantically with correct nesting. The reversibility test passes; the original description can be accurately reconstructed.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "mistralai/mistral-small-3.2-24b-instruct",
+      "model_name": "Mistral-Small-3.2-24B",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a dynamic moment during a baseb...\" --model mistralai/mistral-small-3.2-24b-instruct --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 9.669368982315063,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Sensory-event, Visual-presentation, ((Sport, Baseball), (Scene, (Field, (Grass, Green), (Dirt, Brown)))), ((Player, (Batter, (Clothing, (Jersey, Green), (Pants, White), (Helmet, Black), (Gloves, Batting)))), (Action, (Swing, (Bat, Wooden)))), ((Player, (Catcher, (Clothing, (Uniform, Grey, (Accent, Red)), (Gear, (Mask, Protective), (Protector, Chest)))), (Stance, (Crouch, Low)))), ((Player, (Umpire, (Clothing, (Shirt, DarkBlue), (Pants, Grey)))), (Action, Observe)), (Object, (Banner, (Advertisement, (Logo, Pepsi), (Sign, VerdeGroup.net)))), (Lighting, (Natural, Bright)), (Composition, (Focus, (Action, Swing)), (Formation, Triangular)), (Color, (Contrast, (Green, Jersey), (Grey, Uniform), (Brown, Dirt)))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the event type (Sensory-event, Visual-presentation), the sport (Baseball), key players (Batter, Catcher, Umpire), their actions, clothing, and the setting.  \n- Semantic grouping is correctly applied: object-property relationships (e.g., (Jersey, Green), (Uniform, Grey, (Accent, Red))) are properly nested, and complex entities like the batter\u2019s swing and the triangular formation are well-structured.  \n- Important details such as colors, equipment, spatial arrangement (triangular formation), lighting, and advertisements are included with appropriate grouping.  \n- The annotation maintains clarity and would pass the reversibility test\u2014translating it back to natural language yields a description very close to the original.  \n- No critical information is missing, and optional enhancements (e.g., fine-grained color and object details) are appropriately included without overcomplication.  \n\nOverall, this is a high-quality, faithful HED annotation that effectively represents the rich visual content described.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements\u2014players, actions, attire, setting, lighting, composition, and color contrast\u2014are accurately captured with proper semantic grouping. The annotation preserves spatial and conceptual relationships and passes the reversibility test.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    }
+  ]
+}

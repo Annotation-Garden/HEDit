@@ -78,6 +78,7 @@ def create_byok_workflow(
     model: str | None = None,
     provider: str | None = None,
     temperature: float | None = None,
+    user_id_override: str | None = None,
 ) -> HedAnnotationWorkflow:
     """Create a workflow instance using the user's OpenRouter key (BYOK mode).
 
@@ -86,6 +87,7 @@ def create_byok_workflow(
         model: Override model for all agents (uses server default if None)
         provider: Override provider preference (uses server default if None)
         temperature: Override LLM temperature (uses server default if None)
+        user_id_override: Custom user ID for cache optimization (overrides API key derived ID)
 
     Returns:
         Configured HedAnnotationWorkflow using the user's key and model settings
@@ -102,53 +104,57 @@ def create_byok_workflow(
         temperature if temperature is not None else _byok_config.get("temperature", 0.1)
     )
 
-    # Provider logic:
-    # - If user specifies a custom model, clear provider (Cerebras only works with default models)
-    # - Unless user also explicitly specifies a provider
+    # Get model configuration: user override > server env var > default
+    # Annotation model: Mistral-Small for best quality/cost balance
+    default_annotation_model = os.getenv(
+        "ANNOTATION_MODEL", "mistralai/mistral-small-3.2-24b-instruct"
+    )
+    default_annotation_provider = os.getenv("ANNOTATION_PROVIDER", "mistral")
+    # Evaluation/Assessment: Qwen3-235B via Cerebras for consistent quality checks
+    default_evaluation_model = os.getenv("EVALUATION_MODEL", "qwen/qwen3-235b-a22b-2507")
+    default_evaluation_provider = os.getenv("EVALUATION_PROVIDER", "Cerebras")
+
+    # If user provides a model, use it for annotation only (eval stays consistent)
+    annotation_model = get_model_name(model if model else default_annotation_model)
+    evaluation_model = get_model_name(default_evaluation_model)
+    assessment_model = get_model_name(default_evaluation_model)
+
+    # Provider logic for annotation model
     if provider is not None:
-        # User explicitly set provider (could be empty string to clear it)
-        provider_preference = provider if provider else None
+        annotation_provider = provider if provider else None
     elif model is not None:
         # User specified custom model but no provider → clear provider
-        # (Cerebras only works with default models)
-        provider_preference = None
+        annotation_provider = None
     else:
-        # No custom model or provider → use server defaults
-        provider_preference = _byok_config.get("provider_preference")
+        annotation_provider = default_annotation_provider
 
-    # Get model configuration: user override > server env var > default
-    default_annotation_model = os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b")
-    default_evaluation_model = os.getenv("EVALUATION_MODEL", "qwen/qwen3-235b-a22b-2507")
-    default_assessment_model = os.getenv("ASSESSMENT_MODEL", "openai/gpt-oss-120b")
+    # Evaluation always uses its dedicated provider (Cerebras)
+    evaluation_provider = default_evaluation_provider
 
-    # If user provides a model, use it for all agents (default override)
-    annotation_model = get_model_name(model if model else default_annotation_model)
-    evaluation_model = get_model_name(model if model else default_evaluation_model)
-    assessment_model = get_model_name(model if model else default_assessment_model)
-
-    # Derive user ID for cache optimization (each API key gets own cache lane)
-    user_id = _derive_user_id(openrouter_key)
+    # Use custom user_id if provided, otherwise derive from API key
+    # Custom user_id enables shared caching (e.g., all frontend users share cache)
+    user_id = user_id_override or _derive_user_id(openrouter_key)
 
     # Create LLMs with user's key and settings
     annotation_llm = create_openrouter_llm(
         model=annotation_model,
         api_key=openrouter_key,
         temperature=llm_temperature,
-        provider=provider_preference,
+        provider=annotation_provider,
         user_id=user_id,
     )
     evaluation_llm = create_openrouter_llm(
         model=evaluation_model,
         api_key=openrouter_key,
         temperature=llm_temperature,
-        provider=provider_preference,
+        provider=evaluation_provider,
         user_id=user_id,
     )
     assessment_llm = create_openrouter_llm(
         model=assessment_model,
         api_key=openrouter_key,
         temperature=llm_temperature,
-        provider=provider_preference,
+        provider=evaluation_provider,
         user_id=user_id,
     )
 
@@ -168,6 +174,7 @@ def create_byok_vision_agent(
     vision_model: str | None = None,
     provider: str | None = None,
     temperature: float | None = None,
+    user_id_override: str | None = None,
 ) -> VisionAgent:
     """Create a vision agent instance using the user's OpenRouter key (BYOK mode).
 
@@ -176,6 +183,7 @@ def create_byok_vision_agent(
         vision_model: Override vision model (uses server default if None)
         provider: Override provider preference (uses server default if None)
         temperature: Override temperature (uses 0.3 default if None)
+        user_id_override: Custom user ID for cache optimization (overrides API key derived ID)
 
     Returns:
         Configured VisionAgent using the user's key and model settings
@@ -198,8 +206,8 @@ def create_byok_vision_agent(
     else:
         actual_provider = default_vision_provider
 
-    # Derive user ID for cache optimization
-    user_id = _derive_user_id(openrouter_key)
+    # Use custom user_id if provided, otherwise derive from API key
+    user_id = user_id_override or _derive_user_id(openrouter_key)
 
     vision_llm = create_openrouter_llm(
         model=actual_model,
@@ -567,12 +575,16 @@ async def annotate(
             except ValueError:
                 pass  # Invalid header value, use default
 
+        # Custom user_id for cache optimization (e.g., "frontend-0.6.4" for shared frontend cache)
+        user_id_override = req.headers.get("x-user-id")
+
         try:
             active_workflow = create_byok_workflow(
                 openrouter_key,
                 model=model,
                 provider=provider,
                 temperature=temperature,
+                user_id_override=user_id_override,
             )
         except Exception as e:
             raise HTTPException(
@@ -698,18 +710,23 @@ async def annotate_from_image(
             except ValueError:
                 pass  # Invalid header value, use default
 
+        # Custom user_id for cache optimization (e.g., "frontend-0.6.4" for shared frontend cache)
+        user_id_override = req.headers.get("x-user-id")
+
         try:
             active_workflow = create_byok_workflow(
                 openrouter_key,
                 model=model,
                 provider=provider,
                 temperature=temperature,
+                user_id_override=user_id_override,
             )
             active_vision_agent = create_byok_vision_agent(
                 openrouter_key,
                 vision_model=vision_model,
                 provider=provider,
                 temperature=temperature,
+                user_id_override=user_id_override,
             )
         except Exception as e:
             raise HTTPException(

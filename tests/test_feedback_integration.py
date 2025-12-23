@@ -33,8 +33,8 @@ def triage_agent(test_api_key: str):
     from src.agents.feedback_triage_agent import FeedbackTriageAgent
     from src.utils.openrouter_llm import create_openrouter_llm
 
-    model = os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b")
-    provider = os.getenv("LLM_PROVIDER_PREFERENCE", "Cerebras")
+    model = os.getenv("ANNOTATION_MODEL", "mistralai/mistral-small-3.2-24b-instruct")
+    provider = os.getenv("ANNOTATION_PROVIDER", "mistral")
 
     llm = create_openrouter_llm(
         model=model,
@@ -295,8 +295,8 @@ class TestTriageWithGitHub:
         from src.utils.github_client import GitHubClient
         from src.utils.openrouter_llm import create_openrouter_llm
 
-        model = os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b")
-        provider = os.getenv("LLM_PROVIDER_PREFERENCE", "Cerebras")
+        model = os.getenv("ANNOTATION_MODEL", "mistralai/mistral-small-3.2-24b-instruct")
+        provider = os.getenv("ANNOTATION_PROVIDER", "mistral")
 
         llm = create_openrouter_llm(
             model=model,

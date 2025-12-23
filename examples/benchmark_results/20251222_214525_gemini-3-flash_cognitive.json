@@ -1,0 +1,179 @@
+{
+  "session_id": "20251222_214525",
+  "model_name": "Gemini-3-Flash",
+  "domain": "cognitive",
+  "schema_version": "8.4.0",
+  "eval_model": "qwen/qwen3-235b-a22b-2507",
+  "eval_provider": "Cerebras",
+  "timestamp": "2025-12-22T22:11:21.137710",
+  "results": [
+    {
+      "test_id": "cog_01",
+      "domain": "cognitive",
+      "difficulty": "easy",
+      "input_description": "An orange star flashes briefly at the top of the display",
+      "expected_elements": [
+        "Sensory-event",
+        "Visual-presentation",
+        "Orange",
+        "Star",
+        "Top"
+      ],
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"An orange star flashes briefly at the top of the display\" --model google/gemini-3-flash-preview --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 8.842074871063232,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, Experimental-stimulus, (Flickering, (Orange, Star)), ((Orange, Star), (Center-of, (Top-edge-of, Screen-window))), (Duration/100 ms)",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: event type (Sensory-event, Visual-presentation), stimulus role (Experimental-stimulus), object (Orange, Star), action/state (Flickering), location ((Center-of, (Top-edge-of, Screen-window))), and duration (100 ms).  \n- Semantic grouping is correct: color and shape are properly grouped as (Orange, Star); spatial relations are correctly nested.  \n- The term \"Flickering\" reasonably represents \"flashes briefly\" \u2014 while \"flashing\" might be slightly more precise, \"flickering\" is semantically acceptable in this context.  \n- Duration is specified appropriately.  \n- The annotation is both complete and correctly structured, and it passes the reversibility test \u2014 it can be translated back into a natural language description very close to the original.  \n\nNo refinement needed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements (object: orange star; action: flashes/flickering; location: top of display; duration: 100 ms) are accurately captured with proper semantic grouping. The reversibility test passes.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "cog_02",
+      "domain": "cognitive",
+      "difficulty": "medium",
+      "input_description": "A low-frequency buzzer sounds for 500 milliseconds followed by a high-frequency beep",
+      "expected_elements": [
+        "Sensory-event",
+        "Auditory-presentation",
+        "Duration",
+        "Frequency"
+      ],
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"A low-frequency buzzer sounds for 500 milliseconds followed by a high-frequency beep\" --model google/gemini-3-flash-preview --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 8.39196491241455,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Duration/500 ms, (Sensory-event, Auditory-presentation, ((Low, Frequency), Alarm-sound))), (After, (Sensory-event, Auditory-presentation, ((High, Frequency), Beep)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: two sequential auditory sensory events, with appropriate descriptors for each sound.\n- Event types are correctly identified as Sensory-event and Auditory-presentation.\n- The first sound is properly described with duration (500 ms) and attributes (Low, Frequency) grouped with Alarm-sound \u2014 correctly nested.\n- The second sound is correctly represented as a high-frequency beep, with temporal relation \"After\" appropriately used to sequence the events.\n- Semantic grouping is correct: ((Low, Frequency), Alarm-sound) and ((High, Frequency), Beep) are properly parenthesized to form coherent auditory stimuli.\n- Temporal structure using (After, ...) is acceptable and reflects the sequence described.\n- Reversibility test passes: the annotation can be translated back into a natural language description very close to the original.\n\nNo refinement needed. The annotation is faithful, well-structured, and semantically accurate.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements (low-frequency buzzer, high-frequency beep, 500 ms duration, temporal sequence) are accurately captured with proper semantic grouping. The use of parentheses correctly associates properties with objects and orders events.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "cog_03",
+      "domain": "cognitive",
+      "difficulty": "medium",
+      "input_description": "The participant fixates on a central cross while a peripheral distractor appears in the lower right quadrant",
+      "expected_elements": [
+        "Sensory-event",
+        "Visual-presentation",
+        "Fixation",
+        "Cross",
+        "Distractor"
+      ],
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"The participant fixates on a central cross while a peripheral distractor appears in the lower right quadrant\" --model google/gemini-3-flash-preview --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 6.317754745483398,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Agent-action, Participant-response, ((Human-agent, Experiment-participant), (Fixate, (Center-of, (Screen, Cross))))), (Sensory-event, Visual-presentation, (Distractor, (Lower-right-of, Screen)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: the participant\u2019s action (fixating) and the sensory event (distractor presentation).  \n- Event types are correctly identified: Agent-action with Participant-response for fixation, and Sensory-event with Visual-presentation for the distractor.  \n- Semantic grouping is properly applied:  \n  - The agent and action are correctly nested: ((Human-agent, Experiment-participant), (Fixate, ...))  \n  - The spatial relationship of the cross is well-formed: (Center-of, (Screen, Cross))  \n  - The distractor presentation includes both the object and its location: (Distractor, (Lower-right-of, Screen))  \n- All key details from the original description are represented without over-interpretation.  \n- The structure allows for clear reversibility to natural language: \u201cThe participant fixates on a central cross while a peripheral distractor appears in the lower right quadrant.\u201d  \n\nNo refinement needed. The annotation is semantically accurate and well-structured.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: The annotation captures the fixation on the central cross and the appearance of a peripheral distractor in the lower right quadrant, but the grouping of \"Lower-right-of, Screen\" with \"Distractor\" is ambiguous\u2014spatial relation should be properly nested as ((Distractor), (Lower-right-of, (Screen))). Also, \"Center-of, (Screen, Cross)\" should be ((Cross), (Center-of, Screen)) for correct spatial interpretation.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "cog_04",
+      "domain": "cognitive",
+      "difficulty": "hard",
+      "input_description": "A white noise burst masks the target word which was spoken by a female voice",
+      "expected_elements": [
+        "Auditory-presentation",
+        "Noise",
+        "Speech",
+        "Female"
+      ],
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"A white noise burst masks the target word which was spoken by a female voice\" --model google/gemini-3-flash-preview --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 12.370100021362305,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Auditory-presentation, Experimental-stimulus, ((Target, Word), (Masked-by, (White, Noise, (Auditory-presentation, Beep)))), (Voice, (Female, Human))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": false,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: the event type (Sensory-event, Auditory-presentation), the experimental role (Experimental-stimulus), the target (Target, Word), the masking stimulus (White, Noise, Beep), and the voice characteristics (Female, Human).  \n- Semantic grouping is correctly applied:  \n  - ((Target, Word), (Masked-by, (White, Noise, (Auditory-presentation, Beep)))) properly represents that the target word is masked by a white noise burst.  \n  - (Voice, (Female, Human)) correctly groups voice attributes.  \n- The use of \"Beep\" as a proxy for a noise burst is reasonable in context, though \"Noise-burst\" might be more precise\u2014however, this does not impair faithfulness.  \n- The structure allows for reversibility: it can be translated back into a natural language description very close to the original.  \n\nNo refinement needed. The annotation is semantically accurate and well-structured.",
+          "assessment_feedback": "COMPLETENESS: incomplete  \nGROUPING: needs-improvement  \nNOTES: The annotation misses the temporal and causal relationship between the masking noise and the target word presentation; \"Beep\" is incorrectly added and not in the description. \"White, Noise\" should be grouped as (White, Noise) modifying the auditory stimulus. The voice attribute should be linked to the word's presentation.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "cog_05",
+      "domain": "cognitive",
+      "difficulty": "hard",
+      "input_description": "The go signal consists of a green diamond appearing centrally, prompting a bimanual key press",
+      "expected_elements": [
+        "Agent-action",
+        "Visual-presentation",
+        "Green",
+        "Press",
+        "Participant-response"
+      ],
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"The go signal consists of a green diamond appearing centrally, prompting a bimanual key press\" --model google/gemini-3-flash-preview --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 6.702096223831177,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, Go-signal, (Green, 2D-shape/Diamond, Center-of, Computer-screen), (Agent-action, Participant-response, ((Human-agent, Experiment-participant), (Press, (Keyboard-key, Bilateral-to, Body))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: the event type (Sensory-event, Visual-presentation), the stimulus (Go-signal), and the participant response (Agent-action, Participant-response).  \n- The green diamond is correctly represented with grouped properties: (Green, 2D-shape/Diamond, Center-of, Computer-screen) \u2014 this properly bundles color, shape, and location, ensuring semantic clarity.  \n- The bimanual key press is well modeled using (Press, (Keyboard-key, Bilateral-to, Body)) nested under Agent-action with appropriate agent specification ((Human-agent, Experiment-participant)).  \n- The use of parentheses maintains correct hierarchical structure, allowing for reversibility to natural language.  \n- All key details from the original description are preserved without overcomplication. No refinement needed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements are captured: the green diamond as a visual go signal presented centrally, and the bimanual key press response by the participant. Groupings correctly associate properties with objects and nest agent-action relationships.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    }
+  ]
+}

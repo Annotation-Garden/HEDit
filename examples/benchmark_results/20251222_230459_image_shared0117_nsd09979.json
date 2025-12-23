@@ -1,0 +1,190 @@
+{
+  "session_id": "20251222_230459",
+  "image_name": "shared0117_nsd09979.png",
+  "description": "The image captures a dynamic moment on a clay tennis court, with a female tennis player in the foreground poised in a ready stance, her body low and angled as she prepares to return a shot. She wears a black tank top, a vibrant pink skirt, a black visor, and white athletic shoes, her expression focused and intense. Her right hand grips a red and black tennis racket, held low and ready. Behind her, a young ball boy or girl stands attentively, wearing a blue t-shirt with \"Babolat\" printed on it, white shorts, a blue cap, and white sneakers, positioned near two white plastic chairs. The backdrop is a large, bright pink wall, possibly a sponsor banner, with partially visible white text including a phone number and the word \"Fest.\" The court surface is a classic reddish-brown clay, and the lighting appears to be bright, natural daylight, casting soft shadows and highlighting the textures of the court and the players' clothing. The composition places the athlete as the central focus, with the ball boy providing context and depth, creating a sense of action and concentration within a professional tennis environment.",
+  "vision_model": "qwen/qwen3-vl-30b-a3b-instruct",
+  "vision_response": {
+    "description": "The image captures a dynamic moment on a clay tennis court, with a female tennis player in the foreground poised in a ready stance, her body low and angled as she prepares to return a shot. She wears a black tank top, a vibrant pink skirt, a black visor, and white athletic shoes, her expression focused and intense. Her right hand grips a red and black tennis racket, held low and ready. Behind her, a young ball boy or girl stands attentively, wearing a blue t-shirt with \"Babolat\" printed on it, white shorts, a blue cap, and white sneakers, positioned near two white plastic chairs. The backdrop is a large, bright pink wall, possibly a sponsor banner, with partially visible white text including a phone number and the word \"Fest.\" The court surface is a classic reddish-brown clay, and the lighting appears to be bright, natural daylight, casting soft shadows and highlighting the textures of the court and the players' clothing. The composition places the athlete as the central focus, with the ball boy providing context and depth, creating a sense of action and concentration within a professional tennis environment.",
+    "prompt_used": "Describe what you see in this image. Include the setting, main elements, colors, lighting, and overall composition. Be specific and detailed. Form the response as a continuous paragraph. Maximum 200 words.",
+    "metadata": {
+      "format": "PNG",
+      "mode": "RGB",
+      "size": [
+        425,
+        425
+      ],
+      "width": 425,
+      "height": 425,
+      "size_bytes": 312616,
+      "size_mb": 0.29813385009765625,
+      "mime_type": "image/png"
+    }
+  },
+  "schema_version": "8.4.0",
+  "eval_model": "qwen/qwen3-235b-a22b-2507",
+  "eval_provider": "Cerebras",
+  "timestamp": "2025-12-22T23:49:10.163938",
+  "results": [
+    {
+      "model_id": "openai/gpt-oss-120b",
+      "model_name": "GPT-OSS-120B",
+      "provider": "Cerebras",
+      "cli_command": "hedit annotate \"The image captures a dynamic moment on a clay tenn...\" --model openai/gpt-oss-120b --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment --provider Cerebras",
+      "execution_time_seconds": 23.03292489051819,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Experimental-stimulus, Visual-presentation, Visual-attribute/Daylight, (Item/Clay, (Red, Brown)), (Item/Wall, (Pink), (Label, \"Partially-visible-number\"), (Label, \"Fest\")), Agent-action, ((Human-agent, (Label, \"Player\")), Move-body/Crouch, (Grab, (Item/Racket, (Red, Black))), Focused-attention), (Item/Tank-top, (Black)), (Item/Skirt, (Pink)), (Item/Visor, (Black)), (Item/Athletic-shoe, (White)), (Human-agent, (Label, \"Ball-boy\")), (Item/T-shirt, (Blue), (Label, \"Babolat\")), (Item/Shorts, (White)), (Item/Cap, (Blue)), (Item/Sneaker, (White)), (Item/Chair, (White), (Plastic)), ((Human-agent, (Label, \"Ball-boy\")), (Behind, (Human-agent, (Label, \"Player\")))), ((Human-agent, (Label, \"Ball-boy\")), (Near-to, (Item/Chair)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 5,
+          "total_iterations": 5,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: the visual scene (Sensory-event, Visual-presentation), key agents (player and ball boy), their attire, equipment, spatial relationships, and environmental context.  \n- Semantic grouping is correctly applied: object properties (e.g., (Item/Skirt, (Pink))) are properly nested, and agent-action relationships (e.g., (Grab, (Item/Racket, (Red, Black)))) are well-structured.  \n- Spatial relations ((Behind, ...), (Near-to, ...)) are appropriately parenthesized and linked to the correct agents/objects.  \n- Key visual attributes like daylight, clay court color, wall color, and labels (\"Babolat\", \"Fest\") are included with correct grouping.  \n- The use of (Label, \"...\") for text elements is acceptable for experimental stimuli.  \n- All main components of the description are represented without over-interpretation or omission of critical details.  \n- The annotation would successfully pass the reversibility test, translating back into a coherent and faithful description of the scene.  \n\nNo refinement needed. The annotation is detailed, semantically accurate, and well-structured.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements (players, attire, equipment, spatial relations, court, wall, lighting) are captured with accurate semantic grouping. Properties are properly attached to objects, and agent-action-attribute relationships are well structured.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.2",
+      "model_name": "GPT-5.2",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a dynamic moment on a clay tenn...\" --model openai/gpt-5.2 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 64.99912810325623,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, Photograph, Outdoors, (Field/Tennis-court, Dirt-terrain), (Human, Female, Crouching, Focused-attention), ((Human, Female, Crouching, Focused-attention), (Associated-with, (Clothing/Tank-top, Black))), ((Human, Female, Crouching, Focused-attention), (Associated-with, (Clothing/Skirt, Pink))), ((Human, Female, Crouching, Focused-attention), (Associated-with, (Clothing/Visor, Black))), ((Human, Female, Crouching, Focused-attention), (Associated-with, (Clothing/Athletic-shoes, White))), ((Human, Female, Crouching, Focused-attention), (Associated-with, (Tool/Tennis-racket, (Red, Black)))), (Human/Child, Standing, Attentive), ((Human/Child, Standing, Attentive), (Associated-with, (Clothing/T-shirt, Blue))), ((Textblock, White, Label/Babolat), (Part-of, (Clothing/T-shirt, Blue))), ((Human/Child, Standing, Attentive), (Associated-with, (Clothing/Shorts, White))), ((Human/Child, Standing, Attentive), (Associated-with, (Clothing/Cap, Blue))), ((Human/Child, Standing, Attentive), (Associated-with, (Clothing/Sneakers, White))), ((Human/Child, Standing, Attentive), (Behind, (Human, Female, Crouching, Focused-attention))), (Furnishing/Chair, White), (Furnishing/Chair, White), ((Human/Child, Standing, Attentive), (Near-to, (Furnishing/Chair, White))), (Building-part/Wall, Pink), ((Textblock, White, Label/Fest), (Part-of, (Building-part/Wall, Pink)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the female tennis player in a crouched, focused stance; her clothing and equipment; the child (ball boy/girl) behind her; spatial relationships; background elements like the wall and chairs; and contextual details such as colors, labels, and attire.\n- Semantic grouping is correctly applied throughout. Object properties (e.g., color, type) are properly nested within parentheses with their respective entities (e.g., (Clothing/Skirt, Pink), (Tool/Tennis-racket, (Red, Black))).\n- Spatial and relational structures are well represented: (Behind, ...), (Near-to, ...), and (Part-of, ...) are used appropriately with correct nesting.\n- Key visual details from the description\u2014such as the \"Babolat\" text on the t-shirt, the pink sponsor wall with \"Fest\", the clay court, and the natural lighting (implied by \"Outdoors\", \"Photograph\")\u2014are effectively encoded.\n- The annotation maintains clarity and reversibility: one could reasonably reconstruct a description close to the original from the HED tags.\n\nNo refinement is needed. The annotation is detailed, semantically accurate, and structurally sound.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements (players, clothing, equipment, spatial relations, background) are captured with accurate semantic grouping; properties are properly attached to objects and agents.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.1-codex-mini",
+      "model_name": "GPT-5.1-Codex-Mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a dynamic moment on a clay tenn...\" --model openai/gpt-5.1-codex-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 137.79332613945007,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Experimental-stimulus, Visual-presentation, (Female, Human, Label/Tennis-athlete, Ready-indication, Focused-attention, Foreground-view, Crouching, Low, (Clothing/Tank-top, Black), (Clothing/Skirt, Pink), (Clothing/Visor, Black), (Clothing/Athletic-shoes, White), (Center-of, (Image)), (Hand, Right, (Associated-with, (Tennis-racket, Red, Black, Low, Ready-indication)))), (Human, Label/Ball-person, Background-view, Attentive, (Clothing/T-shirt, Blue, Label/Babolat), (Clothing/Shorts, White), (Clothing/Cap, Blue), (Clothing/Athletic-shoes, White), (Behind, (Label/Tennis-athlete))), (Furniture/Chair, Plastic, White, Item-count/2, (Near-to, (Human, Label/Ball-person))), (Building-part/Wall, Pink, Large, (Behind, ((Label/Tennis-athlete), (Human, Label/Ball-person), (Furniture/Chair, Plastic, White))), (Contains, (White, Label/Fest, Label/Phone-number))), (Terrain/Tennis-court, Natural-object/Clay, Red, Brown, (Associated-with, (Environmental-property/Ambient-lighting, Bright, Environmental-property/Daylight))), Label/Professional-tennis-environment",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the event type (Sensory-event, Visual-presentation), the main agent (female tennis athlete), key objects (racket, ball person, chairs, wall, court), and relevant actions/states (ready stance, focused attention, attentive posture).  \n- Semantic grouping is correctly applied: object-property bundles like (Clothing/Tank-top, Black) and spatial relations like (Behind, (Label/Tennis-athlete)) are properly nested, ensuring clarity and reversibility.  \n- Important details such as clothing colors, labels (Babolat, Fest, phone number), spatial layout (foreground/background, near-to, behind), and environmental context (clay court, daylight, professional setting) are all included.  \n- The use of labels (e.g., Label/Tennis-athlete, Label/Ball-person) enhances specificity without overcomplicating the structure.  \n- Minor omissions (e.g., \"soft shadows\", \"textures\") are acceptable as they are secondary to the core description and do not affect the overall fidelity.  \n- The annotation can be reversed into a coherent natural language summary closely matching the original.  \n\nNo refinement needed. The annotation is detailed, structurally sound, and faithful to the original description.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: Most key elements are captured, including people, clothing, objects, and context, but several grouping issues affect clarity\u2014e.g., ungrouped color labels like \"Red, Black\" with racket should be (Tennis-racket, (Color, Red), (Color, Black)) or similar; \"Contains\" relation for the wall mixes text elements without proper nesting. Some labels (e.g., Label/Fest, Label/Phone-number) lack semantic context.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-4o-mini",
+      "model_name": "GPT-4o-mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a dynamic moment on a clay tenn...\" --model openai/gpt-4o-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 14.345934867858887,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Sensory-event, Visual-presentation, (Female-agent, Tennis-player), (Pose, Ready), (Body, Low, Angled), (Wearing, ((Black, Tank-top), (Pink, Skirt), (Black, Visor), (White, Athletic-shoes))), (Expression, Focused, Intense), (Grip, ((Red, Black, Tennis-racket))), (Position, Low), (Behind, (Ball-boy, (Wearing, ((Blue, T-shirt), (White, Shorts), (Blue, Cap), (White, Sneakers))))), (Near-to, (Two, (White, Plastic-chairs))), (Backdrop, (Bright, Pink, Wall)), (Partially-visible, (Text, (White, Phone-number))), (Partially-visible, (Text, (White, Word, Fest))), (Surface, (Reddish-brown, Clay)), (Lighting, (Bright, Natural, Daylight)), (Shadow, (Soft)), (Highlight, (Textures, (Court, Players-clothing))), (Context, (Ball-boy)), (Adds, Depth), (Expression, Concentration))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the event type (Sensory-event, Visual-presentation), the main agent (Female-agent, Tennis-player), her pose, attire, expression, equipment, and spatial context.  \n- Semantic grouping is correctly applied: object properties (e.g., color, type) are properly parenthesized together (e.g., (Black, Tank-top), (Red, Black, Tennis-racket)), and nested structures reflect ownership and spatial relations (e.g., (Wearing, (...)), (Behind, (...))).  \n- Key details such as clothing colors, the ball boy\u2019s attire, the pink wall with partially visible text, clay court surface, lighting, and compositional elements like depth and focus are all represented.  \n- Minor redundancy (e.g., \"Expression\" appears twice) does not impair meaning or structure.  \n- The annotation passes the reversibility test\u2014translating it back yields a description very close to the original.  \n\nNo refinement needed. The annotation is faithful, well-structured, and semantically precise.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: Most key elements are captured, but some property groupings are incorrect or inconsistent\u2014e.g., (Grip, ((Red, Black, Tennis-racket))) should group color with racket as (Red, Black, Tennis-racket) under a Wearing or Holding tag; \"Adds, Depth\" is not standard HED syntax and should be rephrased. Some redundant or ambiguous uses of \"Partially-visible\" and ungrouped relations reduce clarity.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a dynamic moment on a clay tenn...\" --model google/gemini-3-flash-preview --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 10.534326791763306,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Bright, Natural-light), (Reddish-brown, (Tennis-court, Mineral/Clay)), ((Human-agent, Female, Experiment-participant, (Low, Ready-stance), (Black, Clothing/Tank-top), (Pink, Skirt), (Black, Clothing/Visor), (White, Clothing/Shoes), (Focused, Agent-cognitive-state)), (Action, (Grip, (Red, Black, Racket)))), ((Human-agent, (Agent-task-role/Ball-person), Attentive, (Blue, Clothing/T-shirt, (Label/Babolat, Text-content)), (White, Clothing/Shorts), (Blue, Clothing/Cap), (White, Clothing/Shoes)), (Behind, (Human-agent, Female))), (Group-of, (White, Furniture/Chair), (Material/Plastic)), ((Pink, Building-part/Wall), (Behind, (Human-agent, Female)), (Label/Fest, Text-content), (Label/Phone-number, Text-content))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the event type (Sensory-event, Visual-presentation), the main agents (female tennis player and ball person), key objects (racket, chairs, wall), and environmental context (clay court, lighting, sponsor wall).  \n- Semantic grouping is correctly applied: object properties (color, clothing, stance, labels) are appropriately nested within parentheses to form coherent entities. For example, ((Human-agent, Female, ...), (Action, (Grip, ...))) clearly links the action to the agent, and ((Pink, Wall), (Behind, ...)) correctly represents spatial and descriptive attributes.  \n- Important details such as clothing colors, text on garments and wall, spatial relationships (\"Behind\"), and cognitive states (\"Focused\") are included and well-structured.  \n- The use of Experiment-participant may be slightly interpretive but is reasonable in a structured annotation context to denote the player\u2019s role.  \n- The annotation passes the reversibility test\u2014it can be translated back into a natural language description closely matching the original.  \n\nNo refinement is needed. The annotation is faithful, semantically well-grouped, and comprehensive for the given description.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements (players, attire, actions, spatial relations, objects, lighting, and background) are accurately captured with proper semantic grouping. Reversibility is strong\u2014annotation clearly reflects the original description.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "anthropic/claude-haiku-4.5",
+      "model_name": "Claude-Haiku-4.5",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a dynamic moment on a clay tenn...\" --model anthropic/claude-haiku-4.5 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 14.277800798416138,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, Scene-composition, ((Central-focus, (Agent-action, ((Human-agent, Experiment-participant, Female), (Move-body, Ready-stance), ((Clothing, Tank-top, Black), (Clothing, Skirt, Pink), (Clothing, Visor, Black), (Clothing, Athletic-shoes, White)), (Focused, Intense), (Right, (Grasp, (Tennis-racket, Red, Black)))))), (Contextual-depth, ((Human-agent, (Age, Young), (Clothing, (T-shirt, Blue, (Text-content, \"Babolat\")), Shorts-white, Cap-blue, Sneakers-white)), (Attend-to, Ball-attendant))), (Contextual-depth, (Furniture, Chair, White, Plastic, (Quantity/2)))), (Environmental-property, (Clay-court, Reddish-brown)), (Environmental-property, (Wall, Pink, Bright, (Text-content, \"Fest\"), (Text-content, Phone-number))), (Lighting, Natural-daylight, Bright, (Shadow, Soft))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the central female tennis player in action, her attire, posture, equipment, emotional state, and spatial context.  \n- Semantic grouping is correctly applied: object properties (e.g., color, type, text) are properly nested within parentheses with their respective entities (e.g., (Clothing, T-shirt, Blue, (Text-content, \"Babolat\"))).  \n- Key contextual elements\u2014ball attendant, chairs, wall with text, clay court, lighting\u2014are included with appropriate modifiers and grouped meaningfully.  \n- The use of Scene-composition with Central-focus and Contextual-depth effectively conveys the visual hierarchy described.  \n- All main aspects of the original description can be recovered from the annotation; reversibility holds well.  \n- No critical information is missing, and optional enhancements (e.g., emotional state, texture implications via lighting) are reasonably included.  \n\nNo refinement needed. The annotation is semantically precise, structurally sound, and faithfully represents the natural language description.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements\u2014central player, attire, posture, expression, equipment, ball attendant, furniture, court, wall, lighting\u2014are accurately captured with proper semantic grouping. Properties are correctly bound to objects, and spatial/contextual relationships are preserved.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "mistralai/mistral-small-3.2-24b-instruct",
+      "model_name": "Mistral-Small-3.2-24B",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a dynamic moment on a clay tenn...\" --model mistralai/mistral-small-3.2-24b-instruct --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 9.29817509651184,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, ((Tennis-player, (Female, (Athlete, (Human-agent, Experiment-participant)))), (Ready-stance, (Hold, (Tennis-racket, (Red, Black)))), (Clothing, (Black, Tank-top), (Pink, Skirt), (Black, Visor), (White, Athletic-shoes))), ((Ball-boy, (Young, (Human-agent, Experiment-participant))), (Clothing, (Blue, T-shirt, (Label/Babolat)), (White, Shorts), (Blue, Cap), (White, Sneakers))), ((Clay, Tennis-court), (Surface, (Reddish-brown, Clay))), (Background, (Pink, Wall, (Label/Sponsor-banner)), (White, Text, (Label/Phone-number), (Label/Fest))), (Lighting, (Bright, Daylight)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the event type (Sensory-event, Visual-presentation), the main agents (tennis player and ball boy), their appearances, clothing, stances, and the environmental context (court, lighting, background).  \n- Semantic grouping is correctly applied: object-property pairs (e.g., (Pink, Skirt), (Blue, T-shirt, (Label/Babolat))) are properly nested within Clothing, and agent roles are appropriately structured with modifiers.  \n- Key spatial and contextual details are included: the player's ready stance, racket grip, color details, sponsor wall with labeled text, and daylight lighting are all represented with correct hierarchical structure.  \n- The use of parentheses ensures unambiguous interpretation\u2014for example, ((Tennis-player, ...), (Ready-stance, ...)) groups actions and states with the agent, and ((Clay, Tennis-court), ...) correctly describes the court surface.  \n- The annotation is both semantically precise and reversible\u2014translating it back to natural language would yield a description very close to the original.  \n\nNo refinement is needed. The annotation is faithful, well-structured, and adheres to best practices in HED tagging.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements\u2014players, attire, equipment, setting, lighting, and background\u2014are accurately captured with proper semantic grouping. The nesting of attributes (e.g., colors with clothing, labels with text) and agent-action-attribute relationships is correct. Reversibility test passes.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    }
+  ]
+}

@@ -928,7 +928,7 @@
             opacity: 1;
         }
 
-        /* Telemetry Notice - fixed at absolute bottom */
+        /* Telemetry & Model Info Notice - fixed at absolute bottom */
         .telemetry-notice {
             display: flex;
             align-items: baseline;
@@ -941,6 +941,28 @@
             background: var(--bg-tertiary);
             transition: all 0.3s ease;
             margin: 0;
+        }
+
+        .model-info {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 8px;
+            padding: 4px 16px;
+            font-size: 11px;
+            color: var(--text-muted);
+            background: var(--bg-tertiary);
+            transition: all 0.3s ease;
+            margin: 0;
+        }
+
+        .model-info a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .model-info a:hover {
+            text-decoration: underline;
         }
 
         .telemetry-notice a {
@@ -1175,7 +1197,7 @@ Example: A red circle appears on the left side of the screen and the participant
         </div>
     </div>
 
-    <!-- Telemetry Notice - outside container for absolute bottom positioning -->
+    <!-- Telemetry & Model Info Notice - outside container for absolute bottom positioning -->
     <div class="telemetry-notice">
         <span>Annotations may be recorded to improve the service.</span>
         <label class="telemetry-toggle" title="Toggle telemetry collection">
@@ -1184,9 +1206,15 @@ Example: A red circle appears on the left side of the screen and the participant
         </label>
         <a href="https://docs.annotation.garden/projects/hedit/telemetry" target="_blank" rel="noopener noreferrer" title="Learn more about telemetry">Learn more</a>
     </div>
+    <div class="model-info">
+        <span>Models: <a href="https://openrouter.ai/mistralai/mistral-small-3.2-24b-instruct" target="_blank" rel="noopener noreferrer">Mistral-Small-3.2</a> (annotation) · <a href="https://openrouter.ai/qwen/qwen3-vl-30b-a3b-instruct" target="_blank" rel="noopener noreferrer">Qwen3-VL-30B</a> (vision) · <a href="https://openrouter.ai/qwen/qwen3-235b-a22b-2507" target="_blank" rel="noopener noreferrer">Qwen3-235B</a> (evaluation) · To change models or use programmatically, install <a href="https://pypi.org/project/hedit/" target="_blank" rel="noopener noreferrer">HEDit CLI</a></span>
+    </div>
 
     <script src="config.js"></script>
     <script>
+        // Frontend version - used for cache optimization (X-User-Id header)
+        const FRONTEND_VERSION = '0.6.5';
+
         // Theme Toggle Functionality (cycles: light -> system -> dark -> light)
         const themes = ['light', 'system', 'dark'];
         let currentTheme = 'system';
@@ -1507,6 +1535,7 @@ Example: A red circle appears on the left side of the screen and the participant
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-User-Id': `frontend-${FRONTEND_VERSION}`,
                     },
                     body: JSON.stringify(payload)
                 });
@@ -1619,6 +1648,7 @@ Example: A red circle appears on the left side of the screen and the participant
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-User-Id': `frontend-${FRONTEND_VERSION}`,
                     },
                     body: JSON.stringify(payload)
                 });
@@ -1847,6 +1877,7 @@ Example: A red circle appears on the left side of the screen and the participant
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-User-Id': `frontend-${FRONTEND_VERSION}`,
                     },
                     body: JSON.stringify(feedbackPayload)
                 });

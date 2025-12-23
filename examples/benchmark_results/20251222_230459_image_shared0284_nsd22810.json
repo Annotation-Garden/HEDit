@@ -1,0 +1,180 @@
+{
+  "session_id": "20251222_230459",
+  "image_name": "shared0284_nsd22810.png",
+  "description": "The image captures a towering stone clock tower, constructed from rough-hewn, irregularly shaped blocks of light brown and beige stone, giving it a weathered, historic appearance. The structure is set against a vast, cloudless, deep blue sky, which creates a strong contrast with the warm tones of the masonry. The perspective is a low-angle shot, looking upward, which emphasizes the tower's height and imposing presence. A large, circular clock face with a pale blue or light greenish hue and dark hands is mounted on the upper section of the tower, just below a crenellated parapet. To the left of the clock, a narrow, arched window is visible, and further down, a smaller, rectangular opening. A bronze or metal plaque is affixed to the lower left portion of the tower, though its text is not legible. The lighting is bright and direct, likely from the sun positioned to the right and slightly behind the viewer, casting distinct shadows on the left side of the tower and highlighting the texture of the stonework. The overall composition is vertical and symmetrical, focusing attention on the architectural details and the stark beauty of the structure against the expansive sky.",
+  "vision_model": "qwen/qwen3-vl-30b-a3b-instruct",
+  "vision_response": {
+    "description": "The image captures a towering stone clock tower, constructed from rough-hewn, irregularly shaped blocks of light brown and beige stone, giving it a weathered, historic appearance. The structure is set against a vast, cloudless, deep blue sky, which creates a strong contrast with the warm tones of the masonry. The perspective is a low-angle shot, looking upward, which emphasizes the tower's height and imposing presence. A large, circular clock face with a pale blue or light greenish hue and dark hands is mounted on the upper section of the tower, just below a crenellated parapet. To the left of the clock, a narrow, arched window is visible, and further down, a smaller, rectangular opening. A bronze or metal plaque is affixed to the lower left portion of the tower, though its text is not legible. The lighting is bright and direct, likely from the sun positioned to the right and slightly behind the viewer, casting distinct shadows on the left side of the tower and highlighting the texture of the stonework. The overall composition is vertical and symmetrical, focusing attention on the architectural details and the stark beauty of the structure against the expansive sky.",
+    "prompt_used": "Describe what you see in this image. Include the setting, main elements, colors, lighting, and overall composition. Be specific and detailed. Form the response as a continuous paragraph. Maximum 200 words.",
+    "metadata": {
+      "format": "PNG",
+      "mode": "RGB",
+      "size": [
+        425,
+        425
+      ],
+      "width": 425,
+      "height": 425,
+      "size_bytes": 347439,
+      "size_mb": 0.3313436508178711,
+      "mime_type": "image/png"
+    }
+  },
+  "schema_version": "8.4.0",
+  "eval_model": "qwen/qwen3-235b-a22b-2507",
+  "eval_provider": "Cerebras",
+  "timestamp": "2025-12-23T00:19:18.967619",
+  "results": [
+    {
+      "model_id": "openai/gpt-oss-120b",
+      "model_name": "GPT-OSS-120B",
+      "provider": "Cerebras",
+      "cli_command": "hedit annotate \"The image captures a towering stone clock tower, c...\" --model openai/gpt-oss-120b --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment --provider Cerebras",
+      "execution_time_seconds": 26.697244882583618,
+      "full_response": {
+        "status": "error",
+        "error": "JSON parse error: Expecting value: line 1 column 1 (char 0)",
+        "stdout": "[WORKFLOW] Entering annotate node (validation attempt 0, total iteration 1)\n[WORKFLOW] Annotation generated: Sensory-event, Experimental-stimulus, Visual-presentation, (Building/Tower, (Property/Light-brown, P...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 1/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 1, total iteration 2)\n[WORKFLOW] Annotation generated: Sensory-event, Visual-presentation, (Tower, Beige, (Label/Light-brown), (Label/Weathered), (Label/Hi...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 2/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 2, total iteration 3)\n[WORKFLOW] Annotation generated: Sensory-event, Visual-presentation, (Building, (Rough, Property/Irregular, Color/Light-brown, Beige,...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 3/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 3, total iteration 4)\n[WORKFLOW] Annotation generated: Sensory-event, Visual-presentation, (Building, (Rough), (Brown)), (Clock-face, (LightBlue), (Hand, (...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 4/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 4, total iteration 5)\n[WORKFLOW] Annotation generated: Sensory-event, Experimental-stimulus, Visual-presentation, ((Rough, Brown/Light-brown, Brown/Beige, ...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 5/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 5, total iteration 6)\n[WORKFLOW] Annotation generated: Sensory-event, Visual-presentation, (Building/Clock-tower, (Rough, (Brown, Beige), Natural-object/St...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 6/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 6, total iteration 7)\n[WORKFLOW] Annotation generated: (Item/Stone, (Item/Rough, Item/Irregular, Brown, Beige, Item/Weathered, Item/Historic)), (Sky, Large...\n",
+        "stderr": "Error: Annotation failed: Recursion limit of 25 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.\nFor troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT\nHint: Recursion limit of 25 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.\nFor troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT\n"
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.2",
+      "model_name": "GPT-5.2",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a towering stone clock tower, c...\" --model openai/gpt-5.2 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 74.7297728061676,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Photograph, (2D-view/Low-angle), (Vertically-oriented, Symmetrical)), (Building/Tower, (Beige, Brown, Rough, High)), ((Building/Tower, (Beige, Brown, Rough, High)), (In-front-of, (Natural-feature/Sky, (Blue, Clear)))), ((Clock-face, (Circle, LightBlue)), (Part-of, (Building/Tower))), ((Window, 2D-shape/Arch), (To-left-of, (Clock-face))), ((Window, 2D-shape/Arch), (Part-of, (Building/Tower))), ((Window, Rectangle), (Below, (Window, 2D-shape/Arch))), ((Window, Rectangle), (Part-of, (Building/Tower))), ((Man-made-object/Plaque), (Lower-left-of, (Building/Tower))), ((Man-made-object/Plaque), (Connected-to, (Building/Tower)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": false,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: the event type (Sensory-event, Visual-presentation), the main object (Building/Tower), key visual features (color, texture, orientation, symmetry), and spatial layout.  \n- Semantic grouping is correctly applied: object properties (e.g., Beige, Brown, Rough, High) are grouped with the tower; spatial and partonomic relationships (e.g., Part-of, To-left-of, In-front-of) are properly nested.  \n- Key details such as the clock face (with shape and color), windows (arched and rectangular, with relative positions), and plaque (position and attachment) are included with appropriate structure.  \n- The low-angle perspective, vertical symmetry, sky contrast, and material texture are all represented in a semantically valid way.  \n- While fine details like lighting direction and shadow effects are omitted, these are optional enhancements and do not detract from the overall faithfulness.  \n- The annotation passes the reversibility test\u2014translating it back yields a description very close to the original.  \n\nNo refinement needed. The annotation is faithful, well-structured, and effectively represents the described scene.",
+          "assessment_feedback": "COMPLETENESS: incomplete  \nGROUPING: needs-improvement  \nNOTES: Missing key elements such as lighting (bright, direct, shadows), crenellated parapet, color of clock hands (dark), and material properties (stone, bronze). Some groupings are correct (e.g., spatial relations), but properties like \"Rough\" and \"High\" should be grouped with \"Stone\" or \"Tower\" more precisely. Reversibility is compromised due to scattered attributes and missing details.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.1-codex-mini",
+      "model_name": "GPT-5.1-Codex-Mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a towering stone clock tower, c...\" --model openai/gpt-5.1-codex-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 350.5241467952728,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, Real-world, Image, (2D-view/Low-angle, Upward, (Building/Clock-tower, Symmetrical, Vertically-oriented, Property/Weathered, Property/Historic, Property/Imposing, (Natural-object/Stone-block, (Color, Brown, Beige), (Property/Rough-hewn, Property/Irregularly-shaped, Property/Textured, Property/Warm-toned)), (Height, Large), (Visual-attribute/Contrast, Strong, (Associated-with, Natural-object/Sky)), (Clock-face, Large, Circle, (Color, PaleBlue, LightGreen), (Includes, (Object/Clock-hand, Property/Dark)), (Below, (Building-part/Parapet, Property/Crenellated))), (Window, Narrow, Property/Arched, (To-left-of, Clock-face)), (Object/Opening, Small, Rectangle, (Below, Window)), (Object/Plaque, (Color, Bronze), (Manufactured-material/Metal), (Property/Illegible), (Lower-left-of, Building/Clock-tower)))), (Background-view, (Natural-object/Sky, Large, (Color, DeepSkyBlue), (Property/Cloudless))), (Environmental-property/Lighting, Bright, Direct, (Spatial-relation/Source, Natural-object/Sun), (Directional-relation/Illumination-direction, Right-side-of)), (Visual-attribute/Shadow, (Left-side-of, Building/Clock-tower)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the original description: the event type (Sensory-event, Visual-presentation), the main object (Clock-tower), key visual features (low-angle upward view, weathered stone, clock face, window, plaque), spatial relationships, colors, lighting, and background.  \n- Semantic grouping is correctly applied: object properties (e.g., color, shape, material) are appropriately nested within parentheses with their respective objects (e.g., (Natural-object/Stone-block, (Color, Brown, Beige), ...)), ensuring clarity and avoiding ambiguity.  \n- Spatial relations (e.g., Below, To-left-of, Lower-left-of) and directional lighting are well represented with proper nesting.  \n- Important details such as the symmetry, vertical composition, texture, contrast with the sky, and illegibility of the plaque are included.  \n- The annotation successfully passes the reversibility test\u2014it can be translated back into a natural language description very close to the original.  \n- No critical information is missing, and there are no misrepresentations. While some fine-grained details (e.g., \"sun positioned to the right and slightly behind the viewer\") could be slightly more precise, the current representation using (Directional-relation/Illumination-direction, Right-side-of) is sufficient and reasonable.  \n\nOverall, this is a high-quality, faithful HED annotation that correctly structures complex visual information with appropriate semantic grouping. ACCEPT.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements\u2014structure, materials, colors, spatial relations, lighting, and visual effects\u2014are accurately captured with proper semantic grouping. The hierarchical structure reflects object-property and spatial relationships correctly, and the annotation is reversible to the original description.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-4o-mini",
+      "model_name": "GPT-4o-mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a towering stone clock tower, c...\" --model openai/gpt-4o-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 15.899888277053833,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Sensory-event, Visual-presentation, (Clock-tower, (Towering, (Material, (Stone, (Light-brown, Beige))), (Composition, (Rough-hewn, Irregularly-shaped-blocks)))), (Viewpoint, Low-angle), (Background, (Sky, (Deep-blue))), (Clock-face, (Color, (Pale-blue | Light-green)), (Hands, Dark)), (Window, (Arched, (To-left-of, (Clock-face)))), (Opening, (Rectangular, (Below, (Window)))), (Plaque, (Material, (Bronze | Metal)), (Location, Lower-left)), (Light-source, (Direction, Right-of-viewer)), (Composition, Vertical, Symmetrical))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 3,
+          "total_iterations": 3,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the original description: the main object (clock tower), key visual features (material, color, structure), spatial relationships, viewpoint, lighting, and compositional aspects.  \n- Semantic grouping is correctly applied: object properties (e.g., color, shape, material) are appropriately nested within their respective entities (e.g., (Clock-tower, (Towering, (Material, (Stone, ...))))).  \n- Spatial relations such as (To-left-of, (Clock-face)) and (Below, (Window)) are correctly structured with proper parenthetical grouping.  \n- Key details like the low-angle viewpoint, sky color, clock face hue, window types, plaque location, and light source direction are all represented with correct HED syntax.  \n- The use of | for alternative materials (Bronze | Metal) and colors (Pale-blue | Light-green) is appropriate given the uncertainty in the description.  \n- The annotation maintains a clear, hierarchical structure that passes the reversibility test\u2014it can be translated back into a coherent natural language summary closely matching the original.  \n\nNo refinement is needed. The annotation is faithful, well-structured, and semantically precise.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: Most key elements are captured, but some semantic groupings are incorrect or ambiguous\u2014e.g., \"Towering\" should modify \"Clock-tower\" more directly, and properties like \"Rough-hewn\" and \"Irregularly-shaped-blocks\" are not properly nested under stonework. \"Pale-blue | Light-green\" should be grouped as disjunctive color options for the clock face. Lighting effects (shadows, texture highlighting) are underrepresented.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a towering stone clock tower, c...\" --model google/gemini-3-flash-preview --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 6.759221076965332,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Image, (Low-angle-view, Upward), (Symmetrical, Vertical)), (Natural-object, (Blue, Sky), (Cloudless, Deep)), (Building/Tower, (Stone, (Brown, Beige), Rough), (Clock-face, (Circle, (LightBlue, Green)), (Below, (Building-part/Parapet, (Pattern/Crenellated)))), (Window, (To-left-of, Clock-face), (Shape/Arched, Narrow)), (Window, (Below, Window), (Rectangle, Small)), (Man-made-object/Plaque, (Metal/Bronze), (Lower-left-of, Building/Tower))), (Sensory-attribute, (Visual-attribute, (Luminance, Bright), (Directional-relation, (From-to, (Sun, Building/Tower))))), (Property/Historic, Property/Weathered)",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the event type (Sensory-event, Visual-presentation), main object (Building/Tower), key visual features (stone texture, colors, clock face, windows, plaque), spatial relationships, and lighting conditions.  \n- Semantic grouping is correctly applied: object properties (e.g., (Stone, (Brown, Beige), Rough)) are nested within the object, and spatial relations (e.g., (To-left-of, Clock-face), (Below, ...)) are properly structured with parentheses to maintain clarity.  \n- Important details such as the low-angle upward view, symmetrical vertical composition, sky description, and material properties are included with appropriate modifiers.  \n- The use of (From-to, (Sun, Building/Tower)) to indicate lighting direction is a reasonable interpretation of the light source.  \n- The annotation successfully passes the reversibility test\u2014it can be translated back into a coherent natural language summary closely matching the original.  \n- No critical omissions or structural errors are present. Minor enhancements (e.g., specifying \"circular\" for clock face more explicitly, though \"Circle\" implies it) are optional and do not affect faithfulness.  \n\nOverall, this is a well-structured, semantically accurate HED annotation that faithfully represents the original description.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements: structure, materials, visual perspective, sky, clock, windows, plaque, lighting, and attributes like symmetry and historic appearance. Semantic grouping correctly links properties to objects and spatial relations.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "anthropic/claude-haiku-4.5",
+      "model_name": "Claude-Haiku-4.5",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a towering stone clock tower, c...\" --model anthropic/claude-haiku-4.5 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 15.477236986160278,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, ((Stone, (Light-brown, Beige), Weathered, Historic, Rough-texture), Clock-tower), ((Clock-face, (Pale-blue, Light-greenish), Dark), (Below, Crenellated-parapet)), ((Arched-window, Narrow), (To-left-of, Clock-face)), ((Rectangular-opening, Small), (Below, Arched-window)), ((Metal-plaque, Bronze), (Lower-left-of, Clock-tower)), ((Shadows, Dark), (On, (Left-side-of, Clock-tower))), (Contrast, ((Warm-tones, Stone-masonry), (Deep-blue, Sky))), (Low-angle-shot, Upward), (Vertical-composition, Symmetrical), (Bright-lighting, Direct), (Lighting-source, (Right-side-of, Viewer), (Behind, Viewer)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 3,
+          "total_iterations": 3,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the main object (clock tower), key visual features (stone texture, colors, architectural elements), spatial relationships, lighting, and compositional perspective.  \n- Semantic grouping is correctly applied throughout. Properties are properly nested with their respective objects (e.g., `(Stone, (Light-brown, Beige), Weathered, ...)`), and spatial relations use appropriate parentheses to maintain clarity (e.g., `(To-left-of, Clock-face)`).  \n- Important details such as the clock face color and position, window placements, plaque location, shadows, lighting direction, and compositional qualities (vertical, symmetrical) are all included.  \n- The annotation maintains a coherent structure that passes the reversibility test\u2014it can be translated back into a natural language description very close to the original.  \n- No critical information is missing, and there are no misrepresentations or structural errors.  \n\nThis is a well-formed, faithful HED annotation that effectively represents the described visual scene.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements\u2014objects, colors, spatial relations, lighting, and composition\u2014are accurately captured with proper semantic grouping. The annotation preserves the original meaning and passes the reversibility test.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "mistralai/mistral-small-3.2-24b-instruct",
+      "model_name": "Mistral-Small-3.2-24B",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a towering stone clock tower, c...\" --model mistralai/mistral-small-3.2-24b-instruct --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 28.379823684692383,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, ((Tower, (Material/Stone, (Color/Light-brown, Color/Beige), (Shape/Irregular, Texture/Rough-hewn))), (Clock-face, (Color/Pale-blue, Color/Light-green, Shape/Circular, (Hand/Dark, Hand/Dark))), (Window, (Shape/Arched, Position/Upper-left)), (Window, (Shape/Rectangular, Position/Lower-left)), (Plaque, (Material/Bronze, Material/Metal, Position/Lower-left, Part-of/Tower)), (Sky, (Color/Deep-blue, Color/Cloudless))), (Light-source, (Position/Right, Position/Behind-viewer)), (Shadow, (Direction/Left, Part-of/Tower)), (Composition, (Symmetry/Vertical, Arrangement/Central))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 4,
+          "total_iterations": 4,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the original description: the main object (tower), key architectural features (clock face, windows, plaque), visual context (sky, lighting, shadows), and compositional qualities (symmetry, verticality).  \n- Semantic grouping is correctly applied: object properties such as color, material, shape, and position are appropriately nested within parentheses with their respective entities (e.g., `(Tower, (Material/Stone, ...))`, `(Clock-face, (Color/Pale-blue, ...))`).  \n- Spatial relationships and part-whole relations (e.g., `Part-of/Tower`, `Position/Upper-left`) are used effectively to preserve meaning.  \n- Key details like the rough-hewn texture, dual colors of stone, clock hands, light source direction, and shadow placement are included with correct structure.  \n- The annotation maintains clarity and would pass the reversibility test\u2014translating it back to natural language yields a description very close in meaning to the original.  \n- No critical information is missing, and optional enhancements (e.g., fine-grained texture or hue nuances) are reasonably omitted without loss of fidelity.  \n\nOverall, this is a well-structured, semantically precise HED annotation that faithfully represents the original event.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements\u2014tower materials, colors, structural features, clock, windows, plaque, sky, lighting, shadows, and composition\u2014are accurately captured with proper semantic grouping. The annotation preserves spatial, material, and visual relationships and passes the reversibility test.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    }
+  ]
+}

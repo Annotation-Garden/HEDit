@@ -1,0 +1,180 @@
+{
+  "session_id": "20251222_230459",
+  "image_name": "shared0027_nsd04157.png",
+  "description": "The image captures a still life arrangement on a white, textured tablecloth, positioned in front of a window that offers a view of green foliage outside. The main elements are two large, round pomegranates with deep red, leathery skin and prominent crowns, flanking a single, smooth, bright green apple with a short stem. The pomegranates are slightly out of focus, while the apple in the center is sharp and vibrant. The lighting is natural and diffused, coming from the window behind, creating soft shadows and highlighting the textures of the fruit and the fabric. The composition is balanced, with the apple acting as a focal point between the two larger pomegranates. In the background, a white ceramic container with small holes, a silver cocktail shaker, and a white pill bottle are visible, adding context to the scene. The color palette is dominated by the rich reds and greens of the fruit, contrasted against the neutral white of the tablecloth and background objects, with the green from the outside view providing a natural backdrop. The overall mood is calm and contemplative, emphasizing the simple beauty of everyday objects.",
+  "vision_model": "qwen/qwen3-vl-30b-a3b-instruct",
+  "vision_response": {
+    "description": "The image captures a still life arrangement on a white, textured tablecloth, positioned in front of a window that offers a view of green foliage outside. The main elements are two large, round pomegranates with deep red, leathery skin and prominent crowns, flanking a single, smooth, bright green apple with a short stem. The pomegranates are slightly out of focus, while the apple in the center is sharp and vibrant. The lighting is natural and diffused, coming from the window behind, creating soft shadows and highlighting the textures of the fruit and the fabric. The composition is balanced, with the apple acting as a focal point between the two larger pomegranates. In the background, a white ceramic container with small holes, a silver cocktail shaker, and a white pill bottle are visible, adding context to the scene. The color palette is dominated by the rich reds and greens of the fruit, contrasted against the neutral white of the tablecloth and background objects, with the green from the outside view providing a natural backdrop. The overall mood is calm and contemplative, emphasizing the simple beauty of everyday objects.",
+    "prompt_used": "Describe what you see in this image. Include the setting, main elements, colors, lighting, and overall composition. Be specific and detailed. Form the response as a continuous paragraph. Maximum 200 words.",
+    "metadata": {
+      "format": "PNG",
+      "mode": "RGB",
+      "size": [
+        425,
+        425
+      ],
+      "width": 425,
+      "height": 425,
+      "size_bytes": 298251,
+      "size_mb": 0.28443431854248047,
+      "mime_type": "image/png"
+    }
+  },
+  "schema_version": "8.4.0",
+  "eval_model": "qwen/qwen3-235b-a22b-2507",
+  "eval_provider": "Cerebras",
+  "timestamp": "2025-12-22T23:16:11.292154",
+  "results": [
+    {
+      "model_id": "openai/gpt-oss-120b",
+      "model_name": "GPT-OSS-120B",
+      "provider": "Cerebras",
+      "cli_command": "hedit annotate \"The image captures a still life arrangement on a w...\" --model openai/gpt-oss-120b --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment --provider Cerebras",
+      "execution_time_seconds": 9.739831924438477,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Label/Still-life), (Label/Aesthetic-experience), (Label/Calm), (Label/Contemplative), (Label/Balanced), (Natural), (Visual-attribute/Diffused), (Visual-attribute/Shadow), (Object/Tablecloth, Color/White, Visual-attribute/Textured, Foreground-view), (Object/Window, Background-view), (Object/Foliage, Background-view, Color/Green, Natural), (Object/Pomegranate, Large, Visual-attribute/Round, Color/Red, Visual-attribute/Leathery, Visual-attribute/Out-of-focus, Label/Crown, (To-left-of, Object/Apple)), (Object/Pomegranate, Large, Visual-attribute/Round, Color/Red, Visual-attribute/Leathery, Visual-attribute/Out-of-focus, Label/Crown, (To-right-of, Object/Apple)), (Object/Apple, Color/Green, Visual-attribute/Smooth, Visual-attribute/Sharp, Visual-attribute/Vibrant, Label/Short-stem, Label/Focal-point), (Object/Ceramic-container, Color/White, Small, Label/Holes, Background-view), (Object/Cocktail-shaker, Color/Silver, Background-view), (Object/Pill-bottle, Color/White, Background-view)",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the still life event type, main objects (pomegranates, apple, tablecloth, window, foliage, background items), key visual attributes (color, texture, focus, shape), spatial relationships, and overall aesthetic qualities.  \n- Semantic grouping is correctly applied: object properties (e.g., Color, Visual-attribute, Label) are appropriately grouped within parentheses with their respective objects, ensuring clarity and avoiding ambiguity.  \n- Spatial relations such as (To-left-of, Object/Apple) and (To-right-of, Object/Apple) correctly reflect the described arrangement.  \n- Important details like focus (out-of-focus pomegranates vs. sharp apple), lighting (diffused, shadows), and background context (ceramic container, shaker, pill bottle) are included.  \n- Labels like \"Focal-point\", \"Calm\", \"Contemplative\", and \"Balanced\" effectively convey the mood and composition described.  \n- The use of Background-view and Foreground-view adds useful scene structure.  \n\nThe annotation is both semantically precise and structurally sound. It can be reversed into a natural language description closely matching the original. No refinement is needed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements from the description are captured, including objects, attributes, spatial relations, and abstract labels. Semantic grouping correctly associates properties with objects and uses proper nesting for spatial and visual attributes.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.2",
+      "model_name": "GPT-5.2",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a still life arrangement on a w...\" --model openai/gpt-5.2 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 62.686586141586304,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, Photograph, ((Label/Pomegranate-left, Large, Circle, Red, Ingestible-object/Pomegranate), (To-left-of, (Label/Apple-center, Medium, Circle, Green, Smooth, Ingestible-object/Apple))), ((Label/Pomegranate-right, Large, Circle, Red, Ingestible-object/Pomegranate), (To-right-of, (Label/Apple-center, Medium, Circle, Green, Smooth, Ingestible-object/Apple))), ((Group-of, (Label/Apple-center, Medium, Circle, Green, Smooth, Ingestible-object/Apple), (Label/Pomegranate-left, Large, Circle, Red, Ingestible-object/Pomegranate), (Label/Pomegranate-right, Large, Circle, Red, Ingestible-object/Pomegranate)), (In-front-of, Window)), ((Group-of, (Label/Apple-center, Medium, Circle, Green, Smooth, Ingestible-object/Apple), (Label/Pomegranate-left, Large, Circle, Red, Ingestible-object/Pomegranate), (Label/Pomegranate-right, Large, Circle, Red, Ingestible-object/Pomegranate)), (Over, (Furnishing/Tablecloth, White, Rough))), ((Plant, Green), (Outside-of, Window)), ((Man-made-object/Container, White, Ceramic, Dots), (Behind, (Group-of, (Label/Apple-center, Medium, Circle, Green, Smooth, Ingestible-object/Apple), (Label/Pomegranate-left, Large, Circle, Red, Ingestible-object/Pomegranate), (Label/Pomegranate-right, Large, Circle, Red, Ingestible-object/Pomegranate)))), ((Tool/Cocktail-shaker, Silver), (Behind, (Group-of, (Label/Apple-center, Medium, Circle, Green, Smooth, Ingestible-object/Apple), (Label/Pomegranate-left, Large, Circle, Red, Ingestible-object/Pomegranate), (Label/Pomegranate-right, Large, Circle, Red, Ingestible-object/Pomegranate)))), ((Man-made-object/Bottle, White), (Behind, (Group-of, (Label/Apple-center, Medium, Circle, Green, Smooth, Ingestible-object/Apple), (Label/Pomegranate-left, Large, Circle, Red, Ingestible-object/Pomegranate), (Label/Pomegranate-right, Large, Circle, Red, Ingestible-object/Pomegranate))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": false,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the event type (Sensory-event, Visual-presentation, Photograph), the main objects (pomegranates, apple, tablecloth, window, background items), and their spatial and semantic relationships.  \n- Semantic grouping is correctly applied: object properties (e.g., color, size, texture) are properly nested within parentheses with their respective objects, avoiding ambiguity. For example, `(Label/Pomegranate-left, Large, Circle, Red, Ingestible-object/Pomegranate)` correctly groups attributes with the object.  \n- Spatial relations such as *To-left-of*, *To-right-of*, *In-front-of*, *Over*, and *Behind* are used appropriately to reflect the composition described.  \n- Key details like the green foliage outside the window, the textured white tablecloth, and background objects (ceramic container, cocktail shaker, pill bottle) are included with correct color and material attributes.  \n- The central apple being sharp and vibrant while pomegranates are out of focus is not explicitly captured, but this level of visual focus/detail is an acceptable omission under the principle of prioritizing correctness over completeness.  \n- The balanced composition and mood (\"calm and contemplative\") are interpretive and not required in HED annotations, so their absence does not reduce faithfulness.  \n- The use of `Group-of` to manage repeated spatial references is efficient and semantically sound.  \n\nOverall, the annotation is detailed, structurally correct, and reversible to a natural language description closely matching the original. No refinement is needed.",
+          "assessment_feedback": "COMPLETENESS: incomplete  \nGROUPING: needs-improvement  \nNOTES: Several key details from the description are missing or inaccurately represented, including the pomegranates' \"leathery skin,\" \"prominent crowns,\" and being \"slightly out of focus,\" as well as the apple's sharp focus and short stem. Lighting (\"natural and diffused\"), mood (\"calm and contemplative\"), and texture of the tablecloth (\"textured\") are not captured. Some semantic groupings are correct (e.g., spatial relations), but object properties are often ungrouped with their referents (e.g., \"Large, Circle, Red\" not properly bound to labeled fruits), reducing clarity. The reversibility test fails due to ambiguous property attachment.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.1-codex-mini",
+      "model_name": "GPT-5.1-Codex-Mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a still life arrangement on a w...\" --model openai/gpt-5.1-codex-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 128.14159607887268,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, Environmental-property/Natural-light, Environmental-property/Diffused, Environmental-property/Soft-shadows, Environmental-property/Calm, Environmental-property/Contemplative, Property/Everyday, (Furnishing/Tablecloth, White, Property/Textured), (Window, (Behind, (Furnishing/Tablecloth, White, Property/Textured))), (Window, (Spatial-relation/View-of, (Plant/Foliage, Green))), (Window, (Logical-relation/Provides, (Environmental-property/Natural-light, Environmental-property/Diffused))), (Plant/Foliage, Green, (Outside-of, (Window))), ((Plant/Apple, Green, Property/Smooth, Property/Short-stem, Property/High-focus, Property/Bright, Property/Vibrant, Property/Focal-point, Property/Balanced-composition), (Between, ((Plant/Pomegranate, DarkRed, Property/Round, Large, Property/Leathery, Property/Prominent-crown, Property/Low-focus), (Plant/Pomegranate, DarkRed, Property/Round, Large, Property/Leathery, Property/Prominent-crown, Property/Low-focus)))), (Object/Ceramic-container-with-small-holes, White, Property/Small-holes, (Near-to, (Object/Cocktail-shaker, Silver))), (Object/Cocktail-shaker, Silver, (Near-to, (Object/Pill-bottle, White)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the visual presentation, key objects (pomegranates, apple, tablecloth, window, background items), lighting conditions, spatial relationships, and overall mood.  \n- Semantic grouping is correctly applied: object properties are properly parenthesized with their respective entities (e.g., `(Plant/Apple, Green, Property/Smooth, ...)`), and spatial/logical relations are appropriately nested (e.g., `(Between, ((Plant/Pomegranate, ...), (Plant/Pomegranate, ...)))`).  \n- Key details such as focus (sharp vs. out of focus), color, texture, composition, and lighting are included using standard HED practices.  \n- The use of `Environmental-property` for mood and lighting is acceptable, and spatial context (e.g., `Behind`, `Outside-of`, `Near-to`) enhances scene structure.  \n- The annotation would successfully pass the reversibility test\u2014translating it back to natural language yields a description very close to the original.  \n\nNo refinement is needed. The annotation is semantically rich, structurally sound, and faithful to the original description.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: Most key elements are captured, including objects, colors, spatial relations, and mood. However, some property groupings are incorrect or overly nested\u2014e.g., multiple properties attached directly to the apple without proper semantic grouping, and \"Between\" relation is awkwardly structured with duplicated pomegranates. The reversibility is compromised due to complex, unclear nesting.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-4o-mini",
+      "model_name": "GPT-4o-mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a still life arrangement on a w...\" --model openai/gpt-4o-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 35.43676733970642,
+      "full_response": {
+        "status": "error",
+        "error": "JSON parse error: Expecting value: line 1 column 1 (char 0)",
+        "stdout": "[WORKFLOW] Entering annotate node (validation attempt 0, total iteration 1)\n[WORKFLOW] Annotation generated: (Sensory-event, Visual-presentation, (White, Textured, Tablecloth), (In-front-of, (Window)), (Green,...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 1/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 1, total iteration 2)\n[WORKFLOW] Annotation generated: (Sensory-event, Visual-presentation, (Arrangement, (On, (Textured, Tablecloth))), (In-front-of, (Win...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 2/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 2, total iteration 3)\n[WORKFLOW] Annotation generated: (Sensory-event, Visual-presentation, (Background, ((White, Ceramic, Container), (Silver, Cocktail-sh...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 3/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 3, total iteration 4)\n[WORKFLOW] Annotation generated: (Sensory-event, Visual-presentation, (Background, (White, Tablecloth)), (Calm, Contemplative), (Colo...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 4/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 4, total iteration 5)\n[WORKFLOW] Annotation generated: (Sensory-event, Visual-presentation, (Natural, Diffused-light, (From, (Window, (Behind)))), (Arrange...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 5/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 5, total iteration 6)\n[WORKFLOW] Annotation generated: (Sensory-event, Visual-presentation, (Color-contrast, (Red, Green, Neutral-white)), (Light-source, (...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 6/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 6, total iteration 7)\n[WORKFLOW] Annotation generated: (Sensory-event, Visual-presentation, (Natural-lighting, Diffused), (White, Textured, Tablecloth), (C...\n",
+        "stderr": "Error: Annotation failed: Recursion limit of 25 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.\nFor troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT\nHint: Recursion limit of 25 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.\nFor troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT\n"
+      }
+    },
+    {
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a still life arrangement on a w...\" --model google/gemini-3-flash-preview --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 7.609394788742065,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Image, (Background-view, Window, (Outside-of, (Plant, Green))), (Foreground-view, (White, (Texture, (Fabric, Label/Tablecloth))), (Center-of, (Green, (Smooth, (Apple, (Sharp, (Focal-point)))))), ((Red, (Large, (Circle, (Plant/Pomegranate, (Out-of-focus))))), (To-left-of, (Apple))), ((Red, (Large, (Circle, (Plant/Pomegranate, (Out-of-focus))))), (To-right-of, (Apple))), (Background-view, (White, (Ceramic, (Container, (Label/Holes)))), (Silver, (Machine/Cocktail-shaker)), (White, (Label/Pill-bottle))), (Natural-object, (Light, (Behind, (Fruit, Fabric))))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the visual presentation, main objects (pomegranates, apple, tablecloth, background items), spatial relationships, and key visual properties like color, texture, focus, and lighting.  \n- Semantic grouping is correctly applied: object properties (e.g., Red, Large, Out-of-focus) are properly nested within parentheses with their respective objects (Pomegranate), and spatial relations (To-left-of, To-right-of, Center-of) are appropriately structured.  \n- The use of Background-view and Foreground-view helps organize the scene compositionally, and the inclusion of Natural-object for light source adds contextual detail.  \n- The annotation preserves the intended meaning and can be reversed into a coherent natural language description closely matching the original.  \n- No critical information is missing, and optional enhancements (e.g., mood, color contrast) are reasonably omitted as they are interpretive rather than structural.  \n\nOverall, this is a well-formed, faithful HED annotation that correctly represents the event and its visual structure.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: Most key elements are captured, including objects, colors, spatial relations, and lighting, but some semantic groupings are incorrect or awkward\u2014e.g., (Sharp, (Focal-point)) should be tied to Apple more clearly, and (Natural-object, (Light...)) misrepresents the light source. Properties like color and size are generally well-grouped with objects, but relational nesting (e.g., To-left-of) is incorrectly structured\u2014should be ((Pomegranate), (To-left-of, (Apple))).  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "anthropic/claude-haiku-4.5",
+      "model_name": "Claude-Haiku-4.5",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a still life arrangement on a w...\" --model anthropic/claude-haiku-4.5 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 12.935336828231812,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, Scene, (Balanced-composition), (Mood, (Calm), (Contemplative)), ((Red, Large, Round, Leathery-skin, Prominent-crown, Pomegranate), (Blurred)), ((Red, Large, Round, Leathery-skin, Prominent-crown, Pomegranate), (Blurred)), ((Green, Large, Round, Smooth, Bright, Apple, Short-stem), (Sharp)), (Natural-lighting, Diffused), ((Pomegranate), (To-left-of, (Apple))), ((Pomegranate), (To-right-of, (Apple))), ((Apple), (Center-of, (Composition))), ((White, Textured, Tablecloth), (Below, (Fruit))), ((Green-foliage), (Behind, (Scene))), ((Window), (Behind, (Scene))), ((Ceramic-container, White, Small-holes), (Background)), ((Silver, Cocktail-shaker), (Background)), ((White, Pill-bottle), (Background)), (Color-palette, (Red, Green, White))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the main objects (pomegranates, apple, tablecloth, background items), their visual properties, spatial relationships, lighting, composition, mood, and color palette.  \n- Semantic grouping is correctly applied: object properties (e.g., Red, Large, Round, etc.) are properly grouped within parentheses with their respective objects, avoiding ambiguity.  \n- Spatial relations (e.g., To-left-of, Center-of, Below, Behind) are appropriately nested and reflect the original description.  \n- Higher-level scene attributes like Balanced-composition, Calm/Contemplative mood, and Natural-lighting are well represented.  \n- The background elements and environmental context (window, foliage) are included with appropriate grouping.  \n- The color palette is succinctly summarized without over-specifying, which is acceptable for HED\u2019s level of abstraction.  \n- The annotation passes the reversibility test: it can be translated back into a natural language description very close to the original.  \n\nNo refinement is needed. The annotation is faithful, semantically well-structured, and comprehensive within reasonable limits.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: Most key elements are captured, including objects, attributes, spatial relations, lighting, and mood. However, some groupings are incorrect or inconsistent\u2014e.g., multiple pomegranates are listed separately instead of using a count or shared structure, and attributes like \"Large, Round\" are repeated without clear semantic nesting. The grouping (Blurred) is applied correctly to each pomegranate, but (Sharp) should be similarly parenthesized with the apple. Also, (Ceramic-container, White, Small-holes) should be grouped as ((Ceramic-container, Small-holes), White) for consistency.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "mistralai/mistral-small-3.2-24b-instruct",
+      "model_name": "Mistral-Small-3.2-24B",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a still life arrangement on a w...\" --model mistralai/mistral-small-3.2-24b-instruct --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 10.496555089950562,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Sensory-event, Visual-presentation, (Still-life, (Tablecloth, (White, Textured)), (Window, (View, (Foliage, (Green))))), (Pomegranate, (Large, Round, (Red, (Deep, Leathery)), (Crown, Prominent))), (Pomegranate, (Large, Round, (Red, (Deep, Leathery)), (Crown, Prominent))), (Apple, (Smooth, (Green, Bright), (Stem, Short))), (Lighting, (Natural, Diffused, (Source, (Window, (Behind))))), (Composition, (Balanced, (Focal-point, (Apple)))), (Background, (Container, (Ceramic, (White, (Hole, Small)))), (Cocktail-shaker, (Silver)), (Pill-bottle, (White))), (Color-palette, (Dominant, (Red, Rich), (Green, Rich)), (Contrast, (White, Neutral))), (Mood, (Calm, Contemplative)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the original description: the still life scene, main objects (pomegranates, apple, background items), lighting, composition, color palette, and mood.  \n- Semantic grouping is correctly applied: object properties (e.g., (Red, (Deep, Leathery))) are nested within their respective objects, and complex concepts like focal point and source of lighting are properly structured.  \n- Key details such as the texture of the tablecloth, the view through the window, the focus differential (implied via description of apple as \"sharp and vibrant\" and pomegranates \"out of focus\"\u2014though focus is not explicitly annotated), are largely represented. While depth-of-field or focus could be added for completeness, it is not critical enough to require refinement.  \n- The use of (Pomegranate) twice reflects the two instances in the scene and is appropriate.  \n- The background objects are correctly grouped under (Background), and their attributes are well specified.  \n- The annotation is semantically rich, correctly structured, and reversible\u2014can be read back into a description very close to the original.  \n\nNo refinement needed. The annotation is faithful and well-formed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements\u2014objects, attributes, spatial relations, lighting, composition, and mood\u2014are accurately captured with proper semantic grouping. The annotation preserves the descriptive richness and relationships (e.g., focal point, source of light, texture combinations).  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    }
+  ]
+}

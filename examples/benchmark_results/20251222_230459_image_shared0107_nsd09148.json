@@ -1,0 +1,180 @@
+{
+  "session_id": "20251222_230459",
+  "image_name": "shared0107_nsd09148.png",
+  "description": "The image captures a dynamic moment of a seagull in mid-flight, its wings fully extended as it glides just above a vast expanse of deep blue water. The setting is clearly coastal or marine, with the water's surface textured by gentle ripples that catch the light, creating a shimmering, almost liquid appearance. The seagull, positioned slightly left of center, is the dominant subject, its body angled forward with its head turned slightly to the right, suggesting movement and purpose. Its plumage is a mix of light brown and white, with darker mottled patterns on its back and wings, and the feathers on its underside appear lighter, catching the sunlight. The bird's eye is dark and focused, and its beak is a pale yellowish hue. The lighting is bright and natural, likely from overhead sunlight, which illuminates the scene evenly and enhances the vibrant blue of the water, making it the most dominant color in the composition. The overall composition is balanced, with the bird's diagonal flight path creating a sense of motion against the horizontal lines of the water's surface. A faint reflection of the bird can be seen on the water below, adding depth and grounding the image. The focus is sharp on the bird, while the water in the background is slightly softer, emphasizing the subject.",
+  "vision_model": "qwen/qwen3-vl-30b-a3b-instruct",
+  "vision_response": {
+    "description": "The image captures a dynamic moment of a seagull in mid-flight, its wings fully extended as it glides just above a vast expanse of deep blue water. The setting is clearly coastal or marine, with the water's surface textured by gentle ripples that catch the light, creating a shimmering, almost liquid appearance. The seagull, positioned slightly left of center, is the dominant subject, its body angled forward with its head turned slightly to the right, suggesting movement and purpose. Its plumage is a mix of light brown and white, with darker mottled patterns on its back and wings, and the feathers on its underside appear lighter, catching the sunlight. The bird's eye is dark and focused, and its beak is a pale yellowish hue. The lighting is bright and natural, likely from overhead sunlight, which illuminates the scene evenly and enhances the vibrant blue of the water, making it the most dominant color in the composition. The overall composition is balanced, with the bird's diagonal flight path creating a sense of motion against the horizontal lines of the water's surface. A faint reflection of the bird can be seen on the water below, adding depth and grounding the image. The focus is sharp on the bird, while the water in the background is slightly softer, emphasizing the subject.",
+    "prompt_used": "Describe what you see in this image. Include the setting, main elements, colors, lighting, and overall composition. Be specific and detailed. Form the response as a continuous paragraph. Maximum 200 words.",
+    "metadata": {
+      "format": "PNG",
+      "mode": "RGB",
+      "size": [
+        425,
+        425
+      ],
+      "width": 425,
+      "height": 425,
+      "size_bytes": 281933,
+      "size_mb": 0.2688722610473633,
+      "mime_type": "image/png"
+    }
+  },
+  "schema_version": "8.4.0",
+  "eval_model": "qwen/qwen3-235b-a22b-2507",
+  "eval_provider": "Cerebras",
+  "timestamp": "2025-12-22T23:44:28.513084",
+  "results": [
+    {
+      "model_id": "openai/gpt-oss-120b",
+      "model_name": "GPT-OSS-120B",
+      "provider": "Cerebras",
+      "cli_command": "hedit annotate \"The image captures a dynamic moment of a seagull i...\" --model openai/gpt-oss-120b --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment --provider Cerebras",
+      "execution_time_seconds": 26.094592094421387,
+      "full_response": {
+        "status": "error",
+        "error": "JSON parse error: Expecting value: line 1 column 1 (char 0)",
+        "stdout": "[WORKFLOW] Entering annotate node (validation attempt 0, total iteration 1)\n[WORKFLOW] Annotation generated: Sensory-event, Experimental-stimulus, Visual-presentation, (Animal/Seagull, (Color/Light-brown), (Co...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 1/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 1, total iteration 2)\n[WORKFLOW] Annotation generated: ((Animal/Seagull, (Color/Light-brown), (Color/White), (Color/Dark-brown), (Eye/Dark), (Body-part/Bea...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 2/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 2, total iteration 3)\n[WORKFLOW] Annotation generated: Sensory-event, Experimental-stimulus, Visual-presentation, (Animal/Seagull, (Color/Brown), (Color/Wh...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 3/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 3, total iteration 4)\n[WORKFLOW] Annotation generated: Sensory-event, Visual-presentation, ((Animal/Seagull, (Color/Light-brown, Color/White, Color/Dark-br...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 4/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 4, total iteration 5)\n[WORKFLOW] Annotation generated: Sensory-event, Experimental-stimulus, Visual-presentation, (Animal/Seagull, (Action/Flight), (Body-p...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 5/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 5, total iteration 6)\n[WORKFLOW] Annotation generated: Sensory-event, Visual-presentation, (Animal/Seagull, (Body-part/Head, Right), (Body-part/Wing, Open)...\n[WORKFLOW] Entering validate node\n[WORKFLOW] Validation result: valid, is_valid: True\n[WORKFLOW] Routing to evaluate (validation passed)\n[WORKFLOW] Entering evaluate node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Evaluation result: is_faithful=False\n[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration 6/10)\n[WORKFLOW] Entering summarize_feedback node\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n\n\u001b[1;31mProvider List: https://docs.litellm.ai/docs/providers\u001b[0m\n\n[WORKFLOW] Feedback summarized: No feedback...\n[WORKFLOW] Entering annotate node (validation attempt 6, total iteration 7)\n[WORKFLOW] Annotation generated: Sensory-event, Visual-presentation, (Agent-action, ((Animal-agent, Animal/Seagull), (Move-body/Glide...\n",
+        "stderr": "Error: Annotation failed: Recursion limit of 25 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.\nFor troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT\nHint: Recursion limit of 25 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.\nFor troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT\n"
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.2",
+      "model_name": "GPT-5.2",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a dynamic moment of a seagull i...\" --model openai/gpt-5.2 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 157.95756077766418,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, Outdoors, (Environmental-property/Overhead-sunlight), (Natural-feature/Sea), (Natural-object/Water, Blue, (Saturation, High), Visual-attribute/Shimmering), ((Wave, Small), (Part-of, (Natural-object/Water))), (Animal/Seagull, White, Tan, Pattern/Mottled), ((Body-part/Wing, Open), (Part-of, (Animal/Seagull))), ((Mouth-part/Beak, LightYellow), (Part-of, (Animal/Seagull))), ((Eye, Black), (Part-of, (Animal/Seagull))), ((Animal/Seagull), (Above, (Natural-object/Water))), ((Animal/Seagull), (In-front-of, (Natural-object/Water))), (Image/Reflection), ((Image/Reflection), (Belongs-to, (Animal/Seagull))), ((Image/Reflection), (Within, (Natural-object/Water))), ((Image/Reflection), (Below, (Animal/Seagull))), (Foreground-view, (Animal/Seagull, (Spatial-resolution, High))), (Background-view, (Natural-object/Water, (Spatial-resolution, Low))), Agent-action, ((Animal-agent, Animal/Seagull), (Move, Rightward, Forward))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \nThe HED annotation faithfully captures the core elements of the original description. The event type is appropriately identified with *Sensory-event* and *Visual-presentation*, and the outdoor marine setting is well represented with *Outdoors*, *(Natural-feature/Sea)*, and detailed water properties. The seagull is accurately described with correct coloration *(White, Tan)*, patterning *(Pattern/Mottled)*, and anatomical states *(Wing, Open)*, *(Beak, LightYellow)*, *(Eye, Black)*.  \n\nSpatial relationships are correctly structured using nested parentheses: the seagull is *Above* and *In-front-of* the water, and the reflection is properly attributed to the bird and located *Within* and *Below* it. Visual properties like *Shimmering*, *High saturation*, and lighting from *Overhead-sunlight* are appropriately included.  \n\nThe annotation also captures depth cues through focus differences with *(Spatial-resolution, High)* in the foreground (bird) and *(Spatial-resolution, Low)* in the background (water), matching the description\u2019s emphasis on sharp focus on the subject.  \n\nThe *Agent-action* branch correctly models the bird\u2019s movement (*Move, Rightward, Forward*) based on its forward-angled body and head orientation, which implies directionality.  \n\nAll semantic groupings are correct\u2014object properties are parenthetically bound to their referents, and relational structures (e.g., *Part-of*, *Belongs-to*, *Above*) are properly nested. The annotation would survive the reversibility test, translating back into a coherent and accurate natural language summary of the scene.  \n\nNo refinement is needed. The annotation is both semantically precise and faithful to the original description.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements: the seagull's appearance, position, motion, lighting, water properties, reflection, and spatial relationships. Semantic grouping correctly pairs attributes with objects and actions with agents.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.1-codex-mini",
+      "model_name": "GPT-5.1-Codex-Mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a dynamic moment of a seagull i...\" --model openai/gpt-5.1-codex-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 258.469829082489,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Experimental-stimulus, Visual-presentation, Natural-lighting, Bright-illumination, Depth-of-field, Sharp-focus, Terrain/Coastal, ((Animal/Seagull, Sharp-focus, (Color/Brown, Color/White, Pattern/Mottled), (Oblique, Forward, Rightward), (Body, Forward), Move-body/Glide), (To-left-of, (Center-of, Image)), (Above, (Natural-object/Water, Soft, (Color/Blue, DarkBlue), Large, Horizontally-oriented, Pattern/Ripple, (Has-property, (Luminance, High)), (Has-property, (Reflection-of, Animal/Seagull)))))), ((Head, Rightward, (Eye, Dark), (Mouth, Color/Yellow)), (Part-of, Animal/Seagull))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the event type (Sensory-event, Visual-presentation), the main subject (Seagull), key visual properties (colors, patterns, orientation), spatial relationships (To-left-of, Above), and environmental context (Coastal, Water with ripples and reflection).  \n- Semantic grouping is correctly applied: object properties (e.g., Color, Pattern) are appropriately nested within parentheses with their respective entities (e.g., (Animal/Seagull, ..., (Color/Brown, Color/White, Pattern/Mottled))).  \n- The structure reflects complex spatial and relational information, such as the seagull\u2019s position relative to the center and its relation to the water, and includes depth cues like reflection and depth-of-field.  \n- Key details like lighting (Natural-lighting, Bright-illumination), focus (Sharp-focus on bird, Soft on water), and composition (diagonal movement, horizontal water lines) are well represented.  \n- The use of (Has-property, (Reflection-of, ...)) and (Part-of, ...) correctly models derived and partonomic relationships.  \n- The annotation is rich, structured, and semantically precise\u2014translating it back to natural language would yield a description very close to the original.  \n\nNo refinement needed. The annotation is faithful, well-structured, and adheres to HED best practices.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: Most key elements are captured, including the seagull\u2019s appearance, position, motion, lighting, and water details. However, grouping is inconsistent\u2014properties like (Oblique, Forward, Rightward) are not properly linked to the seagull or its body parts, and (Move-body/Glide) should be nested under the seagull. The reflection and depth cues are present but could be more clearly structured.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-4o-mini",
+      "model_name": "GPT-4o-mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a dynamic moment of a seagull i...\" --model openai/gpt-4o-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 40.38850998878479,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Sensory-event, Visual-presentation, (Seagull, (Plumage, (Light-brown, White, (Darker, Mottled-patterns)))), (Wings, Fully-extended), (Body-state, (Angled-forward)), (Focus, (Sharp, (On, Seagull))), (Beak, Pale-yellowish), (Lighting, (Bright, Natural)), (Water, (Deep-blue, (Textured, (Gentle-ripples)))), (Reflection, (On, Water)), (Diagonal-flight-path, (Above, (Water))), (Compositional-balance, (Horizontal-lines, (Water-surface))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 6,
+          "total_iterations": 6,
+          "is_faithful": true,
+          "is_complete": false,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the original description: the seagull in flight, its physical appearance (plumage, beak, wing position), lighting, water characteristics, reflection, and compositional aspects.  \n- Semantic grouping is correctly applied: object properties (e.g., (Seagull, (Plumage, ...)), (Water, (Deep-blue, ...))) are properly nested, ensuring clarity and avoiding ambiguity.  \n- Key dynamic and spatial elements such as (Diagonal-flight-path, (Above, (Water))) and (Reflection, (On, Water))) are included and well-structured.  \n- The annotation reflects both sensory-visual content and higher-level compositional interpretation (e.g., Compositional-balance) in a way that aligns with HED conventions.  \n- All critical details from the original text\u2014color, texture, position, lighting, focus, motion\u2014are represented with appropriate grouping.  \n- The reversibility test passes: the annotation can be translated back into a coherent natural language summary closely matching the original.  \n\nNo refinement needed. The annotation is faithful, semantically well-structured, and comprehensive.",
+          "assessment_feedback": "COMPLETENESS: incomplete  \nGROUPING: needs-improvement  \nNOTES: Key elements like the seagull's head turned to the right, its eye, underside feathers catching light, and the shimmering effect of water are missing. Grouping issues include ungrouped properties (e.g., \"Light-brown, White\" not properly nested with Plumage) and incorrect nesting (e.g., Diagonal-flight-path should be linked to Seagull). Reversibility is compromised due to ambiguous associations.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a dynamic moment of a seagull i...\" --model google/gemini-3-flash-preview --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 12.695317029953003,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Blue, Water, (Pattern, Ripples), (Focus, Soft)), ((Animal/Seagull, (Light-brown, White, (Pattern, Mottled)), (Body-part, Beak, (Yellow, Light-shade)), (Body-part, Eye, (Black, Focused-attention)), (Focus, Sharp)), (To-left-of, (Center-of, Screen-window))), (Agent-action, ((Animal-agent, Animal/Seagull), (Move, (Direction, Forward), (Direction, Diagonal)))), (Label/Reflection-of, (Animal/Seagull), (Above, Water)), (Natural-light, Bright)",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 3,
+          "total_iterations": 3,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the seagull as the main subject, its visual properties (color, pattern, body parts), motion, spatial positioning, lighting, and environmental context (water, ripples, reflection).  \n- Semantic grouping is correctly applied: object properties (e.g., colors, patterns, focus) are appropriately nested within parentheses with their respective entities (e.g., (Animal/Seagull, (Light-brown, White, ...)), (Focus, Soft) with Water).  \n- Key spatial relationships are preserved: \"To-left-of\" positions the bird relative to the center, and \"Above\" correctly situates the reflection.  \n- The event type is properly identified as a Sensory-event with Visual-presentation, and Agent-action is used correctly to describe the seagull\u2019s movement.  \n- Lighting (Natural-light, Bright) and focus (Sharp vs. Soft) are well represented, enhancing the visual fidelity.  \n- The reflection is clearly annotated with Label/Reflection-of, which is appropriate for marking derived or secondary visual elements.  \n\nThe annotation is rich, structurally sound, and semantically precise\u2014faithfully representing the original description with correct grouping and no critical omissions. No refinement needed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: Most key elements are captured, including the seagull\u2019s appearance, motion, position, lighting, water texture, and reflection. However, some semantic groupings are incorrect or unclear\u2014e.g., (Blue, Water, (Pattern, Ripples)) should better link color and pattern to water; (To-left-of, (Center-of, Screen-window)) is awkwardly structured. The reflection relation is reversed in argument order\u2014should be reflection *on* water, not seagull above water.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "anthropic/claude-haiku-4.5",
+      "model_name": "Claude-Haiku-4.5",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a dynamic moment of a seagull i...\" --model anthropic/claude-haiku-4.5 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 8.251171112060547,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, ((Animal-agent, Animal/Seagull), (Move-body, (In-flight, (Wings, Extended)))), ((Water, (Blue, Deep)), (Ripples, (Texture, Shimmering))), ((Seagull, (Light-brown, White), (Mottled-pattern, (Dark))), (To-left-of, (Center-of, (Image)))), ((Seagull, (Head, (Turned, (To-right-of, (Center))))), (Body, (Angled, Forward))), ((Seagull, (Eye, (Dark, Focused))), (Beak, (Pale, Yellow))), ((Lighting, (Bright, Natural, Overhead))), ((Reflection, (Seagull)), (Inside-of, (Water))), ((Focus, Sharp), (On, (Seagull))), ((Background, (Water)), (Softer, (Focus)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the original description: the seagull in flight, its appearance, position, movement, and key visual context (water, lighting, reflection, focus).  \n- Semantic grouping is correctly applied throughout. Properties are appropriately paired with their referents using parentheses (e.g., (Seagull, (Light-brown, White), (Mottled-pattern, (Dark))) and spatial relations are properly structured (e.g., (To-left-of, (Center-of, (Image)))).  \n- Key details such as wing extension, head orientation, plumage coloration, eye and beak features, water texture, lighting conditions, reflection, and depth of field are all represented with correct syntactic nesting.  \n- The event type (Sensory-event, Visual-presentation) is appropriate for an image depiction.  \n- The annotation is both semantically precise and structurally sound, allowing for reliable reverse translation into natural language that closely matches the original.  \n\nNo refinement is needed. The annotation is faithful and well-formed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements\u2014seagull in flight, wing position, coloration, orientation, lighting, water texture, reflection, focus, and composition\u2014with accurate semantic grouping. Properties are properly attached to their referents, and spatial/relational descriptions are correctly nested.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "mistralai/mistral-small-3.2-24b-instruct",
+      "model_name": "Mistral-Small-3.2-24B",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a dynamic moment of a seagull i...\" --model mistralai/mistral-small-3.2-24b-instruct --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 16.223182916641235,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Sensory-event, Visual-presentation, ((Animal/Seagull, (Plumage, (Light, Brown)), (Plumage, (Dark, Mottled)), (Beak, (Pale, Yellowish)), (Eye, Dark)), (In-flight, (Wing, (Extended, Full))), (Body, (Angle, Forward)), (Head, (Turned, Right))), (Water, (Color, Deep, Blue)), (Ripple, (Texture, Gentle)), (Lighting, (Type, Overhead), (Intensity, Bright)), (Reflection, (On, Water)), (Focus, (Sharp, Animal/Seagull)), (Focus, (Soft, Water)), (Position, (Left, Center)), (Path, (Diagonal, Forward)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 3,
+          "total_iterations": 3,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the seagull as the central subject, its physical attributes (plumage, beak, eye), posture (in-flight, extended wings, forward angle), and key environmental context (water, ripples, lighting, reflection).  \n- Semantic grouping is correctly applied: object properties (e.g., (Plumage, (Light, Brown))) are properly nested, and spatial/relational features (e.g., (In-flight, (Wing, (Extended, Full))), (Focus, (Sharp, Animal/Seagull))) are well-structured.  \n- Important details such as lighting conditions, focus gradient, reflection, and composition (diagonal path, position) are included in a way that preserves meaning.  \n- The annotation is concise yet comprehensive, translating back to a description very close to the original.  \n- No critical information is missing, and there are no misrepresentations.  \n\nThis is a well-formed, faithful HED annotation that effectively represents the natural language description with correct syntax and semantic structure.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements\u2014seagull's appearance, flight posture, position, lighting, water, reflection, and focus\u2014are accurately captured with proper semantic grouping. The annotation preserves spatial, visual, and relational details from the description.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    }
+  ]
+}

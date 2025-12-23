@@ -39,9 +39,29 @@ class AssessmentAgent:
 
 Compare the HED annotation against the original description and provide brief feedback.
 
+## Assessment Criteria
+
+### 1. Completeness
+- Are all key elements from the description captured?
+- Event type, objects, actions, attributes
+
+### 2. Semantic Grouping Quality
+Check that parentheses correctly group related concepts:
+- Properties grouped with their objects: (Red, Circle) not Red, Circle
+- Agent-action nesting: ((Agent), (Action, (Object)))
+- Spatial relations: ((A), (Relation, (B)))
+
+**Reversibility test**: Can you translate the annotation back to the original English?
+If meaning is ambiguous due to ungrouped properties, note this.
+
+### 3. Accuracy
+- Does the annotation accurately represent the described event?
+- No misrepresentations or incorrect relationships
+
 Response format:
 COMPLETENESS: [complete/incomplete]
-NOTES: [Brief note on what's captured or missing, 1-2 sentences]
+GROUPING: [correct/needs-improvement]
+NOTES: [Brief note on what's captured, missing, or needs grouping fixes, 1-2 sentences]
 STATUS: [COMPLETE/NEEDS-REVIEW]
 """
 
@@ -87,8 +107,12 @@ Provide brief assessment in the specified format."""
         response = await self.llm.ainvoke(messages)
         feedback = response.content.strip()
 
-        # Parse completion status
-        is_complete = "FINAL STATUS: COMPLETE" in feedback
+        # Parse completion status from assessment feedback
+        # Format is "COMPLETENESS: complete" and "STATUS: COMPLETE"
+        feedback_upper = feedback.upper()
+        is_complete = (
+            "COMPLETENESS: COMPLETE" in feedback_upper or "STATUS: COMPLETE" in feedback_upper
+        )
 
         # Update state
         return {

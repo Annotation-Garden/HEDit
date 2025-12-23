@@ -1,0 +1,176 @@
+{
+  "session_id": "20251222_214525",
+  "model_name": "Gemini-3-Flash",
+  "domain": "animal",
+  "schema_version": "8.4.0",
+  "eval_model": "qwen/qwen3-235b-a22b-2507",
+  "eval_provider": "Cerebras",
+  "timestamp": "2025-12-22T22:12:00.500462",
+  "results": [
+    {
+      "test_id": "animal_01",
+      "domain": "animal",
+      "difficulty": "medium",
+      "input_description": "A macaque monkey reaches toward a target on a touchscreen and receives a juice reward",
+      "expected_elements": [
+        "Agent-action",
+        "Animal-agent",
+        "Reach",
+        "Target",
+        "Reward"
+      ],
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"A macaque monkey reaches toward a target on a touchscreen and receives a juice reward\" --model google/gemini-3-flash-preview --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 9.754625082015991,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Agent-action, Participant-response, ((Animal-agent, Animal/Macaque), (Reach, (To, (Target, Experimental-stimulus, (Inside-of, Touchscreen))))), (Sensory-event, (Feedback, (Positive, (Reward, (Juice, Liquid)))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: event type (Agent-action, Sensory-event), main agent (Animal/Macaque), key action (Reach toward target), and outcome (juice reward).  \n- Semantic grouping is correctly applied: properties and roles are appropriately nested (e.g., (Animal-agent, Animal/Macaque), (Target, Experimental-stimulus, (Inside-of, Touchscreen))).  \n- The structure clearly links the agent to its action and the spatial relationship of the target, while separately representing the feedback event with proper modifiers.  \n- All key details from the original description are represented without overcomplication.  \n- The annotation passes the reversibility test\u2014it can be translated back into a natural language description very close to the original.  \n\nNo refinement needed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements (macaque, reaching, target, touchscreen, juice reward) are captured with accurate semantic grouping; agent-action and participant-response structures correctly represent the event.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "animal_02",
+      "domain": "animal",
+      "difficulty": "medium",
+      "input_description": "The rat navigates through a virtual reality T-maze and turns left at the choice point",
+      "expected_elements": [
+        "Agent-action",
+        "Animal-agent",
+        "Navigate",
+        "Left"
+      ],
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"The rat navigates through a virtual reality T-maze and turns left at the choice point\" --model google/gemini-3-flash-preview --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 9.38796329498291,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Agent-action, ((Animal-agent, Animal/Rat), (Move, (Path, (Navigational-object, Label/T-maze))), (Turn, (Direction, Left), (Location, Label/Choice-point)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: event type (Agent-action), main agent (Animal/Rat), key actions (Move, Turn), and relevant context (Navigational-object, Label/T-maze and Label/Choice-point).  \n- Semantic grouping is correctly applied: the rat is properly grouped as (Animal-agent, Animal/Rat), movement is nested under Move with appropriate path and environment details, and the turn action includes both direction (Left) and location (Choice-point) in structured form.  \n- Key details from the original sentence\u2014navigating a T-maze, turning left, at the choice point\u2014are all represented with appropriate HED constructs.  \n- The use of parentheses ensures unambiguous interpretation; for example, (Turn, (Direction, Left), (Location, Label/Choice-point)) clearly links the direction and location to the turn event.  \n- The annotation would pass the reversibility test, translating back to a natural language description very close to the original.  \n\nNo refinement needed. The annotation is semantically accurate, well-structured, and faithful to the source.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements (rat, T-maze, virtual reality, navigation, left turn, choice point) are captured; \"virtual reality\" is implied in navigational context or could be added explicitly. Grouping correctly nests agent, actions, and spatial relations.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "animal_03",
+      "domain": "animal",
+      "difficulty": "hard",
+      "input_description": "A rhesus monkey successfully grasps a pellet with a precision grip using thumb and index finger",
+      "expected_elements": [
+        "Agent-action",
+        "Animal-agent",
+        "Grasp"
+      ],
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"A rhesus monkey successfully grasps a pellet with a precision grip using thumb and index finger\" --model google/gemini-3-flash-preview --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 8.743321895599365,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Agent-action, ((Animal-agent, Animal/Rhesus-macaque), (Grasp, Success, (Move-body-part, (Hand, (Thumb, Index-finger))), (Property/Precision-grip), (Pellet)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: event type (Agent-action), agent (Animal-agent, Rhesus-macaque), action (Grasp), outcome (Success), body parts involved (Thumb, Index-finger via Hand), manner of grasp (Precision-grip), and object (Pellet).  \n- Semantic grouping is correct: the agent is properly nested, the action structure groups the movement and its components appropriately, and the precision grip is correctly treated as a property of the grasp.  \n- The use of parentheses ensures that body parts and properties are associated with the correct action and object, avoiding ambiguity.  \n- The annotation is both semantically precise and structurally sound; it could be reversed into a natural language description very close to the original.  \n- No refinement needed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: Most key elements are present, but \"Success\" is incorrectly placed as a separate term rather than a property of the action; \"Precision-grip\" should be grouped with the grasp action as (Grasp, (Property/Precision-grip)). Also, \"Move-body-part\" is redundant with Grasp and should be removed.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "animal_04",
+      "domain": "animal",
+      "difficulty": "hard",
+      "input_description": "The mouse receives an air puff to the whiskers as an aversive stimulus after incorrect lever press",
+      "expected_elements": [
+        "Sensory-event",
+        "Animal-agent",
+        "Incorrect-action",
+        "Aversive"
+      ],
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"The mouse receives an air puff to the whiskers as an aversive stimulus after incorrect lever press\" --model google/gemini-3-flash-preview --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 5.957189083099365,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Experimental-stimulus, Tactile-presentation, (Air-puff, (Associated-with, (Animal-agent, Animal/Mouse), Whiskers)), (After, (Agent-action, Participant-response, Incorrect-action, (Press, Lever)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: the event type (Sensory-event), the nature of the stimulus (Tactile-presentation, Air-puff), the target (Whiskers) associated with the mouse (Animal-agent, Animal/Mouse), and the timing relationship (After) relative to the incorrect lever press.  \n- Semantic grouping is correctly applied:  \n  - (Air-puff, (Associated-with, (Animal-agent, Animal/Mouse), Whiskers)) clearly links the air puff to the mouse's whiskers.  \n  - (After, (Agent-action, ... (Press, Lever))) properly situates the sensory event in time relative to the participant\u2019s incorrect action.  \n- Key details like \"aversive stimulus\" are implied by context (air puff to whiskers after incorrect response), and \"Experimental-stimulus\" appropriately categorizes the air puff.  \n- The structure is logically nested and passes the reversibility test\u2014translating back yields a description very close to the original.  \n\nNo refinement needed. The annotation is semantically accurate, well-structured, and faithful to the original event description.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements are captured: event type (sensory, experimental), stimulus (air puff), target (whiskers, associated with mouse), and temporal relation (after incorrect lever press). Groupings correctly reflect semantic relationships.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "animal_05",
+      "domain": "animal",
+      "difficulty": "hard",
+      "input_description": "A marmoset vocalizes in response to a playback of a conspecific phee call",
+      "expected_elements": [
+        "Agent-action",
+        "Animal-agent",
+        "Vocalize",
+        "Auditory-presentation"
+      ],
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"A marmoset vocalizes in response to a playback of a conspecific phee call\" --model google/gemini-3-flash-preview --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --assessment",
+      "execution_time_seconds": 5.5186591148376465,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Agent-action, ((Animal-agent, Animal/Marmoset), (Vocalize, (Related-to, (Sensory-event, Auditory-presentation, (Vocalized-sound, Label/Phee-call)))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes\n\nGROUPING: correct\n\nDECISION: ACCEPT\n\nFEEDBACK:\nThe HED annotation accurately captures the core elements of the event:  \n- Event type is correctly identified as **Agent-action**  \n- The agent is properly specified as an **Animal-agent** (Marmoset)  \n- The action **Vocalize** is appropriately linked to the stimulus  \n- The stimulus is well-represented as a **Sensory-event** with **Auditory-presentation** of a **phee call**, labeled specifically  \n\nSemantic grouping is correct:  \n- The agent and action are properly nested  \n- The relationship between vocalization and the auditory stimulus is expressed using **Related-to** within a structured hierarchy  \n- Use of **Label/Phee-call** provides specificity  \n\nThe annotation supports reversibility\u2014it can be translated back into a natural language description very close to the original. No refinement is needed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures the marmoset as agent, vocalizing in response to auditory playback of a conspecific phee call; grouping correctly reflects agent-action structure and the sensory trigger.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    }
+  ]
+}

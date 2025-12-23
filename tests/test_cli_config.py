@@ -60,7 +60,8 @@ class TestCLIConfig:
         """Test default configuration values."""
         config = CLIConfig()
         assert config.api.url == "https://api.annotation.garden/hedit"
-        assert config.models.default == "openai/gpt-oss-120b"
+        assert config.models.default == "mistralai/mistral-small-3.2-24b-instruct"
+        assert config.models.provider == "mistral"
         assert config.models.temperature == 0.1
         assert config.settings.schema_version == "8.4.0"
         assert config.output.format == "text"

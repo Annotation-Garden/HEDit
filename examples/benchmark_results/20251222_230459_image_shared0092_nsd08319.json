@@ -1,0 +1,190 @@
+{
+  "session_id": "20251222_230459",
+  "image_name": "shared0092_nsd08319.png",
+  "description": "The image captures a warmly lit living room during the holiday season, bathed in a soft, golden glow from the ambient lighting and decorative string lights. The setting is cozy and intimate, with a central fireplace serving as the focal point, its white mantelpiece adorned with a vibrant garland of red and green foliage, twinkling white lights, and various festive ornaments, including a small Santa figure and a stocking. Above the mantel hangs a framed picture of a classical still life. To the left, a portion of a Christmas tree is visible, its lights contributing to the overall warmth. The room features dark brown leather furniture, including a large armchair in the foreground and a sofa to the right, both partially in shadow. A dark wooden coffee table sits in front of the sofa, cluttered with holiday decorations, including a small figurine and a vase with red flowers. The walls are painted a deep, warm brown, and the floor appears to be hardwood, reflecting the light. A track lighting fixture on the ceiling provides additional illumination, while sheer white curtains on the right side of the frame suggest a window. The composition uses a low-angle perspective, drawing the viewer into the scene, with the warm lighting creating a strong contrast between the brightly lit areas and the deep shadows, enhancing the sense of comfort and seasonal cheer.",
+  "vision_model": "qwen/qwen3-vl-30b-a3b-instruct",
+  "vision_response": {
+    "description": "The image captures a warmly lit living room during the holiday season, bathed in a soft, golden glow from the ambient lighting and decorative string lights. The setting is cozy and intimate, with a central fireplace serving as the focal point, its white mantelpiece adorned with a vibrant garland of red and green foliage, twinkling white lights, and various festive ornaments, including a small Santa figure and a stocking. Above the mantel hangs a framed picture of a classical still life. To the left, a portion of a Christmas tree is visible, its lights contributing to the overall warmth. The room features dark brown leather furniture, including a large armchair in the foreground and a sofa to the right, both partially in shadow. A dark wooden coffee table sits in front of the sofa, cluttered with holiday decorations, including a small figurine and a vase with red flowers. The walls are painted a deep, warm brown, and the floor appears to be hardwood, reflecting the light. A track lighting fixture on the ceiling provides additional illumination, while sheer white curtains on the right side of the frame suggest a window. The composition uses a low-angle perspective, drawing the viewer into the scene, with the warm lighting creating a strong contrast between the brightly lit areas and the deep shadows, enhancing the sense of comfort and seasonal cheer.",
+    "prompt_used": "Describe what you see in this image. Include the setting, main elements, colors, lighting, and overall composition. Be specific and detailed. Form the response as a continuous paragraph. Maximum 200 words.",
+    "metadata": {
+      "format": "PNG",
+      "mode": "RGB",
+      "size": [
+        425,
+        425
+      ],
+      "width": 425,
+      "height": 425,
+      "size_bytes": 262809,
+      "size_mb": 0.25063419342041016,
+      "mime_type": "image/png"
+    }
+  },
+  "schema_version": "8.4.0",
+  "eval_model": "qwen/qwen3-235b-a22b-2507",
+  "eval_provider": "Cerebras",
+  "timestamp": "2025-12-22T23:35:42.787954",
+  "results": [
+    {
+      "model_id": "openai/gpt-oss-120b",
+      "model_name": "GPT-OSS-120B",
+      "provider": "Cerebras",
+      "cli_command": "hedit annotate \"The image captures a warmly lit living room during...\" --model openai/gpt-oss-120b --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment --provider Cerebras",
+      "execution_time_seconds": 10.852312088012695,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Room/Living-room), (Angle/Low-angle), (Contrast/High), (Emotional-state/Cozy), (Emotional-state/Intimate), ((Furniture/Armchair), (Color/Dark-brown)), ((Furniture/Sofa), (Color/Dark-brown)), ((Furniture/Armchair), (To-left-of, (Furniture/Sofa))), ((Furniture/Coffee-table), (Color/Dark-brown)), ((Furniture/Coffee-table), (In-front-of, (Furniture/Sofa))), ((Object/Mantelpiece), (Color/White)), ((Object/Garland), (Color/Red), (Color/Green), (Property/Twinkling), (Property/Vibrant)), ((Object/Santa-figure), (Color/Red)), ((Object/Stocking), (Color/Red)), ((Object/Picture), (Property/Still-life)), ((Object/Tree), (Property/Portion), (Color/Green)), ((Object/Decorations), (Property/Holiday)), ((Object/Figurine), (Property/Holiday)), ((Object/Vase), (Color/Red), (Property/Flowers)), ((Object/Wall), (Color/Dark-brown)), ((Object/Floor), (Property/Wood)), ((Object/Track-lighting), (Property/Additional-illumination)), ((Object/Curtain), (Color/White), (Property/Right-side))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": false,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the living room setting, key objects (fireplace, furniture, tree, decorations), lighting conditions, spatial relationships, colors, and emotional tone.  \n- Semantic grouping is correctly applied: object-property pairs are properly nested (e.g., `(Object/Garland), (Color/Red), (Color/Green), (Property/Twinkling)`), and spatial relations are appropriately structured (e.g., `To-left-of`, `In-front-of`).  \n- Important details such as the low-angle perspective, high contrast, warm lighting (implied via emotional states and colors), and holiday theme are well represented.  \n- While some details from the original description (e.g., \"golden glow\", \"sheer\" curtains, \"hardwood\" floor, \"framed picture\") are simplified or omitted, these are acceptable losses for conciseness in HED annotation.  \n- The use of `Emotional-state/Cozy` and `Intimate` aligns with HED conventions for capturing perceived atmosphere.  \n- All annotations are semantically valid and reversible into a coherent natural language summary closely matching the original.  \n\nNo refinement needed. The annotation is faithful, well-structured, and adheres to best practices.",
+          "assessment_feedback": "COMPLETENESS: incomplete  \nGROUPING: needs-improvement  \nNOTES: Several key elements are missing, including the fireplace as a focal point, string lights, golden glow, shadows, and reflective floor. Some groupings are correct (e.g., colors with objects), but properties like \"Twinkling\" and \"Vibrant\" should be more precisely linked to light sources or garland. \"Portion\" as a property of Tree is awkward; spatial and lighting relationships (e.g., ambient lighting, low-angle perspective effect) are underrepresented.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.2",
+      "model_name": "GPT-5.2",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a warmly lit living room during...\" --model openai/gpt-5.2 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 71.70816588401794,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, Photograph, 2D-view, Indoors, Label/Holiday-season, Label/Christmas, Label/Low-angle-view, (Room, Brown, Dark-shade, Label/Living-room), (Building-part/Fireplace), ((Building-part/Mantel, White), (Part-of, (Building-part/Fireplace))), ((Label/Garland, (Red, Green)), (Part-of, (Building-part/Mantel, White))), ((Label/String-lights, White), (Part-of, (Building-part/Mantel, White))), ((Label/Festive-ornaments), (Part-of, (Building-part/Mantel, White))), ((Label/Santa-figure), (Part-of, (Building-part/Mantel, White))), ((Label/Stocking), (Part-of, (Building-part/Mantel, White))), ((Painting, Label/Still-life), (Above, (Building-part/Mantel, White))), ((Plant, Label/Christmas-tree), (To-left-of, (Building-part/Fireplace))), (Furnishing/Armchair, Brown, Dark-shade, Label/Leather), ((Furnishing/Armchair, Brown, Dark-shade, Label/Leather), (In-front-of, (Building-part/Fireplace))), (Furnishing/Sofa, Brown, Dark-shade, Label/Leather), ((Furnishing/Sofa, Brown, Dark-shade, Label/Leather), (To-right-of, (Building-part/Fireplace))), (Furnishing/Coffee-table, Brown, Dark-shade, Label/Wooden), ((Furnishing/Coffee-table, Brown, Dark-shade, Label/Wooden), (In-front-of, (Furnishing/Sofa, Brown, Dark-shade, Label/Leather))), ((Label/Figurine), (Top-of, (Furnishing/Coffee-table, Brown, Dark-shade, Label/Wooden))), (Furnishing/Vase), ((Furnishing/Vase), (Top-of, (Furnishing/Coffee-table, Brown, Dark-shade, Label/Wooden))), ((Plant, Red, Label/Flowers), (Contained-in, (Furnishing/Vase))), (Building-part/Wall, Brown, Dark-shade), (Building-part/Floor, Label/Hardwood), (Window), (Furnishing/Curtains, White, Thin), ((Furnishing/Curtains, White, Thin), (Part-of, (Window))), (Label/Ambient-lighting, Yellow, Light-shade), (Label/Track-lighting)",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: event type (Sensory-event, Visual-presentation, Photograph), setting (Indoors, Living-room), key objects (fireplace, mantel, Christmas tree, furniture), and their properties.\n- Semantic grouping is correctly applied throughout. Object properties (e.g., color, material) are properly parenthesized with their respective entities (e.g., (Furnishing/Armchair, Brown, Dark-shade, Label/Leather)), and spatial relations are correctly structured using nested parentheses (e.g., (To-left-of, (Building-part/Fireplace))).\n- Important details such as holiday context (Labels: Holiday-season, Christmas), lighting (ambient, track lighting, string lights), and perspective (Low-angle-view) are included.\n- All major components from the description are represented: the decorated mantel with garland, ornaments, Santa figure, and stocking; the visible portion of the Christmas tree; the leather furniture; the cluttered coffee table with figurine and vase of red flowers; wall and floor materials; and the window with sheer curtains.\n- The use of labels for abstract or interpretive elements (e.g., Label/Still-life, Label/Festive-ornaments) is appropriate and consistent with HED conventions.\n- The annotation would successfully pass the reversibility test\u2014translating it back to natural language would yield a description very close to the original.\n\nNo refinement is needed. The annotation is semantically accurate, well-structured, and faithful to the original description.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements from the description are captured, including objects, colors, spatial relations, and lighting. Semantic grouping accurately reflects properties with their referents and correct spatial/functional relationships.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.1-codex-mini",
+      "model_name": "GPT-5.1-Codex-Mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a warmly lit living room during...\" --model openai/gpt-5.1-codex-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 338.97434306144714,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Experimental-stimulus, Visual-presentation, 2D-view/Low-angle, (Building-part/Living-room, (Property/Cozy), (Property/Intimate)), (Item/Lighting, (Color, Gold), (Property/Warm), (Visual-attribute/Glow), (Associated-with, (Building-part/Living-room))), (Visual-attribute/High-contrast, (Associated-with, (Building-part/Living-room))), (Visual-attribute/Shadow, Deep, (Associated-with, (Building-part/Living-room))), (Fireplace, (Center-of, (Building-part/Living-room)), (Includes, (Building-part/Mantelpiece, White, (Part-of, (Fireplace)), (Contains, (Item/Garland, (Color, Red), (Color, Green), (Includes, (Plant/Foliage, (Color, Red), (Color, Green))), (Includes, (Item/String-lights, (Color, White), (Visual-attribute/Twinkling))))), (Contains, (Item/Santa-figure)), (Contains, (Clothing/Stocking)), (Contains, (Item/Ornament, (Property/Holiday-themed)))))), (Item/Image, (Property/Framed), (Property/Classical), (Art-installation/Still-life), (Above, (Building-part/Mantelpiece, White))), (Plant/Christmas-tree, (To-left-of, (Fireplace)), (Includes, (Item/String-lights, (Color, White), (Visual-attribute/Twinkling)))), (Furnishing/Armchair, Large, (Manufactured-material/Leather), (Brown-color), (Associated-with, (Visual-attribute/Shadow, Deep))), (Furnishing/Sofa, (Manufactured-material/Leather), (Brown-color), (To-right-of, (Fireplace)), (Associated-with, (Visual-attribute/Shadow, Deep))), (Furnishing/Coffee-table, (Property/Wooden), (Brown-color), (Dark-shade), (In-front-of, (Furnishing/Sofa)), (Includes, (Item/Small-figurine)), (Includes, (Item/Vase, (Color, Red), (Contains, (Plant/Flower, (Color, Red))))), (Includes, (Item/Holiday-decoration))), (Device/Track-lighting-fixture, (Property/Ceiling-mounted), (Part-of, (Building-part/Ceiling, (Part-of, (Building-part/Living-room)))), (Associated-with, (Item/Lighting))), (Item/Curtain, (Color, White), (Property/Sheer), (Adjacent-to, (Window, (Part-of, (Building-part/Living-room)))), (To-right-of, (Fireplace))), (Building-part/Wall, (Part-of, (Building-part/Living-room)), (Deep, Brown-color), (Color-shade/Warm)), (Building-part/Floor, (Part-of, (Building-part/Living-room)), (Property/Hardwood), (Visual-attribute/Reflective), (Associated-with, (Item/Lighting)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the event type (Sensory-event, Visual-presentation), the setting (Living-room), key objects (fireplace, Christmas tree, furniture), lighting conditions, and spatial relationships.  \n- Semantic grouping is correctly applied throughout. Properties such as color, material, and attributes are appropriately nested within their respective objects (e.g., (Furnishing/Armchair, Large, (Manufactured-material/Leather), (Brown-color)) and (Item/String-lights, (Color, White), (Visual-attribute/Twinkling))).  \n- Spatial relations (e.g., To-left-of, In-front-of, Above, Adjacent-to) are used consistently and correctly to reflect the original description.  \n- Important details like the low-angle view, warm golden lighting, high contrast, deep shadows, and festive decorations are all represented with proper HED structure.  \n- The annotation maintains clarity and would pass the reversibility test\u2014translating it back to natural language would yield a description very close to the original.  \n- No critical information is missing, and there are no structural or semantic errors.  \n\nThis is a well-constructed, faithful HED annotation that effectively represents the rich visual scene described.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements from the description, including spatial relations, object attributes, and semantic groupings. Properties are correctly associated with their objects, and hierarchical structures (e.g., mantelpiece with garland and ornaments) are accurately represented. The reversibility test passes\u2014original scene can be reconstructed from the annotation.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-4o-mini",
+      "model_name": "GPT-4o-mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a warmly lit living room during...\" --model openai/gpt-4o-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 27.80865788459778,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Visual-scene, (Setting, (Living-room, (Cozy, Intimate), (Color, (Warm-brown)), (Lighting, (Ambient, (Golden-glow))), (Furniture, (Dark-brown, Leather, (Armchair, (Foreground)), (Sofa, (Right-side-of, (Coffee-table, (Dark-wood, (Cluttered-with, (Holiday-decorations, (Figurine, (Vase, (Red, Flowers))))))))))))), (Focal-point, (Fireplace, (White, Mantelpiece), (Adorned-with, (Garland, (Vibrant, (Contains, ((Red, Foliage), (Green, Foliage))))), (Twinkling, (White, Lights), (Festive-ornaments, (Santa-figure, Stocking))))))), (Above, (Framed-picture, (Classical, Still-life))), (To-left-of, (Christmas-tree, (Visible, (Lights, (Contributing-to, (Overall, Warmth))))))), (Lighting-fixture, (Track-lighting, (Ceiling))), (Curtains, (Sheer, White), (Located-at, (Right-side-of, (Window)))), (Perspective, (Low-angle))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 4,
+          "total_iterations": 4,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the visual setting (living room), key objects (fireplace, Christmas tree, furniture), lighting conditions, and spatial relationships.  \n- Semantic grouping is correctly applied: object properties (e.g., (Red, Foliage), (Dark-brown, Leather)) are properly parenthesized to form coherent entities, and spatial relations (e.g., (To-left-of, (Christmas-tree...)), (Above, (Framed-picture...))) are appropriately structured.  \n- Important details such as the fireplace as focal point, garland contents, holiday decorations on the coffee table, and low-angle perspective are all represented with correct nesting.  \n- The annotation maintains clarity and would pass the reversibility test\u2014translating it back to natural language yields a description very close to the original.  \n- No critical information is missing, and optional enhancements (e.g., specific ornament types, lighting effects) are included where relevant.  \n\nOverall, this is a well-structured, faithful HED annotation that effectively represents the rich natural language description.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements\u2014setting, objects, spatial relations, lighting, and perspective\u2014with accurate semantic grouping. Properties are properly attached to their referents, and hierarchical relationships (e.g., adornments on mantelpiece, furniture layout) are correctly nested.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a warmly lit living room during...\" --model google/gemini-3-flash-preview --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 20.130463361740112,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Low-angle, 2-D-view), (Ambient-light, (Yellow, (Saturation, High))), (Room, (Living-room, (Brown))), (Floor, (Hardwood)), (Ceiling, (Track-lighting)), (Window, (Curtain, (White))), (Fireplace, (Center-of, Screen), (Mantelpiece, (White), (Above, Fireplace)), (Garland, (Foliage, (Green, Red)), (Light, (White)), (Part-of, Mantelpiece)), (Santa-claus, (Part-of, Mantelpiece)), (Stocking, (Part-of, Mantelpiece))), (Image, (Still-life), (Above, Mantelpiece)), ((Christmas-tree, (Light)), (To-left-of, Fireplace)), (Armchair, (Dark, Brown, Leather), (Foreground-view)), (Sofa, (Dark, Brown, Leather), (To-right-of, Fireplace)), (Table, (Wood, Dark), (In-front-of, Sofa), (Figurine), (Vase, (Flower, (Red)))), (Agent-emotional-state, (Happy))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 3,
+          "total_iterations": 3,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the event type (Sensory-event, Visual-presentation), main objects (fireplace, Christmas tree, furniture, decorations), spatial relationships, lighting, and emotional tone.  \n- Semantic grouping is correctly applied: object properties (e.g., (Dark, Brown, Leather) grouped with Armchair), parts-of relations (e.g., garland and ornaments as Part-of Mantelpiece), and spatial configurations (e.g., To-left-of, In-front-of) are properly nested.  \n- Key details such as the low-angle perspective, warm ambient lighting with high saturation yellow tones, hardwood floor, track lighting, and festive decorations are all represented with appropriate specificity.  \n- The inclusion of Agent-emotional-state (Happy) is a reasonable interpretation of the cozy, cheerful atmosphere implied by the description.  \n- The annotation is rich in detail without overreaching; it avoids misrepresentation and maintains structural clarity.  \n- Reversibility test passes: the annotation can be translated back into a natural language description closely resembling the original.  \n\nNo refinement needed. The annotation is faithful, well-structured, and semantically precise.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements including spatial layout, objects, materials, lighting, and emotional tone. Semantic grouping accurately reflects object-property and object-relation hierarchies, such as (Garland, (Foliage, (Green, Red))) and (To-left-of, Fireplace) relations. The emotional state \"Happy\" is reasonably inferred from the cozy, festive atmosphere.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "anthropic/claude-haiku-4.5",
+      "model_name": "Claude-Haiku-4.5",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a warmly lit living room during...\" --model anthropic/claude-haiku-4.5 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 8.039714097976685,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Interior-space, (Room, Living-room)), (Furniture, (Armchair, (Dark-brown, Leather))), (Furniture, (Sofa, (Dark-brown, Leather))), (Furniture, (Coffee-table, (Dark, Wood))), (Fireplace, (White, Mantelpiece)), (Garland, (Red, Green, Foliage)), (Light, (White, Twinkling)), (Ornament, (Santa, Figure)), (Stocking), (Picture, (Framed, Classical, Still-life)), (Plant, (Christmas-tree, (Light, Twinkling))), (Wall, (Deep-brown, Warm)), (Floor, (Hardwood, Reflecting-light)), (Lighting-fixture, (Track-lighting)), (Curtain, (White, Sheer)), (Window), (Figurine), (Vase, (Red, Flower)), (Illumination, (Golden-glow, Ambient)), (Illumination, (Decorative, String-light)), (Perspective, (Low-angle)), (Contrast, (Bright-area, Deep-shadow)), (Atmosphere, (Warm, Cozy, Intimate, Comfort, Seasonal-cheer, Holiday-season))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the living room setting, key furniture, fireplace with festive decorations, lighting conditions, and atmospheric qualities.  \n- Semantic grouping is correctly applied: object-property bundles (e.g., (Armchair, (Dark-brown, Leather)), (Garland, (Red, Green, Foliage))) are properly nested, avoiding flat or ambiguous structures.  \n- Spatial elements and sensory qualities like (Perspective, (Low-angle)) and (Contrast, (Bright-area, Deep-shadow)) are appropriately included and grouped.  \n- Important details such as the holiday theme, warm illumination, and material textures are well represented.  \n- The use of higher-level categories like (Atmosphere, (Warm, Cozy, ...)) effectively conveys the affective tone of the image.  \n- All main components from the original description are accounted for, and the annotation would allow a reasonable reconstruction of the scene in natural language.  \n\nNo refinement needed. The annotation is comprehensive, structurally sound, and semantically faithful.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements from the description are captured, including objects, attributes, spatial context, and atmosphere. Semantic grouping accurately reflects relationships (e.g., materials with objects, lights with qualities, and nested scene elements). The annotation is reversible to natural language without loss of meaning.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "mistralai/mistral-small-3.2-24b-instruct",
+      "model_name": "Mistral-Small-3.2-24B",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a warmly lit living room during...\" --model mistralai/mistral-small-3.2-24b-instruct --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 15.980281114578247,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Sensory-event, Visual-presentation, ((Living-room, (Furniture, (Armchair, Leather, Brown, Large), (Sofa, Leather, Brown), (Coffee-table, Wood, Dark, Cluttered, (Figurine, Small), (Vase, (Flower, Red))))), (Fireplace, (Mantelpiece, White, (Garland, (Foliage, Red, Green), (Light, White, Twinkling)), (Ornament, (Santa-figure, Small), Stocking)), (Picture, Framed, (Still-life, Classical))), (Christmas-tree, (Light, Twinkling)), (Wall, Paint, Brown, Warm), (Floor, Hardwood), (Lighting, (Ambient, Warm, Golden), (String-light, Decorative), (Track-lighting)), (Curtain, Sheer, White)), (Perspective, Low-angle))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the event type (Sensory-event, Visual-presentation), main objects (living room, fireplace, furniture, Christmas tree, etc.), and key visual details (colors, materials, spatial context).  \n- Semantic grouping is correctly applied: object properties (e.g., (Armchair, Leather, Brown, Large)) are grouped under their respective objects, and nested structures (e.g., (Garland, (Foliage, Red, Green), (Light, White, Twinkling))) preserve meaning.  \n- Important descriptive details such as lighting (warm, golden, twinkling), materials (leather, wood, hardwood), and spatial perspective (Low-angle) are included and appropriately structured.  \n- The annotation maintains coherence and would successfully pass the reversibility test\u2014translating back to natural language yields a description very close to the original.  \n- While some minor details (e.g., \"portion of a Christmas tree\" or \"partially in shadow\") are simplified, these omissions do not affect the overall faithfulness, as they are not critical to the core event structure.  \n\nNo refinement is needed. The annotation is comprehensive, semantically well-structured, and faithful to the original description.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements from the description, including objects, attributes, spatial context, and lighting. Semantic grouping is accurate, with proper nesting of properties and objects (e.g., (Garland, (Foliage, Red, Green), (Light, White, Twinkling))). The structure supports reversibility to natural language.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    }
+  ]
+}

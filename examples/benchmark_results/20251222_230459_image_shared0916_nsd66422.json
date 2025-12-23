@@ -1,0 +1,190 @@
+{
+  "session_id": "20251222_230459",
+  "image_name": "shared0916_nsd66422.png",
+  "description": "The image captures a lively outdoor gathering of five young children seated around a small wooden table on a paved patio, likely in a suburban backyard. The setting is bright and sunlit, with natural daylight casting soft shadows and highlighting the vibrant colors of the scene. The children, dressed in casual summer clothes, are engaged in eating and drawing; one boy in a red shirt sits in a blue folding chair, focused on coloring with a crayon, while others eat hot dogs and drink from cups. The table is cluttered with food, paper plates, and art supplies, suggesting a relaxed, creative playtime. The background features a house with beige siding, a red door, and a white lattice fence, with green grass and flowering plants visible beyond. The ground is covered in colorful chalk drawings, adding a playful, artistic element to the composition. The overall atmosphere is warm and cheerful, with a sense of carefree childhood energy. The composition is centered on the children and their activity, creating a dynamic and intimate snapshot of a joyful moment.",
+  "vision_model": "qwen/qwen3-vl-30b-a3b-instruct",
+  "vision_response": {
+    "description": "The image captures a lively outdoor gathering of five young children seated around a small wooden table on a paved patio, likely in a suburban backyard. The setting is bright and sunlit, with natural daylight casting soft shadows and highlighting the vibrant colors of the scene. The children, dressed in casual summer clothes, are engaged in eating and drawing; one boy in a red shirt sits in a blue folding chair, focused on coloring with a crayon, while others eat hot dogs and drink from cups. The table is cluttered with food, paper plates, and art supplies, suggesting a relaxed, creative playtime. The background features a house with beige siding, a red door, and a white lattice fence, with green grass and flowering plants visible beyond. The ground is covered in colorful chalk drawings, adding a playful, artistic element to the composition. The overall atmosphere is warm and cheerful, with a sense of carefree childhood energy. The composition is centered on the children and their activity, creating a dynamic and intimate snapshot of a joyful moment.",
+    "prompt_used": "Describe what you see in this image. Include the setting, main elements, colors, lighting, and overall composition. Be specific and detailed. Form the response as a continuous paragraph. Maximum 200 words.",
+    "metadata": {
+      "format": "PNG",
+      "mode": "RGB",
+      "size": [
+        425,
+        425
+      ],
+      "width": 425,
+      "height": 425,
+      "size_bytes": 406826,
+      "size_mb": 0.38797950744628906,
+      "mime_type": "image/png"
+    }
+  },
+  "schema_version": "8.4.0",
+  "eval_model": "qwen/qwen3-235b-a22b-2507",
+  "eval_provider": "Cerebras",
+  "timestamp": "2025-12-23T01:29:55.044420",
+  "results": [
+    {
+      "model_id": "openai/gpt-oss-120b",
+      "model_name": "GPT-OSS-120B",
+      "provider": "Cerebras",
+      "cli_command": "hedit annotate \"The image captures a lively outdoor gathering of f...\" --model openai/gpt-oss-120b --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment --provider Cerebras",
+      "execution_time_seconds": 22.089215993881226,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Visual-attribute/Sunlight, Visual-attribute/Bright), (Beige, Building), (Red, Item/Door), (Green, Plant), (Furniture/Table), (Item/Chalk-drawing, (Above, Item/Ground)), (Human/Child, (Red, Item/Shirt), (Blue, Furniture/Chair), (Near-to, Furniture/Table), (Action/Draw, (Item/Crayon))), (Human/Child, (Near-to, Furniture/Table), (Action/Eat, (Item/Hot-dog))), (Human/Child, (Near-to, Furniture/Table), (Action/Drink, (Item/Cup))), (Human/Child, (Near-to, Furniture/Table)), (Human/Child, (Near-to, Furniture/Table))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 5,
+          "total_iterations": 5,
+          "is_faithful": true,
+          "is_complete": false,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements of the scene: the visual setting (sunlit, bright), key objects (table, chairs, door, plants), and the children\u2019s actions (drawing, eating, drinking).  \n- Semantic grouping is correctly applied: object properties (e.g., (Red, Item/Shirt), (Blue, Furniture/Chair)) are properly parenthesized, and agent-action relationships are nested appropriately (e.g., (Human/Child, (Action/Draw, (Item/Crayon)))).  \n- Spatial relations like (Above, Item/Ground) for chalk drawings and (Near-to, Furniture/Table) for children are reasonable approximations of the described layout.  \n- Key details from the description\u2014such as the wooden table, casual clothing, art supplies, and background features\u2014are partially implied through terms like Furniture/Table, Item/Crayon, and Item/Chalk-drawing, which is acceptable given HED\u2019s focus on salient, annotatable features.  \n- While some nuances (e.g., \"five\" children, \"paved patio\", \"suburban backyard\") are not explicitly encoded, they are not required for a faithful representation; the five children are correctly implied by five Human/Child instances.  \n- The overall atmosphere (\"warm and cheerful\") is not directly annotatable in HED and reasonably omitted.  \n\nThe annotation is semantically accurate, well-structured, and reversible to a natural language description closely matching the original. No refinement needed.",
+          "assessment_feedback": "COMPLETENESS: incomplete  \nGROUPING: needs-improvement  \nNOTES: Several key elements are missing, including the wooden material of the table, art supplies, paper plates, and the overall atmosphere (e.g., cheerful, carefree energy). Grouping is inconsistent\u2014attributes like \"Red\" and \"Blue\" are correctly linked to items, but actions and attributes for individual children are not fully or clearly grouped per agent. For example, the child drawing should be clearly associated with both the crayon and the red shirt. The \"Item/Chalk-drawing\" relation \"Above\" Ground is incorrect\u2014chalk drawings are on the ground, not above it.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.2",
+      "model_name": "GPT-5.2",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a lively outdoor gathering of f...\" --model openai/gpt-5.2 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 245.80723690986633,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, Image, Outdoors, Paved-terrain, (High, Luminance), (High, Saturation), (Joyful, (Associated-with, (Group-of, (Human/Child, Item-count/5)))), (Clothing, (Associated-with, (Group-of, (Human/Child, Item-count/5)))), ((Group-of, (Human/Child, Item-count/5)), (Center-of, Image)), ((Group-of, (Human/Child, Item-count/5)), (Around, (Small, Furnishing/Table))), ((Group-of, (Human/Child, Item-count/5)), (In-front-of, Building/House)), ((Human/Child, Male, Sitting, (Red, Clothing/Shirt)), (Contained-in, (Blue, Furnishing/Chair))), (Write, (Performed-by, (Human/Child, Male, Sitting, (Red, Clothing/Shirt)))), (Write, (Performed-using, Tool/Crayon)), (Write, (Related-to, Paper)), ((Group-of, (Human/Child, Item-count/4), Sitting), (Around, (Small, Furnishing/Table))), (Ingest, (Performed-by, (Group-of, (Human/Child, Item-count/4), Sitting))), (Ingest, (Related-to, Ingestible-object/Hot-dog)), (Ingest, (Related-to, Man-made-object/Cup)), (Ingestible-object/Hot-dog, (Contained-in, Furnishing/Table)), (Man-made-object/Cup, (Contained-in, Furnishing/Table)), (Man-made-object/Plate, (Contained-in, Furnishing/Table)), (Paper, (Contained-in, Furnishing/Table)), (Tool/Crayon, (Contained-in, Furnishing/Table)), (Drawing, (Over, Paved-terrain)), (Drawing, (Associated-with, Manufactured-material/Chalk)), (Beige, Building-part/Siding), (Building-part/Siding, (Part-of, Building/House)), (Red, Door), (Door, (Part-of, Building/House)), (White, Man-made-object/Fence), (Man-made-object/Fence, (Adjacent-to, Building/House)), (Grassy-terrain, (Behind, (White, Man-made-object/Fence))), (Plant/Flowering-plant, (Behind, (White, Man-made-object/Fence)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the outdoor setting, the group of five children, their activities (eating, drawing), key objects (table, chairs, food, art supplies), and salient environmental features (house, fence, chalk drawings).  \n- Event types are correctly identified (Sensory-event, Visual-presentation), and agent-action relationships are well represented with proper nesting (e.g., Write actions linked to the boy in the red shirt, Ingest actions for others).  \n- Semantic grouping is consistently correct: object properties (color, type) are appropriately parenthesized (e.g., (Red, Clothing/Shirt), (Blue, Furnishing/Chair)), and spatial/relational structures (e.g., (Around, (Small, Furnishing/Table))) are properly nested.  \n- Important details such as item counts, clothing, actions, containment, and spatial layout are included with precise HED syntax.  \n- The annotation successfully preserves the original meaning and would allow a reasonable reconstruction of the scene in natural language.  \n- No critical information is missing, and there are no misrepresentations or structural errors.  \n\nMinor optional enhancements (e.g., specifying \"casual summer clothes\" more precisely, or noting \"sunlit\" via a lighting condition) could exist but are not necessary for faithfulness.  \n\nOverall, this is a high-quality, semantically precise HED annotation that faithfully represents the original description.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements from the description, including setting, participants, actions, objects, and attributes, with proper semantic grouping (e.g., properties with objects, agent-action relations). The structure supports reversibility to natural language with high fidelity.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-5.1-codex-mini",
+      "model_name": "GPT-5.1-Codex-Mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a lively outdoor gathering of f...\" --model openai/gpt-5.1-codex-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 471.95769000053406,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, Image, Outdoors, Happy, ((Group-of, Sitting), (Around, (Furnishing/Table, Small, (Contains, (Task-event-role/Experimental-stimulus, Ingestible-object/Hot-dog)), (Contains, (Task-event-role/Experimental-stimulus, Object/Cup)), (Contains, (Task-event-role/Play-material, Object/Plate, Color/White)), (Contains, (Task-event-role/Play-material, Object/Paper, Color/White)), (Contains, (Task-event-role/Play-material, Writing-device/Crayon))))), ((Group-of, Sitting), (On, Paved-terrain)), ((Group-of, Sitting), (In-front-of, Building/House)), (Building/House, (Building-part/Siding, Beige), (Includes, (Door, Red))), (Object/Fence, Color/White, (Pattern/Lattice), (In-front-of, Building/House)), ((Plant/Grass, Color/Green, (Contains, (Plant/Flower, Color/Yellow), (Plant/Flower, Color/Pink))), (Behind, (Object/Fence, Color/White, (Pattern/Lattice)))), ((Clothing/Shirt, Color/Red), (Worn-by, (Human/Child, Male, Focused-attention, Sitting, (Located-on, (Furnishing/Chair, Color/Blue)), (Use, (Task-event-role/Play-material, Writing-device/Crayon))))), (Task-event-role/Play-material, Visualization/Chalk-drawing, Color/Blue, Color/Green, Color/Yellow, Color/Pink, (On, Paved-terrain))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements of the scene: the outdoor setting, the group of children, their activities (eating, drawing), key objects (table, food, art supplies), clothing, furniture, and background features (house, fence, plants).  \n- Event type is appropriately identified as a *Sensory-event* with *Visual-presentation* and *Image*, fitting for a static image depicting a visual scene.  \n- Semantic grouping is correctly applied throughout: object properties (color, role, type) are properly nested within parentheses to form coherent entities (e.g., `(Clothing/Shirt, Color/Red)` worn by a child using a crayon).  \n- Spatial relationships are well represented: *Around*, *On*, *In-front-of*, *Behind*, and *Located-on* are used with correct syntactic grouping.  \n- Task roles are sensibly assigned (e.g., *Experimental-stimulus* for food, *Play-material* for art items), which adds useful experimental or observational context.  \n- The presence of chalk drawings on the ground is captured with colors and location, contributing to the playful atmosphere described.  \n- Emotional tone (\"Happy\") is reasonably included as a high-level affective label consistent with \"warm and cheerful\" in the original.  \n\nNo major omissions or structural issues. The annotation is rich, well-structured, and semantically precise\u2014faithfully representing the original description in HED format.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: Most key elements are captured, including setting, objects, actions, and attributes, but some semantic groupings are incorrect or overly nested. For example, \"(Task-event-role/Play-material, Visualization/Chalk-drawing...)\" should be grouped under the surface where it appears, and properties like colors of chalk drawings should be grouped with the drawings themselves. The boy in the red shirt is well-annotated but could be better integrated into the group structure.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "openai/gpt-4o-mini",
+      "model_name": "GPT-4o-mini",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a lively outdoor gathering of f...\" --model openai/gpt-4o-mini --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 56.064226150512695,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Sensory-event, Visual-presentation, (Bright, Sunlit), (Scene-atmosphere, Warm, Cheerful), (Ground-covered-with, (Colorful-chalk-drawings)), (House, (Beige, Siding), (Red, Door), (White, Lattice-fence)), (Green, Grass), (Flowering, Plants), (Child, ((Human-agent, Child-1), (Agent-action, Eating, (With, Hot-dog))), ((Human-agent, Child-2), (Agent-action, Drinking, (From, Cup))), ((Human-agent, Child-3), (Agent-action, Coloring, (With, Crayon, (In, (Blue, Folding-chair))))), ((Human-agent, Child-4), (Agent-action, Eating, (With, Hot-dog))), ((Human-agent, Child-5), (Agent-action, Drinking, (From, Cup)))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 5,
+          "total_iterations": 5,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the visual setting (sunlit, bright), key objects (house, table, grass, fence), and the actions of the five children.  \n- Semantic grouping is correctly applied: object properties (e.g., (Beige, Siding), (Red, Door)) are properly parenthesized; agent-action relationships are nested appropriately with (Human-agent, Child-n) linked to specific (Agent-action) events.  \n- Key details such as the (Colorful-chalk-drawings) on the ground, the (Blue, Folding-chair), and the use of crayons, hot dogs, and cups are included.  \n- The atmosphere (Warm, Cheerful) is appropriately tagged under (Scene-atmosphere), reflecting the emotional tone.  \n- While the table and art supplies are not explicitly mentioned in the annotation, they are implied in the children\u2019s actions (e.g., coloring, eating), and their absence does not undermine the overall faithfulness.  \n- The annotation is well-structured, semantically precise, and reversible\u2014can be translated back into a coherent natural language summary closely matching the original.  \n\nNo refinement needed. The annotation is faithful, correctly grouped, and sufficiently detailed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements: scene setting, atmosphere, objects, actions, and attributes, with proper semantic grouping (e.g., properties with objects, agent-action nesting). The structure is reversible to natural language without loss of meaning.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "google/gemini-3-flash-preview",
+      "model_name": "Gemini-3-Flash",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a lively outdoor gathering of f...\" --model google/gemini-3-flash-preview --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 17.068246126174927,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Outdoors, Suburban, (Paved-terrain, (On, (Collection, (Colorful, (Drawing, Label/Chalk-drawing)))))), (Natural-light, (Bright, (Shadow, Soft))), (Scene, (Centered-composition, (Focus, (Group-of, (Human-agent, (Item-count/5, (Child, (Casual, Clothing)))))))), (Agent-action, ((Human-agent, (Male, (Red, Clothing))), (Sit, (Blue, (Folding-chair, Furniture/Folding-chair))), (Action/Color, (Crayon, (On, Paper))))), (Agent-action, ((Group-of, (Human-agent, Child)), (Eat, (Hot-dog, Ingestible-object)), (Drink, (Cup)))), (Item/Wooden-table, (Part-of, (Collection, (Food, (Paper, (Plate, Tableware/Plate)), (Art-supply, Label/Art-supplies))))), (Background-view, (House, (Beige, (Siding, Building-part/Siding)), (Red, Door), (White, (Lattice, Building-part/Lattice-fence))), (Grassy-terrain, Green), (Plant, (Flowering, Property/Flowering))), (Affective-feeling, Happy, Joyful, (Atmosphere, (Warm, Cheerful)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 3,
+          "total_iterations": 3,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the outdoor setting, the group of children, their actions (eating, drawing), key objects (table, chairs, food, art supplies), lighting, background features, and affective tone.  \n- Semantic grouping is correctly applied throughout. Properties are appropriately paired with objects using parentheses (e.g., (Red, Clothing), (Blue, (Folding-chair, ...))), and complex structures like the table contents and background view are well-nested.  \n- Event types are properly identified: Sensory-event and Visual-presentation set the context; Agent-action represents individual and group behaviors; Scene and Background-view provide spatial and compositional details.  \n- Important descriptive details\u2014such as the chalk drawings on the ground, the house with specific colors, the cluttered table, and the bright natural light\u2014are all included with correct tagging.  \n- The affective atmosphere (happy, joyful, warm, cheerful) is appropriately captured under Affective-feeling.  \n- The annotation passes the reversibility test: it can be translated back into a natural language description very close to the original.  \n\nNo refinement is needed. The annotation is comprehensive, structurally sound, and semantically faithful.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements: setting, lighting, children's actions, objects, and affective tone. Semantic grouping correctly links properties to objects and agents to actions, enabling accurate reversibility.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "anthropic/claude-haiku-4.5",
+      "model_name": "Claude-Haiku-4.5",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a lively outdoor gathering of f...\" --model anthropic/claude-haiku-4.5 --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 14.726415872573853,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, (Experimental-stimulus, (Scene, Outdoor-gathering)), ((Human-agent, (Child, (Clothing, (Red, Shirt)))), (Seated-with-chin-rest, (On, (Chair, (Blue, Folding))))), ((Human-agent, (Child, (Clothing, (Casual, Summer-clothes)))), (Focused-attention, (Move-fingers, (Crayon, (On, (Paper)))))), ((Human-agent, (Child)), (Ingest, (Hot-dog))), ((Human-agent, (Child)), (Ingest, (Drink, (From, (Cup))))), ((Table, (Wooden, Small)), (Cluttered-with, (Food, (Hot-dog), (Paper-plate), (Crayon), (Art-supplies)))), ((Paved-terrain, (Patio)), (Covered-with, (Chalk-drawing, (Colorful)))), ((Building, (Beige, Siding)), (Part-of, (Door, (Red)))), ((Fence, (White, Lattice))), ((Grass, (Green))), ((Plant, (Flowering))), (Natural-daylight, (Bright, (Soft-shadows))), (Emotional-context/Positive, (Warm, Cheerful, Carefree)), (Composition, (Centered-on, (Child, Activity)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: the outdoor gathering, the children as human agents engaged in specific actions (eating, drawing), key objects (table, chairs, food, art supplies), environmental context (patio, building, fence, plants), lighting (natural daylight), emotional tone, and compositional focus.  \n- Semantic grouping is correctly applied throughout. Properties are appropriately nested with their respective objects (e.g., (Red, Shirt), (Blue, Folding) with Chair, (White, Lattice) with Fence), and agent-action relationships are properly structured using parentheses to maintain clarity (e.g., (Focused-attention, (Move-fingers, ...))).  \n- Spatial and relational descriptors are well represented (e.g., (On, (Chair...)), (Cluttered-with...), (Covered-with...), (Part-of...)).  \n- Important details such as clothing, activities, table contents, background features, and emotional context are included in a semantically precise way.  \n- The annotation successfully passes the reversibility test\u2014it can be translated back into a coherent and faithful description matching the original.  \n- No critical omissions or structural errors are present. The annotation is both accurate and well-structured.  \n\nACCEPT as is.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures all key elements: scene setting, children's actions (eating, drawing), objects, clothing, spatial relations, and emotional tone. Semantic grouping accurately reflects agent-action, object-property, and spatial relationships. Reversibility test passes\u2014original description can be reconstructed.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "model_id": "mistralai/mistral-small-3.2-24b-instruct",
+      "model_name": "Mistral-Small-3.2-24B",
+      "provider": null,
+      "cli_command": "hedit annotate \"The image captures a lively outdoor gathering of f...\" --model mistralai/mistral-small-3.2-24b-instruct --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --schema 8.4.0 --max-attempts 5 -o json --standalone --assessment",
+      "execution_time_seconds": 29.036032915115356,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Visual-presentation, ((Outdoors, (Suburban, Backyard)), ((Children, (Count/5)), (Age/Young)), ((Table, (Material/Wooden)), (Size/Small)), (Patio, (Material/Paved))), ((House, (Color/Beige, Siding)), (Door, (Color/Red))), (Fence, (Color/White, Material/Lattice)), (Grass, (Color/Green)), (Plant, (Flowering)), (Ground, (Chalk, Drawing, (Colorful))), ((Children, (Clothing/Summer, Casual)), (Activity/Eating), (Activity/Drawing)), ((Child, (Gender/Male, Shirt/Red)), (Chair, (Color/Blue, Type/Folding)), (Focus, (Activity/Coloring)), (Tool/Crayon)), ((Food, (Hot-dog)), (Drink, (Container/Cup))), (Table, (Clutter, (Food, Paper-plate, Art-supply))), (Atmosphere, (Warm, Cheerful)), (Composition, (Center, (Children, Activity))), (Lighting, (Natural, Daylight, (Soft, Shadow))), (Color, (Vibrant)), (Energy, (Carefree, Childhood))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The HED annotation accurately captures the core elements of the scene: event type (Sensory-event, Visual-presentation), main subjects (children, table, setting), key activities (eating, drawing), and environmental context (outdoor backyard, lighting, atmosphere).  \n- Semantic grouping is correctly applied throughout. Properties are appropriately nested with their referents (e.g., (Color/Red, Siding) with House; (Color/Blue, Type/Folding) with Chair), avoiding flat or ambiguous structures.  \n- Key details such as the number and age of children, materials, colors, spatial setting, activities, and mood are all represented with precise and well-grouped terms.  \n- The annotation maintains clarity and reversibility\u2014translating it back to natural language would yield a description very close to the original.  \n- No critical information is missing, and optional enhancements (e.g., Count/5, specific colors, activity focus) are included where relevant.  \n\nOverall, this is a high-quality, faithful HED annotation that effectively represents the rich detail of the original description while adhering to proper syntactic and semantic conventions.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements from the description are captured, including setting, participants, objects, activities, attributes, and atmosphere. Semantic grouping accurately reflects relationships (e.g., properties with objects, agent-action-context). The annotation is reversible to natural language without loss of meaning.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    }
+  ]
+}

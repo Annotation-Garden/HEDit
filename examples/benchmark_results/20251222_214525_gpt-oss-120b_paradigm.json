@@ -1,0 +1,179 @@
+{
+  "session_id": "20251222_214525",
+  "model_name": "GPT-OSS-120B",
+  "domain": "paradigm",
+  "schema_version": "8.4.0",
+  "eval_model": "qwen/qwen3-235b-a22b-2507",
+  "eval_provider": "Cerebras",
+  "timestamp": "2025-12-22T21:47:38.597248",
+  "results": [
+    {
+      "test_id": "para_01",
+      "domain": "paradigm",
+      "difficulty": "medium",
+      "input_description": "A rare deviant tone at 1200 Hz interrupts a sequence of standard 800 Hz tones",
+      "expected_elements": [
+        "Auditory-presentation",
+        "Frequency",
+        "Oddball"
+      ],
+      "model_id": "openai/gpt-oss-120b",
+      "model_name": "GPT-OSS-120B",
+      "provider": "Cerebras",
+      "cli_command": "hedit annotate \"A rare deviant tone at 1200 Hz interrupts a sequence of standard 800 Hz tones\" --model openai/gpt-oss-120b --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --provider Cerebras --assessment",
+      "execution_time_seconds": 6.301662921905518,
+      "full_response": {
+        "status": "success",
+        "hed_string": "((Sensory-event, Experimental-stimulus, Auditory-presentation, (Tone, Frequency/1200 Hz, Auditory-attribute/Deviant)), (During, (Auditory-presentation, (Tone, Frequency/800 Hz, Auditory-attribute/Standard)))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core event: a deviant 1200 Hz tone presented during a sequence of standard 800 Hz tones.  \n- Event type (Sensory-event), stimulus role (Experimental-stimulus), modality (Auditory-presentation), and key attributes (frequency, deviance/standard) are all correctly included.  \n- Semantic grouping is properly applied: the deviant tone and its properties are grouped together, as are the ongoing standard tones. The \"During\" relation correctly situates the deviant tone within the context of the standard tone sequence.  \n- The structure allows for clear reversibility: it can be translated back into a natural language description very close to the original.  \n- No critical information is missing, and there are no misrepresentations. The annotation is both accurate and appropriately structured.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures the deviant and standard tones, their frequencies, attributes, and the temporal relationship \"during\" the standard sequence. Grouping correctly associates properties with their respective tones and presentation events.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "para_02",
+      "domain": "paradigm",
+      "difficulty": "medium",
+      "input_description": "An upright neutral face is presented for 200ms followed by a scrambled face mask",
+      "expected_elements": [
+        "Sensory-event",
+        "Visual-presentation",
+        "Face",
+        "Duration"
+      ],
+      "model_id": "openai/gpt-oss-120b",
+      "model_name": "GPT-OSS-120B",
+      "provider": "Cerebras",
+      "cli_command": "hedit annotate \"An upright neutral face is presented for 200ms followed by a scrambled face mask\" --model openai/gpt-oss-120b --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --provider Cerebras --assessment",
+      "execution_time_seconds": 5.382359981536865,
+      "full_response": {
+        "status": "success",
+        "hed_string": "(Duration/200 ms, (Sensory-event, Experimental-stimulus, Visual-presentation, (Face, (Property/Upright, Emotionally-neutral)))), (Sensory-event, Experimental-stimulus, Visual-presentation, Item/Scrambled-face-mask)",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: two sequential sensory events, both visual experimental stimuli.  \n- The first event correctly includes the face with its properties (upright, emotionally neutral) properly grouped within the object description.  \n- The second event correctly identifies the scrambled face mask as a distinct visual stimulus.  \n- Duration is appropriately attached to the first event (200 ms), reflecting the temporal specification in the original.  \n- Semantic grouping is correct: properties are nested within the relevant object, and each stimulus is clearly encapsulated.  \n- The structure allows for clear reversibility to natural language: \"An upright neutral face is presented for 200 ms, followed by a scrambled face mask.\"  \n- No critical information is missing, and there are no inaccuracies.  \n\nThis is a well-formed, faithful HED annotation.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements (face orientation, emotion, duration, scrambled face mask) are accurately captured with proper semantic grouping. Temporal sequence is implied by annotation order.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "para_03",
+      "domain": "paradigm",
+      "difficulty": "medium",
+      "input_description": "The participant reaches to grasp a cylinder placed 30 centimeters in front of them",
+      "expected_elements": [
+        "Agent-action",
+        "Reach",
+        "Grasp",
+        "Distance",
+        "Participant-response"
+      ],
+      "model_id": "openai/gpt-oss-120b",
+      "model_name": "GPT-OSS-120B",
+      "provider": "Cerebras",
+      "cli_command": "hedit annotate \"The participant reaches to grasp a cylinder placed 30 centimeters in front of them\" --model openai/gpt-oss-120b --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --provider Cerebras --assessment",
+      "execution_time_seconds": 11.37831711769104,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Agent-action, Participant-response, ((Human-agent, Experiment-participant), (Action, (Reach, (Cylinder, (In-front-of, (Human-agent, Experiment-participant)), (Distance/30 cm))), (Action, (Grab, (Cylinder, (In-front-of, (Human-agent, Experiment-participant)), (Distance/30 cm))))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 3,
+          "total_iterations": 3,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: event type (Agent-action), agent role (Experiment-participant), and key actions (Reach, Grab).  \n- The main object (Cylinder) and its spatial relationship to the participant (In-front-of) with explicit distance (Distance/30 cm) are correctly included and properly grouped.  \n- Semantic grouping is well-structured: properties and relations are nested within the appropriate object and action hierarchies, ensuring clarity and reversibility.  \n- The repeated specification of the cylinder\u2019s location in both (Reach) and (Grab) is redundant but not incorrect, as both actions target the same object in the same location. This does not impair faithfulness.  \n- Overall, the annotation is semantically precise, structurally sound, and can be reliably translated back into a natural language description matching the original.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: The annotation captures the participant, action (reach and grasp), object (cylinder), spatial relation (in front of), and distance. However, the grouping is overly complex and redundant\u2014spatial and distance modifiers are repeated for both \"Reach\" and \"Grab\" without clear necessity; they should be attached to the object or location once. Also, \"Agent-action\" and \"Participant-response\" are vague and not standard HED event tags.  \nSTATUS: NEEDS-REVIEW",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "para_04",
+      "domain": "paradigm",
+      "difficulty": "hard",
+      "input_description": "A fearful facial expression appears in the left visual field while a happy face appears on the right",
+      "expected_elements": [
+        "Sensory-event",
+        "Visual-presentation",
+        "Face",
+        "Emotion",
+        "Left",
+        "Right"
+      ],
+      "model_id": "openai/gpt-oss-120b",
+      "model_name": "GPT-OSS-120B",
+      "provider": "Cerebras",
+      "cli_command": "hedit annotate \"A fearful facial expression appears in the left visual field while a happy face appears on the right\" --model openai/gpt-oss-120b --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --provider Cerebras --assessment",
+      "execution_time_seconds": 6.754209041595459,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Experimental-stimulus, Visual-presentation, ((Fearful, Face), In-left-visual-field), ((Happy, Face), In-right-visual-field)",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 2,
+          "total_iterations": 2,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes\n\nGROUPING: correct\n\nDECISION: ACCEPT\n\nFEEDBACK:\n- The annotation accurately captures the core elements: two facial expressions as sensory events, their emotional content, spatial locations, and role as experimental stimuli.\n- Semantic grouping is correctly applied: (Fearful, Face) and (Happy, Face) are properly parenthesized to form unified objects, each paired with their respective spatial location.\n- The use of Visual-presentation and Experimental-stimulus appropriately contextualizes the event within an experimental setting.\n- The structure allows for clear reversibility: it can be naturally translated back into a description very close to the original.\n- No critical information is missing, and all key details (emotion, object type, visual field) are included with correct syntactic grouping.\n\nThis is a well-formed, faithful HED annotation.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements (fearful and happy faces, their locations) are accurately captured with proper semantic grouping. The annotation correctly links emotional expressions to faces and spatial locations.  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    },
+    {
+      "test_id": "para_05",
+      "domain": "paradigm",
+      "difficulty": "hard",
+      "input_description": "Target letters T and L embedded among distractor letters O are searched in a visual array",
+      "expected_elements": [
+        "Sensory-event",
+        "Visual-presentation",
+        "Target",
+        "Distractor",
+        "Search"
+      ],
+      "model_id": "openai/gpt-oss-120b",
+      "model_name": "GPT-OSS-120B",
+      "provider": "Cerebras",
+      "cli_command": "hedit annotate \"Target letters T and L embedded among distractor letters O are searched in a visual array\" --model openai/gpt-oss-120b --schema 8.4.0 --max-attempts 5 -o json --standalone --eval-model qwen/qwen3-235b-a22b-2507 --eval-provider Cerebras --provider Cerebras --assessment",
+      "execution_time_seconds": 5.270185947418213,
+      "full_response": {
+        "status": "success",
+        "hed_string": "Sensory-event, Experimental-stimulus, Visual-presentation, (Target, (Item/Letter, Label/T)), (Target, (Item/Letter, Label/L)), (Distractor, (Item/Letter, Label/O))",
+        "is_valid": true,
+        "validation_messages": [],
+        "metadata": {
+          "schema_version": "8.4.0",
+          "validation_attempts": 1,
+          "total_iterations": 1,
+          "is_faithful": true,
+          "is_complete": true,
+          "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: the event type (Sensory-event, Experimental-stimulus, Visual-presentation), the target letters (T and L), and the distractor (O).  \n- Semantic grouping is correctly applied: each letter type is properly grouped with its role (Target/Distractor) and labeled using (Item/Letter, Label/X), which preserves the intended meaning.  \n- The structure allows for reversibility: it can be clearly translated back into a natural language description matching the original.  \n- All important details (target vs. distractor roles, letter identities, visual nature of the task) are included in a concise and semantically correct way.  \n- No refinement is needed.",
+          "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements (target letters T/L, distractor O, visual presentation, experimental context) are accurately captured with proper semantic grouping. The structure correctly associates labels with items and roles (Target/Distractor).  \nSTATUS: COMPLETE",
+          "mode": "standalone"
+        }
+      }
+    }
+  ]
+}

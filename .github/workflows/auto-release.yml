@@ -1,0 +1,112 @@
+name: Auto Release on Main
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '.github/**'
+      - 'docs/**'
+      - '*.md'
+
+permissions:
+  contents: write
+
+jobs:
+  auto-release:
+    name: Auto Version and Release
+    runs-on: ubuntu-latest
+    # Skip if commit message already contains version bump (avoid loops)
+    if: "!contains(github.event.head_commit.message, 'Bump version to')"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get current version
+        id: current
+        run: |
+          # Extract version from pyproject.toml
+          VERSION=$(grep -m1 'version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $VERSION"
+
+      - name: Calculate new alpha version
+        id: new_version
+        run: |
+          VERSION="${{ steps.current.outputs.version }}"
+
+          # Parse version components
+          # Handles: 0.6.5.dev3, 0.6.5a1, 0.6.5.alpha1, 0.6.5
+          if [[ "$VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(\.dev[0-9]+|\.alpha[0-9]+|a[0-9]+|b[0-9]+|rc[0-9]+)?$ ]]; then
+            BASE="${BASH_REMATCH[1]}"
+            PRERELEASE="${BASH_REMATCH[2]}"
+
+            # Check if already alpha for this base version
+            LATEST_ALPHA=$(git tag -l "v${BASE}a*" | sort -V | tail -1 || echo "")
+
+            if [ -z "$LATEST_ALPHA" ]; then
+              # No alpha yet, start at a1
+              NEW_VERSION="${BASE}a1"
+            else
+              # Extract alpha number and increment
+              ALPHA_NUM=$(echo "$LATEST_ALPHA" | sed "s/v${BASE}a//")
+              NEW_ALPHA=$((ALPHA_NUM + 1))
+              NEW_VERSION="${BASE}a${NEW_ALPHA}"
+            fi
+          else
+            echo "Unexpected version format: $VERSION"
+            exit 1
+          fi
+
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+
+      - name: Update version files
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+
+          # Update pyproject.toml
+          sed -i "s/^version = .*/version = \"$NEW_VERSION\"/" pyproject.toml
+
+          # Update src/version.py
+          cat > src/version.py << 'PYEOF'
+          """Version information for HEDit."""
+
+          __version__ = "PLACEHOLDER"
+
+
+          def get_version() -> str:
+              """Return the current version string."""
+              return __version__
+          PYEOF
+          # Replace placeholder with actual version and fix indentation
+          sed -i "s/PLACEHOLDER/$NEW_VERSION/" src/version.py
+          sed -i 's/^          //' src/version.py
+
+      - name: Commit version bump
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+          git add pyproject.toml src/version.py
+          git commit -m "Bump version to $NEW_VERSION"
+          git push origin main
+
+      - name: Create and push tag
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+          git tag "v$NEW_VERSION"
+          git push origin "v$NEW_VERSION"
+          echo "Created tag: v$NEW_VERSION"

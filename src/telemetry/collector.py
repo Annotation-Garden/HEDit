@@ -8,9 +8,9 @@ from typing import Any
 from src.telemetry.schema import TelemetryEvent
 from src.telemetry.storage import TelemetryStorage
 
-# Default model blacklist (open-source models we don't want to collect)
+# Default model blacklist (models we don't want to collect telemetry for)
 DEFAULT_MODEL_BLACKLIST = [
-    "openai/gpt-oss-120b",  # Current default model
+    "openai/gpt-oss-120b",  # Legacy default model (poor quality)
 ]
 
 

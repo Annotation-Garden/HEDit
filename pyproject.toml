@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hedit"
-version = "0.6.4a1"
+version = "0.6.5.dev3"
 description = "Multi-agent system for HED annotation generation and validation"
 readme = "PKG_README.md"
 requires-python = ">=3.12"
@@ -151,7 +151,7 @@ disallow_untyped_defs = true
 
 [tool.codespell]
 # Ref: https://github.com/codespell-project/codespell#using-a-config-file
-skip = '.git*,*.svg,package-lock.json'
+skip = '.git*,.venv,*.svg,package-lock.json,examples'
 check-hidden = true
 # ignore-regex = ''
 # ignore-words-list = ''
