@@ -102,29 +102,32 @@ def create_byok_workflow(
         temperature if temperature is not None else _byok_config.get("temperature", 0.1)
     )
 
-    # Provider logic:
-    # - If user specifies a custom model, clear provider (Cerebras only works with default models)
-    # - Unless user also explicitly specifies a provider
+    # Get model configuration: user override > server env var > default
+    # Annotation model: Mistral-Small for best quality/cost balance
+    default_annotation_model = os.getenv(
+        "ANNOTATION_MODEL", "mistralai/mistral-small-3.2-24b-instruct"
+    )
+    default_annotation_provider = os.getenv("ANNOTATION_PROVIDER", "mistral")
+    # Evaluation/Assessment: Qwen3-235B via Cerebras for consistent quality checks
+    default_evaluation_model = os.getenv("EVALUATION_MODEL", "qwen/qwen3-235b-a22b-2507")
+    default_evaluation_provider = os.getenv("EVALUATION_PROVIDER", "Cerebras")
+
+    # If user provides a model, use it for annotation only (eval stays consistent)
+    annotation_model = get_model_name(model if model else default_annotation_model)
+    evaluation_model = get_model_name(default_evaluation_model)
+    assessment_model = get_model_name(default_evaluation_model)
+
+    # Provider logic for annotation model
     if provider is not None:
-        # User explicitly set provider (could be empty string to clear it)
-        provider_preference = provider if provider else None
+        annotation_provider = provider if provider else None
     elif model is not None:
         # User specified custom model but no provider → clear provider
-        # (Cerebras only works with default models)
-        provider_preference = None
+        annotation_provider = None
     else:
-        # No custom model or provider → use server defaults
-        provider_preference = _byok_config.get("provider_preference")
+        annotation_provider = default_annotation_provider
 
-    # Get model configuration: user override > server env var > default
-    default_annotation_model = os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b")
-    default_evaluation_model = os.getenv("EVALUATION_MODEL", "qwen/qwen3-235b-a22b-2507")
-    default_assessment_model = os.getenv("ASSESSMENT_MODEL", "openai/gpt-oss-120b")
-
-    # If user provides a model, use it for all agents (default override)
-    annotation_model = get_model_name(model if model else default_annotation_model)
-    evaluation_model = get_model_name(model if model else default_evaluation_model)
-    assessment_model = get_model_name(model if model else default_assessment_model)
+    # Evaluation always uses its dedicated provider (Cerebras)
+    evaluation_provider = default_evaluation_provider
 
     # Derive user ID for cache optimization (each API key gets own cache lane)
     user_id = _derive_user_id(openrouter_key)
@@ -134,21 +137,21 @@ def create_byok_workflow(
         model=annotation_model,
         api_key=openrouter_key,
         temperature=llm_temperature,
-        provider=provider_preference,
+        provider=annotation_provider,
         user_id=user_id,
     )
     evaluation_llm = create_openrouter_llm(
         model=evaluation_model,
         api_key=openrouter_key,
         temperature=llm_temperature,
-        provider=provider_preference,
+        provider=evaluation_provider,
         user_id=user_id,
     )
     assessment_llm = create_openrouter_llm(
         model=assessment_model,
         api_key=openrouter_key,
         temperature=llm_temperature,
-        provider=provider_preference,
+        provider=evaluation_provider,
         user_id=user_id,
     )
 

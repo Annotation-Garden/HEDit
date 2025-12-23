@@ -85,24 +85,34 @@ class LocalExecutionBackend(ExecutionBackend):
             temperature: LLM temperature (0.0-1.0)
             schema_dir: Optional directory with JSON schemas (None = fetch from GitHub)
         """
-        # API key is optional at init time - only required for LLM operations
+        # Import defaults from config
+        from src.cli.config import (
+            DEFAULT_EVAL_MODEL,
+            DEFAULT_EVAL_PROVIDER,
+            DEFAULT_MODEL,
+            DEFAULT_PROVIDER,
+            DEFAULT_VISION_MODEL,
+            DEFAULT_VISION_PROVIDER,
+        )
 
+        # API key is optional at init time - only required for LLM operations
         self._api_key = api_key
-        self._model = model or "openai/gpt-oss-120b"
-        self._eval_model = eval_model  # None means use same as annotation model
-        self._eval_provider = eval_provider  # Provider for eval model (e.g., Cerebras)
-        self._vision_model = vision_model or "qwen/qwen3-vl-30b-a3b-instruct"
+        self._model = model or DEFAULT_MODEL
+        self._eval_model = eval_model or DEFAULT_EVAL_MODEL
+        self._eval_provider = eval_provider or DEFAULT_EVAL_PROVIDER
+        self._vision_model = vision_model or DEFAULT_VISION_MODEL
+        self._vision_provider = DEFAULT_VISION_PROVIDER
         self._temperature = temperature
         self._schema_dir = Path(schema_dir) if schema_dir else None
 
-        # Handle provider logic: clear if custom model specified
-        # (Cerebras only works with default models)
+        # Handle provider logic for annotation model:
+        # clear if custom model specified without explicit provider
         if provider is not None:
             self._provider = provider if provider else None
-        elif model is not None and model != "openai/gpt-oss-120b":
+        elif model is not None and model != DEFAULT_MODEL:
             self._provider = None
         else:
-            self._provider = "Cerebras"
+            self._provider = DEFAULT_PROVIDER
 
         # Lazy initialization of workflow and vision agent
         self._workflow: HedAnnotationWorkflow | None = None
@@ -199,7 +209,7 @@ class LocalExecutionBackend(ExecutionBackend):
                 model=self._vision_model,
                 api_key=self._api_key,
                 temperature=0.3,  # Slightly higher for vision tasks
-                provider=self._provider,
+                provider=self._vision_provider,
                 user_id=user_id,
             )
 

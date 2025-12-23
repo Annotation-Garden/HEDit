@@ -33,10 +33,21 @@ FIRST_RUN_FILE = CONFIG_DIR / ".first_run"
 DEFAULT_API_URL = "https://api.annotation.garden/hedit"
 DEFAULT_DEV_API_URL = "https://api.annotation.garden/hedit-dev"
 
-# Default models (Cerebras-optimized)
-DEFAULT_MODEL = "openai/gpt-oss-120b"
+# Default models and providers
+# Annotation model: Mistral-Small-3.2-24B chosen based on benchmark results:
+# - 100% faithful rate, 91% complete rate
+# - Fast (13s avg), low token usage
+# - Best cost efficiency ($0.18/M output)
+DEFAULT_MODEL = "mistralai/mistral-small-3.2-24b-instruct"
+DEFAULT_PROVIDER = "mistral"
+
+# Evaluation model: Qwen3-235B for consistent quality assessment
+DEFAULT_EVAL_MODEL = "qwen/qwen3-235b-a22b-2507"
+DEFAULT_EVAL_PROVIDER = "Cerebras"
+
+# Vision model: Qwen3-VL for image descriptions
 DEFAULT_VISION_MODEL = "qwen/qwen3-vl-30b-a3b-instruct"
-DEFAULT_PROVIDER = "Cerebras"
+DEFAULT_VISION_PROVIDER = "deepinfra/fp8"
 
 
 class CredentialsConfig(BaseModel):
@@ -49,16 +60,22 @@ class ModelsConfig(BaseModel):
     """Model configuration for different agents."""
 
     default: str = Field(default=DEFAULT_MODEL, description="Default model for annotation")
+    provider: str | None = Field(
+        default=DEFAULT_PROVIDER, description="Provider for annotation model"
+    )
     evaluation: str | None = Field(
-        default=None,
-        description="Model for evaluation agent (defaults to default model if not set)",
+        default=DEFAULT_EVAL_MODEL,
+        description="Model for evaluation/assessment agents",
     )
     eval_provider: str | None = Field(
-        default=None,
-        description="Provider for evaluation model (e.g., Cerebras for qwen models)",
+        default=DEFAULT_EVAL_PROVIDER,
+        description="Provider for evaluation model (Cerebras for qwen)",
     )
     vision: str = Field(default=DEFAULT_VISION_MODEL, description="Vision model for images")
-    provider: str | None = Field(default=DEFAULT_PROVIDER, description="Provider preference")
+    vision_provider: str | None = Field(
+        default=DEFAULT_VISION_PROVIDER,
+        description="Provider for vision model (deepinfra/fp8 for qwen-vl)",
+    )
     temperature: float = Field(default=0.1, ge=0.0, le=1.0, description="Model temperature")
 
 
@@ -98,7 +115,7 @@ class TelemetryConfig(BaseModel):
 
     enabled: bool = Field(default=True, description="Enable telemetry collection")
     model_blacklist: list[str] = Field(
-        default_factory=lambda: [DEFAULT_MODEL],
+        default_factory=lambda: ["openai/gpt-oss-120b"],
         description="Models to exclude from telemetry",
     )
 
