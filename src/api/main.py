@@ -477,6 +477,9 @@ app.add_middleware(
         "X-OpenRouter-Vision-Model",  # BYOK vision model override
         "X-OpenRouter-Provider",  # BYOK provider preference
         "X-OpenRouter-Temperature",  # BYOK temperature override
+        "X-OpenRouter-Eval-Model",  # BYOK eval model override
+        "X-OpenRouter-Eval-Provider",  # BYOK eval provider override
+        "X-User-Id",  # Custom user ID for cache optimization
     ],
     max_age=3600,  # Cache preflight requests for 1 hour
 )
