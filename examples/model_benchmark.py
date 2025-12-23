@@ -44,28 +44,32 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 SCHEMA_VERSION = "8.4.0"
 MAX_VALIDATION_ATTEMPTS = 5
 
-# Models to benchmark
-# Ordered by expected cost (lowest to highest)
+# Evaluation model - used consistently across all benchmarks for fair comparison
+# This model evaluates annotation quality (is_faithful, is_complete)
+EVAL_MODEL = "qwen/qwen3-235b-a22b-2507"
+
+# Models to benchmark (from GitHub issue #64)
+# https://github.com/Annotation-Garden/HEDit/issues/64#issuecomment-3684641652
 MODELS_TO_BENCHMARK = [
-    # Current default (Cerebras - ultra fast, cheap)
+    # Baseline: Current default (Cerebras - ultra fast, cheap)
     {
         "id": "openai/gpt-oss-120b",
-        "name": "GPT-OSS-120B",
+        "name": "GPT-OSS-120B (baseline)",
         "provider": "Cerebras",
-        "category": "fast",
+        "category": "baseline",
     },
-    # Qwen large (Cerebras - fast)
+    # GPT-5.2 (OpenAI's latest)
     {
-        "id": "qwen/qwen3-235b-a22b-2507",
-        "name": "Qwen3-235B",
-        "provider": "Cerebras",
-        "category": "fast",
+        "id": "openai/gpt-5.2",
+        "name": "GPT-5.2",
+        "provider": None,
+        "category": "quality",
     },
-    # Claude Haiku (cheap, cacheable)
+    # GPT 5.1 Codex Mini
     {
-        "id": "anthropic/claude-3.5-haiku",
-        "name": "Claude Haiku 3.5",
-        "provider": None,  # OpenRouter auto-routes
+        "id": "openai/gpt-5.1-codex-mini",
+        "name": "GPT-5.1-Codex-Mini",
+        "provider": None,
         "category": "balanced",
     },
     # GPT-4o-mini (OpenAI's cheap option)
@@ -75,12 +79,33 @@ MODELS_TO_BENCHMARK = [
         "provider": None,
         "category": "balanced",
     },
-    # Claude Sonnet (high quality, cacheable)
+    # Gemini 3 Flash (Google's fast option)
     {
-        "id": "anthropic/claude-sonnet-4",
-        "name": "Claude Sonnet 4",
+        "id": "google/gemini-3-flash-preview",
+        "name": "Gemini-3-Flash",
         "provider": None,
-        "category": "quality",
+        "category": "fast",
+    },
+    # Claude Haiku 4.5 (Anthropic's fast option)
+    {
+        "id": "anthropic/claude-haiku-4.5",
+        "name": "Claude-Haiku-4.5",
+        "provider": None,
+        "category": "balanced",
+    },
+    # Mistral Small 3.2 24B
+    {
+        "id": "mistralai/mistral-small-3.2-24b-instruct",
+        "name": "Mistral-Small-3.2-24B",
+        "provider": None,
+        "category": "balanced",
+    },
+    # Nemotron 3 Nano 30B A3B (NVIDIA)
+    {
+        "id": "nvidia/nemotron-3-nano-30b-a3b",
+        "name": "Nemotron-3-Nano-30B",
+        "provider": None,
+        "category": "balanced",
     },
 ]
 
@@ -329,6 +354,7 @@ def run_hedit_annotate(
     description: str,
     model_id: str,
     provider: str | None = None,
+    eval_model: str | None = None,
     schema_version: str = "8.4.0",
     max_attempts: int = 5,
     run_assessment: bool = True,
@@ -339,6 +365,7 @@ def run_hedit_annotate(
         description: Natural language event description
         model_id: Model ID (e.g., "openai/gpt-oss-120b")
         provider: Provider preference (e.g., "Cerebras")
+        eval_model: Model for evaluation/assessment (for consistent benchmarking)
         schema_version: HED schema version
         max_attempts: Maximum validation attempts
         run_assessment: Whether to run completeness assessment
@@ -361,6 +388,9 @@ def run_hedit_annotate(
         "json",
         "--standalone",
     ]
+
+    if eval_model:
+        cmd.extend(["--eval-model", eval_model])
 
     if provider:
         cmd.extend(["--provider", provider])
@@ -403,6 +433,7 @@ def run_hedit_annotate_image(
     image_path: str,
     model_id: str,
     provider: str | None = None,
+    eval_model: str | None = None,
     schema_version: str = "8.4.0",
     max_attempts: int = 5,
     run_assessment: bool = True,
@@ -413,6 +444,7 @@ def run_hedit_annotate_image(
         image_path: Path to image file
         model_id: Model ID
         provider: Provider preference
+        eval_model: Model for evaluation/assessment (for consistent benchmarking)
         schema_version: HED schema version
         max_attempts: Maximum validation attempts
         run_assessment: Whether to run completeness assessment
@@ -435,6 +467,9 @@ def run_hedit_annotate_image(
         "json",
         "--standalone",
     ]
+
+    if eval_model:
+        cmd.extend(["--eval-model", eval_model])
 
     if provider:
         cmd.extend(["--provider", provider])
@@ -522,6 +557,7 @@ class ModelBenchmark:
                         image_path=image_path,
                         model_id=model_id,
                         provider=provider,
+                        eval_model=EVAL_MODEL,
                         schema_version=SCHEMA_VERSION,
                         max_attempts=MAX_VALIDATION_ATTEMPTS,
                         run_assessment=True,
@@ -537,6 +573,7 @@ class ModelBenchmark:
                         description=description,
                         model_id=model_id,
                         provider=provider,
+                        eval_model=EVAL_MODEL,
                         schema_version=SCHEMA_VERSION,
                         max_attempts=MAX_VALIDATION_ATTEMPTS,
                         run_assessment=True,
