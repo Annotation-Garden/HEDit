@@ -2,28 +2,34 @@
 """Model benchmark for HED annotation quality comparison.
 
 This script compares multiple LLM models on HED annotation tasks across
-different domains, using a reconstruction-based evaluation methodology.
+different domains, using the hedit CLI for reproducibility.
 
 Related GitHub Issues:
 - #64: Explore alternative candidates for the default model
 - #69: Revisit Agent Prompts (semantic grouping issues)
 
 Methodology:
-1. Generate HED annotation from natural language description
-2. Reconstruct natural language from HED annotation
-3. Compare reconstruction to original (semantic similarity)
-4. Measure validation success rate and iteration count
+1. Use `hedit annotate` CLI to generate HED annotations (reproducible)
+2. Extract is_valid, is_faithful, is_complete from JSON output
+3. Measure validation attempts and execution time
+4. Generate comparison report
 
 Test Domains (avoiding examples in prompt):
 1. Standard cognitive experiments (different stimuli than prompt examples)
 2. Animal experiments (monkey/rat reaching, navigation, reward)
 3. Image annotations (NSD dataset images)
 4. Optional paradigms (oddball, face processing, reaching)
+
+Usage:
+    python examples/model_benchmark.py                    # Run all tests
+    python examples/model_benchmark.py cognitive          # Run specific domain
+    python examples/model_benchmark.py cognitive,animal   # Run multiple domains
 """
 
-import asyncio
 import json
 import os
+import subprocess
+import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -32,10 +38,6 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
-
-from src.agents.vision_agent import VisionAgent  # noqa: E402
-from src.agents.workflow import HedAnnotationWorkflow  # noqa: E402
-from src.utils.openrouter_llm import create_openrouter_llm  # noqa: E402
 
 # Configuration
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
@@ -81,9 +83,6 @@ MODELS_TO_BENCHMARK = [
         "category": "quality",
     },
 ]
-
-# Vision model for image descriptions
-VISION_MODEL = "qwen/qwen3-vl-30b-a3b-instruct"
 
 
 # ============================================================================
@@ -267,8 +266,6 @@ PARADIGM_TESTS = [
 
 # Domain 4: Image Annotations (using NSD images)
 # Images are dynamically discovered from examples/images/ directory
-# Selection methodology: 20 images randomly sampled from NSD shared1000 dataset
-# using seed=42 for reproducibility. See README in images/ for details.
 def _discover_image_tests() -> list[TestCase]:
     """Dynamically discover image test cases from examples/images/ directory.
 
@@ -291,7 +288,7 @@ def _discover_image_tests() -> list[TestCase]:
             TestCase(
                 id=f"img_{i:02d}",
                 domain="image",
-                description=f"[VLM_DESCRIBE:{img_path.name}]",
+                description=str(img_path),  # Full path for CLI
                 expected_elements=["Sensory-event", "Visual-presentation"],
                 difficulty="hard",
                 notes=f"NSD image: {img_path.stem}",
@@ -317,215 +314,179 @@ class BenchmarkResult:
     input_description: str
     annotation: str
     is_valid: bool
-    is_faithful: bool
+    is_faithful: bool | None
+    is_complete: bool | None
     validation_attempts: int
-    validation_errors: list[str]
+    validation_messages: list[str]
     evaluation_feedback: str
+    assessment_feedback: str
     execution_time_seconds: float
-    reconstruction: str | None  # Natural language reconstruction from HED
-    reconstruction_similarity: float | None  # Semantic similarity score
+    cli_command: str  # The exact CLI command used (for reproducibility)
     error: str | None = None
 
 
-class ReconstructionEvaluator:
-    """Evaluates HED annotations by reconstructing natural language."""
+def run_hedit_annotate(
+    description: str,
+    model_id: str,
+    provider: str | None = None,
+    schema_version: str = "8.4.0",
+    max_attempts: int = 5,
+    run_assessment: bool = True,
+) -> tuple[dict, str, float]:
+    """Run hedit annotate CLI command.
 
-    def __init__(self, llm):
-        self.llm = llm
+    Args:
+        description: Natural language event description
+        model_id: Model ID (e.g., "openai/gpt-oss-120b")
+        provider: Provider preference (e.g., "Cerebras")
+        schema_version: HED schema version
+        max_attempts: Maximum validation attempts
+        run_assessment: Whether to run completeness assessment
 
-    async def reconstruct(self, hed_annotation: str) -> str:
-        """Reconstruct natural language from HED annotation.
+    Returns:
+        Tuple of (parsed JSON result, CLI command string, execution time)
+    """
+    # Build CLI command
+    cmd = [
+        "hedit",
+        "annotate",
+        description,
+        "--model",
+        model_id,
+        "--schema",
+        schema_version,
+        "--max-attempts",
+        str(max_attempts),
+        "-o",
+        "json",
+        "--standalone",
+    ]
 
-        Args:
-            hed_annotation: The HED annotation string
+    if provider:
+        cmd.extend(["--provider", provider])
 
-        Returns:
-            Natural language description
-        """
-        from langchain_core.messages import HumanMessage, SystemMessage
+    if run_assessment:
+        cmd.append("--assessment")
 
-        system_prompt = """You are an expert at reading HED (Hierarchical Event Descriptors) annotations.
+    # Command string for logging (quote the description)
+    cmd_str = " ".join(cmd[:2]) + f' "{description}"' + " " + " ".join(cmd[3:])
 
-Given a HED annotation, reconstruct a natural language description of the event.
-The description should:
-1. Be a single, clear sentence
-2. Include all key elements from the annotation
-3. Be written as if describing what happened in an experiment
+    # Run command
+    start_time = time.time()
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        env={**os.environ, "OPENROUTER_API_KEY": OPENROUTER_API_KEY or ""},
+    )
+    execution_time = time.time() - start_time
 
-Output ONLY the natural language description, nothing else."""
+    # Parse JSON from stdout (filter out workflow debug messages)
+    stdout_lines = result.stdout.strip().split("\n")
+    json_lines = [line for line in stdout_lines if not line.startswith("[WORKFLOW]")]
+    json_str = "\n".join(json_lines)
 
-        user_prompt = f"""Reconstruct a natural language description from this HED annotation:
+    try:
+        parsed = json.loads(json_str)
+    except json.JSONDecodeError as e:
+        parsed = {
+            "status": "error",
+            "error": f"JSON parse error: {e}",
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+        }
 
-{hed_annotation}
+    return parsed, cmd_str, execution_time
 
-Natural language description:"""
 
-        messages = [
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=user_prompt),
-        ]
+def run_hedit_annotate_image(
+    image_path: str,
+    model_id: str,
+    provider: str | None = None,
+    schema_version: str = "8.4.0",
+    max_attempts: int = 5,
+    run_assessment: bool = True,
+) -> tuple[dict, str, float]:
+    """Run hedit annotate-image CLI command.
 
-        response = await self.llm.ainvoke(messages)
-        return response.content.strip()
+    Args:
+        image_path: Path to image file
+        model_id: Model ID
+        provider: Provider preference
+        schema_version: HED schema version
+        max_attempts: Maximum validation attempts
+        run_assessment: Whether to run completeness assessment
 
-    async def compute_similarity(self, original: str, reconstruction: str) -> float:
-        """Compute semantic similarity between original and reconstruction.
+    Returns:
+        Tuple of (parsed JSON result, CLI command string, execution time)
+    """
+    # Build CLI command
+    cmd = [
+        "hedit",
+        "annotate-image",
+        image_path,
+        "--model",
+        model_id,
+        "--schema",
+        schema_version,
+        "--max-attempts",
+        str(max_attempts),
+        "-o",
+        "json",
+        "--standalone",
+    ]
 
-        Args:
-            original: Original natural language description
-            reconstruction: Reconstructed description from HED
+    if provider:
+        cmd.extend(["--provider", provider])
 
-        Returns:
-            Similarity score 0-1
-        """
-        from langchain_core.messages import HumanMessage, SystemMessage
+    if run_assessment:
+        cmd.append("--assessment")
 
-        system_prompt = """You are an expert at evaluating semantic similarity.
+    # Command string for logging
+    cmd_str = " ".join(cmd)
 
-Compare two event descriptions and rate their semantic similarity.
-Consider:
-1. Core event type (stimulus, response, action)
-2. Main objects and entities mentioned
-3. Key attributes (color, shape, location, timing)
-4. Relationships between elements
+    # Run command
+    start_time = time.time()
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        env={**os.environ, "OPENROUTER_API_KEY": OPENROUTER_API_KEY or ""},
+    )
+    execution_time = time.time() - start_time
 
-Rate on a scale from 0.0 to 1.0:
-- 1.0: Semantically equivalent (same meaning)
-- 0.8-0.9: Very similar (minor details differ)
-- 0.6-0.7: Similar (same core event, some details differ)
-- 0.4-0.5: Partially similar (related but missing key elements)
-- 0.2-0.3: Weakly similar (only basic overlap)
-- 0.0-0.1: Not similar (different events)
+    # Parse JSON from stdout
+    stdout_lines = result.stdout.strip().split("\n")
+    json_lines = [line for line in stdout_lines if not line.startswith("[WORKFLOW]")]
+    json_str = "\n".join(json_lines)
 
-Output ONLY a number between 0.0 and 1.0."""
+    try:
+        parsed = json.loads(json_str)
+    except json.JSONDecodeError as e:
+        parsed = {
+            "status": "error",
+            "error": f"JSON parse error: {e}",
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+        }
 
-        user_prompt = f"""Compare these two event descriptions:
-
-ORIGINAL:
-{original}
-
-RECONSTRUCTED:
-{reconstruction}
-
-Similarity score (0.0-1.0):"""
-
-        messages = [
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=user_prompt),
-        ]
-
-        response = await self.llm.ainvoke(messages)
-        try:
-            score = float(response.content.strip())
-            return max(0.0, min(1.0, score))
-        except ValueError:
-            # Try to extract a number from the response
-            import re
-
-            match = re.search(r"(\d+\.?\d*)", response.content)
-            if match:
-                return max(0.0, min(1.0, float(match.group(1))))
-            return 0.5  # Default if parsing fails
+    return parsed, cmd_str, execution_time
 
 
 class ModelBenchmark:
-    """Benchmark runner for comparing HED annotation models."""
+    """Benchmark runner for comparing HED annotation models using CLI."""
 
-    def __init__(
-        self,
-        api_key: str,
-        schema_dir: Path,
-        output_dir: Path | None = None,
-    ):
-        self.api_key = api_key
-        self.schema_dir = schema_dir
-        self.output_dir = output_dir or Path("benchmark_results")
+    def __init__(self, output_dir: Path | None = None):
+        self.output_dir = output_dir or Path(__file__).parent / "benchmark_results"
         self.output_dir.mkdir(exist_ok=True)
         self.results: list[BenchmarkResult] = []
 
-        # Create evaluator LLM (use a reliable model)
-        self.evaluator_llm = create_openrouter_llm(
-            model="anthropic/claude-3.5-haiku",
-            api_key=api_key,
-            temperature=0.1,
-        )
-        self.reconstruction_evaluator = ReconstructionEvaluator(self.evaluator_llm)
-
-        # Vision agent for image descriptions
-        self.vision_agent = None
-
-    async def _get_image_description(self, image_path: str) -> str:
-        """Get description of an image using VLM.
-
-        Args:
-            image_path: Path to image file (relative to examples/)
-
-        Returns:
-            Natural language description of the image
-        """
-        if self.vision_agent is None:
-            vision_llm = create_openrouter_llm(
-                model=VISION_MODEL,
-                api_key=self.api_key,
-                temperature=0.1,
-                provider="Cerebras",
-            )
-            self.vision_agent = VisionAgent(llm=vision_llm)
-
-        # Construct full path (images are in examples/images/)
-        images_dir = Path(__file__).parent / "images"
-        full_path = images_dir / image_path
-
-        if not full_path.exists():
-            return f"[Image not found: {image_path}]"
-
-        # Read and encode image
-        import base64
-
-        with open(full_path, "rb") as f:
-            image_data = base64.b64encode(f.read()).decode()
-
-        # Create data URI
-        suffix = full_path.suffix.lower()
-        mime_type = "image/jpeg" if suffix in [".jpg", ".jpeg"] else "image/png"
-        data_uri = f"data:{mime_type};base64,{image_data}"
-
-        # Get description
-        result = await self.vision_agent.describe_image(
-            image_data=data_uri,
-            prompt="Describe what you see in this image as if it were an experimental stimulus. "
-            "Focus on: main objects, their colors, positions, actions, and any notable features. "
-            "Be specific and objective. Maximum 100 words.",
-        )
-
-        return result.get("description", "[Failed to describe image]")
-
-    async def _process_test_description(self, test_case: TestCase) -> str:
-        """Process test description, handling VLM placeholders.
-
-        Args:
-            test_case: The test case
-
-        Returns:
-            Processed description string
-        """
-        description = test_case.description
-
-        # Check for VLM placeholder
-        if description.startswith("[VLM_DESCRIBE:"):
-            # Extract image path
-            image_path = description[14:-1]  # Remove [VLM_DESCRIBE: and ]
-            description = await self._get_image_description(image_path)
-            print(f"    VLM description: {description[:100]}...")
-
-        return description
-
-    async def benchmark_model(
+    def benchmark_model(
         self,
         model_config: dict,
         test_cases: list[TestCase],
     ) -> list[BenchmarkResult]:
-        """Run benchmark for a single model.
+        """Run benchmark for a single model using CLI.
 
         Args:
             model_config: Model configuration dict
@@ -544,62 +505,66 @@ class ModelBenchmark:
 
         results = []
 
-        # Create LLM for this model
-        annotation_llm = create_openrouter_llm(
-            model=model_id,
-            api_key=self.api_key,
-            temperature=0.1,
-            provider=provider,
-        )
-
-        # Create workflow
-        workflow = HedAnnotationWorkflow(
-            llm=annotation_llm,
-            evaluation_llm=self.evaluator_llm,  # Use consistent evaluator
-            assessment_llm=annotation_llm,
-            feedback_llm=annotation_llm,
-            schema_dir=self.schema_dir,
-            validator_path=None,
-            use_js_validator=False,
-        )
-
         for test_case in test_cases:
             print(f"\n  Test: {test_case.id} ({test_case.domain})")
             print(f"    Difficulty: {test_case.difficulty}")
 
             try:
-                # Process description (handle VLM placeholders)
-                description = await self._process_test_description(test_case)
-                print(f"    Description: {description[:80]}...")
+                # Determine if this is an image test
+                is_image_test = test_case.domain == "image"
 
-                # Run annotation
-                start_time = time.time()
-                result = await workflow.run(
-                    input_description=description,
-                    schema_version=SCHEMA_VERSION,
-                    max_validation_attempts=MAX_VALIDATION_ATTEMPTS,
-                    run_assessment=False,
+                if is_image_test:
+                    # Use annotate-image for image tests
+                    image_path = test_case.description
+                    print(f"    Image: {Path(image_path).name}")
+
+                    parsed, cmd_str, exec_time = run_hedit_annotate_image(
+                        image_path=image_path,
+                        model_id=model_id,
+                        provider=provider,
+                        schema_version=SCHEMA_VERSION,
+                        max_attempts=MAX_VALIDATION_ATTEMPTS,
+                        run_assessment=True,
+                    )
+                    # For image tests, get the description from the result
+                    description = parsed.get("description", f"[Image: {Path(image_path).name}]")
+                else:
+                    # Use annotate for text tests
+                    description = test_case.description
+                    print(f"    Description: {description[:80]}...")
+
+                    parsed, cmd_str, exec_time = run_hedit_annotate(
+                        description=description,
+                        model_id=model_id,
+                        provider=provider,
+                        schema_version=SCHEMA_VERSION,
+                        max_attempts=MAX_VALIDATION_ATTEMPTS,
+                        run_assessment=True,
+                    )
+
+                # Extract results from JSON
+                metadata = parsed.get("metadata", {})
+                annotation = parsed.get("hed_string", "")
+                is_valid = parsed.get("is_valid", False)
+                is_faithful = metadata.get("is_faithful")
+                is_complete = metadata.get("is_complete")
+                validation_attempts = metadata.get("validation_attempts", 0)
+                validation_messages = parsed.get("validation_messages", [])
+                evaluation_feedback = metadata.get("evaluation_feedback", "")
+                assessment_feedback = metadata.get("assessment_feedback", "")
+
+                print(
+                    f"    Annotation: {annotation[:80]}..."
+                    if annotation
+                    else "    Annotation: [empty]"
                 )
-                execution_time = time.time() - start_time
+                print(f"    Valid: {is_valid}, Faithful: {is_faithful}, Complete: {is_complete}")
+                print(f"    Attempts: {validation_attempts}, Time: {exec_time:.2f}s")
 
-                annotation = result["current_annotation"]
-                print(f"    Annotation: {annotation[:80]}...")
-                print(f"    Valid: {result['is_valid']}, Faithful: {result['is_faithful']}")
-                print(f"    Attempts: {result['validation_attempts']}, Time: {execution_time:.2f}s")
-
-                # Reconstruction evaluation
-                reconstruction = None
-                similarity = None
-                if result["is_valid"]:
-                    try:
-                        reconstruction = await self.reconstruction_evaluator.reconstruct(annotation)
-                        similarity = await self.reconstruction_evaluator.compute_similarity(
-                            description, reconstruction
-                        )
-                        print(f"    Reconstruction: {reconstruction[:80]}...")
-                        print(f"    Similarity: {similarity:.2f}")
-                    except Exception as e:
-                        print(f"    Reconstruction failed: {e}")
+                error = None
+                if parsed.get("status") == "error":
+                    error = parsed.get("error", "Unknown error")
+                    print(f"    ERROR: {error}")
 
                 results.append(
                     BenchmarkResult(
@@ -609,14 +574,16 @@ class ModelBenchmark:
                         domain=test_case.domain,
                         input_description=description,
                         annotation=annotation,
-                        is_valid=result["is_valid"],
-                        is_faithful=result["is_faithful"],
-                        validation_attempts=result["validation_attempts"],
-                        validation_errors=result.get("validation_errors", []),
-                        evaluation_feedback=result.get("evaluation_feedback", ""),
-                        execution_time_seconds=execution_time,
-                        reconstruction=reconstruction,
-                        reconstruction_similarity=similarity,
+                        is_valid=is_valid,
+                        is_faithful=is_faithful,
+                        is_complete=is_complete,
+                        validation_attempts=validation_attempts,
+                        validation_messages=validation_messages,
+                        evaluation_feedback=evaluation_feedback,
+                        assessment_feedback=assessment_feedback,
+                        execution_time_seconds=exec_time,
+                        cli_command=cmd_str,
+                        error=error,
                     )
                 )
 
@@ -635,20 +602,21 @@ class ModelBenchmark:
                         input_description=test_case.description,
                         annotation="",
                         is_valid=False,
-                        is_faithful=False,
+                        is_faithful=None,
+                        is_complete=None,
                         validation_attempts=0,
-                        validation_errors=[],
+                        validation_messages=[],
                         evaluation_feedback="",
+                        assessment_feedback="",
                         execution_time_seconds=0,
-                        reconstruction=None,
-                        reconstruction_similarity=None,
+                        cli_command="",
                         error=str(e),
                     )
                 )
 
         return results
 
-    async def run_full_benchmark(
+    def run_full_benchmark(
         self,
         models: list[dict] | None = None,
         test_cases: list[TestCase] | None = None,
@@ -669,7 +637,7 @@ class ModelBenchmark:
             test_cases = [tc for tc in test_cases if tc.domain in domains]
 
         print(f"\n{'#' * 80}")
-        print("# HED MODEL BENCHMARK")
+        print("# HED MODEL BENCHMARK (CLI-based)")
         print(f"# Date: {datetime.now().isoformat()}")
         print(f"# Models: {len(models)}")
         print(f"# Test Cases: {len(test_cases)}")
@@ -677,7 +645,7 @@ class ModelBenchmark:
         print(f"{'#' * 80}")
 
         for model_config in models:
-            model_results = await self.benchmark_model(model_config, test_cases)
+            model_results = self.benchmark_model(model_config, test_cases)
             self.results.extend(model_results)
 
         # Save results
@@ -703,12 +671,13 @@ class ModelBenchmark:
                     "annotation": r.annotation,
                     "is_valid": r.is_valid,
                     "is_faithful": r.is_faithful,
+                    "is_complete": r.is_complete,
                     "validation_attempts": r.validation_attempts,
-                    "validation_errors": r.validation_errors,
+                    "validation_messages": r.validation_messages,
                     "evaluation_feedback": r.evaluation_feedback,
+                    "assessment_feedback": r.assessment_feedback,
                     "execution_time_seconds": r.execution_time_seconds,
-                    "reconstruction": r.reconstruction,
-                    "reconstruction_similarity": r.reconstruction_similarity,
+                    "cli_command": r.cli_command,
                     "error": r.error,
                 }
             )
@@ -740,9 +709,9 @@ class ModelBenchmark:
                     "total": 0,
                     "valid": 0,
                     "faithful": 0,
+                    "complete": 0,
                     "total_attempts": 0,
                     "total_time": 0.0,
-                    "similarities": [],
                     "errors": 0,
                     "by_domain": {},
                 }
@@ -751,10 +720,9 @@ class ModelBenchmark:
             stats["total"] += 1
             stats["valid"] += 1 if r.is_valid else 0
             stats["faithful"] += 1 if r.is_faithful else 0
+            stats["complete"] += 1 if r.is_complete else 0
             stats["total_attempts"] += r.validation_attempts
             stats["total_time"] += r.execution_time_seconds
-            if r.reconstruction_similarity is not None:
-                stats["similarities"].append(r.reconstruction_similarity)
             if r.error:
                 stats["errors"] += 1
 
@@ -764,14 +732,13 @@ class ModelBenchmark:
                     "total": 0,
                     "valid": 0,
                     "faithful": 0,
-                    "similarities": [],
+                    "complete": 0,
                 }
             domain_stats = stats["by_domain"][r.domain]
             domain_stats["total"] += 1
             domain_stats["valid"] += 1 if r.is_valid else 0
             domain_stats["faithful"] += 1 if r.is_faithful else 0
-            if r.reconstruction_similarity is not None:
-                domain_stats["similarities"].append(r.reconstruction_similarity)
+            domain_stats["complete"] += 1 if r.is_complete else 0
 
         # Generate markdown report
         report_lines = [
@@ -783,24 +750,20 @@ class ModelBenchmark:
             "",
             "## Summary",
             "",
-            "| Model | Valid Rate | Faithful Rate | Avg Similarity | Avg Attempts | Avg Time | Errors |",
-            "|-------|------------|---------------|----------------|--------------|----------|--------|",
+            "| Model | Valid | Faithful | Complete | Avg Attempts | Avg Time | Errors |",
+            "|-------|-------|----------|----------|--------------|----------|--------|",
         ]
 
         for model_name, stats in model_stats.items():
             valid_rate = stats["valid"] / stats["total"] * 100 if stats["total"] > 0 else 0
             faithful_rate = stats["faithful"] / stats["total"] * 100 if stats["total"] > 0 else 0
-            avg_sim = (
-                sum(stats["similarities"]) / len(stats["similarities"])
-                if stats["similarities"]
-                else 0
-            )
+            complete_rate = stats["complete"] / stats["total"] * 100 if stats["total"] > 0 else 0
             avg_attempts = stats["total_attempts"] / stats["total"] if stats["total"] > 0 else 0
             avg_time = stats["total_time"] / stats["total"] if stats["total"] > 0 else 0
 
             report_lines.append(
-                f"| {model_name} | {valid_rate:.1f}% | {faithful_rate:.1f}% | "
-                f"{avg_sim:.2f} | {avg_attempts:.1f} | {avg_time:.1f}s | {stats['errors']} |"
+                f"| {model_name} | {valid_rate:.0f}% | {faithful_rate:.0f}% | "
+                f"{complete_rate:.0f}% | {avg_attempts:.1f} | {avg_time:.1f}s | {stats['errors']} |"
             )
 
         report_lines.extend(
@@ -817,8 +780,8 @@ class ModelBenchmark:
                 [
                     f"### {domain.title()}",
                     "",
-                    "| Model | Valid Rate | Faithful Rate | Avg Similarity |",
-                    "|-------|------------|---------------|----------------|",
+                    "| Model | Valid | Faithful | Complete |",
+                    "|-------|-------|----------|----------|",
                 ]
             )
 
@@ -827,11 +790,9 @@ class ModelBenchmark:
                     d = stats["by_domain"][domain]
                     valid_rate = d["valid"] / d["total"] * 100 if d["total"] > 0 else 0
                     faithful_rate = d["faithful"] / d["total"] * 100 if d["total"] > 0 else 0
-                    avg_sim = (
-                        sum(d["similarities"]) / len(d["similarities"]) if d["similarities"] else 0
-                    )
+                    complete_rate = d["complete"] / d["total"] * 100 if d["total"] > 0 else 0
                     report_lines.append(
-                        f"| {model_name} | {valid_rate:.1f}% | {faithful_rate:.1f}% | {avg_sim:.2f} |"
+                        f"| {model_name} | {valid_rate:.0f}% | {faithful_rate:.0f}% | {complete_rate:.0f}% |"
                     )
 
             report_lines.append("")
@@ -854,28 +815,55 @@ class ModelBenchmark:
                     "",
                     f"**Annotation**: `{r.annotation}`",
                     "",
-                    f"**Valid**: {r.is_valid} | **Faithful**: {r.is_faithful} | "
+                    f"**Valid**: {r.is_valid} | **Faithful**: {r.is_faithful} | **Complete**: {r.is_complete}",
                     f"**Attempts**: {r.validation_attempts} | **Time**: {r.execution_time_seconds:.2f}s",
+                    "",
+                    "**CLI Command**:",
+                    "```bash",
+                    f"{r.cli_command}",
+                    "```",
                     "",
                 ]
             )
 
-            if r.reconstruction:
+            if r.evaluation_feedback:
+                # Truncate long feedback
+                feedback = (
+                    r.evaluation_feedback[:500] + "..."
+                    if len(r.evaluation_feedback) > 500
+                    else r.evaluation_feedback
+                )
                 report_lines.extend(
                     [
-                        f"**Reconstruction**: {r.reconstruction}",
-                        f"**Similarity**: {r.reconstruction_similarity:.2f}"
-                        if r.reconstruction_similarity
-                        else "",
+                        "**Evaluation Feedback**:",
+                        "```",
+                        f"{feedback}",
+                        "```",
                         "",
                     ]
                 )
 
-            if r.validation_errors:
+            if r.assessment_feedback:
+                feedback = (
+                    r.assessment_feedback[:500] + "..."
+                    if len(r.assessment_feedback) > 500
+                    else r.assessment_feedback
+                )
                 report_lines.extend(
                     [
-                        "**Validation Errors**:",
-                        *[f"- {e}" for e in r.validation_errors[:5]],
+                        "**Assessment Feedback**:",
+                        "```",
+                        f"{feedback}",
+                        "```",
+                        "",
+                    ]
+                )
+
+            if r.validation_messages:
+                report_lines.extend(
+                    [
+                        "**Validation Messages**:",
+                        *[f"- {m}" for m in r.validation_messages[:5]],
                         "",
                     ]
                 )
@@ -893,42 +881,27 @@ class ModelBenchmark:
         print(f"Report saved to: {report_file}")
 
 
-async def main():
+def main():
     """Run the benchmark."""
     if not OPENROUTER_API_KEY:
         print("ERROR: OPENROUTER_API_KEY not set")
-        return
-
-    # Schema directory
-    schema_dir = Path.home() / "Documents/git/HED/hed-schemas/schemas_latest_json"
-    if not schema_dir.exists():
-        # Try alternative path
-        schema_dir = Path.home() / "git/hed-schemas/schemas_latest_json"
-
-    if not schema_dir.exists():
-        print(f"ERROR: Schema directory not found: {schema_dir}")
-        return
+        print("Run 'hedit init' or set the environment variable")
+        sys.exit(1)
 
     # Output directory
     output_dir = Path(__file__).parent / "benchmark_results"
 
     # Create and run benchmark
-    benchmark = ModelBenchmark(
-        api_key=OPENROUTER_API_KEY,
-        schema_dir=schema_dir,
-        output_dir=output_dir,
-    )
+    benchmark = ModelBenchmark(output_dir=output_dir)
 
     # Run with optional domain filter
-    import sys
-
     domains = None
     if len(sys.argv) > 1:
         domains = sys.argv[1].split(",")
         print(f"Filtering to domains: {domains}")
 
-    await benchmark.run_full_benchmark(domains=domains)
+    benchmark.run_full_benchmark(domains=domains)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
