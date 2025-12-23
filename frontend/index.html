@@ -928,8 +928,8 @@
             opacity: 1;
         }
 
-        /* Model Info & Telemetry Notice - fixed at absolute bottom */
-        .model-info {
+        /* Telemetry & Model Info Notice - fixed at absolute bottom */
+        .telemetry-notice {
             display: flex;
             align-items: baseline;
             justify-content: center;
@@ -943,16 +943,7 @@
             margin: 0;
         }
 
-        .model-info a {
-            color: var(--text-secondary);
-            text-decoration: none;
-        }
-
-        .model-info a:hover {
-            text-decoration: underline;
-        }
-
-        .telemetry-notice {
+        .model-info {
             display: flex;
             align-items: baseline;
             justify-content: center;
@@ -963,6 +954,15 @@
             background: var(--bg-tertiary);
             transition: all 0.3s ease;
             margin: 0;
+        }
+
+        .model-info a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .model-info a:hover {
+            text-decoration: underline;
         }
 
         .telemetry-notice a {
@@ -1197,10 +1197,7 @@ Example: A red circle appears on the left side of the screen and the participant
         </div>
     </div>
 
-    <!-- Model Info & Telemetry Notice - outside container for absolute bottom positioning -->
-    <div class="model-info">
-        <span>Models: <a href="https://openrouter.ai/mistralai/mistral-small-3.2-24b-instruct" target="_blank" rel="noopener noreferrer">Mistral-Small-3.2</a> (annotation) · <a href="https://openrouter.ai/qwen/qwen3-vl-30b-a3b-instruct" target="_blank" rel="noopener noreferrer">Qwen3-VL-30B</a> (vision) · <a href="https://openrouter.ai/qwen/qwen3-235b-a22b-2507" target="_blank" rel="noopener noreferrer">Qwen3-235B</a> (evaluation) · To change models or use programmatically, install <a href="https://pypi.org/project/hedit/" target="_blank" rel="noopener noreferrer">HEDit CLI</a></span>
-    </div>
+    <!-- Telemetry & Model Info Notice - outside container for absolute bottom positioning -->
     <div class="telemetry-notice">
         <span>Annotations may be recorded to improve the service.</span>
         <label class="telemetry-toggle" title="Toggle telemetry collection">
@@ -1208,6 +1205,9 @@ Example: A red circle appears on the left side of the screen and the participant
             <span class="telemetry-toggle-label">Allow</span>
         </label>
         <a href="https://docs.annotation.garden/projects/hedit/telemetry" target="_blank" rel="noopener noreferrer" title="Learn more about telemetry">Learn more</a>
+    </div>
+    <div class="model-info">
+        <span>Models: <a href="https://openrouter.ai/mistralai/mistral-small-3.2-24b-instruct" target="_blank" rel="noopener noreferrer">Mistral-Small-3.2</a> (annotation) · <a href="https://openrouter.ai/qwen/qwen3-vl-30b-a3b-instruct" target="_blank" rel="noopener noreferrer">Qwen3-VL-30B</a> (vision) · <a href="https://openrouter.ai/qwen/qwen3-235b-a22b-2507" target="_blank" rel="noopener noreferrer">Qwen3-235B</a> (evaluation) · To change models or use programmatically, install <a href="https://pypi.org/project/hedit/" target="_blank" rel="noopener noreferrer">HEDit CLI</a></span>
     </div>
 
     <script src="config.js"></script>
