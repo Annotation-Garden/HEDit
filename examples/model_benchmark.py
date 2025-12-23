@@ -290,43 +290,10 @@ PARADIGM_TESTS = [
 ]
 
 
-# Domain 4: Image Annotations (using NSD images)
-# Images are dynamically discovered from examples/images/ directory
-def _discover_image_tests() -> list[TestCase]:
-    """Dynamically discover image test cases from examples/images/ directory.
+# Note: Image benchmarking is handled separately by image_benchmark.py
+# This script focuses on text-based annotation benchmarking only.
 
-    Returns:
-        List of TestCase objects for each image found
-    """
-    images_dir = Path(__file__).parent / "images"
-    if not images_dir.exists():
-        return []
-
-    image_tests = []
-    image_files = sorted(
-        list(images_dir.glob("*.jpg"))
-        + list(images_dir.glob("*.jpeg"))
-        + list(images_dir.glob("*.png"))
-    )
-
-    for i, img_path in enumerate(image_files, 1):
-        image_tests.append(
-            TestCase(
-                id=f"img_{i:02d}",
-                domain="image",
-                description=str(img_path),  # Full path for CLI
-                expected_elements=["Sensory-event", "Visual-presentation"],
-                difficulty="hard",
-                notes=f"NSD image: {img_path.stem}",
-            )
-        )
-
-    return image_tests
-
-
-IMAGE_TESTS = _discover_image_tests()
-
-ALL_TEST_CASES = COGNITIVE_TESTS + ANIMAL_TESTS + PARADIGM_TESTS + IMAGE_TESTS
+ALL_TEST_CASES = COGNITIVE_TESTS + ANIMAL_TESTS + PARADIGM_TESTS
 
 
 @dataclass
@@ -459,114 +426,6 @@ def run_hedit_annotate(
     return parsed, cmd_str, execution_time
 
 
-def run_hedit_annotate_image(
-    image_path: str,
-    model_id: str,
-    provider: str | None = None,
-    eval_model: str | None = None,
-    eval_provider: str | None = None,
-    schema_version: str = "8.4.0",
-    max_attempts: int = 5,
-    run_assessment: bool = True,
-) -> tuple[dict, str, float]:
-    """Run hedit annotate-image CLI command.
-
-    Args:
-        image_path: Path to image file
-        model_id: Model ID
-        provider: Provider preference
-        eval_model: Model for evaluation/assessment (for consistent benchmarking)
-        eval_provider: Provider for evaluation model (e.g., "Cerebras")
-        schema_version: HED schema version
-        max_attempts: Maximum validation attempts
-        run_assessment: Whether to run completeness assessment
-
-    Returns:
-        Tuple of (parsed JSON result, CLI command string, execution time)
-    """
-    # Build CLI command
-    cmd = [
-        "hedit",
-        "annotate-image",
-        image_path,
-        "--model",
-        model_id,
-        "--schema",
-        schema_version,
-        "--max-attempts",
-        str(max_attempts),
-        "-o",
-        "json",
-        "--standalone",
-    ]
-
-    if eval_model:
-        cmd.extend(["--eval-model", eval_model])
-
-    if eval_provider:
-        cmd.extend(["--eval-provider", eval_provider])
-
-    if provider:
-        cmd.extend(["--provider", provider])
-
-    if run_assessment:
-        cmd.append("--assessment")
-
-    # Command string for logging
-    cmd_str = " ".join(cmd)
-
-    # Run command
-    start_time = time.time()
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        env={**os.environ, "OPENROUTER_API_KEY": OPENROUTER_API_KEY or ""},
-    )
-    execution_time = time.time() - start_time
-
-    # Parse JSON from stdout (filter out debug messages and find JSON block)
-    stdout_lines = result.stdout.strip().split("\n")
-
-    # Filter out known noise patterns
-    filtered_lines = []
-    for line in stdout_lines:
-        # Skip workflow debug messages
-        if line.startswith("[WORKFLOW]"):
-            continue
-        # Skip LiteLLM provider warnings (contain ANSI codes)
-        if "Provider List" in line or "\x1b[" in line:
-            continue
-        # Skip empty lines at the start
-        if not filtered_lines and not line.strip():
-            continue
-        filtered_lines.append(line)
-
-    # Find the JSON block (starts with '{')
-    json_start = None
-    for i, line in enumerate(filtered_lines):
-        if line.strip().startswith("{"):
-            json_start = i
-            break
-
-    if json_start is not None:
-        json_str = "\n".join(filtered_lines[json_start:])
-    else:
-        json_str = "\n".join(filtered_lines)
-
-    try:
-        parsed = json.loads(json_str)
-    except json.JSONDecodeError as e:
-        parsed = {
-            "status": "error",
-            "error": f"JSON parse error: {e}",
-            "stdout": result.stdout,
-            "stderr": result.stderr,
-        }
-
-    return parsed, cmd_str, execution_time
-
-
 class ModelBenchmark:
     """Benchmark runner for comparing HED annotation models using CLI."""
 
@@ -641,41 +500,19 @@ class ModelBenchmark:
             print(f"    Difficulty: {test_case.difficulty}")
 
             try:
-                # Determine if this is an image test
-                is_image_test = test_case.domain == "image"
+                description = test_case.description
+                print(f"    Description: {description[:80]}...")
 
-                if is_image_test:
-                    # Use annotate-image for image tests
-                    image_path = test_case.description
-                    print(f"    Image: {Path(image_path).name}")
-
-                    parsed, cmd_str, exec_time = run_hedit_annotate_image(
-                        image_path=image_path,
-                        model_id=model_id,
-                        provider=provider,
-                        eval_model=EVAL_MODEL,
-                        eval_provider=EVAL_PROVIDER,
-                        schema_version=SCHEMA_VERSION,
-                        max_attempts=MAX_VALIDATION_ATTEMPTS,
-                        run_assessment=True,
-                    )
-                    # For image tests, get the description from the result
-                    description = parsed.get("description", f"[Image: {Path(image_path).name}]")
-                else:
-                    # Use annotate for text tests
-                    description = test_case.description
-                    print(f"    Description: {description[:80]}...")
-
-                    parsed, cmd_str, exec_time = run_hedit_annotate(
-                        description=description,
-                        model_id=model_id,
-                        provider=provider,
-                        eval_model=EVAL_MODEL,
-                        eval_provider=EVAL_PROVIDER,
-                        schema_version=SCHEMA_VERSION,
-                        max_attempts=MAX_VALIDATION_ATTEMPTS,
-                        run_assessment=True,
-                    )
+                parsed, cmd_str, exec_time = run_hedit_annotate(
+                    description=description,
+                    model_id=model_id,
+                    provider=provider,
+                    eval_model=EVAL_MODEL,
+                    eval_provider=EVAL_PROVIDER,
+                    schema_version=SCHEMA_VERSION,
+                    max_attempts=MAX_VALIDATION_ATTEMPTS,
+                    run_assessment=True,
+                )
 
                 # Extract results from JSON
                 metadata = parsed.get("metadata", {})
