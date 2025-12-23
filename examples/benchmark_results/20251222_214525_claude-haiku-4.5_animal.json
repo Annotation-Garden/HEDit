@@ -34,7 +34,7 @@
           "validation_attempts": 3,
           "total_iterations": 3,
           "is_faithful": true,
-          "is_complete": false,
+          "is_complete": true,
           "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: event type (Agent-action, Outcome), main agent (Animal/Macaque), key action (Reach), target stimulus (Target on touchscreen), and outcome (juice reward).  \n- Semantic grouping is correctly applied: the macaque is properly grouped as (Animal-agent, Animal/Macaque), the action structure nests Reach with its target, and the reward is appropriately structured as (Reward, (Juice, Liquid-reward)).  \n- Task roles are well-specified: Participant-response and Experimental-stimulus are used appropriately.  \n- The structure supports reversibility: it can be translated back into a natural language description very close to the original.  \n- No critical information is missing, and optional enhancements (e.g., touchscreen context) are reasonably included.  \n\nOverall, this is a well-formed, faithful HED annotation.",
           "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: Most key elements are present, but grouping is inconsistent; \"Agent-action\" and \"Participant-response\" are vague labels not tied to structure, and \"Outcome\" is a category, not a relation. The reward structure (Juice, Liquid-reward) lacks proper nesting under Reward.  \nSTATUS: NEEDS-REVIEW",
           "mode": "standalone"
@@ -67,7 +67,7 @@
           "validation_attempts": 1,
           "total_iterations": 1,
           "is_faithful": true,
-          "is_complete": false,
+          "is_complete": true,
           "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: event type (Agent-action), main agent (Animal/Rat), and two key actions (Navigate, Turn).  \n- Semantic grouping is correct: the rat is properly associated with both actions, and modifiers are appropriately nested (e.g., (Virtual-reality, Maze), (Left, Choice-point)).  \n- The structure clearly represents that the rat (as an animal agent) performs two sequential actions\u2014navigating a virtual reality maze and turning left at the choice point.  \n- All explicitly mentioned details (virtual reality, T-maze implied as maze, left turn, choice point) are represented with reasonable abstraction.  \n- The annotation is both semantically precise and reversible\u2014can be translated back into a natural language description very close to the original.  \n\nNo refinement needed.",
           "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: The annotation captures the rat as agent, navigation through a virtual reality T-maze, and turning left at the choice point. However, \"T-maze\" is not explicitly represented\u2014only \"Maze\" is used, losing specificity. Also, \"Virtual-reality\" should be grouped with \"Maze\" as (Maze, (Virtual-reality), (T-type)) or similar for accuracy and clarity.  \nSTATUS: NEEDS-REVIEW",
           "mode": "standalone"
@@ -99,7 +99,7 @@
           "validation_attempts": 1,
           "total_iterations": 1,
           "is_faithful": true,
-          "is_complete": false,
+          "is_complete": true,
           "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: event type (Agent-action), agent (Animal-agent, Rhesus monkey), action (Grasp), object (Pellet), and manner (Precision-grip involving Thumb and Index-finger).  \n- Semantic grouping is correct: the agent is properly nested, and the components of the precision grip are appropriately grouped under the action.  \n- The structure allows for clear reversibility: it can be translated back into a natural language description very close to the original.  \n- All key details (species, action, object, grip type, fingers used) are included in a semantically precise and correctly structured way.  \nNo refinement needed.",
           "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: The annotation captures all key elements (rhesus monkey, pellet, precision grip, thumb and index finger), but the grouping of \"Precision-grip\" as a modifier of \"Pellet\" is incorrect; it should describe the *manner* of grasp, not a property of the pellet. Correct structure would be (Grasp, (Pellet), (Precision-grip, (Thumb, Index-finger))).  \nSTATUS: NEEDS-REVIEW",
           "mode": "standalone"
@@ -132,7 +132,7 @@
           "validation_attempts": 3,
           "total_iterations": 3,
           "is_faithful": true,
-          "is_complete": false,
+          "is_complete": true,
           "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: event type (Agent-action, Sensory-event), main agent (Mouse), key action (Incorrect lever press), and the aversive tactile stimulus (Air-puff to whiskers).  \n- Semantic grouping is correctly applied:  \n  - ((Animal-agent, Animal/Mouse), (Press, Lever), Incorrect) properly links the agent, action, and modifier.  \n  - ((Air-puff, (Applied-to, Whiskers))) correctly groups the stimulus with its spatial/target relation.  \n- Key details like \"after incorrect lever press\" are implied via sequence and \"Delay\", which is reasonable in HED\u2019s event-based structure.  \n- \"Aversive-stimulus\" and \"Tactile-presentation\" appropriately categorize the air puff.  \n- The annotation is both semantically precise and structurally sound. It passes the reversibility test, translating clearly back to the original description.",
           "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: Most key elements are present, but grouping is inconsistent; \"Incorrect\" should be grouped with \"Press\" as (Incorrect, (Press, Lever)), and \"Delay\" lacks temporal relation to events. \"Tactile-presentation\" and \"Aversive-stimulus\" should be linked to \"Air-puff\" for clarity.  \nSTATUS: NEEDS-REVIEW",
           "mode": "standalone"
@@ -165,7 +165,7 @@
           "validation_attempts": 1,
           "total_iterations": 1,
           "is_faithful": true,
-          "is_complete": false,
+          "is_complete": true,
           "evaluation_feedback": "FAITHFUL: yes\n\nGROUPING: correct\n\nDECISION: ACCEPT\n\nFEEDBACK:\nThe HED annotation accurately captures the core elements of the event:\n- Event type is correctly identified as Agent-action with Participant-response\n- The agent (Animal/Marmoset) is properly specified within an Animal-agent role\n- The action (Vocalize) is appropriately linked to the stimulus\n- The causal relationship \u2014 vocalizing *in response to* a playback \u2014 is well represented through (Associated-with, (Sensory-event, ...))\n- The auditory stimulus is detailed with correct nesting: a phee call (Label/Phee-call) presented as a vocalized sound\n\nSemantic grouping is correct: object-role assignments and stimulus-response structure are properly nested. The annotation would survive the reversibility test \u2014 translating it back yields a description very close to the original.\n\nNo refinement is needed. This is a clear, semantically precise, and well-structured HED annotation.",
           "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures the agent (marmoset), action (vocalize), and response context (playback of phee call) with correct semantic grouping, including auditory stimulus and conspecific vocalization.  \nSTATUS: COMPLETE",
           "mode": "standalone"

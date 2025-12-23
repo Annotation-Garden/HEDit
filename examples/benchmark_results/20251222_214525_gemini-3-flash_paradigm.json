@@ -32,7 +32,7 @@
           "validation_attempts": 1,
           "total_iterations": 1,
           "is_faithful": true,
-          "is_complete": false,
+          "is_complete": true,
           "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \nThe HED annotation accurately captures the core elements of the original description. The event type is correctly identified as a Sensory-event with Auditory-presentation and Experimental-stimulus, and the Oddball paradigm context is appropriately implied. The deviant tone (1200 Hz) and the standard tones (800 Hz) are correctly represented as distinct stimuli, with the temporal relationship expressed using (After, (Tone, Frequency/800 Hz)), which reasonably conveys that the deviant occurs after a sequence of standard tones.  \n\nThe semantic grouping is correct: frequency values are properly nested within their respective tone events, ensuring clarity that each tone has a specific frequency. The structure allows for a reversible translation back into natural language: \u201cAn oddball auditory stimulus\u2014a tone at 1200 Hz\u2014is presented after a sequence of 800 Hz tones,\u201d which closely matches the original meaning.  \n\nNo refinement is needed. The annotation is both semantically accurate and structurally sound.",
           "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements are captured: deviant tone (1200 Hz), standard tones (800 Hz), auditory presentation, oddball paradigm. Grouping correctly pairs tone with frequency and uses temporal relation \"After\" appropriately.  \nSTATUS: COMPLETE",
           "mode": "standalone"
@@ -65,7 +65,7 @@
           "validation_attempts": 2,
           "total_iterations": 2,
           "is_faithful": true,
-          "is_complete": false,
+          "is_complete": true,
           "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: two sensory events involving visual presentation, with appropriate temporal sequencing using (After).  \n- The first stimulus is correctly described as a face that is both \"Vertically-oriented\" and \"Emotionally-neutral,\" grouped under the Duration tag, which is acceptable given that Duration modifies the entire presentation event.  \n- The use of (Face, Vertically-oriented, Emotionally-neutral) is semantically grouped within the duration, preserving meaning.  \n- The second event\u2014a scrambled face mask\u2014is properly represented as (Image, Label/Scrambled-face) within a nested Sensory-event, maintaining clarity.  \n- Temporal structure using (After, ...) correctly represents the sequence.  \n- Reversibility test passes: the annotation can be translated back into a natural language description very close to the original.  \n\nNo refinement needed. The annotation is faithful, correctly structured, and semantically precise.",
           "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: The annotation captures all key elements (face orientation, emotion, duration, sequence, scrambled face), but the grouping of properties with \"Face\" is incorrect\u2014\"(Duration/200 ms, (Face, ...))\" should nest duration with the full face event. Also, \"After\" should relate two events more clearly using proper temporal grouping.  \nSTATUS: NEEDS-REVIEW",
           "mode": "standalone"
@@ -99,7 +99,7 @@
           "validation_attempts": 1,
           "total_iterations": 1,
           "is_faithful": true,
-          "is_complete": false,
+          "is_complete": true,
           "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: event type (Agent-action), agent role (Experiment-participant), action (Reach, Grasp), and object (Cylinder) with spatial and quantitative details.  \n- Semantic grouping is correct: the participant is properly grouped as (Human-agent, Experiment-participant), and the action structure ((Reach, (Grasp, ...))) reflects the hierarchical action appropriately.  \n- The spatial relation (In-front-of) is correctly scoped to the cylinder relative to the participant, and the distance modifier (Distance/30 cm) is properly attached.  \n- All key details from the original description are represented without over-interpretation.  \n- The structure passes the reversibility test: it can be translated back into a natural language description very close to the original.  \n\nNo refinement needed.",
           "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements (agent, action, object, spatial relation, distance) are captured with correct semantic grouping; the nested structure accurately reflects the reach-and-grasp action and spatial context.  \nSTATUS: COMPLETE",
           "mode": "standalone"
@@ -134,7 +134,7 @@
           "validation_attempts": 1,
           "total_iterations": 1,
           "is_faithful": true,
-          "is_complete": false,
+          "is_complete": true,
           "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: two facial expressions (fearful and happy) presented visually, with clear spatial positioning relative to the center of the screen.  \n- Event type is correctly specified as Sensory-event and Visual-presentation.  \n- Semantic grouping is properly used: each face is grouped with its emotional expression (e.g., (Face, Fearful)), and spatial relations are correctly nested (e.g., (To-left-of, (Center-of, Screen-window))).  \n- The structure allows for unambiguous interpretation and passes the reversibility test\u2014can be translated back into a natural language description very close to the original.  \n- All important details (emotion, face, left/right placement) are included with correct HED syntax.  \n\nNo refinement needed. Annotation is faithful and well-structured.",
           "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements (fearful/happy faces, left/right positioning relative to center) are accurately captured with proper semantic grouping. The spatial relations are correctly nested.  \nSTATUS: COMPLETE",
           "mode": "standalone"
@@ -168,7 +168,7 @@
           "validation_attempts": 1,
           "total_iterations": 1,
           "is_faithful": true,
-          "is_complete": false,
+          "is_complete": true,
           "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \nThe HED annotation accurately captures the core elements of the original description. The event type is correctly identified as a Sensory-event with Experimental-stimulus and Visual-presentation, which appropriately frames the context. The target letters (T and L) are correctly specified within a Target tag and grouped with their letter identities using proper parenthetical grouping. Similarly, the distractor letters (O) are correctly nested under Distractor. The use of (Letter/T, Letter/L) and Letter/O follows HED conventions for categorical letter stimuli. The semantic grouping is correct\u2014properties and identities are properly associated within parentheses, ensuring clarity and reversibility. The annotation can be cleanly translated back into a natural language description closely matching the original. No refinement is needed.",
           "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: The annotation captures all key elements (target letters, distractor, visual presentation), but the grouping of \"Target\" with both Letter/T and Letter/L is ambiguous\u2014should be (Target, Letter/T), (Target, Letter/L) for clarity and proper semantic grouping.  \nSTATUS: NEEDS-REVIEW",
           "mode": "standalone"

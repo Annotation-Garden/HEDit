@@ -34,7 +34,7 @@
           "validation_attempts": 2,
           "total_iterations": 2,
           "is_faithful": true,
-          "is_complete": false,
+          "is_complete": true,
           "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: the agent (macaque monkey) as both an animal and experiment participant, the action (reaching toward a target on a touchscreen), and the sensory feedback (juice reward via gustatory presentation).  \n- Semantic grouping is correctly applied: object properties and roles are nested appropriately (e.g., (Animal-agent, (Experiment-participant, Animal/Macaque)) and (Target, (Inside-of, Touchscreen))).  \n- The event structure distinguishes between Agent-action (reaching) and Sensory-event (reward delivery), which aligns with the description.  \n- Key details such as the modality of feedback (gustatory), the nature of the reward (ingestible/juice), and spatial context (target inside touchscreen) are included.  \n- The annotation is both semantically precise and structurally sound, allowing for clear reversibility to natural language.  \n\nNo refinement needed.",
           "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements\u2014macaque as agent and participant, reaching action, target and touchscreen location, and juice reward with gustatory feedback\u2014are accurately captured with proper semantic grouping.  \nSTATUS: COMPLETE",
           "mode": "standalone"
@@ -67,7 +67,7 @@
           "validation_attempts": 1,
           "total_iterations": 1,
           "is_faithful": true,
-          "is_complete": false,
+          "is_complete": true,
           "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: event type (Agent-action), main agent (Animal/Rat), key actions (Navigate, Turn), and relevant spatial context (Virtual-world, T-maze, Choice-point).  \n- Semantic grouping is correctly applied: properties and roles are appropriately nested (e.g., (Animal-agent, Animal/Rat), (Turn, Left), and spatial relation (Near-to, (Virtual-world, Navigational-object/Choice-point))).  \n- The structure allows for reversibility\u2014translating back yields a description very close to the original.  \n- All explicitly mentioned components (rat, virtual T-maze, navigating, turning left, choice point) are represented with correct HED syntax and grouping.  \n- No errors or omissions that would require refinement.",
           "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements (rat, virtual T-maze, navigation, turning left, choice point) are captured with correct semantic grouping; agent-action nesting and spatial relations are properly structured.  \nSTATUS: COMPLETE",
           "mode": "standalone"
@@ -99,7 +99,7 @@
           "validation_attempts": 1,
           "total_iterations": 1,
           "is_faithful": true,
-          "is_complete": false,
+          "is_complete": true,
           "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: event type (Agent-action, Correct-action), main agent (Animal/Rhesus-monkey), action (Grasp/Precision-grip), object (Ingestible-object/Pellet), and method (Performed-using, (Thumb, Index-finger)).  \n- Semantic grouping is correct: the agent, action, object, and effector are properly nested, preserving the relationships (e.g., precision grip applied to pellet, using specific fingers).  \n- The use of hierarchical parentheses ensures clarity and reversibility\u2014this HED string can be translated back into a natural language description very close to the original.  \n- All key details (precision grip, thumb and index finger, correctness of action) are included with appropriate specificity.  \n- No refinement needed.",
           "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements (agent, action, object, method) are captured with correct semantic grouping; the structure accurately reflects the precision grip using specific fingers and the object being grasped.  \nSTATUS: COMPLETE",
           "mode": "standalone"
@@ -132,7 +132,7 @@
           "validation_attempts": 1,
           "total_iterations": 1,
           "is_faithful": true,
-          "is_complete": false,
+          "is_complete": true,
           "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core event: a tactile sensory event (air puff to whiskers) delivered as negative feedback after an incorrect lever press by the mouse.  \n- Event type (Sensory-event) and key action (Agent-action with Incorrect-action) are correctly identified.  \n- Main objects and agents (Animal/Mouse, Tool/Lever, Body-part/Whiskers) are properly included and nested.  \n- Temporal relationship \"After\" is appropriately used to link the sensory event to the prior incorrect action.  \n- Semantic grouping is correct: properties and roles are properly parenthesized (e.g., (Blow, (Body-part/Whiskers)), and agent-action structure is well-nested.  \n- All critical details from the original description are represented without over-interpretation.  \n- The annotation passes the reversibility test\u2014it can be clearly translated back into natural language matching the original meaning.",
           "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements are captured: the aversive air puff to whiskers (tactile sensory event), its timing (after incorrect lever press), and the agent-action sequence. Grouping correctly nests properties with objects and actions.  \nSTATUS: COMPLETE",
           "mode": "standalone"
@@ -165,7 +165,7 @@
           "validation_attempts": 1,
           "total_iterations": 1,
           "is_faithful": true,
-          "is_complete": false,
+          "is_complete": true,
           "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: the event type (Agent-action), the agent (Marmoset as Animal-agent), and the key action (Vocalize).  \n- The causal context\u2014vocalizing in response to a playback of a conspecific phee call\u2014is well represented through the use of (Associated-with, (Auditory-presentation, ...)), which appropriately links the stimulus to the action.  \n- The stimulus is correctly detailed: an audio clip of a phee call, specifically a Vocalized-sound/Phee-call, and its origin (Performed-by a conspecific Marmoset) is included.  \n- Semantic grouping is correct: nested parentheses properly associate properties and relationships (e.g., the phee call is grouped with its performer, the auditory presentation with its content).  \n- The use of (Animal, Animal/Marmoset) under Performed-by is slightly redundant but not incorrect; however, it does not impair clarity or faithfulness.  \n- Overall, the annotation is semantically rich, structurally sound, and reversible to a natural language description very close to the original.  \n\nNo refinement needed.",
           "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: The annotation captures the marmoset as agent, the vocalization as action, and the playback of the conspecific phee call with appropriate nesting; all key elements are present and semantically grouped.  \nSTATUS: COMPLETE",
           "mode": "standalone"

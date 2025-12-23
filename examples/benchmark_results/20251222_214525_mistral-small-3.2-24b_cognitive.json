@@ -34,7 +34,7 @@
           "validation_attempts": 1,
           "total_iterations": 1,
           "is_faithful": true,
-          "is_complete": false,
+          "is_complete": true,
           "evaluation_feedback": "FAITHFUL: yes\n\nGROUPING: correct\n\nDECISION: ACCEPT\n\nFEEDBACK:\nThe HED annotation accurately captures the core elements of the original description. The event type is correctly identified as a Sensory-event with Visual-presentation, and the main stimulus\u2014an orange star\u2014is properly represented with color and shape grouped together as (Orange, Star). The action of flashing is appropriately nested under Flash, and the spatial location at the top of the display is correctly expressed using (Top-edge-of, (Screen)), which aligns with standard HED spatial relations. The semantic grouping is correct: properties are grouped with their object, and the event structure reflects the temporal and spatial dynamics of the original sentence. The annotation is both semantically precise and reversible\u2014translating it back to natural language yields a description very close to the original. No refinement is needed.",
           "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements are captured: event type (visual flash), object (star), color (orange), location (top of screen), and duration (briefly implied by \"flashes\"). Groupings correctly associate properties with objects and spatial relations.  \nSTATUS: COMPLETE",
           "mode": "standalone"
@@ -101,7 +101,7 @@
           "validation_attempts": 1,
           "total_iterations": 1,
           "is_faithful": true,
-          "is_complete": false,
+          "is_complete": true,
           "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: two sensory events (fixation point and distractor), the visual presentation modality, and the participant\u2019s action of focusing.  \n- Semantic grouping is correctly applied: properties like location (Center-of, Lower-right-of) are properly nested within object descriptions.  \n- The agent-action is well-structured with appropriate nesting of Human-agent, Experiment-participant, and the Focuses-on action targeting the fixation point.  \n- The distractor\u2019s location is correctly specified relative to the center, matching the \"lower right quadrant\" description.  \n- All key details from the original sentence are represented without over-interpretation.  \n- The annotation passes the reversibility test\u2014it can be read back into a clear and accurate natural language summary.  \n\nNo refinement needed.",
           "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements are captured: fixation on central cross, peripheral distractor in lower right quadrant. Semantic grouping correctly links attributes to objects (e.g., Lower-right-of with Distractor, Center-of with Screen).  \nSTATUS: COMPLETE",
           "mode": "standalone"
@@ -134,7 +134,7 @@
           "validation_attempts": 1,
           "total_iterations": 1,
           "is_faithful": true,
-          "is_complete": false,
+          "is_complete": true,
           "evaluation_feedback": "FAITHFUL: yes\n\nGROUPING: correct\n\nDECISION: ACCEPT\n\nFEEDBACK:\nThe HED annotation accurately captures the core elements of the original description. The event type (Sensory-event, Auditory-presentation) is correctly identified and applied to both the masking noise and the target word. The structure properly groups \"White-noise\" with \"Burst\" as a single auditory stimulus. The masking relationship is appropriately modeled by nesting the masked content\u2014namely the target word spoken by a female voice\u2014within the \"Masking\" tag. The use of (Female, Voice) and (Spoken, Word) is semantically sound and correctly nested under the masked auditory event. The grouping respects HED principles: properties are attached to their referents, and hierarchical relationships (e.g., what is being masked) are preserved. The annotation would successfully pass the reversibility test, translating back into a natural language description very close to the original. No refinement is needed.",
           "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: correct  \nNOTES: All key elements are captured: white noise burst, masking, female voice, spoken word. Grouping correctly nests the masking relationship and attributes with their respective events.  \nSTATUS: COMPLETE",
           "mode": "standalone"
@@ -168,7 +168,7 @@
           "validation_attempts": 2,
           "total_iterations": 2,
           "is_faithful": true,
-          "is_complete": false,
+          "is_complete": true,
           "evaluation_feedback": "FAITHFUL: yes  \nGROUPING: correct  \nDECISION: ACCEPT  \n\nFEEDBACK:  \n- The annotation accurately captures the core elements: the event type (Sensory-event, Visual-presentation), the stimulus (green diamond), its location (center of screen), role (Cue, Go-signal), and the participant\u2019s bimanual key press response.  \n- Semantic grouping is correctly applied: (Green, Diamond) is properly grouped as a single object; spatial relation (Center-of, (Computer-screen)) is appropriately nested; and the agent-action structure ((Human-agent, Experiment-participant), (Press, ...)) is well-formed with separate presses for left and right keys.  \n- Key details like color, shape, position, cue function, and dual-hand response are all represented faithfully.  \n- The structure supports reversibility\u2014translating back yields a description very close to the original.  \nNo refinement needed.",
           "assessment_feedback": "COMPLETENESS: complete  \nGROUPING: needs-improvement  \nNOTES: Most key elements are present, but the bimanual key press is split into two separate presses without grouping under a single action or agent; also, (Cue-type, Go-signal) should be grouped with Cue.  \nSTATUS: NEEDS-REVIEW",
           "mode": "standalone"
