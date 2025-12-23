@@ -511,10 +511,43 @@ def run_hedit_annotate_image(
 class ModelBenchmark:
     """Benchmark runner for comparing HED annotation models using CLI."""
 
+    # Simple warm-up description to prime the cache
+    WARMUP_DESCRIPTION = "A visual stimulus appears on screen"
+
     def __init__(self, output_dir: Path | None = None):
         self.output_dir = output_dir or Path(__file__).parent / "benchmark_results"
         self.output_dir.mkdir(exist_ok=True)
         self.results: list[BenchmarkResult] = []
+
+    def warmup_model(self, model_config: dict) -> None:
+        """Run a warm-up call to prime the cache for fair comparison.
+
+        This ensures all models start with equally "warm" caches for the
+        system prompts and schema context.
+
+        Args:
+            model_config: Model configuration dict
+        """
+        model_id = model_config["id"]
+        model_name = model_config["name"]
+        provider = model_config.get("provider")
+
+        print(f"  Warming up cache for {model_name}...")
+
+        try:
+            # Run a simple annotation to warm up the cache
+            run_hedit_annotate(
+                description=self.WARMUP_DESCRIPTION,
+                model_id=model_id,
+                provider=provider,
+                eval_model=EVAL_MODEL,
+                schema_version=SCHEMA_VERSION,
+                max_attempts=1,  # Single attempt for warmup
+                run_assessment=False,  # Skip assessment for speed
+            )
+            print("  Cache warmed up successfully")
+        except Exception as e:
+            print(f"  Warning: Warmup failed: {e}")
 
     def benchmark_model(
         self,
@@ -537,6 +570,9 @@ class ModelBenchmark:
         print(f"\n{'=' * 80}")
         print(f"Benchmarking: {model_name} ({model_id})")
         print(f"{'=' * 80}")
+
+        # Warm up cache before benchmarking
+        self.warmup_model(model_config)
 
         results = []
 
