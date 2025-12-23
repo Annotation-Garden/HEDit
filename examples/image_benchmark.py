@@ -2,32 +2,32 @@
 """Image annotation benchmark for HED annotation quality comparison.
 
 This script benchmarks multiple LLM models on image annotation tasks using
-NSD (Natural Scenes Dataset) images. The same vision model describes all images,
-then different annotation models generate HED annotations.
+NSD (Natural Scenes Dataset) images.
 
-Key Design:
-- Same vision model (qwen/qwen3-vl-30b-a3b-instruct) for all image descriptions
-- Same evaluation model (qwen/qwen3-235b-a22b-2507) via Cerebras for fair comparison
-- Only the annotation model varies between benchmarks
-
-Related GitHub Issues:
-- #64: Explore alternative candidates for the default model
+Design for resilience:
+- For each image:
+  1. Run vision model once to get description
+  2. Run all annotation models on that same description
+  3. Save results for that image immediately
+- If a model fails, we don't lose results from other models or images
+- Full JSON responses are captured
 
 Usage:
-    python examples/image_benchmark.py                    # Run all models
-    python examples/image_benchmark.py --models 2         # Run first 2 models only
-    python examples/image_benchmark.py --images 5         # Run first 5 images only
+    python examples/image_benchmark.py                    # Run all
+    python examples/image_benchmark.py --models 2         # First 2 models
+    python examples/image_benchmark.py --images 5         # First 5 images
 """
 
 import argparse
+import base64
 import json
 import os
 import subprocess
 import sys
 import time
-from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from dotenv import load_dotenv
 
@@ -47,59 +47,45 @@ EVAL_PROVIDER = "Cerebras"
 
 # Models to benchmark (annotation models only - vision is fixed)
 MODELS_TO_BENCHMARK = [
-    # Baseline: Current default (Cerebras - ultra fast, cheap)
     {
         "id": "openai/gpt-oss-120b",
-        "name": "GPT-OSS-120B (baseline)",
+        "name": "GPT-OSS-120B",
         "provider": "Cerebras",
         "category": "baseline",
     },
-    # GPT-5.2 (OpenAI's latest)
     {
         "id": "openai/gpt-5.2",
         "name": "GPT-5.2",
         "provider": None,
         "category": "quality",
     },
-    # GPT 5.1 Codex Mini
     {
         "id": "openai/gpt-5.1-codex-mini",
         "name": "GPT-5.1-Codex-Mini",
         "provider": None,
         "category": "balanced",
     },
-    # GPT-4o-mini (OpenAI's cheap option)
     {
         "id": "openai/gpt-4o-mini",
         "name": "GPT-4o-mini",
         "provider": None,
         "category": "balanced",
     },
-    # Gemini 3 Flash (Google's fast option)
     {
         "id": "google/gemini-3-flash-preview",
         "name": "Gemini-3-Flash",
         "provider": None,
         "category": "fast",
     },
-    # Claude Haiku 4.5 (Anthropic's fast option)
     {
         "id": "anthropic/claude-haiku-4.5",
         "name": "Claude-Haiku-4.5",
         "provider": None,
         "category": "balanced",
     },
-    # Mistral Small 3.2 24B
     {
         "id": "mistralai/mistral-small-3.2-24b-instruct",
         "name": "Mistral-Small-3.2-24B",
-        "provider": None,
-        "category": "balanced",
-    },
-    # Nemotron 3 Nano 30B A3B (NVIDIA)
-    {
-        "id": "nvidia/nemotron-3-nano-30b-a3b",
-        "name": "Nemotron-3-Nano-30B",
         "provider": None,
         "category": "balanced",
     },
@@ -120,38 +106,85 @@ def discover_images() -> list[Path]:
     return image_files
 
 
-@dataclass
-class ImageBenchmarkResult:
-    """Result from a single image annotation benchmark."""
+def run_vision_description(image_path: Path) -> tuple[str, dict[str, Any]]:
+    """Run vision model to get image description.
 
-    image_name: str
-    image_path: str
-    model_id: str
-    model_name: str
-    description: str  # Vision model's description
-    annotation: str
-    is_valid: bool
-    is_faithful: bool | None
-    is_complete: bool | None
-    validation_attempts: int
-    validation_messages: list[str]
-    evaluation_feedback: str
-    assessment_feedback: str
-    execution_time_seconds: float
-    cli_command: str
-    error: str | None = None
+    This runs once per image, then all annotation models use the same description.
+
+    Args:
+        image_path: Path to image file
+
+    Returns:
+        Tuple of (description text, full response dict)
+    """
+    # Read and encode image
+    suffix = image_path.suffix.lower()
+    mime_types = {
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".gif": "image/gif",
+        ".webp": "image/webp",
+    }
+    mime_type = mime_types.get(suffix, "image/png")
+
+    with open(image_path, "rb") as f:
+        image_data = base64.b64encode(f.read()).decode("utf-8")
+    image_uri = f"data:{mime_type};base64,{image_data}"
+
+    # Use the standalone vision agent
+    try:
+        from src.agents.vision_agent import VisionAgent
+        from src.cli.config import get_machine_id
+        from src.utils.openrouter_llm import create_openrouter_llm
+
+        user_id = get_machine_id()
+
+        vision_llm = create_openrouter_llm(
+            model=VISION_MODEL,
+            api_key=OPENROUTER_API_KEY,
+            temperature=0.3,
+            provider=None,
+            user_id=user_id,
+        )
+
+        vision_agent = VisionAgent(llm=vision_llm)
+
+        import asyncio
+
+        async def _run():
+            return await vision_agent.describe_image(image_data=image_uri)
+
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop is not None:
+            import nest_asyncio
+
+            nest_asyncio.apply()
+            result = asyncio.get_event_loop().run_until_complete(_run())
+        else:
+            result = asyncio.run(_run())
+
+        description = result.get("description", "")
+        return description, result
+
+    except Exception as e:
+        return "", {"error": str(e), "status": "vision_failed"}
 
 
-def run_hedit_annotate_image(
-    image_path: str,
+def run_hedit_annotate(
+    description: str,
     model_id: str,
     provider: str | None = None,
 ) -> tuple[dict, str, float]:
-    """Run hedit annotate-image CLI command."""
+    """Run hedit annotate CLI command."""
     cmd = [
         "hedit",
-        "annotate-image",
-        image_path,
+        "annotate",
+        description,
         "--model",
         model_id,
         "--eval-model",
@@ -171,7 +204,7 @@ def run_hedit_annotate_image(
     if provider:
         cmd.extend(["--provider", provider])
 
-    cmd_str = " ".join(cmd)
+    cmd_str = " ".join(cmd[:2]) + f' "{description[:50]}..."' + " " + " ".join(cmd[3:])
 
     start_time = time.time()
     result = subprocess.run(
@@ -182,7 +215,7 @@ def run_hedit_annotate_image(
     )
     execution_time = time.time() - start_time
 
-    # Parse JSON from stdout (filter out debug messages)
+    # Parse JSON from stdout
     stdout_lines = result.stdout.strip().split("\n")
 
     filtered_lines = []
@@ -220,142 +253,142 @@ def run_hedit_annotate_image(
 
 
 class ImageBenchmark:
-    """Benchmark runner for comparing image annotation models."""
+    """Benchmark runner with per-image incremental saving.
 
-    WARMUP_IMAGE = None  # Will be set to first image
+    Design:
+    - For each image: run vision once, then all annotation models
+    - Save after each image completes (all models)
+    - If one model fails, other models still get saved
+    """
 
     def __init__(self, output_dir: Path | None = None):
         self.output_dir = output_dir or Path(__file__).parent / "benchmark_results"
         self.output_dir.mkdir(exist_ok=True)
-        self.results: list[ImageBenchmarkResult] = []
+        self.session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    def warmup_model(self, model_config: dict, image_path: Path) -> None:
-        """Run a warm-up call to prime the cache."""
-        model_id = model_config["id"]
-        model_name = model_config["name"]
-        provider = model_config.get("provider")
+    def _save_image_results(
+        self, image_name: str, description: str, vision_response: dict, results: list[dict]
+    ) -> Path:
+        """Save results for a single image (all models).
 
-        print(f"  Warming up cache for {model_name}...")
+        Args:
+            image_name: Image filename
+            description: Vision model's description
+            vision_response: Full response from vision model
+            results: List of annotation results for each model
 
-        try:
-            run_hedit_annotate_image(
-                image_path=str(image_path),
-                model_id=model_id,
-                provider=provider,
+        Returns:
+            Path to saved file
+        """
+        safe_name = image_name.replace("/", "-").replace(" ", "_").lower()
+        safe_name = safe_name.rsplit(".", 1)[0]  # Remove extension
+        filename = f"{self.session_id}_image_{safe_name}.json"
+        output_file = self.output_dir / filename
+
+        with open(output_file, "w") as f:
+            json.dump(
+                {
+                    "session_id": self.session_id,
+                    "image_name": image_name,
+                    "description": description,
+                    "vision_model": VISION_MODEL,
+                    "vision_response": vision_response,
+                    "schema_version": SCHEMA_VERSION,
+                    "eval_model": EVAL_MODEL,
+                    "eval_provider": EVAL_PROVIDER,
+                    "timestamp": datetime.now().isoformat(),
+                    "results": results,
+                },
+                f,
+                indent=2,
             )
-            print("  Cache warmed up successfully")
-        except Exception as e:
-            print(f"  Warning: Warmup failed: {e}")
 
-    def benchmark_model(
-        self,
-        model_config: dict,
-        images: list[Path],
-    ) -> list[ImageBenchmarkResult]:
-        """Run benchmark for a single model on all images."""
-        model_id = model_config["id"]
-        model_name = model_config["name"]
-        provider = model_config.get("provider")
+        print(f"  [SAVED] {output_file.name}")
+        return output_file
 
-        print(f"\n{'=' * 80}")
-        print(f"Benchmarking: {model_name} ({model_id})")
-        print(f"Images: {len(images)}")
-        print(f"{'=' * 80}")
+    def benchmark_image(
+        self, image_path: Path, models: list[dict]
+    ) -> tuple[str, dict, list[dict[str, Any]]]:
+        """Benchmark all models on a single image.
 
-        # Warm up with first image
-        if images:
-            self.warmup_model(model_config, images[0])
+        Args:
+            image_path: Path to image
+            models: List of model configs
 
+        Returns:
+            Tuple of (description, vision_response, list of model results)
+        """
+        print("\n  Getting description from vision model...")
+
+        # Run vision model once
+        description, vision_response = run_vision_description(image_path)
+
+        if not description:
+            print("    ERROR: Vision model failed")
+            return "", vision_response, []
+
+        print(f"    Description: {description[:80]}...")
+
+        # Run all annotation models on this description
         results = []
 
-        for i, image_path in enumerate(images, 1):
-            print(f"\n  [{i}/{len(images)}] {image_path.name}")
+        for model_config in models:
+            model_id = model_config["id"]
+            model_name = model_config["name"]
+            provider = model_config.get("provider")
+
+            print(f"\n    {model_name}:")
 
             try:
-                parsed, cmd_str, exec_time = run_hedit_annotate_image(
-                    image_path=str(image_path),
+                parsed, cmd_str, exec_time = run_hedit_annotate(
+                    description=description,
                     model_id=model_id,
                     provider=provider,
                 )
 
+                result = {
+                    "model_id": model_id,
+                    "model_name": model_name,
+                    "provider": provider,
+                    "cli_command": cmd_str,
+                    "execution_time_seconds": exec_time,
+                    "full_response": parsed,
+                }
+
+                # Extract key metrics for logging
                 metadata = parsed.get("metadata", {})
-                description = parsed.get("description", "")
                 annotation = parsed.get("hed_string", "")
                 is_valid = parsed.get("is_valid", False)
                 is_faithful = metadata.get("is_faithful")
                 is_complete = metadata.get("is_complete")
-                validation_attempts = metadata.get("validation_attempts", 0)
-                validation_messages = parsed.get("validation_messages", [])
-                evaluation_feedback = metadata.get("evaluation_feedback", "")
-                assessment_feedback = metadata.get("assessment_feedback", "")
 
-                print(
-                    f"    Description: {description[:60]}..."
-                    if description
-                    else "    Description: [empty]"
-                )
-                print(
-                    f"    Annotation: {annotation[:60]}..."
-                    if annotation
-                    else "    Annotation: [empty]"
-                )
-                print(f"    Valid: {is_valid}, Faithful: {is_faithful}, Complete: {is_complete}")
-                print(f"    Time: {exec_time:.1f}s")
+                print(f"      Valid: {is_valid}, Faithful: {is_faithful}, Complete: {is_complete}")
+                if annotation:
+                    print(f"      HED: {annotation[:50]}...")
 
-                error = None
                 if parsed.get("status") == "error":
-                    error = parsed.get("error", "Unknown error")
-                    print(f"    ERROR: {error}")
+                    print(f"      ERROR: {parsed.get('error', 'Unknown')}")
 
-                results.append(
-                    ImageBenchmarkResult(
-                        image_name=image_path.name,
-                        image_path=str(image_path),
-                        model_id=model_id,
-                        model_name=model_name,
-                        description=description,
-                        annotation=annotation,
-                        is_valid=is_valid,
-                        is_faithful=is_faithful,
-                        is_complete=is_complete,
-                        validation_attempts=validation_attempts,
-                        validation_messages=validation_messages,
-                        evaluation_feedback=evaluation_feedback,
-                        assessment_feedback=assessment_feedback,
-                        execution_time_seconds=exec_time,
-                        cli_command=cmd_str,
-                        error=error,
-                    )
-                )
+                results.append(result)
 
             except Exception as e:
-                print(f"    ERROR: {e}")
+                print(f"      EXCEPTION: {e}")
                 import traceback
 
                 traceback.print_exc()
 
                 results.append(
-                    ImageBenchmarkResult(
-                        image_name=image_path.name,
-                        image_path=str(image_path),
-                        model_id=model_id,
-                        model_name=model_name,
-                        description="",
-                        annotation="",
-                        is_valid=False,
-                        is_faithful=None,
-                        is_complete=None,
-                        validation_attempts=0,
-                        validation_messages=[],
-                        evaluation_feedback="",
-                        assessment_feedback="",
-                        execution_time_seconds=0,
-                        cli_command="",
-                        error=str(e),
-                    )
+                    {
+                        "model_id": model_id,
+                        "model_name": model_name,
+                        "provider": provider,
+                        "cli_command": "",
+                        "execution_time_seconds": 0,
+                        "full_response": {"status": "exception", "error": str(e)},
+                    }
                 )
 
-        return results
+        return description, vision_response, results
 
     def run_benchmark(
         self,
@@ -364,7 +397,14 @@ class ImageBenchmark:
         max_models: int | None = None,
         max_images: int | None = None,
     ):
-        """Run full benchmark across models and images."""
+        """Run benchmark with per-image incremental saving.
+
+        Args:
+            models: List of model configs
+            images: List of image paths
+            max_models: Limit number of models
+            max_images: Limit number of images
+        """
         models = models or MODELS_TO_BENCHMARK
         images = images or discover_images()
 
@@ -374,163 +414,119 @@ class ImageBenchmark:
             images = images[:max_images]
 
         print(f"\n{'#' * 80}")
-        print("# IMAGE ANNOTATION BENCHMARK")
-        print(f"# Date: {datetime.now().isoformat()}")
-        print(f"# Models: {len(models)}")
+        print("# IMAGE BENCHMARK (Per-Image Saving)")
+        print(f"# Session: {self.session_id}")
         print(f"# Images: {len(images)}")
+        print(f"# Models: {len(models)}")
         print(f"# Vision Model: {VISION_MODEL}")
         print(f"# Eval Model: {EVAL_MODEL} (via {EVAL_PROVIDER})")
         print(f"{'#' * 80}")
 
-        for model_config in models:
-            model_results = self.benchmark_model(model_config, images)
-            self.results.extend(model_results)
+        saved_files = []
 
-        self._save_results()
-        self._generate_report()
+        for i, image_path in enumerate(images, 1):
+            print(f"\n{'=' * 80}")
+            print(f"IMAGE [{i}/{len(images)}]: {image_path.name}")
+            print(f"{'=' * 80}")
 
-    def _save_results(self):
-        """Save benchmark results to JSON."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_file = self.output_dir / f"image_benchmark_{timestamp}.json"
+            description, vision_response, results = self.benchmark_image(image_path, models)
 
-        results_data = []
-        for r in self.results:
-            results_data.append(
-                {
-                    "image_name": r.image_name,
-                    "image_path": r.image_path,
-                    "model_id": r.model_id,
-                    "model_name": r.model_name,
-                    "description": r.description,
-                    "annotation": r.annotation,
-                    "is_valid": r.is_valid,
-                    "is_faithful": r.is_faithful,
-                    "is_complete": r.is_complete,
-                    "validation_attempts": r.validation_attempts,
-                    "validation_messages": r.validation_messages,
-                    "evaluation_feedback": r.evaluation_feedback,
-                    "assessment_feedback": r.assessment_feedback,
-                    "execution_time_seconds": r.execution_time_seconds,
-                    "cli_command": r.cli_command,
-                    "error": r.error,
-                }
-            )
+            # Save immediately after each image
+            if results:  # Only save if we got any results
+                saved_file = self._save_image_results(
+                    image_name=image_path.name,
+                    description=description,
+                    vision_response=vision_response,
+                    results=results,
+                )
+                saved_files.append(saved_file)
 
-        with open(output_file, "w") as f:
-            json.dump(
-                {
-                    "timestamp": timestamp,
-                    "schema_version": SCHEMA_VERSION,
-                    "vision_model": VISION_MODEL,
-                    "eval_model": EVAL_MODEL,
-                    "eval_provider": EVAL_PROVIDER,
-                    "results": results_data,
-                },
-                f,
-                indent=2,
-            )
+        # Generate summary
+        self._generate_summary_report(saved_files)
 
-        print(f"\nResults saved to: {output_file}")
+    def _generate_summary_report(self, result_files: list[Path]):
+        """Generate summary report from all saved result files."""
+        report_file = self.output_dir / f"{self.session_id}_image_summary.md"
 
-    def _generate_report(self):
-        """Generate summary report."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        report_file = self.output_dir / f"image_report_{timestamp}.md"
+        # Load all results
+        all_results = []
+        for f in result_files:
+            with open(f) as fp:
+                data = json.load(fp)
+                image_name = data["image_name"]
+                for r in data["results"]:
+                    r["_image_name"] = image_name
+                    all_results.append(r)
 
-        # Aggregate statistics by model
-        model_stats = {}
-        for r in self.results:
-            if r.model_name not in model_stats:
-                model_stats[r.model_name] = {
-                    "model_id": r.model_id,
+        # Aggregate stats by model
+        model_stats: dict[str, dict] = {}
+        for r in all_results:
+            model_name = r["model_name"]
+            if model_name not in model_stats:
+                model_stats[model_name] = {
                     "total": 0,
                     "valid": 0,
                     "faithful": 0,
                     "complete": 0,
-                    "total_attempts": 0,
-                    "total_time": 0.0,
                     "errors": 0,
+                    "total_time": 0.0,
                 }
 
-            stats = model_stats[r.model_name]
+            stats = model_stats[model_name]
             stats["total"] += 1
-            stats["valid"] += 1 if r.is_valid else 0
-            stats["faithful"] += 1 if r.is_faithful else 0
-            stats["complete"] += 1 if r.is_complete else 0
-            stats["total_attempts"] += r.validation_attempts
-            stats["total_time"] += r.execution_time_seconds
-            if r.error:
+
+            resp = r.get("full_response", {})
+            metadata = resp.get("metadata", {})
+
+            if resp.get("is_valid"):
+                stats["valid"] += 1
+            if metadata.get("is_faithful"):
+                stats["faithful"] += 1
+            if metadata.get("is_complete"):
+                stats["complete"] += 1
+            if resp.get("status") in ("error", "exception"):
                 stats["errors"] += 1
 
-        # Generate markdown report
-        report_lines = [
-            "# Image Annotation Benchmark Report",
+            stats["total_time"] += r.get("execution_time_seconds", 0)
+
+        # Generate report
+        lines = [
+            "# Image Benchmark Summary",
             "",
+            f"**Session**: {self.session_id}",
             f"**Date**: {datetime.now().isoformat()}",
-            f"**Schema Version**: {SCHEMA_VERSION}",
             f"**Vision Model**: {VISION_MODEL}",
-            f"**Evaluation Model**: {EVAL_MODEL} (via {EVAL_PROVIDER})",
-            f"**Total Tests**: {len(self.results)}",
+            f"**Eval Model**: {EVAL_MODEL} (via {EVAL_PROVIDER})",
+            f"**Images**: {len(result_files)}",
             "",
-            "## Summary",
+            "## Results",
             "",
-            "| Model | Valid | Faithful | Complete | Avg Attempts | Avg Time | Errors |",
-            "|-------|-------|----------|----------|--------------|----------|--------|",
+            "| Model | Valid | Faithful | Complete | Avg Time | Errors |",
+            "|-------|-------|----------|----------|----------|--------|",
         ]
 
         for model_name, stats in model_stats.items():
-            valid_rate = stats["valid"] / stats["total"] * 100 if stats["total"] > 0 else 0
-            faithful_rate = stats["faithful"] / stats["total"] * 100 if stats["total"] > 0 else 0
-            complete_rate = stats["complete"] / stats["total"] * 100 if stats["total"] > 0 else 0
-            avg_attempts = stats["total_attempts"] / stats["total"] if stats["total"] > 0 else 0
-            avg_time = stats["total_time"] / stats["total"] if stats["total"] > 0 else 0
+            n = stats["total"]
+            valid_pct = stats["valid"] / n * 100 if n else 0
+            faithful_pct = stats["faithful"] / n * 100 if n else 0
+            complete_pct = stats["complete"] / n * 100 if n else 0
+            avg_time = stats["total_time"] / n if n else 0
 
-            report_lines.append(
-                f"| {model_name} | {valid_rate:.0f}% | {faithful_rate:.0f}% | "
-                f"{complete_rate:.0f}% | {avg_attempts:.1f} | {avg_time:.1f}s | {stats['errors']} |"
+            lines.append(
+                f"| {model_name} | {valid_pct:.0f}% | {faithful_pct:.0f}% | "
+                f"{complete_pct:.0f}% | {avg_time:.1f}s | {stats['errors']} |"
             )
 
-        report_lines.extend(
-            [
-                "",
-                "## Per-Image Results",
-                "",
-            ]
-        )
-
-        # Group by image
-        images = {}
-        for r in self.results:
-            if r.image_name not in images:
-                images[r.image_name] = []
-            images[r.image_name].append(r)
-
-        for image_name, results in images.items():
-            report_lines.extend(
-                [
-                    f"### {image_name}",
-                    "",
-                    "| Model | Valid | Faithful | Complete | Annotation |",
-                    "|-------|-------|----------|----------|------------|",
-                ]
-            )
-
-            for r in results:
-                annotation_preview = (
-                    r.annotation[:50] + "..." if len(r.annotation) > 50 else r.annotation
-                )
-                annotation_preview = annotation_preview.replace("|", "\\|")
-                report_lines.append(
-                    f"| {r.model_name} | {r.is_valid} | {r.is_faithful} | {r.is_complete} | `{annotation_preview}` |"
-                )
-
-            report_lines.append("")
+        lines.extend(["", "## Result Files", ""])
+        for f in result_files:
+            lines.append(f"- `{f.name}`")
 
         with open(report_file, "w") as f:
-            f.write("\n".join(report_lines))
+            f.write("\n".join(lines))
 
-        print(f"Report saved to: {report_file}")
+        print(f"\n{'=' * 80}")
+        print(f"Summary report: {report_file}")
+        print(f"{'=' * 80}")
 
 
 def main():

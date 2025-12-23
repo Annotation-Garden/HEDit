@@ -34,6 +34,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from dotenv import load_dotenv
 
@@ -55,7 +56,7 @@ MODELS_TO_BENCHMARK = [
     # Baseline: Current default (Cerebras - ultra fast, cheap)
     {
         "id": "openai/gpt-oss-120b",
-        "name": "GPT-OSS-120B (baseline)",
+        "name": "GPT-OSS-120B",
         "provider": "Cerebras",
         "category": "baseline",
     },
@@ -98,13 +99,6 @@ MODELS_TO_BENCHMARK = [
     {
         "id": "mistralai/mistral-small-3.2-24b-instruct",
         "name": "Mistral-Small-3.2-24B",
-        "provider": None,
-        "category": "balanced",
-    },
-    # Nemotron 3 Nano 30B A3B (NVIDIA)
-    {
-        "id": "nvidia/nemotron-3-nano-30b-a3b",
-        "name": "Nemotron-3-Nano-30B",
         "provider": None,
         "category": "balanced",
     },
@@ -296,28 +290,6 @@ PARADIGM_TESTS = [
 ALL_TEST_CASES = COGNITIVE_TESTS + ANIMAL_TESTS + PARADIGM_TESTS
 
 
-@dataclass
-class BenchmarkResult:
-    """Result from a single benchmark run."""
-
-    test_id: str
-    model_id: str
-    model_name: str
-    domain: str
-    input_description: str
-    annotation: str
-    is_valid: bool
-    is_faithful: bool | None
-    is_complete: bool | None
-    validation_attempts: int
-    validation_messages: list[str]
-    evaluation_feedback: str
-    assessment_feedback: str
-    execution_time_seconds: float
-    cli_command: str  # The exact CLI command used (for reproducibility)
-    error: str | None = None
-
-
 def run_hedit_annotate(
     description: str,
     model_id: str,
@@ -427,25 +399,60 @@ def run_hedit_annotate(
 
 
 class ModelBenchmark:
-    """Benchmark runner for comparing HED annotation models using CLI."""
+    """Benchmark runner with incremental saving per model/domain.
 
-    # Simple warm-up description to prime the cache
+    Design:
+    - Saves results after each model completes a domain
+    - Captures full JSON response from CLI
+    - Resilient to failures - previous results are preserved
+    """
+
     WARMUP_DESCRIPTION = "A visual stimulus appears on screen"
 
     def __init__(self, output_dir: Path | None = None):
         self.output_dir = output_dir or Path(__file__).parent / "benchmark_results"
         self.output_dir.mkdir(exist_ok=True)
-        self.results: list[BenchmarkResult] = []
+        self.session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    def warmup_model(self, model_config: dict) -> None:
-        """Run a warm-up call to prime the cache for fair comparison.
-
-        This ensures all models start with equally "warm" caches for the
-        system prompts and schema context.
+    def _save_domain_results(
+        self, model_name: str, domain: str, results: list[dict[str, Any]]
+    ) -> Path:
+        """Save results for a single model/domain combination.
 
         Args:
-            model_config: Model configuration dict
+            model_name: Short model name (e.g., "GPT-OSS-120B")
+            domain: Domain name (e.g., "cognitive")
+            results: List of result dicts with full JSON responses
+
+        Returns:
+            Path to saved file
         """
+        # Sanitize model name for filename
+        safe_name = model_name.replace("/", "-").replace(" ", "_").lower()
+        filename = f"{self.session_id}_{safe_name}_{domain}.json"
+        output_file = self.output_dir / filename
+
+        with open(output_file, "w") as f:
+            json.dump(
+                {
+                    "session_id": self.session_id,
+                    "model_name": model_name,
+                    "domain": domain,
+                    "schema_version": SCHEMA_VERSION,
+                    "eval_model": EVAL_MODEL,
+                    "eval_provider": EVAL_PROVIDER,
+                    "timestamp": datetime.now().isoformat(),
+                    "results": results,
+                },
+                f,
+                indent=2,
+            )
+
+        print(f"    [SAVED] {output_file.name}")
+        return output_file
+
+    def warmup_model(self, model_config: dict) -> None:
+        """Run a warm-up call to prime the cache."""
         model_id = model_config["id"]
         model_name = model_config["name"]
         provider = model_config.get("provider")
@@ -453,7 +460,6 @@ class ModelBenchmark:
         print(f"  Warming up cache for {model_name}...")
 
         try:
-            # Run a simple annotation to warm up the cache
             run_hedit_annotate(
                 description=self.WARMUP_DESCRIPTION,
                 model_id=model_id,
@@ -461,50 +467,41 @@ class ModelBenchmark:
                 eval_model=EVAL_MODEL,
                 eval_provider=EVAL_PROVIDER,
                 schema_version=SCHEMA_VERSION,
-                max_attempts=1,  # Single attempt for warmup
-                run_assessment=False,  # Skip assessment for speed
+                max_attempts=1,
+                run_assessment=False,
             )
             print("  Cache warmed up successfully")
         except Exception as e:
             print(f"  Warning: Warmup failed: {e}")
 
-    def benchmark_model(
+    def benchmark_model_domain(
         self,
         model_config: dict,
         test_cases: list[TestCase],
-    ) -> list[BenchmarkResult]:
-        """Run benchmark for a single model using CLI.
+        domain: str,
+    ) -> list[dict[str, Any]]:
+        """Run benchmark for a single model on a single domain.
 
         Args:
             model_config: Model configuration dict
-            test_cases: List of test cases to run
+            test_cases: List of test cases (already filtered by domain)
+            domain: Domain name for logging
 
         Returns:
-            List of benchmark results
+            List of result dicts with full JSON responses
         """
         model_id = model_config["id"]
         model_name = model_config["name"]
         provider = model_config.get("provider")
 
-        print(f"\n{'=' * 80}")
-        print(f"Benchmarking: {model_name} ({model_id})")
-        print(f"{'=' * 80}")
-
-        # Warm up cache before benchmarking
-        self.warmup_model(model_config)
-
         results = []
 
         for test_case in test_cases:
-            print(f"\n  Test: {test_case.id} ({test_case.domain})")
-            print(f"    Difficulty: {test_case.difficulty}")
+            print(f"\n    {test_case.id}: {test_case.description[:60]}...")
 
             try:
-                description = test_case.description
-                print(f"    Description: {description[:80]}...")
-
                 parsed, cmd_str, exec_time = run_hedit_annotate(
-                    description=description,
+                    description=test_case.description,
                     model_id=model_id,
                     provider=provider,
                     eval_model=EVAL_MODEL,
@@ -514,343 +511,192 @@ class ModelBenchmark:
                     run_assessment=True,
                 )
 
-                # Extract results from JSON
+                # Build result with full JSON response
+                result = {
+                    "test_id": test_case.id,
+                    "domain": domain,
+                    "difficulty": test_case.difficulty,
+                    "input_description": test_case.description,
+                    "expected_elements": test_case.expected_elements,
+                    "model_id": model_id,
+                    "model_name": model_name,
+                    "provider": provider,
+                    "cli_command": cmd_str,
+                    "execution_time_seconds": exec_time,
+                    "full_response": parsed,  # Store full JSON response
+                }
+
+                # Extract key metrics for quick access
                 metadata = parsed.get("metadata", {})
                 annotation = parsed.get("hed_string", "")
                 is_valid = parsed.get("is_valid", False)
                 is_faithful = metadata.get("is_faithful")
                 is_complete = metadata.get("is_complete")
-                validation_attempts = metadata.get("validation_attempts", 0)
-                validation_messages = parsed.get("validation_messages", [])
-                evaluation_feedback = metadata.get("evaluation_feedback", "")
-                assessment_feedback = metadata.get("assessment_feedback", "")
 
-                print(
-                    f"    Annotation: {annotation[:80]}..."
-                    if annotation
-                    else "    Annotation: [empty]"
-                )
-                print(f"    Valid: {is_valid}, Faithful: {is_faithful}, Complete: {is_complete}")
-                print(f"    Attempts: {validation_attempts}, Time: {exec_time:.2f}s")
+                print(f"      Valid: {is_valid}, Faithful: {is_faithful}, Complete: {is_complete}")
+                if annotation:
+                    print(f"      HED: {annotation[:60]}...")
 
-                error = None
                 if parsed.get("status") == "error":
-                    error = parsed.get("error", "Unknown error")
-                    print(f"    ERROR: {error}")
+                    print(f"      ERROR: {parsed.get('error', 'Unknown')}")
 
-                results.append(
-                    BenchmarkResult(
-                        test_id=test_case.id,
-                        model_id=model_id,
-                        model_name=model_name,
-                        domain=test_case.domain,
-                        input_description=description,
-                        annotation=annotation,
-                        is_valid=is_valid,
-                        is_faithful=is_faithful,
-                        is_complete=is_complete,
-                        validation_attempts=validation_attempts,
-                        validation_messages=validation_messages,
-                        evaluation_feedback=evaluation_feedback,
-                        assessment_feedback=assessment_feedback,
-                        execution_time_seconds=exec_time,
-                        cli_command=cmd_str,
-                        error=error,
-                    )
-                )
+                results.append(result)
 
             except Exception as e:
-                print(f"    ERROR: {e}")
+                print(f"      EXCEPTION: {e}")
                 import traceback
 
                 traceback.print_exc()
 
                 results.append(
-                    BenchmarkResult(
-                        test_id=test_case.id,
-                        model_id=model_id,
-                        model_name=model_name,
-                        domain=test_case.domain,
-                        input_description=test_case.description,
-                        annotation="",
-                        is_valid=False,
-                        is_faithful=None,
-                        is_complete=None,
-                        validation_attempts=0,
-                        validation_messages=[],
-                        evaluation_feedback="",
-                        assessment_feedback="",
-                        execution_time_seconds=0,
-                        cli_command="",
-                        error=str(e),
-                    )
+                    {
+                        "test_id": test_case.id,
+                        "domain": domain,
+                        "difficulty": test_case.difficulty,
+                        "input_description": test_case.description,
+                        "expected_elements": test_case.expected_elements,
+                        "model_id": model_id,
+                        "model_name": model_name,
+                        "provider": provider,
+                        "cli_command": "",
+                        "execution_time_seconds": 0,
+                        "full_response": {"status": "exception", "error": str(e)},
+                    }
                 )
 
         return results
 
-    def run_full_benchmark(
+    def run_benchmark(
         self,
         models: list[dict] | None = None,
-        test_cases: list[TestCase] | None = None,
         domains: list[str] | None = None,
     ):
-        """Run full benchmark across all models and test cases.
+        """Run benchmark with incremental saving per model/domain.
 
         Args:
             models: List of model configs (defaults to MODELS_TO_BENCHMARK)
-            test_cases: List of test cases (defaults to ALL_TEST_CASES)
-            domains: Filter to specific domains (e.g., ["cognitive", "animal"])
+            domains: Filter to specific domains (defaults to all)
         """
         models = models or MODELS_TO_BENCHMARK
-        test_cases = test_cases or ALL_TEST_CASES
+        all_domains = ["cognitive", "animal", "paradigm"]
+        domains = domains or all_domains
 
-        # Filter by domain if specified
-        if domains:
-            test_cases = [tc for tc in test_cases if tc.domain in domains]
+        # Group test cases by domain
+        domain_tests = {d: [tc for tc in ALL_TEST_CASES if tc.domain == d] for d in domains}
 
         print(f"\n{'#' * 80}")
-        print("# HED MODEL BENCHMARK (CLI-based)")
-        print(f"# Date: {datetime.now().isoformat()}")
+        print("# HED MODEL BENCHMARK (Incremental Saving)")
+        print(f"# Session: {self.session_id}")
         print(f"# Models: {len(models)}")
-        print(f"# Test Cases: {len(test_cases)}")
-        print(f"# Domains: { {tc.domain for tc in test_cases} }")
+        print(f"# Domains: {domains}")
+        print(f"# Eval Model: {EVAL_MODEL} (via {EVAL_PROVIDER})")
         print(f"{'#' * 80}")
 
+        saved_files = []
+
         for model_config in models:
-            model_results = self.benchmark_model(model_config, test_cases)
-            self.results.extend(model_results)
+            model_name = model_config["name"]
+            print(f"\n{'=' * 80}")
+            print(f"MODEL: {model_name} ({model_config['id']})")
+            print(f"{'=' * 80}")
 
-        # Save results
-        self._save_results()
+            # Warm up once per model
+            self.warmup_model(model_config)
 
-        # Generate report
-        self._generate_report()
+            for domain in domains:
+                test_cases = domain_tests[domain]
+                print(f"\n  DOMAIN: {domain} ({len(test_cases)} tests)")
 
-    def _save_results(self):
-        """Save benchmark results to JSON."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_file = self.output_dir / f"benchmark_{timestamp}.json"
+                results = self.benchmark_model_domain(model_config, test_cases, domain)
 
-        results_data = []
-        for r in self.results:
-            results_data.append(
-                {
-                    "test_id": r.test_id,
-                    "model_id": r.model_id,
-                    "model_name": r.model_name,
-                    "domain": r.domain,
-                    "input_description": r.input_description,
-                    "annotation": r.annotation,
-                    "is_valid": r.is_valid,
-                    "is_faithful": r.is_faithful,
-                    "is_complete": r.is_complete,
-                    "validation_attempts": r.validation_attempts,
-                    "validation_messages": r.validation_messages,
-                    "evaluation_feedback": r.evaluation_feedback,
-                    "assessment_feedback": r.assessment_feedback,
-                    "execution_time_seconds": r.execution_time_seconds,
-                    "cli_command": r.cli_command,
-                    "error": r.error,
-                }
-            )
+                # Save immediately after each domain completes
+                saved_file = self._save_domain_results(model_name, domain, results)
+                saved_files.append(saved_file)
 
-        with open(output_file, "w") as f:
-            json.dump(
-                {
-                    "timestamp": timestamp,
-                    "schema_version": SCHEMA_VERSION,
-                    "results": results_data,
-                },
-                f,
-                indent=2,
-            )
+        # Generate final summary report
+        self._generate_summary_report(saved_files)
 
-        print(f"\nResults saved to: {output_file}")
+    def _generate_summary_report(self, result_files: list[Path]):
+        """Generate summary report from all saved result files."""
+        report_file = self.output_dir / f"{self.session_id}_summary.md"
 
-    def _generate_report(self):
-        """Generate summary report."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        report_file = self.output_dir / f"report_{timestamp}.md"
+        # Load all results
+        all_results = []
+        for f in result_files:
+            with open(f) as fp:
+                data = json.load(fp)
+                for r in data["results"]:
+                    r["_model_name"] = data["model_name"]
+                    r["_domain"] = data["domain"]
+                    all_results.append(r)
 
-        # Aggregate statistics by model
-        model_stats = {}
-        for r in self.results:
-            if r.model_name not in model_stats:
-                model_stats[r.model_name] = {
-                    "model_id": r.model_id,
+        # Aggregate stats
+        model_stats: dict[str, dict] = {}
+        for r in all_results:
+            model_name = r["_model_name"]
+            if model_name not in model_stats:
+                model_stats[model_name] = {
                     "total": 0,
                     "valid": 0,
                     "faithful": 0,
                     "complete": 0,
-                    "total_attempts": 0,
-                    "total_time": 0.0,
                     "errors": 0,
-                    "by_domain": {},
+                    "total_time": 0.0,
                 }
 
-            stats = model_stats[r.model_name]
+            stats = model_stats[model_name]
             stats["total"] += 1
-            stats["valid"] += 1 if r.is_valid else 0
-            stats["faithful"] += 1 if r.is_faithful else 0
-            stats["complete"] += 1 if r.is_complete else 0
-            stats["total_attempts"] += r.validation_attempts
-            stats["total_time"] += r.execution_time_seconds
-            if r.error:
+
+            resp = r.get("full_response", {})
+            metadata = resp.get("metadata", {})
+
+            if resp.get("is_valid"):
+                stats["valid"] += 1
+            if metadata.get("is_faithful"):
+                stats["faithful"] += 1
+            if metadata.get("is_complete"):
+                stats["complete"] += 1
+            if resp.get("status") == "error" or resp.get("status") == "exception":
                 stats["errors"] += 1
 
-            # Domain stats
-            if r.domain not in stats["by_domain"]:
-                stats["by_domain"][r.domain] = {
-                    "total": 0,
-                    "valid": 0,
-                    "faithful": 0,
-                    "complete": 0,
-                }
-            domain_stats = stats["by_domain"][r.domain]
-            domain_stats["total"] += 1
-            domain_stats["valid"] += 1 if r.is_valid else 0
-            domain_stats["faithful"] += 1 if r.is_faithful else 0
-            domain_stats["complete"] += 1 if r.is_complete else 0
+            stats["total_time"] += r.get("execution_time_seconds", 0)
 
-        # Generate markdown report
-        report_lines = [
-            "# HED Model Benchmark Report",
+        # Generate report
+        lines = [
+            "# HED Model Benchmark Summary",
             "",
+            f"**Session**: {self.session_id}",
             f"**Date**: {datetime.now().isoformat()}",
-            f"**Schema Version**: {SCHEMA_VERSION}",
-            f"**Total Tests**: {len(self.results)}",
+            f"**Eval Model**: {EVAL_MODEL} (via {EVAL_PROVIDER})",
             "",
-            "## Summary",
+            "## Results",
             "",
-            "| Model | Valid | Faithful | Complete | Avg Attempts | Avg Time | Errors |",
-            "|-------|-------|----------|----------|--------------|----------|--------|",
+            "| Model | Valid | Faithful | Complete | Avg Time | Errors |",
+            "|-------|-------|----------|----------|----------|--------|",
         ]
 
         for model_name, stats in model_stats.items():
-            valid_rate = stats["valid"] / stats["total"] * 100 if stats["total"] > 0 else 0
-            faithful_rate = stats["faithful"] / stats["total"] * 100 if stats["total"] > 0 else 0
-            complete_rate = stats["complete"] / stats["total"] * 100 if stats["total"] > 0 else 0
-            avg_attempts = stats["total_attempts"] / stats["total"] if stats["total"] > 0 else 0
-            avg_time = stats["total_time"] / stats["total"] if stats["total"] > 0 else 0
+            n = stats["total"]
+            valid_pct = stats["valid"] / n * 100 if n else 0
+            faithful_pct = stats["faithful"] / n * 100 if n else 0
+            complete_pct = stats["complete"] / n * 100 if n else 0
+            avg_time = stats["total_time"] / n if n else 0
 
-            report_lines.append(
-                f"| {model_name} | {valid_rate:.0f}% | {faithful_rate:.0f}% | "
-                f"{complete_rate:.0f}% | {avg_attempts:.1f} | {avg_time:.1f}s | {stats['errors']} |"
+            lines.append(
+                f"| {model_name} | {valid_pct:.0f}% | {faithful_pct:.0f}% | "
+                f"{complete_pct:.0f}% | {avg_time:.1f}s | {stats['errors']} |"
             )
 
-        report_lines.extend(
-            [
-                "",
-                "## By Domain",
-                "",
-            ]
-        )
-
-        domains = {r.domain for r in self.results}
-        for domain in sorted(domains):
-            report_lines.extend(
-                [
-                    f"### {domain.title()}",
-                    "",
-                    "| Model | Valid | Faithful | Complete |",
-                    "|-------|-------|----------|----------|",
-                ]
-            )
-
-            for model_name, stats in model_stats.items():
-                if domain in stats["by_domain"]:
-                    d = stats["by_domain"][domain]
-                    valid_rate = d["valid"] / d["total"] * 100 if d["total"] > 0 else 0
-                    faithful_rate = d["faithful"] / d["total"] * 100 if d["total"] > 0 else 0
-                    complete_rate = d["complete"] / d["total"] * 100 if d["total"] > 0 else 0
-                    report_lines.append(
-                        f"| {model_name} | {valid_rate:.0f}% | {faithful_rate:.0f}% | {complete_rate:.0f}% |"
-                    )
-
-            report_lines.append("")
-
-        # Detailed results
-        report_lines.extend(
-            [
-                "## Detailed Results",
-                "",
-            ]
-        )
-
-        for r in self.results:
-            report_lines.extend(
-                [
-                    f"### {r.test_id} - {r.model_name}",
-                    "",
-                    f"**Domain**: {r.domain}",
-                    f"**Input**: {r.input_description[:200]}{'...' if len(r.input_description) > 200 else ''}",
-                    "",
-                    f"**Annotation**: `{r.annotation}`",
-                    "",
-                    f"**Valid**: {r.is_valid} | **Faithful**: {r.is_faithful} | **Complete**: {r.is_complete}",
-                    f"**Attempts**: {r.validation_attempts} | **Time**: {r.execution_time_seconds:.2f}s",
-                    "",
-                    "**CLI Command**:",
-                    "```bash",
-                    f"{r.cli_command}",
-                    "```",
-                    "",
-                ]
-            )
-
-            if r.evaluation_feedback:
-                # Truncate long feedback
-                feedback = (
-                    r.evaluation_feedback[:500] + "..."
-                    if len(r.evaluation_feedback) > 500
-                    else r.evaluation_feedback
-                )
-                report_lines.extend(
-                    [
-                        "**Evaluation Feedback**:",
-                        "```",
-                        f"{feedback}",
-                        "```",
-                        "",
-                    ]
-                )
-
-            if r.assessment_feedback:
-                feedback = (
-                    r.assessment_feedback[:500] + "..."
-                    if len(r.assessment_feedback) > 500
-                    else r.assessment_feedback
-                )
-                report_lines.extend(
-                    [
-                        "**Assessment Feedback**:",
-                        "```",
-                        f"{feedback}",
-                        "```",
-                        "",
-                    ]
-                )
-
-            if r.validation_messages:
-                report_lines.extend(
-                    [
-                        "**Validation Messages**:",
-                        *[f"- {m}" for m in r.validation_messages[:5]],
-                        "",
-                    ]
-                )
-
-            if r.error:
-                report_lines.append(f"**Error**: {r.error}")
-                report_lines.append("")
-
-            report_lines.append("---")
-            report_lines.append("")
+        lines.extend(["", "## Result Files", ""])
+        for f in result_files:
+            lines.append(f"- `{f.name}`")
 
         with open(report_file, "w") as f:
-            f.write("\n".join(report_lines))
+            f.write("\n".join(lines))
 
-        print(f"Report saved to: {report_file}")
+        print(f"\n{'=' * 80}")
+        print(f"Summary report: {report_file}")
+        print(f"{'=' * 80}")
 
 
 def main():
@@ -872,7 +718,7 @@ def main():
         domains = sys.argv[1].split(",")
         print(f"Filtering to domains: {domains}")
 
-    benchmark.run_full_benchmark(domains=domains)
+    benchmark.run_benchmark(domains=domains)
 
 
 if __name__ == "__main__":
