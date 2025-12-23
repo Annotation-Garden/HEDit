@@ -411,10 +411,34 @@ def run_hedit_annotate(
     )
     execution_time = time.time() - start_time
 
-    # Parse JSON from stdout (filter out workflow debug messages)
+    # Parse JSON from stdout (filter out debug messages and find JSON block)
     stdout_lines = result.stdout.strip().split("\n")
-    json_lines = [line for line in stdout_lines if not line.startswith("[WORKFLOW]")]
-    json_str = "\n".join(json_lines)
+
+    # Filter out known noise patterns
+    filtered_lines = []
+    for line in stdout_lines:
+        # Skip workflow debug messages
+        if line.startswith("[WORKFLOW]"):
+            continue
+        # Skip LiteLLM provider warnings (contain ANSI codes)
+        if "Provider List" in line or "\x1b[" in line:
+            continue
+        # Skip empty lines at the start
+        if not filtered_lines and not line.strip():
+            continue
+        filtered_lines.append(line)
+
+    # Find the JSON block (starts with '{')
+    json_start = None
+    for i, line in enumerate(filtered_lines):
+        if line.strip().startswith("{"):
+            json_start = i
+            break
+
+    if json_start is not None:
+        json_str = "\n".join(filtered_lines[json_start:])
+    else:
+        json_str = "\n".join(filtered_lines)
 
     try:
         parsed = json.loads(json_str)
@@ -490,10 +514,34 @@ def run_hedit_annotate_image(
     )
     execution_time = time.time() - start_time
 
-    # Parse JSON from stdout
+    # Parse JSON from stdout (filter out debug messages and find JSON block)
     stdout_lines = result.stdout.strip().split("\n")
-    json_lines = [line for line in stdout_lines if not line.startswith("[WORKFLOW]")]
-    json_str = "\n".join(json_lines)
+
+    # Filter out known noise patterns
+    filtered_lines = []
+    for line in stdout_lines:
+        # Skip workflow debug messages
+        if line.startswith("[WORKFLOW]"):
+            continue
+        # Skip LiteLLM provider warnings (contain ANSI codes)
+        if "Provider List" in line or "\x1b[" in line:
+            continue
+        # Skip empty lines at the start
+        if not filtered_lines and not line.strip():
+            continue
+        filtered_lines.append(line)
+
+    # Find the JSON block (starts with '{')
+    json_start = None
+    for i, line in enumerate(filtered_lines):
+        if line.strip().startswith("{"):
+            json_start = i
+            break
+
+    if json_start is not None:
+        json_str = "\n".join(filtered_lines[json_start:])
+    else:
+        json_str = "\n".join(filtered_lines)
 
     try:
         parsed = json.loads(json_str)
