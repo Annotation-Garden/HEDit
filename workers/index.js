@@ -333,8 +333,8 @@ async function handleAnnotate(request, env, ctx, corsHeaders, CONFIG) {
       backendHeaders['X-API-Key'] = env.BACKEND_API_KEY;
     }
 
-    // Forward BYOK headers to backend for user's own API key
-    const byokHeaders = ['X-OpenRouter-Key', 'X-OpenRouter-Model', 'X-OpenRouter-Provider', 'X-OpenRouter-Temperature'];
+    // Forward BYOK and user ID headers to backend
+    const byokHeaders = ['X-OpenRouter-Key', 'X-OpenRouter-Model', 'X-OpenRouter-Provider', 'X-OpenRouter-Temperature', 'X-OpenRouter-Eval-Model', 'X-OpenRouter-Eval-Provider', 'X-User-Id'];
     for (const header of byokHeaders) {
       const value = request.headers.get(header);
       if (value) {
@@ -449,8 +449,8 @@ async function handleAnnotateFromImage(request, env, corsHeaders, CONFIG) {
       backendHeaders['X-API-Key'] = env.BACKEND_API_KEY;
     }
 
-    // Forward BYOK headers to backend for user's own API key
-    const byokHeaders = ['X-OpenRouter-Key', 'X-OpenRouter-Model', 'X-OpenRouter-Provider', 'X-OpenRouter-Temperature'];
+    // Forward BYOK and user ID headers to backend
+    const byokHeaders = ['X-OpenRouter-Key', 'X-OpenRouter-Model', 'X-OpenRouter-Provider', 'X-OpenRouter-Temperature', 'X-OpenRouter-Eval-Model', 'X-OpenRouter-Eval-Provider', 'X-User-Id'];
     for (const header of byokHeaders) {
       const value = request.headers.get(header);
       if (value) {
