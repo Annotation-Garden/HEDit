@@ -566,41 +566,67 @@ async def annotate(
         HTTPException: If workflow fails or authentication fails
     """
     # Determine which workflow to use
+    # Check for model override headers (from frontend dropdown or CLI)
+    model_override = request.model or req.headers.get("x-openrouter-model")
+    provider_override = request.provider or req.headers.get("x-openrouter-provider")
+    eval_model_override = req.headers.get("x-openrouter-eval-model")
+    eval_provider_override = req.headers.get("x-openrouter-eval-provider")
+    temp_header = req.headers.get("x-openrouter-temperature")
+    temperature = request.temperature
+    if temperature is None and temp_header:
+        try:
+            temperature = float(temp_header)
+        except ValueError:
+            pass  # Invalid header value, use default
+    user_id_override = req.headers.get("x-user-id")
+
     if api_key == "byok":
         # BYOK mode: Create workflow with user's key and model settings
         openrouter_key = req.headers.get("x-openrouter-key")
         if not openrouter_key:
             raise HTTPException(status_code=401, detail="Missing X-OpenRouter-Key header")
 
-        # Get model config: request body > headers > server defaults
-        model = request.model or req.headers.get("x-openrouter-model")
-        provider = request.provider or req.headers.get("x-openrouter-provider")
-        eval_model = req.headers.get("x-openrouter-eval-model")
-        eval_provider = req.headers.get("x-openrouter-eval-provider")
-        temp_header = req.headers.get("x-openrouter-temperature")
-        temperature = request.temperature
-        if temperature is None and temp_header:
-            try:
-                temperature = float(temp_header)
-            except ValueError:
-                pass  # Invalid header value, use default
-
-        # Custom user_id for cache optimization (e.g., "frontend-0.6.4" for shared frontend cache)
-        user_id_override = req.headers.get("x-user-id")
-
         try:
             active_workflow = create_byok_workflow(
                 openrouter_key,
-                model=model,
-                provider=provider,
-                eval_model=eval_model,
-                eval_provider=eval_provider,
+                model=model_override,
+                provider=provider_override,
+                eval_model=eval_model_override,
+                eval_provider=eval_provider_override,
                 temperature=temperature,
                 user_id_override=user_id_override,
             )
         except Exception as e:
             raise HTTPException(
                 status_code=500, detail=f"Failed to initialize BYOK workflow: {str(e)}"
+            ) from e
+    elif model_override or provider_override:
+        # Server mode with model overrides: Create custom workflow with server's API key
+        # This supports frontend model dropdown without requiring user's own API key
+        server_api_key = os.getenv("OPENROUTER_API_KEY")
+        if not server_api_key:
+            raise HTTPException(
+                status_code=503,
+                detail="Server not configured for model overrides (missing OPENROUTER_API_KEY)",
+            )
+
+        try:
+            active_workflow = create_openrouter_workflow(
+                api_key=server_api_key,
+                annotation_model=model_override,
+                annotation_provider=provider_override,
+                eval_model=eval_model_override,
+                eval_provider=eval_provider_override,
+                temperature=temperature,
+                user_id=user_id_override,
+                schema_dir=_byok_config.get("schema_dir"),
+                validator_path=_byok_config.get("validator_path"),
+                use_js_validator=_byok_config.get("use_js_validator", True),
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to initialize workflow with model override: {str(e)}",
             ) from e
     else:
         # Server mode: Use pre-initialized workflow
@@ -704,49 +730,81 @@ async def annotate_from_image(
         HTTPException: If workflow or vision agent fails or authentication fails
     """
     # Determine which workflow and vision agent to use
+    # Check for model override headers (from frontend dropdown or CLI)
+    model_override = request.model or req.headers.get("x-openrouter-model")
+    vision_model_override = request.vision_model or req.headers.get("x-openrouter-vision-model")
+    provider_override = request.provider or req.headers.get("x-openrouter-provider")
+    eval_model_override = req.headers.get("x-openrouter-eval-model")
+    eval_provider_override = req.headers.get("x-openrouter-eval-provider")
+    temp_header = req.headers.get("x-openrouter-temperature")
+    temperature = request.temperature
+    if temperature is None and temp_header:
+        try:
+            temperature = float(temp_header)
+        except ValueError:
+            pass  # Invalid header value, use default
+    user_id_override = req.headers.get("x-user-id")
+
     if api_key == "byok":
         # BYOK mode: Create workflow and vision agent with user's key and model settings
         openrouter_key = req.headers.get("x-openrouter-key")
         if not openrouter_key:
             raise HTTPException(status_code=401, detail="Missing X-OpenRouter-Key header")
 
-        # Get model config: request body > headers > server defaults
-        model = request.model or req.headers.get("x-openrouter-model")
-        vision_model = request.vision_model or req.headers.get("x-openrouter-vision-model")
-        provider = request.provider or req.headers.get("x-openrouter-provider")
-        eval_model = req.headers.get("x-openrouter-eval-model")
-        eval_provider = req.headers.get("x-openrouter-eval-provider")
-        temp_header = req.headers.get("x-openrouter-temperature")
-        temperature = request.temperature
-        if temperature is None and temp_header:
-            try:
-                temperature = float(temp_header)
-            except ValueError:
-                pass  # Invalid header value, use default
-
-        # Custom user_id for cache optimization (e.g., "frontend-0.6.4" for shared frontend cache)
-        user_id_override = req.headers.get("x-user-id")
-
         try:
             active_workflow = create_byok_workflow(
                 openrouter_key,
-                model=model,
-                provider=provider,
-                eval_model=eval_model,
-                eval_provider=eval_provider,
+                model=model_override,
+                provider=provider_override,
+                eval_model=eval_model_override,
+                eval_provider=eval_provider_override,
                 temperature=temperature,
                 user_id_override=user_id_override,
             )
             active_vision_agent = create_byok_vision_agent(
                 openrouter_key,
-                vision_model=vision_model,
-                provider=provider,
+                vision_model=vision_model_override,
+                provider=provider_override,
                 temperature=temperature,
                 user_id_override=user_id_override,
             )
         except Exception as e:
             raise HTTPException(
                 status_code=500, detail=f"Failed to initialize BYOK agents: {str(e)}"
+            ) from e
+    elif model_override or provider_override or vision_model_override:
+        # Server mode with model overrides: Create custom workflow with server's API key
+        server_api_key = os.getenv("OPENROUTER_API_KEY")
+        if not server_api_key:
+            raise HTTPException(
+                status_code=503,
+                detail="Server not configured for model overrides (missing OPENROUTER_API_KEY)",
+            )
+
+        try:
+            active_workflow = create_openrouter_workflow(
+                api_key=server_api_key,
+                annotation_model=model_override,
+                annotation_provider=provider_override,
+                eval_model=eval_model_override,
+                eval_provider=eval_provider_override,
+                temperature=temperature,
+                user_id=user_id_override,
+                schema_dir=_byok_config.get("schema_dir"),
+                validator_path=_byok_config.get("validator_path"),
+                use_js_validator=_byok_config.get("use_js_validator", True),
+            )
+            active_vision_agent = create_byok_vision_agent(
+                server_api_key,
+                vision_model=vision_model_override,
+                provider=provider_override,
+                temperature=temperature,
+                user_id_override=user_id_override,
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to initialize workflow with model override: {str(e)}",
             ) from e
     else:
         # Server mode: Use pre-initialized workflow and vision agent
