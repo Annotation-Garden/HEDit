@@ -52,27 +52,24 @@ telemetry_collector: TelemetryCollector | None = None
 _byok_config: dict = {}
 
 
-def _derive_user_id(api_key: str) -> str:
-    """Derive a stable user ID from API key for cache optimization.
+def _derive_user_id(token: str) -> str:
+    """Derive a stable user ID from API token for cache optimization.
 
-    Uses HMAC-SHA256 to create a stable, anonymous identifier from the API key.
-    Each unique API key gets its own cache lane in OpenRouter.
+    Uses BLAKE2b to create a stable, anonymous identifier from the token.
+    Each unique token gets its own cache lane in OpenRouter.
 
-    Note: This is NOT password hashing. The API key is already a high-entropy
-    secret. We use HMAC for consistent key derivation (not credential storage).
+    Note: This is NOT password hashing. The token is already a high-entropy
+    secret. We use BLAKE2b for fast, consistent ID derivation.
 
     Args:
-        api_key: OpenRouter API key (already a secret, not a password)
+        token: OpenRouter API token (already a secret, not user password)
 
     Returns:
-        16-character hexadecimal user ID
+        16-character hexadecimal cache ID
     """
-    import hmac
-
-    # Use HMAC for key derivation - appropriate for deriving cache IDs from secrets
-    # The key is constant since we just need consistent derivation, not secrecy
-    hmac_key = b"hedit-cache-id-derivation"
-    return hmac.new(hmac_key, api_key.encode(), hashlib.sha256).hexdigest()[:16]
+    # BLAKE2b is designed for fast hashing and key derivation
+    # digest_size=8 gives us 16 hex characters
+    return hashlib.blake2b(token.encode(), digest_size=8).hexdigest()
 
 
 def create_openrouter_workflow(
