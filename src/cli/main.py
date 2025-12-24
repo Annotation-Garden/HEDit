@@ -560,6 +560,13 @@ def annotate_image(
             help="Run completeness assessment",
         ),
     ] = False,
+    no_streaming: Annotated[
+        bool,
+        typer.Option(
+            "--no-streaming",
+            help="Disable streaming progress (use batch mode)",
+        ),
+    ] = False,
     standalone: StandaloneOption = False,
     api_mode: ApiModeOption = False,
     verbose: VerboseOption = False,
@@ -574,6 +581,7 @@ def annotate_image(
         hedit annotate-image photo.jpg --prompt "Describe the experimental setup"
         hedit annotate-image screen.png -o json > result.json
         hedit annotate-image stimulus.png --standalone  # Run locally
+        hedit annotate-image stimulus.png --no-streaming  # Disable live progress
     """
     # Show telemetry disclosure on first run
     if is_first_run():
@@ -613,22 +621,61 @@ def annotate_image(
         raise typer.Exit(1)
 
     mode_name = mode_override or config.execution.mode
-    if not output.is_piped():
-        output.print_progress(f"Analyzing image and generating HED annotation ({mode_name} mode)")
+    # Determine if streaming should be used
+    # Streaming only works in API mode and when not piped
+    use_streaming = (
+        config.output.streaming
+        and not no_streaming
+        and mode_name == "api"
+        and not output.is_piped()
+    )
 
     try:
         executor = get_executor(config, effective_key, mode_override, config.settings.user_id)
-        result = executor.annotate_image(
-            image_path=image,
-            prompt=prompt,
-            schema_version=schema_version or config.settings.schema_version,
-            max_validation_attempts=max_attempts,
-            run_assessment=assessment,
-        )
-        output.print_image_annotation_result(result, output_format, verbose)
 
-        if result.get("status") != "success" or not result.get("is_valid"):
-            raise typer.Exit(1)
+        if use_streaming and hasattr(executor, "annotate_image_stream"):
+            # Use streaming mode with live progress updates
+            result = None
+            with output.streaming_status("Connecting to API...") as status:
+                for event_type, data in executor.annotate_image_stream(
+                    image_path=image,
+                    prompt=prompt,
+                    schema_version=schema_version or config.settings.schema_version,
+                    max_validation_attempts=max_attempts,
+                    run_assessment=assessment,
+                ):
+                    output.update_streaming_status(status, event_type, data)
+                    if event_type == "result":
+                        result = data
+                    elif event_type == "error":
+                        output.print_error(data.get("message", "Unknown error"))
+                        raise typer.Exit(1)
+
+            if result:
+                output.print_image_annotation_result(result, output_format, verbose)
+                if result.get("status") != "success" or not result.get("is_valid"):
+                    raise typer.Exit(1)
+            else:
+                output.print_error("No result received from streaming API")
+                raise typer.Exit(1)
+        else:
+            # Use batch mode (non-streaming)
+            if not output.is_piped():
+                output.print_progress(
+                    f"Analyzing image and generating HED annotation ({mode_name} mode)"
+                )
+
+            result = executor.annotate_image(
+                image_path=image,
+                prompt=prompt,
+                schema_version=schema_version or config.settings.schema_version,
+                max_validation_attempts=max_attempts,
+                run_assessment=assessment,
+            )
+            output.print_image_annotation_result(result, output_format, verbose)
+
+            if result.get("status") != "success" or not result.get("is_valid"):
+                raise typer.Exit(1)
 
     except ExecutionError as e:
         output.print_error(str(e), hint=e.detail)

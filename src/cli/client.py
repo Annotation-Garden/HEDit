@@ -251,7 +251,91 @@ class HEDitClient:
         Returns:
             Annotation response dictionary
         """
-        # Read and encode image
+        image_uri = self._encode_image(image_path)
+
+        with httpx.Client(timeout=self.timeout) as client:
+            response = client.post(
+                f"{self.api_url}/annotate-from-image",
+                headers=self._get_headers(),
+                json={
+                    "image": image_uri,
+                    "prompt": prompt,
+                    "schema_version": schema_version,
+                    "max_validation_attempts": max_validation_attempts,
+                    "run_assessment": run_assessment,
+                },
+            )
+            return self._handle_response(response)
+
+    def annotate_image_stream(
+        self,
+        image_path: Path | str,
+        prompt: str | None = None,
+        schema_version: str = "8.4.0",
+        max_validation_attempts: int = 5,
+        run_assessment: bool = False,
+    ) -> Generator[tuple[str, dict[str, Any]], None, None]:
+        """Generate HED annotation from image with streaming progress.
+
+        Yields SSE events as (event_type, data) tuples.
+
+        Args:
+            image_path: Path to image file
+            prompt: Optional custom prompt for vision model
+            schema_version: HED schema version
+            max_validation_attempts: Maximum validation retries
+            run_assessment: Whether to run assessment
+
+        Yields:
+            Tuple of (event_type, event_data) for each SSE event.
+            Event types: "progress", "image_description", "validation", "result", "error", "done"
+        """
+        image_uri = self._encode_image(image_path)
+
+        with httpx.Client(timeout=self.timeout) as client:
+            with client.stream(
+                "POST",
+                f"{self.api_url}/annotate-from-image/stream",
+                headers=self._get_headers(),
+                json={
+                    "image": image_uri,
+                    "prompt": prompt,
+                    "schema_version": schema_version,
+                    "max_validation_attempts": max_validation_attempts,
+                    "run_assessment": run_assessment,
+                },
+            ) as response:
+                if response.status_code != 200:
+                    # Read full response for error
+                    response.read()
+                    self._handle_response(response)
+                    return
+
+                # Parse SSE stream
+                current_event = None
+                for line in response.iter_lines():
+                    if line.startswith("event: "):
+                        current_event = line[7:]
+                    elif line.startswith("data: ") and current_event:
+                        try:
+                            data = json.loads(line[6:])
+                            yield (current_event, data)
+                        except json.JSONDecodeError:
+                            pass  # Skip malformed data
+                        current_event = None
+
+    def _encode_image(self, image_path: Path | str) -> str:
+        """Encode an image file to base64 data URI.
+
+        Args:
+            image_path: Path to image file
+
+        Returns:
+            Base64-encoded data URI string
+
+        Raises:
+            APIError: If image file not found
+        """
         image_path = Path(image_path)
         if not image_path.exists():
             raise APIError(f"Image file not found: {image_path}")
@@ -271,21 +355,7 @@ class HEDitClient:
         with open(image_path, "rb") as f:
             image_data = base64.b64encode(f.read()).decode("utf-8")
 
-        image_uri = f"data:{mime_type};base64,{image_data}"
-
-        with httpx.Client(timeout=self.timeout) as client:
-            response = client.post(
-                f"{self.api_url}/annotate-from-image",
-                headers=self._get_headers(),
-                json={
-                    "image": image_uri,
-                    "prompt": prompt,
-                    "schema_version": schema_version,
-                    "max_validation_attempts": max_validation_attempts,
-                    "run_assessment": run_assessment,
-                },
-            )
-            return self._handle_response(response)
+        return f"data:{mime_type};base64,{image_data}"
 
     def validate(
         self,

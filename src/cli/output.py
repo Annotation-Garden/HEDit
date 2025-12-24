@@ -307,7 +307,7 @@ def update_streaming_status(status: Status, event_type: str, data: dict[str, Any
 
     Args:
         status: Rich Status object from streaming_status()
-        event_type: SSE event type (progress, validation, etc.)
+        event_type: SSE event type (progress, validation, image_description, etc.)
         data: Event data dictionary
     """
     if event_type == "progress":
@@ -328,6 +328,14 @@ def update_streaming_status(status: Status, event_type: str, data: dict[str, Any
             status.update("[green]Validation passed[/]")
         else:
             status.update(f"[yellow]Attempt {attempt}: {message}[/]")
+
+    elif event_type == "image_description":
+        # Show that image description was generated
+        description = data.get("description", "")
+        # Truncate long descriptions for status display
+        if len(description) > 60:
+            description = description[:57] + "..."
+        status.update(f"[cyan]Image described: {description}[/]")
 
 
 def is_piped() -> bool:
