@@ -796,10 +796,13 @@ async def annotate_from_image(
                 validator_path=_byok_config.get("validator_path"),
                 use_js_validator=_byok_config.get("use_js_validator", True),
             )
+            # Note: Vision agent uses its own provider (deepinfra/fp8 for qwen-vl)
+            # Only pass provider_override to vision if a custom vision_model was specified
+            vision_provider = provider_override if vision_model_override else None
             active_vision_agent = create_byok_vision_agent(
                 server_api_key,
                 vision_model=vision_model_override,
-                provider=provider_override,
+                provider=vision_provider,
                 temperature=temperature,
                 user_id_override=user_id_override,
             )
@@ -1205,10 +1208,13 @@ async def annotate_from_image_stream(
                 validator_path=_byok_config.get("validator_path"),
                 use_js_validator=_byok_config.get("use_js_validator", True),
             )
+            # Note: Vision agent uses its own provider (deepinfra/fp8 for qwen-vl)
+            # Only pass provider_override to vision if a custom vision_model was specified
+            vision_provider = provider_override if vision_model_override else None
             active_vision_agent = create_byok_vision_agent(
                 server_api_key,
                 vision_model=vision_model_override,
-                provider=provider_override,
+                provider=vision_provider,
                 temperature=temperature,
                 user_id_override=user_id_override,
             )
