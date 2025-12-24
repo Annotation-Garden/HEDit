@@ -1097,8 +1097,12 @@ async def annotate_stream(
             yield send_event("result", result)
             yield send_event("done", {"message": "Workflow completed"})
 
-        except Exception as e:
-            yield send_event("error", {"message": str(e)})
+        except Exception:
+            # Log the actual error for debugging, but return a generic message
+            import logging
+
+            logging.exception("Streaming workflow error")
+            yield send_event("error", {"message": "An error occurred during annotation processing"})
 
     return StreamingResponse(
         event_generator(),
