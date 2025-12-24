@@ -82,22 +82,44 @@ jobs:
         run: |
           NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
 
+          # Parse version for __version_info__
+          # Format: 0.6.7a1 -> (0, 6, 7, "alpha")
+          MAJOR=$(echo "$NEW_VERSION" | cut -d. -f1)
+          MINOR=$(echo "$NEW_VERSION" | cut -d. -f2)
+          PATCH=$(echo "$NEW_VERSION" | cut -d. -f3 | sed 's/[^0-9].*//')
+          if [[ "$NEW_VERSION" == *"a"* ]]; then
+            PRERELEASE="alpha"
+          elif [[ "$NEW_VERSION" == *"b"* ]]; then
+            PRERELEASE="beta"
+          elif [[ "$NEW_VERSION" == *"rc"* ]]; then
+            PRERELEASE="rc"
+          elif [[ "$NEW_VERSION" == *"dev"* ]]; then
+            PRERELEASE="dev"
+          else
+            PRERELEASE=""
+          fi
+
           # Update pyproject.toml
           sed -i "s/^version = .*/version = \"$NEW_VERSION\"/" pyproject.toml
 
-          # Update src/version.py
-          cat > src/version.py << 'PYEOF'
+          # Update src/version.py with full exports
+          cat > src/version.py << PYEOF
           """Version information for HEDit."""
 
-          __version__ = "PLACEHOLDER"
+          __version__ = "$NEW_VERSION"
+          __version_info__ = ($MAJOR, $MINOR, $PATCH, "$PRERELEASE")
 
 
           def get_version() -> str:
-              """Return the current version string."""
+              """Get the current version string."""
               return __version__
+
+
+          def get_version_info() -> tuple:
+              """Get the version info tuple (major, minor, patch, prerelease)."""
+              return __version_info__
           PYEOF
-          # Replace placeholder with actual version and fix indentation
-          sed -i "s/PLACEHOLDER/$NEW_VERSION/" src/version.py
+          # Fix indentation (remove leading spaces from heredoc)
           sed -i 's/^          //' src/version.py
 
       - name: Commit version bump
