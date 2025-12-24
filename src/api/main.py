@@ -933,7 +933,7 @@ async def annotate_stream(
         try:
             temperature = float(temp_header)
         except ValueError:
-            pass
+            pass  # Invalid header value, use default temperature
     user_id_override = req.headers.get("x-user-id")
 
     if api_key == "byok":
