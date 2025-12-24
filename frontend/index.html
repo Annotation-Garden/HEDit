@@ -1131,6 +1131,14 @@ Example: A red circle appears on the left side of the screen and the participant
                     </select>
                 </div>
                 <div>
+                    <label for="annotationModel-image">Annotation Model</label>
+                    <select id="annotationModel-image">
+                        <option value="anthropic/claude-haiku-4.5" data-provider="anthropic" selected>Claude Haiku 4.5 (best)</option>
+                        <option value="mistralai/mistral-small-3.2-24b-instruct" data-provider="mistral">Mistral Small 3.2 (balanced, cheap)</option>
+                        <option value="openai/gpt-oss-120b" data-provider="Cerebras">GPT-OSS 120B (fast, cheap)</option>
+                    </select>
+                </div>
+                <div>
                     <label for="maxAttempts-image">Max Validation Attempts</label>
                     <input type="number" id="maxAttempts-image" value="3" min="1" max="10">
                 </div>
@@ -1507,6 +1515,11 @@ Example: A red circle appears on the left side of the screen and the participant
             const maxAttempts = parseInt(document.getElementById('maxAttempts-image').value);
             const runAssessment = document.getElementById('runAssessment-image').checked;
 
+            // Get selected model and provider
+            const modelSelect = document.getElementById('annotationModel-image');
+            const selectedModel = modelSelect.value;
+            const selectedProvider = modelSelect.options[modelSelect.selectedIndex].dataset.provider;
+
             // Store for feedback
             lastInputDescription = null; // No text description for image mode
             lastImageData = uploadedImageBase64;
@@ -1516,7 +1529,7 @@ Example: A red circle appears on the left side of the screen and the participant
             document.getElementById('generateBtn-image').disabled = true;
             document.getElementById('progressStatus').classList.add('active');
 
-            updateProgress('Analyzing image...', []);
+            updateProgress('Analyzing image...', getProgressSteps('starting'));
 
             try {
                 // Get Turnstile token for bot protection
@@ -1544,6 +1557,8 @@ Example: A red circle appears on the left side of the screen and the participant
                     headers: {
                         'Content-Type': 'application/json',
                         'X-User-Id': `frontend-${FRONTEND_VERSION}`,
+                        'X-OpenRouter-Model': selectedModel,
+                        'X-OpenRouter-Provider': selectedProvider,
                     },
                     body: JSON.stringify(payload)
                 });
