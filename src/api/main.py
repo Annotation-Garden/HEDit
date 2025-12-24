@@ -300,16 +300,25 @@ async def lifespan(app: FastAPI):
                 "OPENROUTER_API_KEY environment variable is required when using OpenRouter"
             )
 
-        # Provider preference (e.g., "Cerebras" for ultra-fast inference)
-        provider_preference = os.getenv("LLM_PROVIDER_PREFERENCE")
+        # Provider preference (e.g., "mistral" for Mistral models, "Cerebras" for fast inference)
+        # Default to "mistral" for best routing with Mistral models
+        provider_preference = os.getenv("LLM_PROVIDER_PREFERENCE", "mistral")
 
         # Per-agent model configuration
-        annotation_model = get_model_name(os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b"))
+        # Default annotation model: Mistral-Small-3.2-24B (best balance of quality/speed/cost)
+        annotation_model = get_model_name(
+            os.getenv("ANNOTATION_MODEL", "mistralai/mistral-small-3.2-24b-instruct")
+        )
         evaluation_model = get_model_name(
             os.getenv("EVALUATION_MODEL", "qwen/qwen3-235b-a22b-2507")
         )
-        assessment_model = get_model_name(os.getenv("ASSESSMENT_MODEL", "openai/gpt-oss-120b"))
-        feedback_model = get_model_name(os.getenv("FEEDBACK_MODEL", "openai/gpt-oss-120b"))
+        # Assessment and feedback use same model as annotation for consistency
+        assessment_model = get_model_name(
+            os.getenv("ASSESSMENT_MODEL", "mistralai/mistral-small-3.2-24b-instruct")
+        )
+        feedback_model = get_model_name(
+            os.getenv("FEEDBACK_MODEL", "mistralai/mistral-small-3.2-24b-instruct")
+        )
 
         print("Using OpenRouter with models:")
         print(f"  Annotation: {annotation_model}")
