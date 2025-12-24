@@ -1633,7 +1633,7 @@ Example: A red circle appears on the left side of the screen and the participant
         }
 
         async function generateAnnotationFallback(description, schema, maxAttempts, runAssessment) {
-            updateProgress('Generating annotation...', ['annotating']);
+            updateProgress('Generating annotation...', getProgressSteps('annotating'));
 
             try {
                 // Get Turnstile token for bot protection
