@@ -1619,16 +1619,128 @@ Example: A red circle appears on the left side of the screen and the participant
             updateProgress('Connecting to server...', []);
 
             try {
-                // Use regular fetch (streaming has issues)
-                // Show simulated progress
-                updateProgress('Generating annotation...', getProgressSteps('annotating'));
-
-                await generateAnnotationFallback(description, schema, maxAttempts, runAssessment);
-
+                // Try streaming endpoint first, fall back to regular endpoint
+                await generateAnnotationStreaming(description, schema, maxAttempts, runAssessment);
             } catch (error) {
-                displayError(error.message);
-                document.getElementById('progressStatus').classList.remove('active');
-                document.getElementById('generateBtn').disabled = false;
+                console.warn('Streaming failed, falling back to regular endpoint:', error);
+                // Fall back to non-streaming
+                try {
+                    await generateAnnotationFallback(description, schema, maxAttempts, runAssessment);
+                } catch (fallbackError) {
+                    displayError(fallbackError.message);
+                    document.getElementById('progressStatus').classList.remove('active');
+                    document.getElementById('generateBtn').disabled = false;
+                }
+            }
+        }
+
+        async function generateAnnotationStreaming(description, schema, maxAttempts, runAssessment) {
+            // Get Turnstile token for bot protection
+            const turnstileToken = await getTurnstileToken();
+
+            // Get selected model and provider
+            const modelSelect = document.getElementById('annotationModel');
+            const selectedModel = modelSelect.value;
+            const selectedProvider = modelSelect.options[modelSelect.selectedIndex].dataset.provider;
+
+            const payload = {
+                description: description,
+                schema_version: schema,
+                max_validation_attempts: maxAttempts,
+                run_assessment: runAssessment,
+                telemetry_enabled: isTelemetryEnabled()
+            };
+
+            if (turnstileToken) {
+                payload.cf_turnstile_response = turnstileToken;
+            }
+
+            const response = await fetch(`${API_URL}/annotate/stream`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-User-Id': `frontend-${FRONTEND_VERSION}`,
+                    'X-OpenRouter-Model': selectedModel,
+                    'X-OpenRouter-Provider': selectedProvider,
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            // Read the streaming response
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+
+                // Parse SSE events from buffer
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+                let currentEvent = null;
+                for (const line of lines) {
+                    if (line.startsWith('event: ')) {
+                        currentEvent = line.substring(7);
+                    } else if (line.startsWith('data: ') && currentEvent) {
+                        const data = JSON.parse(line.substring(6));
+                        handleStreamEvent(currentEvent, data);
+                        currentEvent = null;
+                    }
+                }
+            }
+
+            // Process any remaining data
+            if (buffer.trim()) {
+                const lines = buffer.split('\n');
+                let currentEvent = null;
+                for (const line of lines) {
+                    if (line.startsWith('event: ')) {
+                        currentEvent = line.substring(7);
+                    } else if (line.startsWith('data: ') && currentEvent) {
+                        const data = JSON.parse(line.substring(6));
+                        handleStreamEvent(currentEvent, data);
+                        currentEvent = null;
+                    }
+                }
+            }
+
+            document.getElementById('progressStatus').classList.remove('active');
+            document.getElementById('generateBtn').disabled = false;
+        }
+
+        function handleStreamEvent(eventType, data) {
+            switch (eventType) {
+                case 'progress':
+                    updateProgress(data.message, getProgressSteps(data.stage));
+                    break;
+                case 'validation':
+                    // Show validation feedback in progress area
+                    if (data.valid) {
+                        updateProgress('Validation passed!', getProgressSteps('evaluating'));
+                    } else {
+                        const attemptMsg = `Attempt ${data.attempt}: ${data.message}`;
+                        updateProgress(attemptMsg, getProgressSteps('validating'));
+                    }
+                    break;
+                case 'result':
+                    displayResults(data);
+                    break;
+                case 'error':
+                    displayError(data.message);
+                    document.getElementById('progressStatus').classList.remove('active');
+                    document.getElementById('generateBtn').disabled = false;
+                    break;
+                case 'done':
+                    // Streaming complete
+                    break;
             }
         }
 
@@ -1695,15 +1807,22 @@ Example: A red circle appears on the left side of the screen and the participant
             const allSteps = [
                 { name: 'Annotating', stage: 'annotating' },
                 { name: 'Validating', stage: 'validating' },
+                { name: 'Refining', stage: 'refining' },
                 { name: 'Evaluating', stage: 'evaluating' },
                 { name: 'Assessing', stage: 'assessing' }
             ];
 
-            return allSteps.map(step => ({
+            // Map 'starting' to show all as pending
+            if (currentStage === 'starting') {
+                return allSteps.map(step => ({ name: step.name, status: '' }));
+            }
+
+            const currentIndex = allSteps.findIndex(s => s.stage === currentStage);
+
+            return allSteps.map((step, index) => ({
                 name: step.name,
-                status: step.stage === currentStage ? 'active' :
-                       (allSteps.findIndex(s => s.stage === step.stage) <
-                        allSteps.findIndex(s => s.stage === currentStage) ? 'completed' : '')
+                status: index === currentIndex ? 'active' :
+                       (index < currentIndex ? 'completed' : '')
             }));
         }
 

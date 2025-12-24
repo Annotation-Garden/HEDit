@@ -8,6 +8,7 @@ App is imported inside the fixture to avoid polluting global state.
 
 import importlib
 import os
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -352,10 +353,303 @@ class TestStreamingEndpoint:
             "schema_version": "8.3.0",
         }
         # Note: streaming tests are limited without async test support
-        # This verifies the endpoint exists and responds
-        response = client.post("/annotate/stream", json=request_data)
+        # This verifies the endpoint exists and responds with authentication
+        response = client.post("/annotate/stream", json=request_data, headers=TEST_AUTH_HEADERS)
         # May be 503 if workflow not initialized, or 200 with streaming
         assert response.status_code in [200, 503]
+
+    def test_stream_endpoint_requires_auth(self, client):
+        """Test that streaming endpoint requires authentication."""
+        request_data = {
+            "description": "A red circle appears",
+            "schema_version": "8.3.0",
+        }
+        response = client.post("/annotate/stream", json=request_data)
+        assert response.status_code == 401
+
+    def test_stream_endpoint_accepts_model_override_headers(self, client):
+        """Test that streaming endpoint accepts model/provider override headers."""
+        request_data = {
+            "description": "A red circle appears",
+            "schema_version": "8.3.0",
+        }
+        headers = {
+            **TEST_AUTH_HEADERS,
+            "X-OpenRouter-Model": "anthropic/claude-haiku-4.5",
+            "X-OpenRouter-Provider": "anthropic",
+        }
+        response = client.post("/annotate/stream", json=request_data, headers=headers)
+        # 503 expected without workflow initialized, but should not be 400 for bad headers
+        assert response.status_code in [200, 503]
+
+    def test_stream_endpoint_accepts_temperature_header(self, client):
+        """Test that streaming endpoint accepts temperature header."""
+        request_data = {
+            "description": "A red circle appears",
+            "schema_version": "8.3.0",
+        }
+        headers = {
+            **TEST_AUTH_HEADERS,
+            "X-OpenRouter-Temperature": "0.5",
+        }
+        response = client.post("/annotate/stream", json=request_data, headers=headers)
+        assert response.status_code in [200, 503]
+
+    def test_stream_endpoint_handles_invalid_temperature_gracefully(self, client):
+        """Test that streaming endpoint handles invalid temperature header."""
+        request_data = {
+            "description": "A red circle appears",
+            "schema_version": "8.3.0",
+        }
+        headers = {
+            **TEST_AUTH_HEADERS,
+            "X-OpenRouter-Temperature": "invalid",
+        }
+        # Should not fail, just ignore invalid temperature
+        response = client.post("/annotate/stream", json=request_data, headers=headers)
+        assert response.status_code in [200, 503]
+
+    def test_stream_endpoint_byok_mode_requires_key(self, client):
+        """Test that BYOK mode streaming requires OpenRouter key."""
+        request_data = {
+            "description": "A red circle appears",
+            "schema_version": "8.3.0",
+        }
+        # Provide a valid BYOK key header pattern but with an invalid key
+        # This should trigger BYOK mode check
+        headers = {"X-OpenRouter-Key": "sk-or-v1-test"}
+        response = client.post("/annotate/stream", json=request_data, headers=headers)
+        # Should accept BYOK mode (503 because workflow can't be created with fake key)
+        assert response.status_code in [401, 500, 503]
+
+    def test_stream_endpoint_returns_sse_content_type(self, client):
+        """Test that streaming endpoint returns SSE content type when successful."""
+        request_data = {
+            "description": "A red circle appears",
+            "schema_version": "8.3.0",
+        }
+        response = client.post("/annotate/stream", json=request_data, headers=TEST_AUTH_HEADERS)
+        if response.status_code == 200:
+            assert response.headers.get("content-type") == "text/event-stream; charset=utf-8"
+
+    def test_stream_endpoint_with_user_id_header(self, client):
+        """Test that streaming endpoint accepts user ID header."""
+        request_data = {
+            "description": "A red circle appears",
+            "schema_version": "8.3.0",
+        }
+        headers = {
+            **TEST_AUTH_HEADERS,
+            "X-User-Id": "frontend-test-0.6.6",
+        }
+        response = client.post("/annotate/stream", json=request_data, headers=headers)
+        assert response.status_code in [200, 503]
+
+    def test_stream_endpoint_with_eval_model_headers(self, client):
+        """Test that streaming endpoint accepts eval model headers."""
+        request_data = {
+            "description": "A red circle appears",
+            "schema_version": "8.3.0",
+        }
+        headers = {
+            **TEST_AUTH_HEADERS,
+            "X-OpenRouter-Eval-Model": "qwen/qwen3-235b-a22b-2507",
+            "X-OpenRouter-Eval-Provider": "Cerebras",
+        }
+        response = client.post("/annotate/stream", json=request_data, headers=headers)
+        assert response.status_code in [200, 503]
+
+    def test_stream_endpoint_with_assessment_flag(self, client):
+        """Test that streaming endpoint accepts run_assessment flag."""
+        request_data = {
+            "description": "A red circle appears",
+            "schema_version": "8.3.0",
+            "run_assessment": True,
+        }
+        response = client.post("/annotate/stream", json=request_data, headers=TEST_AUTH_HEADERS)
+        assert response.status_code in [200, 503]
+
+    def test_stream_endpoint_with_max_validation_attempts(self, client):
+        """Test that streaming endpoint accepts max_validation_attempts."""
+        request_data = {
+            "description": "A red circle appears",
+            "schema_version": "8.3.0",
+            "max_validation_attempts": 5,
+        }
+        response = client.post("/annotate/stream", json=request_data, headers=TEST_AUTH_HEADERS)
+        assert response.status_code in [200, 503]
+
+
+class TestStreamingWithMockedWorkflow:
+    """Tests for streaming endpoint with mocked workflow."""
+
+    @pytest.fixture
+    def client_with_workflow(self):
+        """Create a test client with a mocked workflow."""
+        original_env = {}
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+            if key in os.environ:
+                original_env[key] = os.environ[key]
+
+        os.environ["REQUIRE_API_AUTH"] = "true"
+        os.environ["API_KEYS"] = "test-api-key-for-unit-tests"
+        os.environ["OPENROUTER_API_KEY"] = "test-openrouter-key"
+
+        from src.api import security
+
+        importlib.reload(security)
+
+        # Create mock workflow
+        mock_workflow = MagicMock()
+        mock_graph = MagicMock()
+
+        # Create async generator for streaming events
+        async def mock_stream_events(*args, **kwargs):
+            # Simulate node events
+            yield {"event": "on_chain_start", "name": "annotate", "data": {}}
+            yield {
+                "event": "on_chain_end",
+                "name": "annotate",
+                "data": {"output": {"current_annotation": "Sensory-event, Visual"}},
+            }
+            yield {"event": "on_chain_start", "name": "validate", "data": {}}
+            yield {
+                "event": "on_chain_end",
+                "name": "validate",
+                "data": {"output": {"is_valid": True, "validation_errors": []}},
+            }
+            yield {"event": "on_chain_start", "name": "evaluate", "data": {}}
+            yield {
+                "event": "on_chain_end",
+                "name": "evaluate",
+                "data": {"output": {"is_faithful": True, "is_complete": True}},
+            }
+
+        mock_graph.astream_events = mock_stream_events
+        mock_workflow.graph = mock_graph
+
+        # Patch the workflow in main module
+        with patch("src.api.main.workflow", mock_workflow):
+            from src.api.main import app
+
+            yield TestClient(app, raise_server_exceptions=False)
+
+        # Restore original values
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+            if key in original_env:
+                os.environ[key] = original_env[key]
+            elif key in os.environ:
+                del os.environ[key]
+
+        importlib.reload(security)
+
+    def test_stream_returns_progress_events(self, client_with_workflow):
+        """Test that streaming returns progress events."""
+        request_data = {
+            "description": "A red circle appears",
+            "schema_version": "8.3.0",
+        }
+        response = client_with_workflow.post(
+            "/annotate/stream", json=request_data, headers=TEST_AUTH_HEADERS
+        )
+        # Should get 200 with mock workflow
+        assert response.status_code == 200
+        assert "text/event-stream" in response.headers.get("content-type", "")
+
+    def test_stream_content_has_events(self, client_with_workflow):
+        """Test that streaming response contains SSE events."""
+        request_data = {
+            "description": "A red circle appears",
+            "schema_version": "8.3.0",
+        }
+        response = client_with_workflow.post(
+            "/annotate/stream", json=request_data, headers=TEST_AUTH_HEADERS
+        )
+        content = response.text
+        # Should contain event markers
+        assert "event:" in content or response.status_code == 503
+
+
+class TestModelOverrideWithEnv:
+    """Tests for model override with environment variables set."""
+
+    @pytest.fixture
+    def client_with_env(self):
+        """Create a test client with OPENROUTER_API_KEY set."""
+        original_env = {}
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+            if key in os.environ:
+                original_env[key] = os.environ[key]
+
+        os.environ["REQUIRE_API_AUTH"] = "true"
+        os.environ["API_KEYS"] = "test-api-key-for-unit-tests"
+        os.environ["OPENROUTER_API_KEY"] = "test-openrouter-key"
+
+        from src.api import security
+
+        importlib.reload(security)
+        from src.api.main import app
+
+        yield TestClient(app, raise_server_exceptions=False)
+
+        # Restore original values
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+            if key in original_env:
+                os.environ[key] = original_env[key]
+            elif key in os.environ:
+                del os.environ[key]
+
+        importlib.reload(security)
+
+    def test_annotate_with_model_override(self, client_with_env):
+        """Test annotate endpoint with model override headers."""
+        request_data = {
+            "description": "A red circle appears",
+            "schema_version": "8.3.0",
+        }
+        headers = {
+            **TEST_AUTH_HEADERS,
+            "X-OpenRouter-Model": "anthropic/claude-haiku-4.5",
+            "X-OpenRouter-Provider": "anthropic",
+        }
+        response = client_with_env.post("/annotate", json=request_data, headers=headers)
+        # Will fail to create workflow with fake key, but tests the code path
+        assert response.status_code in [200, 500, 503]
+
+    def test_stream_with_model_override(self, client_with_env):
+        """Test streaming endpoint with model override headers."""
+        request_data = {
+            "description": "A red circle appears",
+            "schema_version": "8.3.0",
+        }
+        headers = {
+            **TEST_AUTH_HEADERS,
+            "X-OpenRouter-Model": "anthropic/claude-haiku-4.5",
+            "X-OpenRouter-Provider": "anthropic",
+        }
+        response = client_with_env.post("/annotate/stream", json=request_data, headers=headers)
+        # Will fail to create workflow with fake key, but tests the code path
+        assert response.status_code in [200, 500, 503]
+
+    def test_stream_with_all_headers(self, client_with_env):
+        """Test streaming endpoint with all override headers."""
+        request_data = {
+            "description": "A red circle appears",
+            "schema_version": "8.3.0",
+            "run_assessment": True,
+            "max_validation_attempts": 5,
+        }
+        headers = {
+            **TEST_AUTH_HEADERS,
+            "X-OpenRouter-Model": "anthropic/claude-haiku-4.5",
+            "X-OpenRouter-Provider": "anthropic",
+            "X-OpenRouter-Temperature": "0.5",
+            "X-OpenRouter-Eval-Model": "qwen/qwen3-235b-a22b-2507",
+            "X-OpenRouter-Eval-Provider": "Cerebras",
+            "X-User-Id": "test-user-123",
+        }
+        response = client_with_env.post("/annotate/stream", json=request_data, headers=headers)
+        assert response.status_code in [200, 500, 503]
 
 
 class TestVersionEndpointExtended:

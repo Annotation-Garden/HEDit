@@ -69,9 +69,11 @@ jobs:
           docker stop hed-bot-test || true
           docker rm hed-bot-test || true
 
-  # Second job: Push to registry (only after tests pass)
+  # Second job: Push to registry (only on main branch and tags, not PRs or develop)
   build-and-push:
     needs: build-and-test
+    # Only push on main branch or tags, skip for PRs and develop
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
