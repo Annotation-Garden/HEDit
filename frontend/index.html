@@ -1697,7 +1697,8 @@ Example: A red circle appears on the left side of the screen and the participant
                 }
             }
 
-            // Process any remaining data
+            // Flush decoder and process any remaining data (Safari compatibility)
+            buffer += decoder.decode(); // Flush remaining bytes
             if (buffer.trim()) {
                 const lines = buffer.split('\n');
                 let currentEvent = null;
@@ -1705,8 +1706,12 @@ Example: A red circle appears on the left side of the screen and the participant
                     if (line.startsWith('event: ')) {
                         currentEvent = line.substring(7);
                     } else if (line.startsWith('data: ') && currentEvent) {
-                        const data = JSON.parse(line.substring(6));
-                        handleStreamEvent(currentEvent, data);
+                        try {
+                            const data = JSON.parse(line.substring(6));
+                            handleStreamEvent(currentEvent, data);
+                        } catch (e) {
+                            console.warn('Failed to parse SSE data:', line);
+                        }
                         currentEvent = null;
                     }
                 }
