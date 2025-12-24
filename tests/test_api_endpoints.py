@@ -352,10 +352,19 @@ class TestStreamingEndpoint:
             "schema_version": "8.3.0",
         }
         # Note: streaming tests are limited without async test support
-        # This verifies the endpoint exists and responds
-        response = client.post("/annotate/stream", json=request_data)
+        # This verifies the endpoint exists and responds with authentication
+        response = client.post("/annotate/stream", json=request_data, headers=TEST_AUTH_HEADERS)
         # May be 503 if workflow not initialized, or 200 with streaming
         assert response.status_code in [200, 503]
+
+    def test_stream_endpoint_requires_auth(self, client):
+        """Test that streaming endpoint requires authentication."""
+        request_data = {
+            "description": "A red circle appears",
+            "schema_version": "8.3.0",
+        }
+        response = client.post("/annotate/stream", json=request_data)
+        assert response.status_code == 401
 
 
 class TestVersionEndpointExtended:

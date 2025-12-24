@@ -4,7 +4,6 @@ This module provides REST API endpoints for HED annotation generation
 and validation using the multi-agent workflow.
 """
 
-import asyncio
 import hashlib
 import json
 import os
@@ -897,78 +896,201 @@ async def annotate_from_image(
 
 
 @app.post("/annotate/stream")
-async def annotate_stream(request: AnnotationRequest):
+async def annotate_stream(
+    request: AnnotationRequest,
+    req: Request,
+    api_key: str = Depends(api_key_auth),
+):
     """Generate HED annotation with real-time progress updates via Server-Sent Events.
 
     This endpoint streams progress updates as the workflow runs through different
     stages (annotation, validation, evaluation, assessment), providing real-time
     feedback to the user.
 
+    Supports both server-mode and BYOK (Bring Your Own Key) authentication.
+
     Args:
         request: Annotation request with description and parameters
+        req: FastAPI request to extract headers
+        api_key: Authentication result (injected by dependency)
 
     Returns:
         StreamingResponse with Server-Sent Events
 
     Raises:
-        HTTPException: If workflow fails
+        HTTPException: If workflow fails or authentication fails
     """
-    if workflow is None:
-        raise HTTPException(status_code=503, detail="Workflow not initialized")
+    from src.agents.state import create_initial_state
+
+    # Determine which workflow to use (same logic as /annotate)
+    model_override = request.model or req.headers.get("x-openrouter-model")
+    provider_override = request.provider or req.headers.get("x-openrouter-provider")
+    eval_model_override = req.headers.get("x-openrouter-eval-model")
+    eval_provider_override = req.headers.get("x-openrouter-eval-provider")
+    temp_header = req.headers.get("x-openrouter-temperature")
+    temperature = request.temperature
+    if temperature is None and temp_header:
+        try:
+            temperature = float(temp_header)
+        except ValueError:
+            pass
+    user_id_override = req.headers.get("x-user-id")
+
+    if api_key == "byok":
+        openrouter_key = req.headers.get("x-openrouter-key")
+        if not openrouter_key:
+            raise HTTPException(status_code=401, detail="Missing X-OpenRouter-Key header")
+        try:
+            active_workflow = create_byok_workflow(
+                openrouter_key,
+                model=model_override,
+                provider=provider_override,
+                eval_model=eval_model_override,
+                eval_provider=eval_provider_override,
+                temperature=temperature,
+                user_id_override=user_id_override,
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to initialize BYOK workflow: {str(e)}"
+            ) from e
+    elif model_override or provider_override:
+        server_api_key = os.getenv("OPENROUTER_API_KEY")
+        if not server_api_key:
+            raise HTTPException(
+                status_code=503,
+                detail="Server not configured for model overrides (missing OPENROUTER_API_KEY)",
+            )
+        try:
+            active_workflow = create_openrouter_workflow(
+                api_key=server_api_key,
+                annotation_model=model_override,
+                annotation_provider=provider_override,
+                eval_model=eval_model_override,
+                eval_provider=eval_provider_override,
+                temperature=temperature,
+                user_id=user_id_override,
+                schema_dir=_byok_config.get("schema_dir"),
+                validator_path=_byok_config.get("validator_path"),
+                use_js_validator=_byok_config.get("use_js_validator", True),
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to initialize workflow: {str(e)}"
+            ) from e
+    else:
+        if workflow is None:
+            raise HTTPException(status_code=503, detail="Workflow not initialized")
+        active_workflow = workflow
+
+    # Create initial state
+    initial_state = create_initial_state(
+        request.description,
+        request.schema_version,
+        request.max_validation_attempts,
+        10,  # max_total_iterations
+        request.run_assessment,
+    )
+
+    # Node name to user-friendly stage mapping
+    node_stage_map = {
+        "annotate": ("annotating", "Generating HED annotation..."),
+        "validate": ("validating", "Validating HED annotation..."),
+        "summarize_feedback": ("refining", "Processing validation feedback..."),
+        "evaluate": ("evaluating", "Evaluating annotation faithfulness..."),
+        "assess": ("assessing", "Running final assessment..."),
+    }
 
     async def event_generator():
-        """Generate SSE events for workflow progress."""
+        """Generate SSE events for workflow progress using LangGraph streaming."""
+
+        def send_event(event_type: str, data: dict) -> str:
+            return f"event: {event_type}\ndata: {json.dumps(data)}\n\n"
+
         try:
-            # Progress queue for receiving updates from workflow
-            asyncio.Queue()
-
-            # Helper to send SSE event
-            def send_event(event_type: str, data: dict):
-                return f"event: {event_type}\ndata: {json.dumps(data)}\n\n"
-
             # Send initial start event
             yield send_event(
                 "progress", {"stage": "starting", "message": "Initializing annotation workflow..."}
             )
 
-            # Run workflow with progress monitoring
-            # Note: We'll need to modify workflow to accept progress callback
-            # For now, we'll use a simple approach with state polling
+            # Track state and progress
+            current_state = initial_state.copy()
+            last_stage = None
+            validation_attempt = 0
 
-            # Start workflow in background task
+            # Use LangGraph's astream_events for real-time streaming
+            config = {"recursion_limit": 100}
+            async for event in active_workflow.graph.astream_events(
+                initial_state, config=config, version="v2"
+            ):
+                event_type = event.get("event")
+                name = event.get("name", "")
 
-            # Note: create_initial_state is called internally by workflow.run()
-            # No need to create it here
+                # Handle node start events
+                if event_type == "on_chain_start" and name in node_stage_map:
+                    stage, message = node_stage_map[name]
 
-            # Track workflow progress by monitoring state changes
-            # This is a simplified version - ideally we'd use callbacks
-            yield send_event(
-                "progress",
-                {"stage": "annotating", "message": "Generating HED annotation...", "attempt": 1},
-            )
+                    # Track validation attempts
+                    if name == "validate":
+                        validation_attempt += 1
 
-            # Run workflow
-            final_state = await workflow.run(
-                input_description=request.description,
-                schema_version=request.schema_version,
-                max_validation_attempts=request.max_validation_attempts,
-                run_assessment=request.run_assessment,
-            )
+                    # Only send if stage changed
+                    if stage != last_stage:
+                        last_stage = stage
+                        progress_data = {
+                            "stage": stage,
+                            "message": message,
+                        }
+                        if name == "validate":
+                            progress_data["attempt"] = validation_attempt
+                        yield send_event("progress", progress_data)
+
+                # Handle node end events to get intermediate state
+                if event_type == "on_chain_end" and name in node_stage_map:
+                    output = event.get("data", {}).get("output", {})
+                    if isinstance(output, dict):
+                        current_state.update(output)
+
+                        # Send validation result events
+                        if name == "validate":
+                            is_valid = output.get("is_valid", False)
+                            errors = output.get("validation_errors", [])
+                            if is_valid:
+                                yield send_event(
+                                    "validation",
+                                    {
+                                        "valid": True,
+                                        "attempt": validation_attempt,
+                                        "message": "Validation passed",
+                                    },
+                                )
+                            elif errors:
+                                yield send_event(
+                                    "validation",
+                                    {
+                                        "valid": False,
+                                        "attempt": validation_attempt,
+                                        "errors": errors[:3],  # Send first 3 errors
+                                        "message": f"Found {len(errors)} validation error(s)",
+                                    },
+                                )
 
             # Send final result
-            # IMPORTANT: Ensure is_valid is only True when there are NO validation errors
-            is_valid = final_state["is_valid"] and len(final_state["validation_errors"]) == 0
+            is_valid = (
+                current_state.get("is_valid", False)
+                and len(current_state.get("validation_errors", [])) == 0
+            )
             status = "success" if is_valid else "failed"
             result = {
-                "annotation": final_state["current_annotation"],
+                "annotation": current_state.get("current_annotation", ""),
                 "is_valid": is_valid,
-                "is_faithful": final_state["is_faithful"],
-                "is_complete": final_state["is_complete"],
-                "validation_attempts": final_state["validation_attempts"],
-                "validation_errors": final_state["validation_errors"],
-                "validation_warnings": final_state["validation_warnings"],
-                "evaluation_feedback": final_state["evaluation_feedback"],
-                "assessment_feedback": final_state["assessment_feedback"],
+                "is_faithful": current_state.get("is_faithful", False),
+                "is_complete": current_state.get("is_complete", False),
+                "validation_attempts": current_state.get("validation_attempts", 0),
+                "validation_errors": current_state.get("validation_errors", []),
+                "validation_warnings": current_state.get("validation_warnings", []),
+                "evaluation_feedback": current_state.get("evaluation_feedback", ""),
+                "assessment_feedback": current_state.get("assessment_feedback", ""),
                 "status": status,
             }
 
