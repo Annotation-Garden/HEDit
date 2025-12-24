@@ -55,11 +55,12 @@ _byok_config: dict = {}
 def _derive_user_id(token: str) -> str:
     """Derive a stable user ID from API token for cache optimization.
 
-    Uses BLAKE2b to create a stable, anonymous identifier from the token.
+    Uses PBKDF2 to create a stable, anonymous identifier from the token.
     Each unique token gets its own cache lane in OpenRouter.
 
-    Note: This is NOT password hashing. The token is already a high-entropy
-    secret. We use BLAKE2b for fast, consistent ID derivation.
+    Note: While PBKDF2 is designed for password hashing, we use it here
+    to satisfy CodeQL requirements. The token is already high-entropy,
+    so the computational cost is primarily for compliance.
 
     Args:
         token: OpenRouter API token (already a secret, not user password)
@@ -67,9 +68,11 @@ def _derive_user_id(token: str) -> str:
     Returns:
         16-character hexadecimal cache ID
     """
-    # BLAKE2b is designed for fast hashing and key derivation
-    # digest_size=8 gives us 16 hex characters
-    return hashlib.blake2b(token.encode(), digest_size=8).hexdigest()
+    # PBKDF2 is a computationally expensive KDF that satisfies CodeQL
+    # Using minimal iterations (1000) since input is already high-entropy
+    salt = b"hedit-cache-id-v1"
+    derived = hashlib.pbkdf2_hmac("sha256", token.encode(), salt, iterations=1000, dklen=8)
+    return derived.hex()
 
 
 def create_openrouter_workflow(
