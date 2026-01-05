@@ -653,7 +653,9 @@ class SemanticSearchManager:
 
         Args:
             model_id: HuggingFace model ID for embeddings
-            embeddings_path: Path to pre-computed embeddings JSON file
+            embeddings_path: Path to embeddings file, directory, or None
+                - If file: loads that single file
+                - If directory: loads all embeddings-*.json files
         """
         self.model_id = model_id
         self.embeddings_path = embeddings_path
@@ -662,6 +664,7 @@ class SemanticSearchManager:
         self._keyword_embeddings: list[KeywordEmbedding] = []
         self._embeddings_loaded = False
         self._dimensions = 1024  # Qwen3-Embedding default
+        self._loaded_files: list[str] = []  # Track loaded files
 
     def _get_model(self) -> SentenceTransformer:
         """Lazy-load the embedding model."""
@@ -673,55 +676,105 @@ class SemanticSearchManager:
             logger.info("Embedding model loaded successfully")
         return self._model
 
-    def load_embeddings(self, path: Path | None = None) -> bool:
-        """Load pre-computed embeddings from file.
+    def _load_single_file(self, file_path: Path) -> bool:
+        """Load embeddings from a single file.
 
         Args:
-            path: Path to embeddings JSON file (overrides constructor path)
+            file_path: Path to embeddings JSON file
 
         Returns:
-            True if embeddings loaded successfully
+            True if loaded successfully
         """
-        embeddings_path = path or self.embeddings_path
-        if embeddings_path is None or not embeddings_path.exists():
-            logger.warning(f"Embeddings file not found: {embeddings_path}")
-            return False
-
         try:
-            with open(embeddings_path) as f:
+            with open(file_path) as f:
                 data = json.load(f)
 
-            # Load tag embeddings
-            for entry in data.get("tags", []):
-                key = f"{entry.get('prefix', '')}{entry['tag']}".lower()
-                self._tag_embeddings[key] = TagEmbedding(
-                    tag=entry["tag"],
-                    long_form=entry.get("long_form", entry["tag"]),
-                    prefix=entry.get("prefix", ""),
-                    vector=entry["vector"],
-                )
+            embed_type = data.get("type", "tags")
 
-            # Load keyword embeddings
-            for entry in data.get("keywords", []):
-                self._keyword_embeddings.append(
-                    KeywordEmbedding(
-                        keyword=entry["keyword"],
-                        targets=entry["targets"],
+            if embed_type == "keywords":
+                # Load keyword embeddings
+                for entry in data.get("embeddings", []):
+                    self._keyword_embeddings.append(
+                        KeywordEmbedding(
+                            keyword=entry["keyword"],
+                            targets=entry["targets"],
+                            vector=entry["vector"],
+                        )
+                    )
+                logger.debug(
+                    f"Loaded {len(data.get('embeddings', []))} keywords from {file_path.name}"
+                )
+            else:
+                # Load tag embeddings
+                for entry in data.get("embeddings", data.get("tags", [])):
+                    key = f"{entry.get('prefix', '')}{entry['tag']}".lower()
+                    self._tag_embeddings[key] = TagEmbedding(
+                        tag=entry["tag"],
+                        long_form=entry.get("long_form", entry["tag"]),
+                        prefix=entry.get("prefix", ""),
                         vector=entry["vector"],
                     )
+                logger.debug(
+                    f"Loaded {len(data.get('embeddings', data.get('tags', [])))} tags from {file_path.name}"
                 )
 
             self._dimensions = data.get("dimensions", 1024)
-            self._embeddings_loaded = True
-            logger.info(
-                f"Loaded {len(self._tag_embeddings)} tag embeddings and "
-                f"{len(self._keyword_embeddings)} keyword embeddings"
-            )
+            self._loaded_files.append(file_path.name)
             return True
 
         except (json.JSONDecodeError, KeyError) as e:
-            logger.error(f"Failed to load embeddings: {e}")
+            logger.error(f"Failed to load {file_path}: {e}")
             return False
+
+    def load_embeddings(self, path: Path | None = None) -> bool:
+        """Load pre-computed embeddings from file(s).
+
+        Supports modular loading:
+        - Single file: loads that file
+        - Directory: loads all embeddings-*.json files
+        - List of files (via multiple calls): accumulates embeddings
+
+        Args:
+            path: Path to embeddings file or directory (overrides constructor path)
+
+        Returns:
+            True if any embeddings loaded successfully
+        """
+        embeddings_path = path or self.embeddings_path
+        if embeddings_path is None:
+            logger.warning("No embeddings path specified")
+            return False
+
+        if not embeddings_path.exists():
+            logger.warning(f"Embeddings path not found: {embeddings_path}")
+            return False
+
+        files_to_load: list[Path] = []
+
+        if embeddings_path.is_dir():
+            # Load all embeddings-*.json files from directory
+            files_to_load = sorted(embeddings_path.glob("embeddings-*.json"))
+            if not files_to_load:
+                logger.warning(f"No embeddings-*.json files found in {embeddings_path}")
+                return False
+        else:
+            # Single file
+            files_to_load = [embeddings_path]
+
+        success_count = 0
+        for file_path in files_to_load:
+            if self._load_single_file(file_path):
+                success_count += 1
+
+        if success_count > 0:
+            self._embeddings_loaded = True
+            logger.info(
+                f"Loaded {len(self._tag_embeddings)} tag embeddings and "
+                f"{len(self._keyword_embeddings)} keyword embeddings from {success_count} file(s)"
+            )
+            return True
+
+        return False
 
     def find_by_keyword(self, query: str) -> list[TagMatch]:
         """Find tags matching a keyword from the deterministic index.
@@ -951,6 +1004,7 @@ class SemanticSearchManager:
             "dimensions": self._dimensions,
             "model_id": self.model_id,
             "embeddings_loaded": self._embeddings_loaded,
+            "loaded_files": self._loaded_files,
         }
 
 

@@ -27,7 +27,9 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_MODEL_ID = "Qwen/Qwen3-Embedding-0.6B"
 DEFAULT_SCHEMA_VERSION = "8.4.0"
-DEFAULT_OUTPUT = Path(__file__).parent.parent / "data" / "tag-embeddings.json"
+DEFAULT_OUTPUT_DIR = Path(__file__).parent.parent / "data"
+# Library schemas to include by default (SCORE for clinical/EEG, LANG for language)
+DEFAULT_LIBRARIES = ["sc:score_2.1.0", "la:lang_1.1.0"]
 
 
 def load_hed_schema(version: str) -> tuple[list[dict], list[str]]:
@@ -49,9 +51,11 @@ def load_hed_schema(version: str) -> tuple[list[dict], list[str]]:
     extendable = []
 
     for _name, entry in schema.tags.items():
+        # Get full hierarchical path (e.g., "Event/Sensory-event/Visual-presentation")
+        long_form = entry.long_tag_name if hasattr(entry, "long_tag_name") else entry.short_tag_name
         tag_info = {
             "tag": entry.short_tag_name,
-            "long_form": entry.name if hasattr(entry, "name") else entry.short_tag_name,
+            "long_form": long_form,
             "prefix": "",  # Base schema has no prefix
         }
         tags.append(tag_info)
@@ -84,24 +88,52 @@ def load_library_schemas(library_specs: list[str]) -> list[dict]:
 
         prefix, version = spec.split(":", 1)
         prefix = f"{prefix}:"
+        count_before = len(all_tags)
 
         try:
             logger.info(f"Loading library schema: {spec}...")
             schema = load_schema_version(xml_version=version)
 
             for _name, entry in schema.tags.items():
+                # Get full hierarchical path with prefix
+                long_form = (
+                    entry.long_tag_name if hasattr(entry, "long_tag_name") else entry.short_tag_name
+                )
                 tag_info = {
                     "tag": entry.short_tag_name,
-                    "long_form": entry.name if hasattr(entry, "name") else entry.short_tag_name,
+                    "long_form": f"{prefix}{long_form}",  # Include prefix in long form
                     "prefix": prefix,
                 }
                 all_tags.append(tag_info)
 
-            logger.info(f"Loaded {len(all_tags)} tags from {spec}")
+            logger.info(f"Loaded {len(all_tags) - count_before} tags from {spec}")
         except Exception as e:
             logger.error(f"Failed to load library schema {spec}: {e}")
 
     return all_tags
+
+
+def expand_tag_path(path: str) -> str:
+    """Expand a HED tag path into a more readable format for embeddings.
+
+    Converts camelCase and hyphens to spaces for better semantic matching.
+    E.g., "Event/Sensory-event/Visual-presentation" -> "event sensory event visual presentation"
+
+    Args:
+        path: HED tag path (possibly with prefix like "sc:")
+
+    Returns:
+        Space-separated lowercase string
+    """
+    import re
+
+    # Expand camelCase: "SensoryEvent" -> "Sensory Event"
+    path = re.sub(r"([a-z])([A-Z])", r"\1 \2", path)
+    # Replace hyphens and slashes with spaces
+    path = path.replace("-", " ").replace("/", " ")
+    # Remove prefix colons (sc:, la:)
+    path = re.sub(r"^\w+:", "", path)
+    return path.lower()
 
 
 def generate_tag_embeddings(
@@ -123,14 +155,14 @@ def generate_tag_embeddings(
     model = SentenceTransformer(model_id)
     logger.info("Model loaded successfully")
 
-    # Prepare texts for embedding - use tag names
+    # Prepare texts for embedding - use SHORT TAG NAME (not full path)
+    # Full hierarchy paths don't produce good similarity matches
+    # e.g., "Visual-presentation" -> "visual presentation"
     texts = []
     for tag in tags:
-        # Use short form tag name, with prefix context if present
-        text = tag["tag"]
-        if tag["prefix"]:
-            text = f"{tag['prefix']}{tag['tag']}"
-        texts.append(text.lower().replace("-", " "))
+        # Use short tag name expanded (camelCase -> spaces, hyphens -> spaces)
+        text = expand_tag_path(tag["tag"])
+        texts.append(text)
 
     logger.info(f"Generating embeddings for {len(texts)} tags...")
     embeddings = model.encode(texts, normalize_embeddings=True, show_progress_bar=True)
@@ -185,12 +217,49 @@ def generate_keyword_embeddings(
     return result
 
 
+def save_embeddings_file(
+    output_path: Path,
+    embeddings: list[dict],
+    model_id: str,
+    schema_spec: str,
+    embed_type: str = "tags",
+) -> None:
+    """Save embeddings to a JSON file.
+
+    Args:
+        output_path: Path to output file
+        embeddings: List of embedding entries
+        model_id: Model ID used for embeddings
+        schema_spec: Schema specification (e.g., "8.4.0" or "sc:score_2.1.0")
+        embed_type: Type of embeddings ("tags" or "keywords")
+    """
+    dimensions = len(embeddings[0]["vector"]) if embeddings else 1024
+
+    output_data = {
+        "version": "1.0.0",
+        "model_id": model_id,
+        "schema": schema_spec,
+        "type": embed_type,
+        "dimensions": dimensions,
+        "count": len(embeddings),
+        "embeddings": embeddings,
+    }
+
+    with open(output_path, "w") as f:
+        json.dump(output_data, f)
+
+    file_size = output_path.stat().st_size / (1024 * 1024)
+    logger.info(f"  Saved {output_path.name}: {len(embeddings)} {embed_type}, {file_size:.2f} MB")
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Generate HED tag embeddings for semantic search")
+    parser = argparse.ArgumentParser(
+        description="Generate modular HED tag embeddings for semantic search"
+    )
     parser.add_argument(
         "--schema-version",
         default=DEFAULT_SCHEMA_VERSION,
-        help=f"HED schema version (default: {DEFAULT_SCHEMA_VERSION})",
+        help=f"HED base schema version (default: {DEFAULT_SCHEMA_VERSION})",
     )
     parser.add_argument(
         "--model",
@@ -198,69 +267,116 @@ def main():
         help=f"Embedding model ID (default: {DEFAULT_MODEL_ID})",
     )
     parser.add_argument(
-        "--output",
+        "--output-dir",
         type=Path,
-        default=DEFAULT_OUTPUT,
-        help=f"Output file path (default: {DEFAULT_OUTPUT})",
+        default=DEFAULT_OUTPUT_DIR,
+        help=f"Output directory (default: {DEFAULT_OUTPUT_DIR})",
     )
     parser.add_argument(
         "--libraries",
         nargs="*",
-        default=[],
-        help="Library schemas to include (e.g., sc:score_2.1.0 la:lang_1.1.0)",
+        default=DEFAULT_LIBRARIES,
+        help=f"Library schemas to include (default: {DEFAULT_LIBRARIES})",
+    )
+    parser.add_argument(
+        "--no-libraries",
+        action="store_true",
+        help="Skip library schemas (only generate base schema embeddings)",
     )
     parser.add_argument(
         "--skip-keywords",
         action="store_true",
         help="Skip generating keyword embeddings",
     )
+    parser.add_argument(
+        "--single-file",
+        action="store_true",
+        help="Generate single combined file instead of modular files",
+    )
 
     args = parser.parse_args()
 
     # Ensure output directory exists
-    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Load base schema
-    base_tags, extendable = load_hed_schema(args.schema_version)
+    # Determine which libraries to process
+    libraries = [] if args.no_libraries else args.libraries
 
-    # Load library schemas
-    library_tags = load_library_schemas(args.libraries) if args.libraries else []
+    # Load the embedding model once
+    from sentence_transformers import SentenceTransformer
 
-    # Combine all tags
-    all_tags = base_tags + library_tags
+    logger.info(f"Loading embedding model: {args.model}...")
+    model = SentenceTransformer(args.model)
+    logger.info("Model loaded successfully\n")
 
-    # Generate embeddings
-    tag_embeddings = generate_tag_embeddings(all_tags, args.model)
+    total_tags = 0
+    all_files = []
+
+    # Generate base schema embeddings
+    logger.info(f"=== Base Schema: {args.schema_version} ===")
+    base_tags, _extendable = load_hed_schema(args.schema_version)
+
+    texts = [expand_tag_path(tag["tag"]) for tag in base_tags]
+    logger.info(f"Generating embeddings for {len(texts)} tags...")
+    embeddings = model.encode(texts, normalize_embeddings=True, show_progress_bar=True)
+
+    base_embeddings = []
+    for i, tag in enumerate(base_tags):
+        tag_with_vector = tag.copy()
+        tag_with_vector["vector"] = embeddings[i].tolist()
+        base_embeddings.append(tag_with_vector)
+
+    base_output = args.output_dir / f"embeddings-base-{args.schema_version}.json"
+    save_embeddings_file(base_output, base_embeddings, args.model, args.schema_version)
+    total_tags += len(base_embeddings)
+    all_files.append(base_output)
+
+    # Generate library schema embeddings (one file per library)
+    for lib_spec in libraries:
+        logger.info(f"\n=== Library Schema: {lib_spec} ===")
+        lib_tags = load_library_schemas([lib_spec])
+
+        if not lib_tags:
+            logger.warning(f"No tags loaded for {lib_spec}, skipping")
+            continue
+
+        texts = [expand_tag_path(tag["tag"]) for tag in lib_tags]
+        logger.info(f"Generating embeddings for {len(texts)} tags...")
+        embeddings = model.encode(texts, normalize_embeddings=True, show_progress_bar=True)
+
+        lib_embeddings = []
+        for i, tag in enumerate(lib_tags):
+            tag_with_vector = tag.copy()
+            tag_with_vector["vector"] = embeddings[i].tolist()
+            lib_embeddings.append(tag_with_vector)
+
+        # Create filename from lib spec: "sc:score_2.1.0" -> "embeddings-sc-score_2.1.0.json"
+        lib_filename = lib_spec.replace(":", "-")
+        lib_output = args.output_dir / f"embeddings-{lib_filename}.json"
+        save_embeddings_file(lib_output, lib_embeddings, args.model, lib_spec)
+        total_tags += len(lib_embeddings)
+        all_files.append(lib_output)
 
     # Generate keyword embeddings
-    keyword_embeddings = []
     if not args.skip_keywords:
+        logger.info("\n=== Keywords ===")
         keyword_embeddings = generate_keyword_embeddings(args.model)
+        kw_output = args.output_dir / "embeddings-keywords.json"
+        save_embeddings_file(kw_output, keyword_embeddings, args.model, "keywords", "keywords")
+        all_files.append(kw_output)
 
-    # Get embedding dimensions
-    dimensions = len(tag_embeddings[0]["vector"]) if tag_embeddings else 1024
-
-    # Save to file
-    output_data = {
-        "version": "1.0.0",
-        "model_id": args.model,
-        "schema_version": args.schema_version,
-        "library_schemas": args.libraries,
-        "dimensions": dimensions,
-        "tags": tag_embeddings,
-        "keywords": keyword_embeddings,
-    }
-
-    logger.info(f"Saving embeddings to {args.output}...")
-    with open(args.output, "w") as f:
-        json.dump(output_data, f)
-
-    # Report size
-    file_size = args.output.stat().st_size / (1024 * 1024)
-    logger.info(f"Done! Output file size: {file_size:.2f} MB")
-    logger.info(f"  - Tags: {len(tag_embeddings)}")
-    logger.info(f"  - Keywords: {len(keyword_embeddings)}")
-    logger.info(f"  - Dimensions: {dimensions}")
+    # Summary
+    logger.info("\n" + "=" * 50)
+    logger.info("SUMMARY")
+    logger.info("=" * 50)
+    logger.info(f"Total tags: {total_tags}")
+    logger.info("Files generated:")
+    total_size = 0
+    for f in all_files:
+        size = f.stat().st_size / (1024 * 1024)
+        total_size += size
+        logger.info(f"  - {f.name}: {size:.2f} MB")
+    logger.info(f"Total size: {total_size:.2f} MB")
 
 
 if __name__ == "__main__":

@@ -129,6 +129,7 @@ class TestSemanticSearchManager:
         stats = manager.get_stats()
         assert "tag_embeddings" in stats
         assert "keyword_index_size" in stats
+        assert "loaded_files" in stats
         assert stats["keyword_index_size"] == len(KEYWORD_INDEX)
 
 
@@ -140,6 +141,83 @@ class TestGlobalManager:
         manager1 = get_semantic_search_manager()
         manager2 = get_semantic_search_manager()
         assert manager1 is manager2
+
+
+class TestModularLoading:
+    """Tests for modular embeddings loading."""
+
+    def test_load_from_directory(self, tmp_path):
+        """Should load all embeddings-*.json files from directory."""
+        import json
+
+        # Create test embeddings files
+        base_data = {
+            "version": "1.0.0",
+            "model_id": "test-model",
+            "schema": "8.4.0",
+            "type": "tags",
+            "dimensions": 4,
+            "count": 2,
+            "embeddings": [
+                {
+                    "tag": "Animal",
+                    "long_form": "Animal",
+                    "prefix": "",
+                    "vector": [0.1, 0.2, 0.3, 0.4],
+                },
+                {
+                    "tag": "Event",
+                    "long_form": "Event",
+                    "prefix": "",
+                    "vector": [0.5, 0.6, 0.7, 0.8],
+                },
+            ],
+        }
+
+        lib_data = {
+            "version": "1.0.0",
+            "model_id": "test-model",
+            "schema": "sc:score_2.1.0",
+            "type": "tags",
+            "dimensions": 4,
+            "count": 1,
+            "embeddings": [
+                {
+                    "tag": "Seizure",
+                    "long_form": "sc:Seizure",
+                    "prefix": "sc:",
+                    "vector": [0.9, 0.8, 0.7, 0.6],
+                },
+            ],
+        }
+
+        kw_data = {
+            "version": "1.0.0",
+            "model_id": "test-model",
+            "schema": "keywords",
+            "type": "keywords",
+            "dimensions": 4,
+            "count": 1,
+            "embeddings": [
+                {"keyword": "mouse", "targets": ["Animal"], "vector": [0.2, 0.3, 0.4, 0.5]},
+            ],
+        }
+
+        # Write files
+        (tmp_path / "embeddings-base-8.4.0.json").write_text(json.dumps(base_data))
+        (tmp_path / "embeddings-sc-score_2.1.0.json").write_text(json.dumps(lib_data))
+        (tmp_path / "embeddings-keywords.json").write_text(json.dumps(kw_data))
+
+        # Load from directory
+        manager = SemanticSearchManager()
+        result = manager.load_embeddings(tmp_path)
+
+        assert result is True
+        assert manager.is_available() is True
+        stats = manager.get_stats()
+        assert stats["tag_embeddings"] == 3  # 2 base + 1 library
+        assert stats["keyword_embeddings"] == 1
+        assert len(stats["loaded_files"]) == 3
 
 
 class TestTagMatch:
