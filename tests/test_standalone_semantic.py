@@ -214,3 +214,142 @@ class TestFullSemanticPipeline:
         prefixed = [(r.prefix, r.tag) for r in results]
         has_score_tag = any(prefix == "sc:" for prefix, _ in prefixed)
         assert has_score_tag, "Should find SCORE library tags for clinical description"
+
+
+class TestNoExtendFlag:
+    """Tests for --no-extend functionality."""
+
+    @pytest.mark.asyncio
+    async def test_no_extend_flag_passes_through_workflow(self, api_key, embeddings_dir):
+        """Verify that no_extend flag is correctly passed through workflow.
+
+        This test verifies the plumbing works (flag propagates through the system).
+        Note: LLM behavior is not 100% deterministic - the model may still generate
+        extensions despite instructions. This is a known limitation of prompt-based
+        control over LLM output.
+        """
+        from src.agents.workflow import HedAnnotationWorkflow
+        from src.utils.litellm_llm import create_litellm_openrouter
+
+        if not embeddings_dir.exists():
+            pytest.skip("Embeddings directory not found")
+
+        # Create workflow with semantic search enabled
+        llm = create_litellm_openrouter(
+            model=TEST_MODEL,
+            api_key=api_key,
+            temperature=0.0,
+            provider=TEST_PROVIDER if TEST_PROVIDER else None,
+        )
+
+        workflow = HedAnnotationWorkflow(
+            llm=llm,
+            enable_semantic_search=True,
+            embeddings_path=embeddings_dir,
+            use_js_validator=False,  # Use Python validator (no hed-javascript path needed)
+        )
+
+        # Use a description that might tempt the LLM to extend
+        # (marmoset is not in base schema, would need Animal/Marmoset extension)
+        description = "A marmoset monkey receives a juice reward after pressing a lever"
+
+        # Run with no_extend=True
+        result = await workflow.run(
+            input_description=description,
+            schema_version="8.4.0",
+            max_validation_attempts=3,
+            max_total_iterations=5,
+            no_extend=True,
+        )
+
+        annotation = result.get("current_annotation", "")
+        print(f"Annotation with no_extend=True: {annotation}")
+
+        # Verify the annotation was generated (workflow completed successfully)
+        assert len(annotation) > 0, "Annotation should not be empty"
+
+        # Verify no_extend was passed to state
+        assert result.get("no_extend") is True, "no_extend flag should be preserved in state"
+
+        # Check for extensions (informational, not a hard failure)
+        # LLMs may still generate extensions despite instructions
+        suspicious_extensions = [
+            "Animal/Marmoset",
+            "Animal/Monkey",
+            "Item/Lever",
+            "Object/Lever",
+        ]
+        found_extensions = [ext for ext in suspicious_extensions if ext in annotation]
+        if found_extensions:
+            print(f"NOTE: LLM generated extensions despite no_extend=True: {found_extensions}")
+            print("This is expected behavior - LLMs are not 100% deterministic.")
+
+    @pytest.mark.asyncio
+    async def test_no_extend_state_propagation(self, api_key, embeddings_dir):
+        """Verify no_extend state propagates correctly through workflow.
+
+        This tests that the state management works correctly, comparing
+        the state when no_extend=True vs no_extend=False (default).
+        """
+        from src.agents.workflow import HedAnnotationWorkflow
+        from src.utils.litellm_llm import create_litellm_openrouter
+
+        if not embeddings_dir.exists():
+            pytest.skip("Embeddings directory not found")
+
+        llm = create_litellm_openrouter(
+            model=TEST_MODEL,
+            api_key=api_key,
+            temperature=0.0,
+            provider=TEST_PROVIDER if TEST_PROVIDER else None,
+        )
+
+        workflow = HedAnnotationWorkflow(
+            llm=llm,
+            enable_semantic_search=True,
+            embeddings_path=embeddings_dir,
+            use_js_validator=False,  # Use Python validator (no hed-javascript path needed)
+        )
+
+        description = "A dolphin swims through the underwater maze"
+
+        # Run WITH extensions allowed (default)
+        result_extend = await workflow.run(
+            input_description=description,
+            schema_version="8.4.0",
+            max_validation_attempts=3,
+            max_total_iterations=5,
+            no_extend=False,
+        )
+        annotation_extend = result_extend.get("current_annotation", "")
+        print(f"With extensions (default): {annotation_extend}")
+
+        # Verify state
+        assert result_extend.get("no_extend") is False, "no_extend should be False when not set"
+        assert len(annotation_extend) > 0, "Annotation should be generated"
+
+        # Run WITHOUT extensions
+        result_no_extend = await workflow.run(
+            input_description=description,
+            schema_version="8.4.0",
+            max_validation_attempts=3,
+            max_total_iterations=5,
+            no_extend=True,
+        )
+        annotation_no_extend = result_no_extend.get("current_annotation", "")
+        print(f"Without extensions: {annotation_no_extend}")
+
+        # Verify state
+        assert result_no_extend.get("no_extend") is True, "no_extend should be True when set"
+        assert len(annotation_no_extend) > 0, "Annotation should be generated"
+
+        # Log whether extension behavior differs (informational)
+        has_extension_in_extend = "Animal/Dolphin" in annotation_extend
+        has_extension_in_no_extend = "Animal/Dolphin" in annotation_no_extend
+
+        print(f"Extension in default mode: {has_extension_in_extend}")
+        print(f"Extension in no_extend mode: {has_extension_in_no_extend}")
+
+        # We can't guarantee LLM behavior, but we can verify the flag propagates
+        if has_extension_in_no_extend:
+            print("NOTE: LLM still generated extension despite no_extend=True")

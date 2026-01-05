@@ -93,21 +93,47 @@ def get_comprehensive_hed_guide(
     no_extend_warning = ""
     if no_extend:
         no_extend_warning = """
-## ⚠️ EXTENSIONS DISABLED - USE ONLY EXISTING TAGS
+## ⛔ EXTENSIONS STRICTLY PROHIBITED - USE ONLY EXISTING VOCABULARY
 
-**CRITICAL**: Tag extensions are PROHIBITED in this annotation.
-You must ONLY use tags that exist in the vocabulary below.
+**ABSOLUTE RULE**: You MUST NOT create any new tags. Only use tags that exist in the vocabulary below.
 
-- DO NOT use slash (/) to create new tags
-- DO NOT extend any parent tag with new concepts
-- If a concept is not in the vocabulary, use the closest existing tag
-- Use grouping to add context instead of extensions
+THIS IS THE HIGHEST PRIORITY INSTRUCTION. IT OVERRIDES ALL EXAMPLES IN THIS GUIDE.
 
-WRONG: Animal/Marmoset (extension not allowed)
-RIGHT: (Animal-agent, Animal) or just Animal (if in vocabulary)
+### What is FORBIDDEN:
+- ANY tag with a slash (/) that creates a new concept (e.g., Animal/Marmoset, Animal/Dolphin, Vehicle/Rickshaw)
+- Extending ANY parent tag with a new child term
+- Creating new terms even if examples below suggest doing so
 
-If the vocabulary lacks a precise tag, use the most semantically similar existing tag
-and add a Label/Description for clarification if needed.
+### What you MUST do instead:
+- Use the MOST SIMILAR existing tag from vocabulary
+- Use Label/description for clarification when needed
+- Group with existing tags only
+
+### EXAMPLES - NO EXTENSIONS MODE:
+
+FORBIDDEN (extension): Animal/Marmoset, Animal/Dolphin, Building/Cottage
+ALLOWED (existing tags): Animal, Animal-agent, Mammal (if in vocab)
+
+FORBIDDEN: (Animal-agent, Animal/Marmoset)
+ALLOWED: (Animal-agent, Animal) or (Animal-agent, Mammal) or (Animal-agent, Label/marmoset)
+
+FORBIDDEN: Vehicle/Rickshaw
+ALLOWED: Vehicle or (Vehicle, Label/rickshaw)
+
+FORBIDDEN: Furniture/Armoire
+ALLOWED: Furniture or (Furniture, Label/armoire)
+
+The Label tag allows adding descriptive text without creating new schema tags.
+Pattern: (Existing-tag, Label/description)
+
+### Value tags with units ARE allowed:
+Duration/2 s, Frequency/440 Hz - These are VALUES not extensions.
+
+### Definitions ARE allowed (they don't create new schema tags):
+Definition/MyDef, Def/MyDef - These are annotation tools, not extensions.
+
+**REMINDER**: Ignore any examples below that show extensions like Animal/X or Building/Y.
+Use only existing vocabulary tags. When in doubt, use Label/description.
 
 ---
 
