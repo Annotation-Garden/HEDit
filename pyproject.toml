@@ -132,6 +132,12 @@ markers = [
 asyncio_mode = "auto"
 
 [tool.coverage.run]
+# Enable branch coverage for more accurate metrics
+branch = true
+# Use data_file for combining multiple test runs
+data_file = ".coverage"
+# Parallel mode allows combining coverage from multiple processes
+parallel = true
 omit = [
     "src/utils/hed_rules.py",  # Just a string constant, no logic to test
 ]

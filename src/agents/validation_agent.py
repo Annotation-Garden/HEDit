@@ -102,7 +102,10 @@ class ValidationAgent:
         # If no_extend is True, strip any extensions and re-validate
         stripped_annotation = None
         if no_extend:
-            extended_tags = self._extract_extended_tags(result)
+            # Detect extensions directly from the HedString parsing
+            # This is more reliable than validator warnings which may be suppressed
+            extended_tags = self._detect_extensions_from_hedstring(annotation, schema_version)
+
             if extended_tags:
                 stripped_annotation = strip_extensions(annotation, extended_tags)
                 # Re-validate the stripped annotation
@@ -198,4 +201,36 @@ class ValidationAgent:
                         full_tag = full_tag.rstrip(".\n\r\t ")
                         if "/" in full_tag:
                             extended_tags.append(full_tag)
+        return extended_tags
+
+    def _detect_extensions_from_hedstring(self, annotation: str, schema_version: str) -> list[str]:
+        """Detect extended tags directly from HedString parsing.
+
+        This is more reliable than validator warnings which may be suppressed
+        when there are other errors (like TAG_INVALID).
+
+        Args:
+            annotation: HED annotation string
+            schema_version: Schema version to check against
+
+        Returns:
+            List of extended tag strings (e.g., ['Animal/Marmoset'])
+        """
+        from hed import HedString
+        from hed.schema import load_schema_version
+
+        extended_tags = []
+
+        try:
+            schema = load_schema_version(schema_version)
+            hed_string = HedString(annotation, schema)
+
+            for tag in hed_string.get_all_tags():
+                # Check if this tag has an extension
+                if tag.extension:
+                    extended_tags.append(str(tag))
+        except Exception:
+            # If parsing fails, fall back to validator warnings
+            pass
+
         return extended_tags
