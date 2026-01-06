@@ -25,8 +25,8 @@ class TestComprehensiveGuide:
         guide = get_comprehensive_hed_guide(vocabulary, extendable_tags, no_extend=False)
 
         # Should NOT contain the no-extend warning
-        assert "EXTENSIONS DISABLED" not in guide
-        assert "Extensions disabled" not in guide
+        assert "EXTENSIONS STRICTLY PROHIBITED" not in guide
+        assert "(Extensions disabled)" not in guide
         # Extendable tags should be shown normally
         assert "Label" in guide
         assert "Description" in guide
@@ -38,10 +38,10 @@ class TestComprehensiveGuide:
 
         guide = get_comprehensive_hed_guide(vocabulary, extendable_tags, no_extend=True)
 
-        # Should contain the no-extend warning
-        assert "EXTENSIONS DISABLED" in guide
-        assert "Tag extensions are PROHIBITED" in guide
-        assert "DO NOT use slash (/) to create new tags" in guide
+        # Should contain the no-extend warning section
+        assert "EXTENSIONS STRICTLY PROHIBITED" in guide
+        assert "MUST NOT create any new tags" in guide
+        assert "What is FORBIDDEN" in guide
         # Should show extensions as disabled
         assert "(Extensions disabled)" in guide
 
@@ -78,5 +78,5 @@ class TestComprehensiveGuide:
 
         # Should have both features
         assert "POTENTIALLY RELEVANT TAGS" in guide
-        assert "EXTENSIONS DISABLED" in guide
+        assert "EXTENSIONS STRICTLY PROHIBITED" in guide
         assert "(Extensions disabled)" in guide
