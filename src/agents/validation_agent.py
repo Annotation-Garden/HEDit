@@ -1,7 +1,8 @@
 """Validation Agent for HED annotation validation.
 
 This agent validates HED annotation strings using HED validation tools
-and provides detailed feedback for corrections.
+and provides detailed feedback for corrections. When invalid tags are found,
+it uses hed-lsp CLI to suggest valid alternatives.
 """
 
 import re
@@ -10,6 +11,7 @@ from pathlib import Path
 from src.agents.state import HedAnnotationState
 from src.utils.error_remediation import get_remediator
 from src.utils.schema_loader import HedSchemaLoader
+from src.validation.hed_lsp import is_hed_lsp_available, suggest_tags_for_keywords
 from src.validation.hed_validator import (
     HedJavaScriptValidator,
     HedPythonValidator,
@@ -53,7 +55,17 @@ class ValidationAgent:
     """Agent that validates HED annotations using HED validation tools.
 
     Supports both JavaScript validator (detailed feedback) and Python validator (fallback).
+    Uses hed-lsp CLI for suggesting valid tag alternatives when available.
     """
+
+    # Error codes that indicate invalid or extended tags
+    TAG_ERROR_CODES = [
+        "TAG_INVALID",
+        "TAG_EXTENSION_INVALID",
+        "TAG_NOT_UNIQUE",
+        "TAG_REQUIRES_CHILD",
+        "TAG_NAMESPACE_PREFIX_INVALID",
+    ]
 
     def __init__(
         self,
@@ -61,6 +73,7 @@ class ValidationAgent:
         use_javascript: bool = True,
         validator_path: Path | None = None,
         tests_json_path: Path | str | None = None,
+        use_hed_lsp: bool = True,
     ) -> None:
         """Initialize the validation agent.
 
@@ -69,10 +82,12 @@ class ValidationAgent:
             use_javascript: Whether to use JavaScript validator (more detailed)
             validator_path: Path to hed-javascript repository (required if use_javascript=True)
             tests_json_path: Optional path to javascriptTests.json for error remediation
+            use_hed_lsp: Whether to use hed-lsp for tag suggestions (auto-detected)
         """
         self.schema_loader = schema_loader
         self.use_javascript = use_javascript
         self.error_remediator = get_remediator(tests_json_path)
+        self.use_hed_lsp = use_hed_lsp and is_hed_lsp_available()
 
         # Declare validators with proper types
         self.js_validator: HedJavaScriptValidator | None = None
@@ -82,6 +97,82 @@ class ValidationAgent:
             if validator_path is None:
                 raise ValueError("validator_path required when use_javascript=True")
             self.js_validator = HedJavaScriptValidator(validator_path)
+
+    def _extract_problematic_tags(
+        self, errors: list, warnings: list
+    ) -> list[str]:
+        """Extract problematic tag names from validation errors and warnings.
+
+        Args:
+            errors: List of ValidationIssue errors
+            warnings: List of ValidationIssue warnings
+
+        Returns:
+            List of problematic tag names
+        """
+        problematic_tags = []
+
+        for issue in errors + warnings:
+            # Check if this is a tag-related error
+            if issue.code in self.TAG_ERROR_CODES:
+                if issue.tag:
+                    # Extract just the tag name (last part of path)
+                    tag_name = issue.tag.split("/")[-1] if "/" in issue.tag else issue.tag
+                    # Clean up the tag name (remove value placeholders like #)
+                    tag_name = tag_name.split("#")[0].strip()
+                    if tag_name and tag_name not in problematic_tags:
+                        problematic_tags.append(tag_name)
+
+        return problematic_tags
+
+    def _get_tag_suggestions(
+        self, problematic_tags: list[str], schema_version: str
+    ) -> dict[str, list[str]]:
+        """Get suggested valid tags for problematic tags using hed-lsp.
+
+        Args:
+            problematic_tags: List of problematic tag names
+            schema_version: HED schema version
+
+        Returns:
+            Dictionary mapping problematic tags to suggested alternatives
+        """
+        if not self.use_hed_lsp or not problematic_tags:
+            return {}
+
+        try:
+            return suggest_tags_for_keywords(
+                problematic_tags,
+                schema_version=schema_version,
+                max_results=5,  # Limit suggestions for clarity
+            )
+        except Exception:
+            # Silently fail if hed-lsp has issues
+            return {}
+
+    def _format_suggestions_for_feedback(
+        self, suggestions: dict[str, list[str]]
+    ) -> str:
+        """Format tag suggestions as feedback for the LLM.
+
+        Args:
+            suggestions: Dictionary mapping problematic tags to suggested alternatives
+
+        Returns:
+            Formatted suggestion string for LLM feedback
+        """
+        if not suggestions:
+            return ""
+
+        lines = ["\n--- Suggested valid HED tags for problematic terms ---"]
+        for tag, suggested in suggestions.items():
+            if suggested:
+                lines.append(f"  '{tag}' → consider: {', '.join(suggested[:3])}")
+            else:
+                lines.append(f"  '{tag}' → no direct match found, check HED schema vocabulary")
+        lines.append("---")
+
+        return "\n".join(lines)
 
     async def validate(self, state: HedAnnotationState) -> dict:
         """Validate the current HED annotation.
@@ -119,6 +210,19 @@ class ValidationAgent:
         augmented_errors, augmented_warnings = self.error_remediator.augment_validation_errors(
             raw_errors, raw_warnings
         )
+
+        # Extract problematic tags and get suggestions from hed-lsp
+        if not result.is_valid and self.use_hed_lsp:
+            problematic_tags = self._extract_problematic_tags(result.errors, result.warnings)
+            if problematic_tags:
+                suggestions = self._get_tag_suggestions(problematic_tags, schema_version)
+                suggestion_feedback = self._format_suggestions_for_feedback(suggestions)
+                if suggestion_feedback:
+                    # Append suggestions to augmented errors for LLM feedback
+                    if augmented_errors:
+                        augmented_errors[-1] += suggestion_feedback
+                    else:
+                        augmented_errors = [suggestion_feedback]
 
         # Determine validation status
         validation_attempts = state["validation_attempts"] + 1
