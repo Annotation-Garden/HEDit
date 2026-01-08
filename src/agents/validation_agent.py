@@ -101,9 +101,7 @@ class ValidationAgent:
                 raise ValueError("validator_path required when use_javascript=True")
             self.js_validator = HedJavaScriptValidator(validator_path)
 
-    def _extract_problematic_tags(
-        self, errors: list, warnings: list
-    ) -> list[str]:
+    def _extract_problematic_tags(self, errors: list, warnings: list) -> list[str]:
         """Extract problematic tag names from validation errors and warnings.
 
         Args:
@@ -157,9 +155,7 @@ class ValidationAgent:
             )
             return {}
 
-    def _format_suggestions_for_feedback(
-        self, suggestions: dict[str, list[str]]
-    ) -> str:
+    def _format_suggestions_for_feedback(self, suggestions: dict[str, list[str]]) -> str:
         """Format tag suggestions as feedback for the LLM.
 
         Args:

@@ -175,10 +175,10 @@ flowchart LR
 - All dependencies (Python, Node.js, HED schemas, validator) included in image!
 
 ### Local Development
-- Python 3.11+
+- Python 3.12+
 - CUDA-capable GPU (for LLM serving)
 - Node.js 18+ (for HED JavaScript validator)
-- Conda (recommended)
+- uv (fast Python package manager)
 
 ### Quick Start (Docker)
 
@@ -201,16 +201,16 @@ open frontend/index.html
 
 ### Local Development Setup
 
-1. **Create conda environment**:
+1. **Install uv** (if not already installed):
 ```bash
-source ~/miniconda3/etc/profile.d/conda.sh
-conda create -n hedit python=3.11 -y
-conda activate hedit
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-2. **Install dependencies**:
+2. **Create virtual environment and install dependencies**:
 ```bash
-pip install -e ".[dev]"
+uv venv
+source .venv/bin/activate
+uv pip install -e ".[dev]"
 ```
 
 3. **Clone HED resources** (if not using Docker):
@@ -241,18 +241,18 @@ uvicorn src.api.main:app --reload --host 0.0.0.0 --port 38427
 
 ### Run Tests
 ```bash
-pytest
+uv run pytest
 ```
 
 ### Code Quality
 ```bash
-ruff check src/ tests/
-ruff format src/ tests/
+uv run ruff check src/ tests/
+uv run ruff format src/ tests/
 ```
 
 ### Coverage Report
 ```bash
-pytest --cov=src --cov-report=html
+uv run pytest --cov=src --cov-report=html
 ```
 
 ## Project Structure
