@@ -200,20 +200,39 @@ class HedLspClient:
                             )
                         )
             elif isinstance(output, dict):
-                # Object with suggestions array
-                items = output.get("suggestions") or output.get("results") or []
-                for item in items:
-                    if isinstance(item, str):
-                        suggestions.append(HedSuggestion(tag=item))
-                    elif isinstance(item, dict):
-                        tag = item.get("tag") or item.get("name") or ""
-                        suggestions.append(
-                            HedSuggestion(
-                                tag=tag,
-                                score=item.get("score"),
-                                description=item.get("description"),
+                # Handle hed-suggest output format: {"query": ["tag1", "tag2", ...]}
+                # First check for explicit suggestions/results keys
+                items = output.get("suggestions") or output.get("results")
+                if items is not None:
+                    for item in items:
+                        if isinstance(item, str):
+                            suggestions.append(HedSuggestion(tag=item))
+                        elif isinstance(item, dict):
+                            tag = item.get("tag") or item.get("name") or ""
+                            suggestions.append(
+                                HedSuggestion(
+                                    tag=tag,
+                                    score=item.get("score"),
+                                    description=item.get("description"),
+                                )
                             )
-                        )
+                else:
+                    # Handle format where keys are query terms
+                    # e.g., {"button press": ["Button", "Response-button", ...]}
+                    for _query_key, tag_list in output.items():
+                        if isinstance(tag_list, list):
+                            for item in tag_list:
+                                if isinstance(item, str):
+                                    suggestions.append(HedSuggestion(tag=item))
+                                elif isinstance(item, dict):
+                                    tag = item.get("tag") or item.get("name") or ""
+                                    suggestions.append(
+                                        HedSuggestion(
+                                            tag=tag,
+                                            score=item.get("score"),
+                                            description=item.get("description"),
+                                        )
+                                    )
 
             return HedSuggestResult(
                 success=True,
