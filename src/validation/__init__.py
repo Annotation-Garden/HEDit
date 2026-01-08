@@ -23,13 +23,15 @@ from src.validation.hed_lsp import (
     suggest_tags_for_keywords,
 )
 
-# Type hints only - actual imports happen at runtime when used
+# Type hints only - actual imports happen at runtime when used via __getattr__
 if TYPE_CHECKING:
     from src.validation.hed_validator import (
         HedJavaScriptValidator,
         HedPythonValidator,
         ValidationIssue,
         ValidationResult,
+        get_validator,
+        is_js_validator_available,
     )
 
 __all__ = [
