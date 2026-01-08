@@ -48,6 +48,8 @@ Issues = "https://github.com/Annotation-Garden/hedit/issues"
 
 [project.optional-dependencies]
 # Standalone mode: run LangGraph workflow locally without backend (~2GB)
+# Note: hed-lsp CLI is recommended for semantic tag suggestions
+# Install separately: https://github.com/hed-standard/hed-lsp
 standalone = [
     "langgraph>=0.2.0",
     "langchain>=0.3.0",
@@ -61,9 +63,6 @@ standalone = [
     "beautifulsoup4>=4.12.3",
     "pillow>=11.0.0",
     "nest-asyncio>=1.6.0",
-    # Semantic search for tag discovery
-    "sentence-transformers>=5.0.0",
-    "numpy>=2.0.0",
 ]
 # API server: run the HEDit backend server
 api = [

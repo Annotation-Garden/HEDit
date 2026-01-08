@@ -14,11 +14,10 @@ from src.agents.annotation_agent import AnnotationAgent
 from src.agents.assessment_agent import AssessmentAgent
 from src.agents.evaluation_agent import EvaluationAgent
 from src.agents.feedback_summarizer import FeedbackSummarizer
-from src.agents.keyword_extraction_agent import KeywordExtractionAgent
 from src.agents.state import HedAnnotationState
 from src.agents.validation_agent import ValidationAgent
 from src.utils.schema_loader import HedSchemaLoader
-from src.utils.semantic_search import SemanticSearchManager, get_semantic_search_manager
+from src.validation.hed_lsp import HedLspClient, is_hed_lsp_available
 
 logger = logging.getLogger(__name__)
 
@@ -44,12 +43,10 @@ class HedAnnotationWorkflow:
         evaluation_llm: BaseChatModel | None = None,
         assessment_llm: BaseChatModel | None = None,
         feedback_llm: BaseChatModel | None = None,
-        keyword_llm: BaseChatModel | None = None,
         schema_dir: Path | str | None = None,
         validator_path: Path | None = None,
         use_js_validator: bool = True,
         enable_semantic_search: bool = True,
-        embeddings_path: Path | None = None,
     ) -> None:
         """Initialize the workflow.
 
@@ -58,16 +55,15 @@ class HedAnnotationWorkflow:
             evaluation_llm: Language model for evaluation agent (defaults to llm)
             assessment_llm: Language model for assessment agent (defaults to llm)
             feedback_llm: Language model for feedback summarization (defaults to llm)
-            keyword_llm: Language model for keyword extraction (fast model, defaults to llm)
             schema_dir: Directory containing JSON schemas
             validator_path: Path to hed-javascript for validation
             use_js_validator: Whether to use JavaScript validator
-            enable_semantic_search: Whether to enable semantic search preprocessing
-            embeddings_path: Path to pre-computed embeddings file
+            enable_semantic_search: Whether to use hed-lsp CLI for tag suggestions
         """
         # Store schema directory (None means use HED library to fetch from GitHub)
         self.schema_dir = schema_dir
-        self.enable_semantic_search = enable_semantic_search
+        # Enable semantic search only if hed-lsp CLI is available
+        self.enable_semantic_search = enable_semantic_search and is_hed_lsp_available()
 
         # Initialize legacy schema loader for validation
         self.schema_loader = HedSchemaLoader()
@@ -76,7 +72,6 @@ class HedAnnotationWorkflow:
         eval_llm = evaluation_llm or llm
         assess_llm = assessment_llm or llm
         feed_llm = feedback_llm or llm
-        kw_llm = keyword_llm or llm
 
         # Initialize agents with JSON schema support and per-agent LLMs
         self.annotation_agent = AnnotationAgent(llm, schema_dir=self.schema_dir)
@@ -89,13 +84,15 @@ class HedAnnotationWorkflow:
         self.assessment_agent = AssessmentAgent(assess_llm, schema_dir=self.schema_dir)
         self.feedback_summarizer = FeedbackSummarizer(feed_llm)
 
-        # Initialize semantic search components
-        self.keyword_extraction_agent = KeywordExtractionAgent(kw_llm)
-        self.semantic_search: SemanticSearchManager | None = None
-        if enable_semantic_search:
-            self.semantic_search = get_semantic_search_manager()
-            if embeddings_path:
-                self.semantic_search.load_embeddings(embeddings_path)
+        # Initialize hed-lsp client for semantic search
+        self.hed_lsp_client: HedLspClient | None = None
+        if self.enable_semantic_search:
+            try:
+                self.hed_lsp_client = HedLspClient()
+                logger.info("[WORKFLOW] hed-lsp CLI available for semantic tag suggestions")
+            except RuntimeError as e:
+                logger.warning(f"[WORKFLOW] hed-lsp CLI not available: {e}")
+                self.enable_semantic_search = False
 
         # Build graph
         self.graph = self._build_graph()
@@ -159,10 +156,11 @@ class HedAnnotationWorkflow:
         return workflow.compile()  # type: ignore[return-value]
 
     async def _semantic_preprocess_node(self, state: HedAnnotationState) -> dict:
-        """Semantic preprocessing node: Extract keywords and find relevant tags.
+        """Semantic preprocessing node: Use hed-lsp CLI to suggest relevant tags.
 
         This node runs before annotation to provide semantic hints based on
-        the input description. Only runs on the first iteration.
+        the input description. Uses hed-lsp CLI for tag suggestions.
+        Only runs on the first iteration.
 
         Args:
             state: Current workflow state
@@ -177,26 +175,33 @@ class HedAnnotationWorkflow:
 
         logger.info("[WORKFLOW] Entering semantic_preprocess node")
 
-        # Extract keywords from description
-        keywords = await self.keyword_extraction_agent.extract(state["input_description"])
-        logger.info(f"[WORKFLOW] Extracted keywords: {keywords}")
-
-        # Find relevant tags using semantic search
+        # Use hed-lsp CLI to suggest tags from the description
         semantic_hints = []
-        if self.semantic_search and keywords:
-            matches = self.semantic_search.find_similar(
-                keywords, top_k=15, use_embeddings=self.semantic_search.is_available()
-            )
-            semantic_hints = [
-                {
-                    "tag": m.tag,
-                    "prefix": m.prefix,
-                    "score": m.score,
-                    "source": m.source,
-                }
-                for m in matches
-            ]
-            logger.info(f"[WORKFLOW] Found {len(semantic_hints)} relevant tags")
+        keywords: list[str] = []
+
+        if self.hed_lsp_client:
+            try:
+                # Get tag suggestions directly from the description
+                result = self.hed_lsp_client.suggest(state["input_description"])
+                if result.success:
+                    semantic_hints = [
+                        {
+                            "tag": s.tag,
+                            "prefix": "",  # hed-lsp returns full tags
+                            "score": s.score or 0.0,
+                            "source": "hed-lsp",
+                        }
+                        for s in result.suggestions
+                    ]
+                    # Extract keywords from the tags for logging
+                    keywords = [s.tag.split("/")[-1] for s in result.suggestions]
+                    logger.info(
+                        f"[WORKFLOW] hed-lsp suggested {len(semantic_hints)} tags: {keywords[:5]}..."
+                    )
+                else:
+                    logger.warning(f"[WORKFLOW] hed-lsp suggestion failed: {result.error}")
+            except Exception as e:
+                logger.warning(f"[WORKFLOW] hed-lsp error: {e}")
 
         return {
             "extracted_keywords": keywords,
