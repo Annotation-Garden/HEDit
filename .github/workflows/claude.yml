@@ -78,7 +78,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           allowed_non_write_users: "*"
           claude_args: |
-            --model claude-haiku-4-5-20251001 --allowedTools mcp__github__get_issue,mcp__github__add_labels_to_issue,mcp__github__create_label
+            --model claude-haiku-4-5-20251001
 
   # Check new issues for duplicates
   deduplicate-issue:
@@ -138,4 +138,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           allowed_non_write_users: "*"
           claude_args: |
-            --model claude-haiku-4-5-20251001 --allowedTools mcp__github__get_issue,mcp__github__search_issues,mcp__github__list_issues,mcp__github__create_issue_comment,mcp__github__update_issue,mcp__github__get_issue_comments
+            --model claude-haiku-4-5-20251001
