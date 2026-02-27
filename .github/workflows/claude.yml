@@ -57,12 +57,28 @@ jobs:
       - name: Triage issue with Claude
         uses: anthropics/claude-code-action@v1
         with:
-          prompt: "/label-issue REPO: ${{ github.repository }} ISSUE_NUMBER: ${{ github.event.issue.number }}"
+          prompt: |
+            Read issue #${{ github.event.issue.number }} in ${{ github.repository }} and apply the most relevant labels.
+
+            Use mcp__github__get_issue to read the issue title and body, then mcp__github__add_labels_to_issue to apply labels.
+            If a needed label doesn't exist yet, create it first with mcp__github__create_label.
+
+            Standard labels to choose from (apply only what fits):
+            - bug: something isn't working
+            - enhancement: new feature or improvement request
+            - documentation: docs improvements or fixes
+            - question: further information is requested
+            - help wanted: extra attention needed
+            - good first issue: good for newcomers
+            - invalid: doesn't seem right
+            - wontfix: will not be worked on
+
+            Apply 1-3 labels maximum. Do not add a comment.
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           allowed_non_write_users: "*"
           claude_args: |
-            --model claude-haiku-4-5-20251001
+            --model claude-haiku-4-5-20251001 --allowedTools mcp__github__get_issue,mcp__github__add_labels_to_issue,mcp__github__create_label
 
   # Check new issues for duplicates
   deduplicate-issue:
