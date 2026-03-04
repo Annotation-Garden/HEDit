@@ -4,10 +4,14 @@ This agent summarizes validation errors and evaluation/assessment feedback
 into concise, actionable points for the annotation agent.
 """
 
+import logging
+
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from src.agents.state import HedAnnotationState
+
+logger = logging.getLogger(__name__)
 
 
 class FeedbackSummarizer:
@@ -112,7 +116,11 @@ Be direct and actionable."""
             HumanMessage(content=user_prompt),
         ]
 
-        response = await self.llm.ainvoke(messages)
+        try:
+            response = await self.llm.ainvoke(messages)
+        except Exception as e:
+            logger.error("Feedback summarization LLM invocation failed: %s", e, exc_info=True)
+            raise
         content = response.content
         summarized_feedback = content.strip() if isinstance(content, str) else str(content)
 

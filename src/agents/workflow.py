@@ -5,6 +5,7 @@ annotation, validation, evaluation, and assessment.
 """
 
 import logging
+import time
 from pathlib import Path
 
 from langchain_core.language_models import BaseChatModel
@@ -104,7 +105,7 @@ class HedAnnotationWorkflow:
             Compiled StateGraph
         """
         # Create graph
-        workflow = StateGraph(HedAnnotationState)
+        workflow = StateGraph(HedAnnotationState)  # type: ignore[arg-type]  # LangGraph typing limitation
 
         # Add nodes
         if self.enable_semantic_search:
@@ -221,9 +222,13 @@ class HedAnnotationWorkflow:
         print(
             f"[WORKFLOW] Entering annotate node (validation attempt {state['validation_attempts']}, total iteration {total_iters})"
         )
+        t0 = time.monotonic()
         result = await self.annotation_agent.annotate(state)
+        elapsed = time.monotonic() - t0
         result["total_iterations"] = total_iters  # Increment counter
-        print(f"[WORKFLOW] Annotation generated: {result.get('current_annotation', '')[:100]}...")
+        print(
+            f"[WORKFLOW] Annotation generated in {elapsed:.1f}s: {result.get('current_annotation', '')[:100]}..."
+        )
         return result
 
     async def _validate_node(self, state: HedAnnotationState) -> dict:
@@ -236,9 +241,11 @@ class HedAnnotationWorkflow:
             State update
         """
         print("[WORKFLOW] Entering validate node")
+        t0 = time.monotonic()
         result = await self.validation_agent.validate(state)
+        elapsed = time.monotonic() - t0
         print(
-            f"[WORKFLOW] Validation result: {result.get('validation_status')}, is_valid: {result.get('is_valid')}"
+            f"[WORKFLOW] Validation result in {elapsed:.1f}s: {result.get('validation_status')}, is_valid: {result.get('is_valid')}"
         )
         if not result.get("is_valid"):
             print(f"[WORKFLOW] Validation errors: {result.get('validation_errors', [])}")
@@ -254,8 +261,12 @@ class HedAnnotationWorkflow:
             State update
         """
         print("[WORKFLOW] Entering evaluate node")
+        t0 = time.monotonic()
         result = await self.evaluation_agent.evaluate(state)
-        print(f"[WORKFLOW] Evaluation result: is_faithful={result.get('is_faithful')}")
+        elapsed = time.monotonic() - t0
+        print(
+            f"[WORKFLOW] Evaluation result in {elapsed:.1f}s: is_faithful={result.get('is_faithful')}"
+        )
 
         # Set default assessment values if assessment will be skipped
         run_assessment = state.get("run_assessment", False)
@@ -281,7 +292,12 @@ class HedAnnotationWorkflow:
         Returns:
             State update
         """
-        return await self.assessment_agent.assess(state)
+        print("[WORKFLOW] Entering assess node")
+        t0 = time.monotonic()
+        result = await self.assessment_agent.assess(state)
+        elapsed = time.monotonic() - t0
+        print(f"[WORKFLOW] Assessment completed in {elapsed:.1f}s")
+        return result
 
     async def _summarize_feedback_node(self, state: HedAnnotationState) -> dict:
         """Summarize feedback node: Condense errors and feedback.
@@ -293,9 +309,11 @@ class HedAnnotationWorkflow:
             State update with summarized feedback
         """
         print("[WORKFLOW] Entering summarize_feedback node")
+        t0 = time.monotonic()
         result = await self.feedback_summarizer.summarize(state)
+        elapsed = time.monotonic() - t0
         print(
-            f"[WORKFLOW] Feedback summarized: {result.get('validation_errors_augmented', [''])[0][:100] if result.get('validation_errors_augmented') else 'No feedback'}..."
+            f"[WORKFLOW] Feedback summarized in {elapsed:.1f}s: {result.get('validation_errors_augmented', [''])[0][:100] if result.get('validation_errors_augmented') else 'No feedback'}..."
         )
         return result
 
@@ -327,7 +345,12 @@ class HedAnnotationWorkflow:
         self,
         state: HedAnnotationState,
     ) -> str:
-        """Route after evaluation based on faithfulness.
+        """Route after evaluation based on faithfulness and assessment mode.
+
+        When run_assessment=False (default), evaluation is informational only;
+        the result is reported but never triggers refinement loops.
+        When run_assessment=True, evaluation can trigger refinement and the
+        assessment node runs at the end.
 
         Args:
             state: Current workflow state
@@ -335,44 +358,26 @@ class HedAnnotationWorkflow:
         Returns:
             Next node name
         """
-        # Check if max total iterations reached
-        total_iters = state.get("total_iterations", 0)
-        max_iters = state.get("max_total_iterations", 10)
         run_assessment = state.get("run_assessment", False)
 
+        # When assessment is off, evaluation is informational -- always end
+        if not run_assessment:
+            print(
+                f"[WORKFLOW] Evaluation complete (informational, is_faithful={state['is_faithful']}) - routing to END"
+            )
+            return "end"
+
+        # Assessment mode: allow refinement loops with iteration cap
+        total_iters = state.get("total_iterations", 0)
+        max_iters = state.get("max_total_iterations", 4)
+
         if total_iters >= max_iters:
-            # Only run assessment at max iterations if explicitly requested
-            if run_assessment:
-                print(f"[WORKFLOW] Routing to assess (max total iterations {max_iters} reached)")
-                return "assess"
-            else:
-                print(
-                    "[WORKFLOW] Skipping assessment (max iterations reached, assessment not requested) - routing to END"
-                )
-                return "end"
+            print(f"[WORKFLOW] Routing to assess (max total iterations {max_iters} reached)")
+            return "assess"
 
         if state["is_faithful"]:
-            # Only run assessment if explicitly requested
-            if state.get("is_valid") and run_assessment:
-                print(
-                    "[WORKFLOW] Routing to assess (annotation is valid and faithful, assessment requested)"
-                )
-                return "assess"
-            elif state.get("is_valid"):
-                print(
-                    "[WORKFLOW] Skipping assessment (annotation is valid and faithful, assessment not requested) - routing to END"
-                )
-                return "end"
-            elif run_assessment:
-                print(
-                    "[WORKFLOW] Routing to assess (annotation is faithful but has validation issues)"
-                )
-                return "assess"
-            else:
-                print(
-                    "[WORKFLOW] Skipping assessment (has validation issues, assessment not requested) - routing to END"
-                )
-                return "end"
+            print("[WORKFLOW] Routing to assess (annotation is faithful)")
+            return "assess"
         else:
             print(
                 f"[WORKFLOW] Routing to summarize_feedback (annotation needs refinement, iteration {total_iters}/{max_iters})"
@@ -383,8 +388,8 @@ class HedAnnotationWorkflow:
         self,
         input_description: str,
         schema_version: str = "8.4.0",
-        max_validation_attempts: int = 5,
-        max_total_iterations: int = 10,
+        max_validation_attempts: int = 3,
+        max_total_iterations: int | None = None,
         run_assessment: bool = False,
         no_extend: bool = False,
         config: dict | None = None,
@@ -395,7 +400,7 @@ class HedAnnotationWorkflow:
             input_description: Natural language event description
             schema_version: HED schema version to use
             max_validation_attempts: Maximum validation retry attempts
-            max_total_iterations: Maximum total iterations to prevent infinite loops
+            max_total_iterations: Maximum total iterations (default: max_validation_attempts + 1)
             run_assessment: Whether to run final assessment (default: False)
             no_extend: If True, prohibit tag extensions (use only existing vocabulary)
             config: Optional LangGraph config (e.g., recursion_limit)
@@ -404,6 +409,9 @@ class HedAnnotationWorkflow:
             Final workflow state with annotation and feedback
         """
         from src.agents.state import create_initial_state
+
+        if max_total_iterations is None:
+            max_total_iterations = max_validation_attempts + 1
 
         # Create initial state
         initial_state = create_initial_state(
@@ -418,4 +426,4 @@ class HedAnnotationWorkflow:
         # Run workflow
         final_state = await self.graph.ainvoke(initial_state, config=config)  # type: ignore[attr-defined]
 
-        return final_state  # type: ignore[no-any-return]
+        return final_state
