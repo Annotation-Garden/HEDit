@@ -1,0 +1,143 @@
+name: Claude Code
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  claude:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          additional_permissions: |
+            actions: read
+
+  # Auto-label new issues
+  triage-issue:
+    if: github.event_name == 'issues' && github.event.action == 'opened'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Triage issue with Claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          prompt: |
+            Read issue #${{ github.event.issue.number }} in ${{ github.repository }} and apply the most relevant labels.
+
+            Use mcp__github__get_issue to read the issue title and body, then mcp__github__add_labels_to_issue to apply labels.
+            If a needed label doesn't exist yet, create it first with mcp__github__create_label.
+
+            Standard labels to choose from (apply only what fits):
+            - bug: something isn't working
+            - enhancement: new feature or improvement request
+            - documentation: docs improvements or fixes
+            - question: further information is requested
+            - help wanted: extra attention needed
+            - good first issue: good for newcomers
+            - invalid: doesn't seem right
+            - wontfix: will not be worked on
+
+            Apply 1-3 labels maximum. Do not add a comment.
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          allowed_non_write_users: "*"
+          show_full_output: "true"
+          claude_args: |
+            --model haiku
+
+  # Check new issues for duplicates
+  deduplicate-issue:
+    if: github.event_name == 'issues' && github.event.action == 'opened'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Check for duplicate issues
+        uses: anthropics/claude-code-action@v1
+        with:
+          prompt: |
+            Analyze this new issue and check if it's a duplicate of existing issues in the repository.
+
+            Issue: #${{ github.event.issue.number }}
+            Repository: ${{ github.repository }}
+
+            Your task:
+            1. Use mcp__github__get_issue to get details of the current issue (#${{ github.event.issue.number }})
+            2. Search for similar existing issues using mcp__github__search_issues with relevant keywords from the issue title and body
+            3. Compare the new issue with existing ones to identify potential duplicates
+
+            Criteria for duplicates:
+            - Same bug or error being reported
+            - Same feature request (even if worded differently)
+            - Same question being asked
+            - Issues describing the same root problem
+
+            If you find duplicates:
+            - Add a comment on the new issue linking to the original issue(s)
+            - Apply a "duplicate" label to the new issue
+            - Be polite and explain why it's a duplicate
+            - Suggest the user follow the original issue for updates
+
+            If it is NOT a duplicate:
+            - Do not add any comments
+            - Do not add any labels (the triage job handles labeling)
+
+            Use these tools:
+            - mcp__github__get_issue: Get issue details
+            - mcp__github__search_issues: Search for similar issues
+            - mcp__github__list_issues: List recent issues if needed
+            - mcp__github__create_issue_comment: Add a comment if duplicate found
+            - mcp__github__update_issue: Add labels
+
+            Be thorough but efficient. Focus on finding true duplicates, not just similar issues.
+
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          allowed_non_write_users: "*"
+          show_full_output: "true"
+          claude_args: |
+            --model haiku
