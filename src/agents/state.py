@@ -81,8 +81,8 @@ class HedAnnotationState(TypedDict):
 def create_initial_state(
     input_description: str,
     schema_version: str = "8.4.0",
-    max_validation_attempts: int = 5,
-    max_total_iterations: int = 10,
+    max_validation_attempts: int = 3,
+    max_total_iterations: int | None = None,
     run_assessment: bool = False,
     extracted_keywords: list[str] | None = None,
     semantic_hints: list[dict] | None = None,
@@ -93,8 +93,8 @@ def create_initial_state(
     Args:
         input_description: Natural language event description to annotate
         schema_version: HED schema version to use (default: "8.4.0")
-        max_validation_attempts: Maximum validation retry attempts (default: 5)
-        max_total_iterations: Maximum total iterations to prevent infinite loops (default: 10)
+        max_validation_attempts: Maximum validation retry attempts (default: 3)
+        max_total_iterations: Maximum total iterations (default: max_validation_attempts + 1)
         run_assessment: Whether to run final assessment (default: False)
         extracted_keywords: Pre-extracted keywords from description (optional)
         semantic_hints: Pre-computed semantic search hints (optional)
@@ -103,6 +103,9 @@ def create_initial_state(
     Returns:
         Initial HedAnnotationState
     """
+    if max_total_iterations is None:
+        max_total_iterations = max_validation_attempts + 1
+
     return HedAnnotationState(
         messages=[],
         input_description=input_description,

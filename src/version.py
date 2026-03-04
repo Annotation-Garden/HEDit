@@ -1,7 +1,7 @@
 """Version information for HEDit."""
 
-__version__ = "0.7.4a4"
-__version_info__ = (0, 7, 4, "alpha")
+__version__ = "0.7.5.dev0"
+__version_info__ = (0, 7, 5, "dev")
 
 
 def get_version() -> str:

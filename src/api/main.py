@@ -18,6 +18,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from langchain_community.chat_models import ChatOllama
+from openai import APITimeoutError, RateLimitError
 
 from src import __version__
 from src.agents.vision_agent import VisionAgent
@@ -98,8 +99,8 @@ def create_openrouter_workflow(
         api_key: OpenRouter API key
         annotation_model: Model for annotation (default: ANNOTATION_MODEL env or Claude Haiku 4.5)
         annotation_provider: Provider for annotation model (default: ANNOTATION_PROVIDER env or "anthropic")
-        eval_model: Model for eval/assessment/feedback (default: EVALUATION_MODEL env or Qwen3-235B)
-        eval_provider: Provider for eval models (default: EVALUATION_PROVIDER env or auto-routed)
+        eval_model: Model for eval/assessment/feedback (default: EVALUATION_MODEL env or GPT-OSS-120B)
+        eval_provider: Provider for eval models (default: EVALUATION_PROVIDER env or "groq")
         temperature: LLM temperature (default: 0.1)
         user_id: User ID for cache optimization (derived from API key if not provided)
         schema_dir: Path to HED schemas (None = fetch from GitHub)
@@ -112,8 +113,8 @@ def create_openrouter_workflow(
     # Apply defaults from environment
     default_annotation_model = os.getenv("ANNOTATION_MODEL", "anthropic/claude-haiku-4.5")
     default_annotation_provider = os.getenv("ANNOTATION_PROVIDER", "anthropic")
-    default_eval_model = os.getenv("EVALUATION_MODEL", "qwen/qwen3-235b-a22b-2507")
-    default_eval_provider = os.getenv("EVALUATION_PROVIDER", "")
+    default_eval_model = os.getenv("EVALUATION_MODEL", "openai/gpt-oss-120b")
+    default_eval_provider = os.getenv("EVALUATION_PROVIDER", "groq")
 
     # Resolve final values: parameter > env var > default
     actual_annotation_model = get_model_name(annotation_model or default_annotation_model)
@@ -283,7 +284,7 @@ async def lifespan(app: FastAPI):
     print("Initializing HEDit annotation workflow...")
 
     # Auto-detect environment (Docker vs local)
-    def get_default_path(docker_path: str, local_path: str) -> str:
+    def get_default_path(docker_path: str, local_path: str) -> str | None:
         """Get default path based on environment.
 
         Args:
@@ -473,7 +474,7 @@ if extra_origins := os.getenv("EXTRA_CORS_ORIGINS"):
 
 # Add CORS middleware
 app.add_middleware(
-    CORSMiddleware,
+    CORSMiddleware,  # type: ignore[arg-type]  # Starlette typing limitation
     allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -640,9 +641,7 @@ async def annotate(
         active_workflow = workflow
 
     try:
-        # Run annotation workflow with increased recursion limit for long descriptions
-        # LangGraph default is 25, increase to 100 for complex workflows
-        config = {"recursion_limit": 100}
+        config = {"recursion_limit": 50}
 
         start_time = time.time()
         final_state = await active_workflow.run(
@@ -701,10 +700,21 @@ async def annotate(
             status=status,
         )
 
+    except APITimeoutError as e:
+        raise HTTPException(
+            status_code=504,
+            detail="LLM request timed out. Try again or use a faster model/provider.",
+        ) from e
+    except RateLimitError as e:
+        raise HTTPException(
+            status_code=429,
+            detail="LLM rate limit exceeded. Please wait and try again.",
+        ) from e
     except Exception as e:
+        logging.exception("Annotation workflow failed")
         raise HTTPException(
             status_code=500,
-            detail=f"Annotation workflow failed: {str(e)}",
+            detail="An error occurred during annotation processing.",
         ) from e
 
 
@@ -839,7 +849,7 @@ async def annotate_from_image(
         image_metadata = vision_result["metadata"]
 
         # Step 2: Pass description through HED annotation workflow
-        config = {"recursion_limit": 100}
+        config = {"recursion_limit": 50}
 
         final_state = await active_workflow.run(
             input_description=image_description,
@@ -897,10 +907,21 @@ async def annotate_from_image(
             image_metadata=image_metadata,
         )
 
+    except APITimeoutError as e:
+        raise HTTPException(
+            status_code=504,
+            detail="LLM request timed out. Try again or use a faster model/provider.",
+        ) from e
+    except RateLimitError as e:
+        raise HTTPException(
+            status_code=429,
+            detail="LLM rate limit exceeded. Please wait and try again.",
+        ) from e
     except Exception as e:
+        logging.exception("Image annotation workflow failed")
         raise HTTPException(
             status_code=500,
-            detail=f"Image annotation workflow failed: {str(e)}",
+            detail="An error occurred during image annotation processing.",
         ) from e
 
 
@@ -992,13 +1013,12 @@ async def annotate_stream(
             raise HTTPException(status_code=503, detail="Workflow not initialized")
         active_workflow = workflow
 
-    # Create initial state
+    # Create initial state (max_total_iterations derived from max_validation_attempts + 1)
     initial_state = create_initial_state(
         request.description,
         request.schema_version,
         request.max_validation_attempts,
-        10,  # max_total_iterations
-        request.run_assessment,
+        run_assessment=request.run_assessment,
     )
 
     # Node name to user-friendly stage mapping
@@ -1031,8 +1051,8 @@ async def annotate_stream(
             validation_attempt = 0
 
             # Use LangGraph's astream_events for real-time streaming
-            config = {"recursion_limit": 100}
-            async for event in active_workflow.graph.astream_events(
+            config = {"recursion_limit": 50}
+            async for event in active_workflow.graph.astream_events(  # type: ignore[union-attr]
                 initial_state, config=config, version="v2"
             ):
                 event_type = event.get("event")
@@ -1113,10 +1133,35 @@ async def annotate_stream(
 
         except asyncio.CancelledError:
             raise
+        except APITimeoutError:
+            logging.exception("Streaming workflow timeout")
+            yield send_event(
+                "error",
+                {
+                    "message": "LLM request timed out. Try again or use a faster model/provider.",
+                    "error_type": "timeout",
+                },
+            )
+            yield send_event("done", {"message": "Workflow ended with error"})
+        except RateLimitError:
+            logging.exception("Streaming workflow rate limit")
+            yield send_event(
+                "error",
+                {
+                    "message": "LLM rate limit exceeded. Please wait and try again.",
+                    "error_type": "rate_limit",
+                },
+            )
+            yield send_event("done", {"message": "Workflow ended with error"})
         except Exception:
-            # Log the actual error for debugging, but return a generic message
             logging.exception("Streaming workflow error")
-            yield send_event("error", {"message": "An error occurred during annotation processing"})
+            yield send_event(
+                "error",
+                {
+                    "message": "An error occurred during annotation processing.",
+                    "error_type": "internal",
+                },
+            )
             yield send_event("done", {"message": "Workflow ended with error"})
 
     return StreamingResponse(
@@ -1291,8 +1336,7 @@ async def annotate_from_image_stream(
                 image_description,
                 request.schema_version,
                 request.max_validation_attempts,
-                10,  # max_total_iterations
-                request.run_assessment,
+                run_assessment=request.run_assessment,
             )
 
             # Track state and progress
@@ -1301,8 +1345,8 @@ async def annotate_from_image_stream(
             validation_attempt = 0
 
             # Use LangGraph's astream_events for real-time streaming
-            config = {"recursion_limit": 100}
-            async for event in active_workflow.graph.astream_events(
+            config = {"recursion_limit": 50}
+            async for event in active_workflow.graph.astream_events(  # type: ignore[union-attr]
                 initial_state, config=config, version="v2"
             ):
                 event_type = event.get("event")
@@ -1385,10 +1429,35 @@ async def annotate_from_image_stream(
 
         except asyncio.CancelledError:
             raise
+        except APITimeoutError:
+            logging.exception("Streaming image workflow timeout")
+            yield send_event(
+                "error",
+                {
+                    "message": "LLM request timed out. Try again or use a faster model/provider.",
+                    "error_type": "timeout",
+                },
+            )
+            yield send_event("done", {"message": "Workflow ended with error"})
+        except RateLimitError:
+            logging.exception("Streaming image workflow rate limit")
+            yield send_event(
+                "error",
+                {
+                    "message": "LLM rate limit exceeded. Please wait and try again.",
+                    "error_type": "rate_limit",
+                },
+            )
+            yield send_event("done", {"message": "Workflow ended with error"})
         except Exception:
-            # Log the actual error for debugging, but return a generic message
             logging.exception("Streaming image annotation workflow error")
-            yield send_event("error", {"message": "An error occurred during image annotation"})
+            yield send_event(
+                "error",
+                {
+                    "message": "An error occurred during image annotation processing.",
+                    "error_type": "internal",
+                },
+            )
             yield send_event("done", {"message": "Workflow ended with error"})
 
     return StreamingResponse(

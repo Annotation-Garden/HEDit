@@ -4,13 +4,18 @@ This agent evaluates how faithfully a HED annotation captures
 the original natural language event description.
 """
 
+import logging
+import re
 from pathlib import Path
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from src.agents.state import HedAnnotationState
+from src.utils import extract_text_content
 from src.utils.json_schema_loader import HedJsonSchemaLoader, load_latest_schema
+
+logger = logging.getLogger(__name__)
 
 
 class EvaluationAgent:
@@ -163,9 +168,12 @@ Provide a thorough evaluation following the specified format."""
             HumanMessage(content=user_prompt),
         ]
 
-        response = await self.llm.ainvoke(messages)
-        content = response.content
-        feedback = content.strip() if isinstance(content, str) else str(content)
+        try:
+            response = await self.llm.ainvoke(messages)
+        except Exception as e:
+            logger.error("Evaluation LLM invocation failed: %s", e, exc_info=True)
+            raise
+        feedback = extract_text_content(response.content)
 
         # Parse decision with multiple fallbacks
         is_faithful = self._parse_decision(feedback)
@@ -186,8 +194,6 @@ Provide a thorough evaluation following the specified format."""
         Returns:
             True if annotation should be accepted, False if needs refinement
         """
-        import re
-
         feedback_lower = feedback.lower()
 
         # Check for explicit DECISION line
@@ -201,19 +207,16 @@ Provide a thorough evaluation following the specified format."""
             result = faithful_match.group(1)
             return result in ["yes", "partial"]  # Accept partial as good enough!
 
-        # Fallback: look for positive indicators
-        positive_indicators = ["accept", "good", "sufficient", "adequate", "captures well"]
-        negative_indicators = ["refine", "missing", "incorrect", "inaccurate", "lacks"]
+        # Fallback: look for explicit refine indicators only
+        refine_indicators = ["refine", "incorrect", "inaccurate", "wrong"]
+        if any(indicator in feedback_lower for indicator in refine_indicators):
+            return False
 
-        positive_score = sum(1 for indicator in positive_indicators if indicator in feedback_lower)
-        negative_score = sum(1 for indicator in negative_indicators if indicator in feedback_lower)
-
-        # If more positive than negative, accept
-        if positive_score > negative_score:
-            return True
-
-        # Default to refine if ambiguous (conservative)
-        return False
+        # Default to accept if ambiguous -- avoid unnecessary refinement loops
+        logger.debug(
+            "Evaluation parsing: no explicit DECISION/FAITHFUL/refine indicator found; defaulting to ACCEPT"
+        )
+        return True
 
     def _check_tags_and_suggest(self, annotation: str) -> str:
         """Check annotation for invalid tags and suggest alternatives.
