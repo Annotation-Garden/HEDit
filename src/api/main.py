@@ -98,8 +98,8 @@ def create_openrouter_workflow(
         api_key: OpenRouter API key
         annotation_model: Model for annotation (default: ANNOTATION_MODEL env or Claude Haiku 4.5)
         annotation_provider: Provider for annotation model (default: ANNOTATION_PROVIDER env or "anthropic")
-        eval_model: Model for eval/assessment/feedback (default: EVALUATION_MODEL env or Qwen3-235B)
-        eval_provider: Provider for eval models (default: EVALUATION_PROVIDER env or auto-routed)
+        eval_model: Model for eval/assessment/feedback (default: EVALUATION_MODEL env or GPT-OSS-120B)
+        eval_provider: Provider for eval models (default: EVALUATION_PROVIDER env or "groq")
         temperature: LLM temperature (default: 0.1)
         user_id: User ID for cache optimization (derived from API key if not provided)
         schema_dir: Path to HED schemas (None = fetch from GitHub)
@@ -112,8 +112,8 @@ def create_openrouter_workflow(
     # Apply defaults from environment
     default_annotation_model = os.getenv("ANNOTATION_MODEL", "anthropic/claude-haiku-4.5")
     default_annotation_provider = os.getenv("ANNOTATION_PROVIDER", "anthropic")
-    default_eval_model = os.getenv("EVALUATION_MODEL", "qwen/qwen3-235b-a22b-2507")
-    default_eval_provider = os.getenv("EVALUATION_PROVIDER", "")
+    default_eval_model = os.getenv("EVALUATION_MODEL", "openai/gpt-oss-120b")
+    default_eval_provider = os.getenv("EVALUATION_PROVIDER", "groq")
 
     # Resolve final values: parameter > env var > default
     actual_annotation_model = get_model_name(annotation_model or default_annotation_model)
@@ -640,15 +640,17 @@ async def annotate(
         active_workflow = workflow
 
     try:
-        # Run annotation workflow with increased recursion limit for long descriptions
-        # LangGraph default is 25, increase to 100 for complex workflows
-        config = {"recursion_limit": 100}
+        config = {"recursion_limit": 50}
+
+        # Derive total iteration cap from validation attempts (+1 for evaluation refinement)
+        max_total_iterations = request.max_validation_attempts + 1
 
         start_time = time.time()
         final_state = await active_workflow.run(
             input_description=request.description,
             schema_version=request.schema_version,
             max_validation_attempts=request.max_validation_attempts,
+            max_total_iterations=max_total_iterations,
             run_assessment=request.run_assessment,
             config=config,
         )
@@ -839,12 +841,14 @@ async def annotate_from_image(
         image_metadata = vision_result["metadata"]
 
         # Step 2: Pass description through HED annotation workflow
-        config = {"recursion_limit": 100}
+        config = {"recursion_limit": 50}
+        img_max_total_iters = request.max_validation_attempts + 1
 
         final_state = await active_workflow.run(
             input_description=image_description,
             schema_version=request.schema_version,
             max_validation_attempts=request.max_validation_attempts,
+            max_total_iterations=img_max_total_iters,
             run_assessment=request.run_assessment,
             config=config,
         )
@@ -992,12 +996,13 @@ async def annotate_stream(
             raise HTTPException(status_code=503, detail="Workflow not initialized")
         active_workflow = workflow
 
-    # Create initial state
+    # Create initial state with iteration cap derived from validation attempts
+    max_total_iterations = request.max_validation_attempts + 1
     initial_state = create_initial_state(
         request.description,
         request.schema_version,
         request.max_validation_attempts,
-        10,  # max_total_iterations
+        max_total_iterations,
         request.run_assessment,
     )
 
@@ -1031,7 +1036,7 @@ async def annotate_stream(
             validation_attempt = 0
 
             # Use LangGraph's astream_events for real-time streaming
-            config = {"recursion_limit": 100}
+            config = {"recursion_limit": 50}
             async for event in active_workflow.graph.astream_events(
                 initial_state, config=config, version="v2"
             ):
@@ -1287,11 +1292,12 @@ async def annotate_from_image_stream(
             )
 
             # Step 2: Create initial state for annotation workflow
+            img_max_total_iterations = request.max_validation_attempts + 1
             initial_state = create_initial_state(
                 image_description,
                 request.schema_version,
                 request.max_validation_attempts,
-                10,  # max_total_iterations
+                img_max_total_iterations,
                 request.run_assessment,
             )
 
@@ -1301,7 +1307,7 @@ async def annotate_from_image_stream(
             validation_attempt = 0
 
             # Use LangGraph's astream_events for real-time streaming
-            config = {"recursion_limit": 100}
+            config = {"recursion_limit": 50}
             async for event in active_workflow.graph.astream_events(
                 initial_state, config=config, version="v2"
             ):

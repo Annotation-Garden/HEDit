@@ -28,8 +28,8 @@ class AnnotationRequest(BaseModel):
         examples=["8.3.0", "8.4.0"],
     )
     max_validation_attempts: int = Field(
-        default=5,
-        description="Maximum validation retry attempts",
+        default=3,
+        description="Maximum validation retry attempts (total iterations = this + 1)",
         ge=1,
         le=10,
     )
@@ -155,8 +155,8 @@ class ImageAnnotationRequest(BaseModel):
         examples=["8.3.0", "8.4.0"],
     )
     max_validation_attempts: int = Field(
-        default=5,
-        description="Maximum validation retry attempts",
+        default=3,
+        description="Maximum validation retry attempts (total iterations = this + 1)",
         ge=1,
         le=10,
     )

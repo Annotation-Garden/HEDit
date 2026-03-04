@@ -201,19 +201,13 @@ Provide a thorough evaluation following the specified format."""
             result = faithful_match.group(1)
             return result in ["yes", "partial"]  # Accept partial as good enough!
 
-        # Fallback: look for positive indicators
-        positive_indicators = ["accept", "good", "sufficient", "adequate", "captures well"]
-        negative_indicators = ["refine", "missing", "incorrect", "inaccurate", "lacks"]
+        # Fallback: look for explicit refine indicators only
+        refine_indicators = ["refine", "incorrect", "inaccurate", "wrong"]
+        if any(indicator in feedback_lower for indicator in refine_indicators):
+            return False
 
-        positive_score = sum(1 for indicator in positive_indicators if indicator in feedback_lower)
-        negative_score = sum(1 for indicator in negative_indicators if indicator in feedback_lower)
-
-        # If more positive than negative, accept
-        if positive_score > negative_score:
-            return True
-
-        # Default to refine if ambiguous (conservative)
-        return False
+        # Default to accept if ambiguous -- avoid unnecessary refinement loops
+        return True
 
     def _check_tags_and_suggest(self, annotation: str) -> str:
         """Check annotation for invalid tags and suggest alternatives.
