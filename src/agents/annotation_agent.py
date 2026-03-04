@@ -11,6 +11,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from src.agents.state import HedAnnotationState
+from src.utils import extract_text_content
 from src.utils.hed_comprehensive_guide import get_comprehensive_hed_guide
 from src.utils.json_schema_loader import HedJsonSchemaLoader, load_latest_schema
 
@@ -212,8 +213,7 @@ CRITICAL: Output ONLY the raw HED annotation string."""
         except Exception as e:
             logger.error("LLM invocation failed: %s", e, exc_info=True)
             raise
-        content = response.content
-        raw_annotation = content.strip() if isinstance(content, str) else str(content)
+        raw_annotation = extract_text_content(response.content)
 
         # Clean up LLM output - extract just the HED annotation
         annotation = self._extract_hed_annotation(raw_annotation)

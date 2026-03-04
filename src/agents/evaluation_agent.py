@@ -12,6 +12,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from src.agents.state import HedAnnotationState
+from src.utils import extract_text_content
 from src.utils.json_schema_loader import HedJsonSchemaLoader, load_latest_schema
 
 logger = logging.getLogger(__name__)
@@ -172,8 +173,7 @@ Provide a thorough evaluation following the specified format."""
         except Exception as e:
             logger.error("Evaluation LLM invocation failed: %s", e, exc_info=True)
             raise
-        content = response.content
-        feedback = content.strip() if isinstance(content, str) else str(content)
+        feedback = extract_text_content(response.content)
 
         # Parse decision with multiple fallbacks
         is_faithful = self._parse_decision(feedback)

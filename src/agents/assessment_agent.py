@@ -11,6 +11,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from src.agents.state import HedAnnotationState
+from src.utils import extract_text_content
 
 logger = logging.getLogger(__name__)
 
@@ -112,8 +113,7 @@ Provide brief assessment in the specified format."""
         except Exception as e:
             logger.error("Assessment LLM invocation failed: %s", e, exc_info=True)
             raise
-        content = response.content
-        feedback = content.strip() if isinstance(content, str) else str(content)
+        feedback = extract_text_content(response.content)
 
         # Parse completion status from assessment feedback
         # Format is "COMPLETENESS: complete" and "STATUS: COMPLETE"

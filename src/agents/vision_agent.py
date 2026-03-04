@@ -7,6 +7,7 @@ language descriptions that can be used for HED annotation.
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage
 
+from src.utils import extract_text_content
 from src.utils.image_processing import prepare_image_for_vision_model
 
 DEFAULT_VISION_PROMPT = """Describe what you see in this image. Include the setting, main elements, colors, lighting, and overall composition. Be specific and detailed. Form the response as a continuous paragraph. Maximum 200 words."""
@@ -70,8 +71,7 @@ class VisionAgent:
 
         # Generate description
         response = await self.llm.ainvoke([message])
-        content = response.content
-        description = content.strip() if isinstance(content, str) else str(content)
+        description = extract_text_content(response.content)
 
         return {
             "description": description,
@@ -115,8 +115,7 @@ class VisionAgent:
 
         # Generate description
         response = self.llm.invoke([message])
-        content = response.content
-        description = content.strip() if isinstance(content, str) else str(content)
+        description = extract_text_content(response.content)
 
         return {
             "description": description,

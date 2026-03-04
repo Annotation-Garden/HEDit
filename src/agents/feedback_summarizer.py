@@ -10,6 +10,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from src.agents.state import HedAnnotationState
+from src.utils import extract_text_content
 
 logger = logging.getLogger(__name__)
 
@@ -121,8 +122,7 @@ Be direct and actionable."""
         except Exception as e:
             logger.error("Feedback summarization LLM invocation failed: %s", e, exc_info=True)
             raise
-        content = response.content
-        summarized_feedback = content.strip() if isinstance(content, str) else str(content)
+        summarized_feedback = extract_text_content(response.content)
 
         # Replace verbose feedback with summary (only augmented fields for LLM, not raw for users)
         return {
