@@ -4,6 +4,7 @@ This agent evaluates how faithfully a HED annotation captures
 the original natural language event description.
 """
 
+import logging
 import re
 from pathlib import Path
 
@@ -12,6 +13,8 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from src.agents.state import HedAnnotationState
 from src.utils.json_schema_loader import HedJsonSchemaLoader, load_latest_schema
+
+logger = logging.getLogger(__name__)
 
 
 class EvaluationAgent:
@@ -164,7 +167,11 @@ Provide a thorough evaluation following the specified format."""
             HumanMessage(content=user_prompt),
         ]
 
-        response = await self.llm.ainvoke(messages)
+        try:
+            response = await self.llm.ainvoke(messages)
+        except Exception as e:
+            logger.error("Evaluation LLM invocation failed: %s", e, exc_info=True)
+            raise
         content = response.content
         feedback = content.strip() if isinstance(content, str) else str(content)
 
@@ -206,6 +213,9 @@ Provide a thorough evaluation following the specified format."""
             return False
 
         # Default to accept if ambiguous -- avoid unnecessary refinement loops
+        logger.debug(
+            "Evaluation parsing: no explicit DECISION/FAITHFUL/refine indicator found; defaulting to ACCEPT"
+        )
         return True
 
     def _check_tags_and_suggest(self, annotation: str) -> str:

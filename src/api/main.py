@@ -18,6 +18,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from langchain_community.chat_models import ChatOllama
+from openai import APITimeoutError, RateLimitError
 
 from src import __version__
 from src.agents.vision_agent import VisionAgent
@@ -699,10 +700,21 @@ async def annotate(
             status=status,
         )
 
+    except APITimeoutError as e:
+        raise HTTPException(
+            status_code=504,
+            detail="LLM request timed out. Try again or use a faster model/provider.",
+        ) from e
+    except RateLimitError as e:
+        raise HTTPException(
+            status_code=429,
+            detail="LLM rate limit exceeded. Please wait and try again.",
+        ) from e
     except Exception as e:
+        logging.exception("Annotation workflow failed")
         raise HTTPException(
             status_code=500,
-            detail=f"Annotation workflow failed: {str(e)}",
+            detail="An error occurred during annotation processing.",
         ) from e
 
 
@@ -895,10 +907,21 @@ async def annotate_from_image(
             image_metadata=image_metadata,
         )
 
+    except APITimeoutError as e:
+        raise HTTPException(
+            status_code=504,
+            detail="LLM request timed out. Try again or use a faster model/provider.",
+        ) from e
+    except RateLimitError as e:
+        raise HTTPException(
+            status_code=429,
+            detail="LLM rate limit exceeded. Please wait and try again.",
+        ) from e
     except Exception as e:
+        logging.exception("Image annotation workflow failed")
         raise HTTPException(
             status_code=500,
-            detail=f"Image annotation workflow failed: {str(e)}",
+            detail="An error occurred during image annotation processing.",
         ) from e
 
 
@@ -1110,10 +1133,35 @@ async def annotate_stream(
 
         except asyncio.CancelledError:
             raise
+        except APITimeoutError:
+            logging.exception("Streaming workflow timeout")
+            yield send_event(
+                "error",
+                {
+                    "message": "LLM request timed out. Try again or use a faster model/provider.",
+                    "error_type": "timeout",
+                },
+            )
+            yield send_event("done", {"message": "Workflow ended with error"})
+        except RateLimitError:
+            logging.exception("Streaming workflow rate limit")
+            yield send_event(
+                "error",
+                {
+                    "message": "LLM rate limit exceeded. Please wait and try again.",
+                    "error_type": "rate_limit",
+                },
+            )
+            yield send_event("done", {"message": "Workflow ended with error"})
         except Exception:
-            # Log the actual error for debugging, but return a generic message
             logging.exception("Streaming workflow error")
-            yield send_event("error", {"message": "An error occurred during annotation processing"})
+            yield send_event(
+                "error",
+                {
+                    "message": "An error occurred during annotation processing.",
+                    "error_type": "internal",
+                },
+            )
             yield send_event("done", {"message": "Workflow ended with error"})
 
     return StreamingResponse(
@@ -1381,10 +1429,35 @@ async def annotate_from_image_stream(
 
         except asyncio.CancelledError:
             raise
+        except APITimeoutError:
+            logging.exception("Streaming image workflow timeout")
+            yield send_event(
+                "error",
+                {
+                    "message": "LLM request timed out. Try again or use a faster model/provider.",
+                    "error_type": "timeout",
+                },
+            )
+            yield send_event("done", {"message": "Workflow ended with error"})
+        except RateLimitError:
+            logging.exception("Streaming image workflow rate limit")
+            yield send_event(
+                "error",
+                {
+                    "message": "LLM rate limit exceeded. Please wait and try again.",
+                    "error_type": "rate_limit",
+                },
+            )
+            yield send_event("done", {"message": "Workflow ended with error"})
         except Exception:
-            # Log the actual error for debugging, but return a generic message
             logging.exception("Streaming image annotation workflow error")
-            yield send_event("error", {"message": "An error occurred during image annotation"})
+            yield send_event(
+                "error",
+                {
+                    "message": "An error occurred during image annotation processing.",
+                    "error_type": "internal",
+                },
+            )
             yield send_event("done", {"message": "Workflow ended with error"})
 
     return StreamingResponse(

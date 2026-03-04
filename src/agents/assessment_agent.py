@@ -4,12 +4,15 @@ This agent performs the final assessment to identify any still-missing
 elements or dimensions in the HED annotation.
 """
 
+import logging
 from pathlib import Path
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from src.agents.state import HedAnnotationState
+
+logger = logging.getLogger(__name__)
 
 
 class AssessmentAgent:
@@ -104,7 +107,11 @@ Provide brief assessment in the specified format."""
             HumanMessage(content=user_prompt),
         ]
 
-        response = await self.llm.ainvoke(messages)
+        try:
+            response = await self.llm.ainvoke(messages)
+        except Exception as e:
+            logger.error("Assessment LLM invocation failed: %s", e, exc_info=True)
+            raise
         content = response.content
         feedback = content.strip() if isinstance(content, str) else str(content)
 
