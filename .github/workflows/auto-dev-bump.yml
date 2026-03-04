@@ -1,0 +1,120 @@
+name: Auto Dev Bump on Develop
+
+on:
+  push:
+    branches:
+      - develop
+    paths-ignore:
+      - '.github/**'
+      - 'docs/**'
+      - '**/*.md'
+      - '.context/**'
+      - '.rules/**'
+      - '.serena/**'
+
+permissions:
+  contents: write
+
+jobs:
+  auto-dev-bump:
+    name: Auto Bump Dev Version
+    runs-on: ubuntu-latest
+    # Skip if commit message already contains a version bump (avoid loops)
+    if: >-
+      !contains(github.event.head_commit.message, 'Bump version to')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_PAT }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get current version
+        id: current
+        run: |
+          VERSION=$(grep -m1 'version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $VERSION"
+
+      - name: Calculate new dev version
+        id: new_version
+        run: |
+          VERSION="${{ steps.current.outputs.version }}"
+
+          # Parse version: expects format like 0.7.5.dev0 or 0.7.5
+          if [[ "$VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(\.dev([0-9]+))?$ ]]; then
+            BASE="${BASH_REMATCH[1]}"
+            DEV_NUM="${BASH_REMATCH[3]}"
+
+            if [ -z "$DEV_NUM" ]; then
+              # No dev suffix yet, start at dev0
+              NEW_VERSION="${BASE}.dev0"
+            else
+              # Increment dev number
+              NEW_DEV=$((DEV_NUM + 1))
+              NEW_VERSION="${BASE}.dev${NEW_DEV}"
+            fi
+          else
+            echo "Unexpected version format for develop: $VERSION (expected X.Y.Z or X.Y.Z.devN)"
+            exit 1
+          fi
+
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+
+      - name: Update version files
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+
+          # Parse version for __version_info__
+          MAJOR=$(echo "$NEW_VERSION" | cut -d. -f1)
+          MINOR=$(echo "$NEW_VERSION" | cut -d. -f2)
+          PATCH=$(echo "$NEW_VERSION" | cut -d. -f3)
+
+          # Update pyproject.toml
+          sed -i "s/^version = .*/version = \"$NEW_VERSION\"/" pyproject.toml
+
+          # Update src/version.py
+          cat > src/version.py << PYEOF
+          """Version information for HEDit."""
+
+          __version__ = "$NEW_VERSION"
+          __version_info__ = ($MAJOR, $MINOR, $PATCH, "dev")
+
+
+          def get_version() -> str:
+              """Get the current version string."""
+              return __version__
+
+
+          def get_version_info() -> tuple:
+              """Get the version info tuple (major, minor, patch, prerelease)."""
+              return __version_info__
+          PYEOF
+          # Fix indentation (remove leading spaces from heredoc)
+          sed -i 's/^          //' src/version.py
+
+      - name: Commit version bump
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+          git add pyproject.toml src/version.py
+          git commit -m "Bump version to $NEW_VERSION"
+          git push origin develop
+
+      - name: Create and push tag
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+          git tag "v$NEW_VERSION"
+          git push origin "v$NEW_VERSION"
+          echo "Created tag: v$NEW_VERSION"
