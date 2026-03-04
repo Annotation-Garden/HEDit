@@ -15,7 +15,7 @@ def test_create_initial_state():
     assert state["is_valid"] is False
     assert state["is_faithful"] is False
     assert state["is_complete"] is False
-    assert state["max_validation_attempts"] == 5
+    assert state["max_validation_attempts"] == 3
     assert state["schema_version"] == "8.4.0"
     assert state["no_extend"] is False
     assert state["tag_suggestions"] == {}

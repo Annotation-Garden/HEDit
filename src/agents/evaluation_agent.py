@@ -4,6 +4,7 @@ This agent evaluates how faithfully a HED annotation captures
 the original natural language event description.
 """
 
+import re
 from pathlib import Path
 
 from langchain_core.language_models import BaseChatModel
@@ -186,8 +187,6 @@ Provide a thorough evaluation following the specified format."""
         Returns:
             True if annotation should be accepted, False if needs refinement
         """
-        import re
-
         feedback_lower = feedback.lower()
 
         # Check for explicit DECISION line

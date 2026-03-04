@@ -101,7 +101,7 @@ class CachingLLMWrapper(BaseChatModel):
 
     model_config = {"arbitrary_types_allowed": True}
 
-    def __init__(self, llm: BaseChatModel, **kwargs) -> None:  # type: ignore[no-untyped-def]
+    def __init__(self, llm: BaseChatModel, **kwargs) -> None:
         super().__init__(llm=llm, **kwargs)  # type: ignore[call-arg]
 
     @property

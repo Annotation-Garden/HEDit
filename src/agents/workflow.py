@@ -105,7 +105,7 @@ class HedAnnotationWorkflow:
             Compiled StateGraph
         """
         # Create graph
-        workflow = StateGraph(HedAnnotationState)
+        workflow = StateGraph(HedAnnotationState)  # type: ignore[arg-type]  # LangGraph typing limitation
 
         # Add nodes
         if self.enable_semantic_search:
@@ -292,6 +292,7 @@ class HedAnnotationWorkflow:
         Returns:
             State update
         """
+        print("[WORKFLOW] Entering assess node")
         t0 = time.monotonic()
         result = await self.assessment_agent.assess(state)
         elapsed = time.monotonic() - t0
@@ -388,7 +389,7 @@ class HedAnnotationWorkflow:
         input_description: str,
         schema_version: str = "8.4.0",
         max_validation_attempts: int = 3,
-        max_total_iterations: int = 4,
+        max_total_iterations: int | None = None,
         run_assessment: bool = False,
         no_extend: bool = False,
         config: dict | None = None,
@@ -399,7 +400,7 @@ class HedAnnotationWorkflow:
             input_description: Natural language event description
             schema_version: HED schema version to use
             max_validation_attempts: Maximum validation retry attempts
-            max_total_iterations: Maximum total iterations to prevent infinite loops
+            max_total_iterations: Maximum total iterations (default: max_validation_attempts + 1)
             run_assessment: Whether to run final assessment (default: False)
             no_extend: If True, prohibit tag extensions (use only existing vocabulary)
             config: Optional LangGraph config (e.g., recursion_limit)
@@ -408,6 +409,9 @@ class HedAnnotationWorkflow:
             Final workflow state with annotation and feedback
         """
         from src.agents.state import create_initial_state
+
+        if max_total_iterations is None:
+            max_total_iterations = max_validation_attempts + 1
 
         # Create initial state
         initial_state = create_initial_state(
@@ -422,4 +426,4 @@ class HedAnnotationWorkflow:
         # Run workflow
         final_state = await self.graph.ainvoke(initial_state, config=config)  # type: ignore[attr-defined]
 
-        return final_state  # type: ignore[no-any-return]
+        return final_state

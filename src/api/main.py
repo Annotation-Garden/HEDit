@@ -283,7 +283,7 @@ async def lifespan(app: FastAPI):
     print("Initializing HEDit annotation workflow...")
 
     # Auto-detect environment (Docker vs local)
-    def get_default_path(docker_path: str, local_path: str) -> str:
+    def get_default_path(docker_path: str, local_path: str) -> str | None:
         """Get default path based on environment.
 
         Args:
@@ -473,7 +473,7 @@ if extra_origins := os.getenv("EXTRA_CORS_ORIGINS"):
 
 # Add CORS middleware
 app.add_middleware(
-    CORSMiddleware,
+    CORSMiddleware,  # type: ignore[arg-type]  # Starlette typing limitation
     allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -642,15 +642,11 @@ async def annotate(
     try:
         config = {"recursion_limit": 50}
 
-        # Derive total iteration cap from validation attempts (+1 for evaluation refinement)
-        max_total_iterations = request.max_validation_attempts + 1
-
         start_time = time.time()
         final_state = await active_workflow.run(
             input_description=request.description,
             schema_version=request.schema_version,
             max_validation_attempts=request.max_validation_attempts,
-            max_total_iterations=max_total_iterations,
             run_assessment=request.run_assessment,
             config=config,
         )
@@ -842,13 +838,11 @@ async def annotate_from_image(
 
         # Step 2: Pass description through HED annotation workflow
         config = {"recursion_limit": 50}
-        img_max_total_iters = request.max_validation_attempts + 1
 
         final_state = await active_workflow.run(
             input_description=image_description,
             schema_version=request.schema_version,
             max_validation_attempts=request.max_validation_attempts,
-            max_total_iterations=img_max_total_iters,
             run_assessment=request.run_assessment,
             config=config,
         )
@@ -996,14 +990,12 @@ async def annotate_stream(
             raise HTTPException(status_code=503, detail="Workflow not initialized")
         active_workflow = workflow
 
-    # Create initial state with iteration cap derived from validation attempts
-    max_total_iterations = request.max_validation_attempts + 1
+    # Create initial state (max_total_iterations derived from max_validation_attempts + 1)
     initial_state = create_initial_state(
         request.description,
         request.schema_version,
         request.max_validation_attempts,
-        max_total_iterations,
-        request.run_assessment,
+        run_assessment=request.run_assessment,
     )
 
     # Node name to user-friendly stage mapping
@@ -1037,7 +1029,7 @@ async def annotate_stream(
 
             # Use LangGraph's astream_events for real-time streaming
             config = {"recursion_limit": 50}
-            async for event in active_workflow.graph.astream_events(
+            async for event in active_workflow.graph.astream_events(  # type: ignore[union-attr]
                 initial_state, config=config, version="v2"
             ):
                 event_type = event.get("event")
@@ -1292,13 +1284,11 @@ async def annotate_from_image_stream(
             )
 
             # Step 2: Create initial state for annotation workflow
-            img_max_total_iterations = request.max_validation_attempts + 1
             initial_state = create_initial_state(
                 image_description,
                 request.schema_version,
                 request.max_validation_attempts,
-                img_max_total_iterations,
-                request.run_assessment,
+                run_assessment=request.run_assessment,
             )
 
             # Track state and progress
@@ -1308,7 +1298,7 @@ async def annotate_from_image_stream(
 
             # Use LangGraph's astream_events for real-time streaming
             config = {"recursion_limit": 50}
-            async for event in active_workflow.graph.astream_events(
+            async for event in active_workflow.graph.astream_events(  # type: ignore[union-attr]
                 initial_state, config=config, version="v2"
             ):
                 event_type = event.get("event")
