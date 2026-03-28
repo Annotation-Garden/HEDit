@@ -87,6 +87,7 @@ class APIExecutionBackend(ExecutionBackend):
         schema_version: str = "8.4.0",
         max_validation_attempts: int = 5,
         run_assessment: bool = False,
+        no_extend: bool = False,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """Generate HED annotation via API."""
@@ -96,6 +97,7 @@ class APIExecutionBackend(ExecutionBackend):
                 schema_version=schema_version,
                 max_validation_attempts=max_validation_attempts,
                 run_assessment=run_assessment,
+                no_extend=no_extend,
             )
         except APIError as e:
             raise ExecutionError(
@@ -110,6 +112,7 @@ class APIExecutionBackend(ExecutionBackend):
         schema_version: str = "8.4.0",
         max_validation_attempts: int = 5,
         run_assessment: bool = False,
+        no_extend: bool = False,
         **kwargs: Any,
     ) -> Generator[tuple[str, dict[str, Any]], None, None]:
         """Generate HED annotation with streaming progress via API.
@@ -122,6 +125,7 @@ class APIExecutionBackend(ExecutionBackend):
                 schema_version=schema_version,
                 max_validation_attempts=max_validation_attempts,
                 run_assessment=run_assessment,
+                no_extend=no_extend,
             )
         except APIError as e:
             raise ExecutionError(
@@ -137,6 +141,7 @@ class APIExecutionBackend(ExecutionBackend):
         schema_version: str = "8.4.0",
         max_validation_attempts: int = 5,
         run_assessment: bool = False,
+        no_extend: bool = False,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """Generate HED annotation from image via API."""
@@ -147,6 +152,7 @@ class APIExecutionBackend(ExecutionBackend):
                 schema_version=schema_version,
                 max_validation_attempts=max_validation_attempts,
                 run_assessment=run_assessment,
+                no_extend=no_extend,
             )
         except APIError as e:
             raise ExecutionError(
@@ -162,6 +168,7 @@ class APIExecutionBackend(ExecutionBackend):
         schema_version: str = "8.4.0",
         max_validation_attempts: int = 5,
         run_assessment: bool = False,
+        no_extend: bool = False,
         **kwargs: Any,
     ) -> Generator[tuple[str, dict[str, Any]], None, None]:
         """Generate HED annotation from image with streaming progress via API.
@@ -175,6 +182,7 @@ class APIExecutionBackend(ExecutionBackend):
                 schema_version=schema_version,
                 max_validation_attempts=max_validation_attempts,
                 run_assessment=run_assessment,
+                no_extend=no_extend,
             )
         except APIError as e:
             raise ExecutionError(

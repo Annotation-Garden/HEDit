@@ -154,6 +154,7 @@ class HEDitClient:
         schema_version: str = "8.4.0",
         max_validation_attempts: int = 5,
         run_assessment: bool = False,
+        no_extend: bool = False,
     ) -> dict[str, Any]:
         """Generate HED annotation from text description.
 
@@ -162,6 +163,7 @@ class HEDitClient:
             schema_version: HED schema version
             max_validation_attempts: Maximum validation retries
             run_assessment: Whether to run assessment
+            no_extend: If True, prohibit tag extensions
 
         Returns:
             Annotation response dictionary
@@ -175,6 +177,7 @@ class HEDitClient:
                     "schema_version": schema_version,
                     "max_validation_attempts": max_validation_attempts,
                     "run_assessment": run_assessment,
+                    "no_extend": no_extend,
                 },
             )
             return self._handle_response(response)
@@ -185,6 +188,7 @@ class HEDitClient:
         schema_version: str = "8.4.0",
         max_validation_attempts: int = 5,
         run_assessment: bool = False,
+        no_extend: bool = False,
     ) -> Generator[tuple[str, dict[str, Any]], None, None]:
         """Generate HED annotation with streaming progress.
 
@@ -195,6 +199,7 @@ class HEDitClient:
             schema_version: HED schema version
             max_validation_attempts: Maximum validation retries
             run_assessment: Whether to run assessment
+            no_extend: If True, prohibit tag extensions
 
         Yields:
             Tuple of (event_type, event_data) for each SSE event.
@@ -210,6 +215,7 @@ class HEDitClient:
                     "schema_version": schema_version,
                     "max_validation_attempts": max_validation_attempts,
                     "run_assessment": run_assessment,
+                    "no_extend": no_extend,
                 },
             ) as response:
                 if response.status_code != 200:
@@ -238,6 +244,7 @@ class HEDitClient:
         schema_version: str = "8.4.0",
         max_validation_attempts: int = 5,
         run_assessment: bool = False,
+        no_extend: bool = False,
     ) -> dict[str, Any]:
         """Generate HED annotation from image.
 
@@ -247,6 +254,7 @@ class HEDitClient:
             schema_version: HED schema version
             max_validation_attempts: Maximum validation retries
             run_assessment: Whether to run assessment
+            no_extend: If True, prohibit tag extensions
 
         Returns:
             Annotation response dictionary
@@ -263,6 +271,7 @@ class HEDitClient:
                     "schema_version": schema_version,
                     "max_validation_attempts": max_validation_attempts,
                     "run_assessment": run_assessment,
+                    "no_extend": no_extend,
                 },
             )
             return self._handle_response(response)
@@ -274,6 +283,7 @@ class HEDitClient:
         schema_version: str = "8.4.0",
         max_validation_attempts: int = 5,
         run_assessment: bool = False,
+        no_extend: bool = False,
     ) -> Generator[tuple[str, dict[str, Any]], None, None]:
         """Generate HED annotation from image with streaming progress.
 
@@ -285,6 +295,7 @@ class HEDitClient:
             schema_version: HED schema version
             max_validation_attempts: Maximum validation retries
             run_assessment: Whether to run assessment
+            no_extend: If True, prohibit tag extensions
 
         Yields:
             Tuple of (event_type, event_data) for each SSE event.
@@ -303,6 +314,7 @@ class HEDitClient:
                     "schema_version": schema_version,
                     "max_validation_attempts": max_validation_attempts,
                     "run_assessment": run_assessment,
+                    "no_extend": no_extend,
                 },
             ) as response:
                 if response.status_code != 200:

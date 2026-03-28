@@ -649,6 +649,7 @@ async def annotate(
             schema_version=request.schema_version,
             max_validation_attempts=request.max_validation_attempts,
             run_assessment=request.run_assessment,
+            no_extend=request.no_extend,
             config=config,
         )
         latency_ms = int((time.time() - start_time) * 1000)
@@ -856,6 +857,7 @@ async def annotate_from_image(
             schema_version=request.schema_version,
             max_validation_attempts=request.max_validation_attempts,
             run_assessment=request.run_assessment,
+            no_extend=request.no_extend,
             config=config,
         )
         latency_ms = int((time.time() - start_time) * 1000)
@@ -1019,6 +1021,7 @@ async def annotate_stream(
         request.schema_version,
         request.max_validation_attempts,
         run_assessment=request.run_assessment,
+        no_extend=request.no_extend,
     )
 
     # Node name to user-friendly stage mapping
@@ -1337,6 +1340,7 @@ async def annotate_from_image_stream(
                 request.schema_version,
                 request.max_validation_attempts,
                 run_assessment=request.run_assessment,
+                no_extend=request.no_extend,
             )
 
             # Track state and progress
