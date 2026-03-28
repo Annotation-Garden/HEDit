@@ -4,6 +4,7 @@ This module defines the multi-agent workflow that orchestrates
 annotation, validation, evaluation, and assessment.
 """
 
+import asyncio
 import logging
 import time
 from pathlib import Path
@@ -239,28 +240,32 @@ class HedAnnotationWorkflow:
         semantic_hints: list[dict] = []
 
         if keywords and self.hed_lsp_client:
-            try:
-                # Query hed-lsp for each keyword individually for better results
-                for keyword in keywords:
-                    result = self.hed_lsp_client.suggest(keyword)
-                    if result.success:
-                        for s in result.suggestions:
-                            semantic_hints.append(
-                                {
-                                    "tag": s.tag,
-                                    "keyword": keyword,
-                                    "score": s.score or 0.0,
-                                    "source": "hed-lsp",
-                                }
-                            )
-                    else:
-                        logger.debug(
-                            "[WORKFLOW] hed-lsp suggestion failed for '%s': %s",
-                            keyword,
-                            result.error,
+            # Query hed-lsp for each keyword individually for better results
+            for keyword in keywords:
+                try:
+                    result = await asyncio.to_thread(self.hed_lsp_client.suggest, keyword)
+                except Exception as e:
+                    logger.warning("[WORKFLOW] hed-lsp error for '%s': %s", keyword, e)
+                    continue
+                if result.success:
+                    for s in result.suggestions:
+                        semantic_hints.append(
+                            {
+                                "tag": s.tag,
+                                "keyword": keyword,
+                                "score": s.score or 0.0,
+                                "source": "hed-lsp",
+                            }
                         )
+                else:
+                    logger.debug(
+                        "[WORKFLOW] hed-lsp suggestion failed for '%s': %s",
+                        keyword,
+                        result.error,
+                    )
 
-                # Deduplicate by tag, keeping highest score
+            # Deduplicate by tag, keeping highest score
+            if semantic_hints:
                 seen_tags: dict[str, dict] = {}
                 for hint in semantic_hints:
                     tag = hint["tag"]
@@ -268,13 +273,11 @@ class HedAnnotationWorkflow:
                         seen_tags[tag] = hint
                 semantic_hints = sorted(seen_tags.values(), key=lambda h: h["score"], reverse=True)
 
-                logger.info(
-                    "[WORKFLOW] hed-lsp suggested %d unique tags from %d keywords",
-                    len(semantic_hints),
-                    len(keywords),
-                )
-            except Exception as e:
-                logger.warning("[WORKFLOW] hed-lsp error: %s", e, exc_info=True)
+            logger.info(
+                "[WORKFLOW] hed-lsp suggested %d unique tags from %d keywords",
+                len(semantic_hints),
+                len(keywords),
+            )
         elif keywords:
             # LSP not available; still store keywords for the annotation agent
             logger.info(
