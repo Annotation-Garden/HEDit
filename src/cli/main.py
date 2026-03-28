@@ -495,6 +495,7 @@ def annotate(
                     schema_version=schema_version or config.settings.schema_version,
                     max_validation_attempts=max_attempts,
                     run_assessment=assessment,
+                    no_extend=no_extend,
                 ):
                     output.update_streaming_status(status, event_type, data)
                     if event_type == "result":
@@ -656,6 +657,7 @@ def annotate_image(
                     schema_version=schema_version or config.settings.schema_version,
                     max_validation_attempts=max_attempts,
                     run_assessment=assessment,
+                    no_extend=no_extend,
                 ):
                     output.update_streaming_status(status, event_type, data)
                     if event_type == "result":
