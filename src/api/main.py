@@ -957,11 +957,16 @@ async def _collect_stream_telemetry(
         or req.headers.get("x-openrouter-model")
         or os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b")
     )
-    temperature = (
-        request.temperature
-        or float(req.headers.get("x-openrouter-temperature", 0))
-        or _byok_config.get("temperature", 0.1)
-    )
+    temperature = request.temperature
+    if temperature is None:
+        temp_header = req.headers.get("x-openrouter-temperature")
+        if temp_header is not None:
+            try:
+                temperature = float(temp_header)
+            except ValueError:
+                temperature = None
+    if temperature is None:
+        temperature = _byok_config.get("temperature", 0.1)
 
     event = TelemetryEvent.create(
         description=description,
