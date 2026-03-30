@@ -10,8 +10,8 @@ assembles them into the full system prompt.
 """
 
 
-def _format_semantic_hints(hints: list[dict]) -> str:
-    """Format semantic hints for inclusion in the guide.
+def format_semantic_hints(hints: list[dict]) -> str:
+    """Format semantic hints for inclusion in the user prompt.
 
     Args:
         hints: List of semantic search results, each with:
@@ -21,7 +21,7 @@ def _format_semantic_hints(hints: list[dict]) -> str:
               - prefix: Optional library prefix (e.g., "sc:")
 
     Returns:
-        Formatted hints section for the guide
+        Formatted hints section for the user prompt
     """
     if not hints:
         return ""
@@ -33,6 +33,8 @@ def _format_semantic_hints(hints: list[dict]) -> str:
 
     for hint in hints:
         tag = hint.get("tag", "")
+        if not tag:
+            continue
         prefix = hint.get("prefix", "")
         score = hint.get("score", 0)
         full_tag = f"{prefix}{tag}" if prefix else tag
@@ -45,7 +47,7 @@ def _format_semantic_hints(hints: list[dict]) -> str:
             low_conf.append(full_tag)
 
     lines = [
-        "## POTENTIALLY RELEVANT TAGS",
+        "## SEMANTIC HINTS",
         "",
         "Based on your description, these schema tags may be relevant.",
         "Note: this list may contain false positives - use your judgment.",
@@ -974,7 +976,6 @@ Just output the raw HED annotation string directly.
 def get_comprehensive_hed_guide(
     vocabulary_sample: list[str],
     extendable_tags: list[str],
-    semantic_hints: list[dict] | None = None,
     no_extend: bool = False,
 ) -> str:
     """Generate comprehensive HED annotation guide.
@@ -983,11 +984,13 @@ def get_comprehensive_hed_guide(
     annotation agent. The guide includes vocabulary constraints, semantic
     rules, correction workflows, and output format instructions.
 
+    Note: Semantic hints are NOT included here to keep the system prompt
+    static across requests, enabling prompt caching. Hints are passed
+    in the user prompt instead.
+
     Args:
         vocabulary_sample: Full list of valid HED tags (complete vocabulary)
         extendable_tags: Tags that allow extension
-        semantic_hints: Optional list of semantically relevant tags from search
-                       Each dict has: tag, score, source, prefix (optional)
         no_extend: If True, add strict instructions to prohibit tag extensions
 
     Returns:
@@ -997,16 +1000,23 @@ def get_comprehensive_hed_guide(
     extend_str = ", ".join(extendable_tags) if not no_extend else "(Extensions disabled)"
 
     # Format optional sections
-    hints_section = _format_semantic_hints(semantic_hints) if semantic_hints else ""
     no_extend_warning = _build_no_extend_warning() if no_extend else ""
 
     # Assemble guide from modular sections
+    # Note: semantic hints are placed in the user prompt for cache efficiency
     sections = [
         "# HED ANNOTATION GUIDE\n",
         no_extend_warning,
         _build_vocabulary_check_section(),
         _build_correction_workflow_section(),
-        hints_section,
+        (
+            "## SEMANTIC HINTS\n\n"
+            "The user message may include a SEMANTIC HINTS section with "
+            "potentially relevant tags from schema search. If present, use "
+            "these as guidance for tag selection, but verify each against "
+            "the vocabulary. If no hints section is present, proceed without them.\n\n"
+            "---\n\n"
+        ),
         _build_semantic_rules_section(),
         _build_relation_tags_section(),
         _build_event_agent_section(),
