@@ -45,38 +45,24 @@ class TestComprehensiveGuide:
         # Should show extensions as disabled
         assert "(Extensions disabled)" in guide
 
-    def test_guide_with_semantic_hints(self):
-        """Test guide generation with semantic hints."""
+    def test_guide_has_semantic_hints_pointer(self):
+        """Test guide includes a pointer to check user message for semantic hints."""
         vocabulary = ["Event", "Reward", "Animal-agent"]
         extendable_tags = ["Label"]
-        semantic_hints = [
-            {"tag": "Reward", "prefix": "", "score": 0.95, "source": "keyword"},
-            {"tag": "Animal-agent", "prefix": "", "score": 0.85, "source": "embedding"},
-        ]
 
-        guide = get_comprehensive_hed_guide(
-            vocabulary, extendable_tags, semantic_hints=semantic_hints
-        )
+        guide = get_comprehensive_hed_guide(vocabulary, extendable_tags)
 
-        assert "POTENTIALLY RELEVANT TAGS" in guide
-        assert "Reward" in guide
-        assert "Animal-agent" in guide
-        # Check confidence indicators
-        assert "high" in guide.lower() or "0.95" in guide
+        # System prompt should point to user message for hints (not contain them)
+        assert "SEMANTIC HINTS" in guide
+        assert "user message" in guide.lower()
 
-    def test_guide_with_semantic_hints_and_no_extend(self):
-        """Test guide with both semantic hints and no_extend."""
+    def test_guide_no_extend_with_hints_pointer(self):
+        """Test guide with no_extend has both hints pointer and extension warning."""
         vocabulary = ["Event", "Visual-presentation"]
         extendable_tags = ["Label"]
-        semantic_hints = [
-            {"tag": "Visual-presentation", "prefix": "", "score": 0.9, "source": "keyword"},
-        ]
 
-        guide = get_comprehensive_hed_guide(
-            vocabulary, extendable_tags, semantic_hints=semantic_hints, no_extend=True
-        )
+        guide = get_comprehensive_hed_guide(vocabulary, extendable_tags, no_extend=True)
 
-        # Should have both features
-        assert "POTENTIALLY RELEVANT TAGS" in guide
+        assert "SEMANTIC HINTS" in guide
         assert "EXTENSIONS STRICTLY PROHIBITED" in guide
         assert "(Extensions disabled)" in guide

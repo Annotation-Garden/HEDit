@@ -12,7 +12,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from src.agents.state import HedAnnotationState
 from src.utils import extract_text_content
-from src.utils.hed_comprehensive_guide import get_comprehensive_hed_guide
+from src.utils.hed_comprehensive_guide import format_semantic_hints, get_comprehensive_hed_guide
 from src.utils.json_schema_loader import HedJsonSchemaLoader, load_latest_schema
 
 logger = logging.getLogger(__name__)
@@ -60,21 +60,23 @@ class AnnotationAgent:
         self,
         vocabulary: list[str],
         extendable_tags: list[str],
-        semantic_hints: list[dict] | None = None,
         no_extend: bool = False,
     ) -> str:
         """Build the system prompt for the annotation agent.
 
+        The system prompt is static per schema version (vocabulary + rules)
+        to enable prompt caching across requests. Semantic hints are placed
+        in the user prompt instead.
+
         Args:
             vocabulary: List of valid short-form HED tags
             extendable_tags: Tags that allow extension
-            semantic_hints: Optional semantic search results with relevant tags
             no_extend: If True, prohibit tag extensions
 
         Returns:
             Complete system prompt with all HED rules
         """
-        return get_comprehensive_hed_guide(vocabulary, extendable_tags, semantic_hints, no_extend)
+        return get_comprehensive_hed_guide(vocabulary, extendable_tags, no_extend)
 
     def _format_tag_suggestions(self, tag_suggestions: dict[str, list[str]]) -> str:
         """Format tag suggestions into a clear instruction block.
@@ -98,24 +100,46 @@ class AnnotationAgent:
                 )
         return "\n".join(lines)
 
+    def _format_semantic_hints(self, semantic_hints: list[dict] | None) -> str:
+        """Format semantic hints for inclusion in the user prompt.
+
+        Args:
+            semantic_hints: List of hint dicts with tag, score, source keys
+
+        Returns:
+            Formatted hints section, or empty string if no hints
+        """
+        if not semantic_hints:
+            return ""
+
+        logger.debug("Including %d semantic hints in user prompt", len(semantic_hints))
+        return "\n" + format_semantic_hints(semantic_hints)
+
     def _build_user_prompt(
         self,
         description: str,
         validation_errors: list[str] | None = None,
         tag_suggestions: dict[str, list[str]] | None = None,
         previous_annotation: str | None = None,
+        semantic_hints: list[dict] | None = None,
     ) -> str:
         """Build the user prompt for annotation.
+
+        Semantic hints are included here (not in system prompt) so the
+        system prompt stays static and cacheable across requests.
 
         Args:
             description: Natural language event description
             validation_errors: Previous validation errors (if retrying)
             tag_suggestions: LSP-suggested valid tags for invalid tags
             previous_annotation: The previous annotation attempt (for targeted correction)
+            semantic_hints: Optional semantic search hints for relevant tags
 
         Returns:
             User prompt string
         """
+        hints_str = self._format_semantic_hints(semantic_hints)
+
         if validation_errors:
             errors_str = "\n".join(f"- {error}" for error in validation_errors)
             suggestions_str = self._format_tag_suggestions(tag_suggestions or {})
@@ -133,12 +157,12 @@ class AnnotationAgent:
 
 Fix these errors and generate a corrected HED annotation for:
 {description}
-
+{hints_str}
 {replacement_note}CRITICAL: Output ONLY the raw HED annotation string."""
 
         return f"""Generate a HED annotation for this event description:
 {description}
-
+{hints_str}
 CRITICAL: Output ONLY the raw HED annotation string."""
 
     async def annotate(self, state: HedAnnotationState) -> dict:
@@ -170,17 +194,16 @@ CRITICAL: Output ONLY the raw HED annotation string."""
             # Use empty list - LLM will still generate valid annotations
             extendable_tags = []
 
-        # Build prompts with complete HED rules (including semantic hints if available)
-        semantic_hints = state.get("semantic_hints", [])
+        # Build system prompt with HED rules (static per schema version for caching)
         no_extend = state.get("no_extend", False)
         system_prompt = self._build_system_prompt(
             vocabulary,
             extendable_tags,
-            semantic_hints if semantic_hints else None,
             no_extend,
         )
 
-        # Build user prompt with any feedback (use augmented errors with remediation for LLM)
+        # Build user prompt with feedback and semantic hints
+        semantic_hints = state.get("semantic_hints", [])
         feedbacks = []
         if state.get("validation_errors_augmented"):
             feedbacks.extend(state["validation_errors_augmented"])
@@ -200,6 +223,7 @@ CRITICAL: Output ONLY the raw HED annotation string."""
             feedbacks or None,
             tag_suggestions or None,
             previous_annotation,
+            semantic_hints if semantic_hints else None,
         )
 
         # Generate annotation
