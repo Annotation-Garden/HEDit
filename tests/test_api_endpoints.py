@@ -8,6 +8,7 @@ App is imported inside the fixture to avoid polluting global state.
 
 import importlib
 import os
+import time
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -841,3 +842,433 @@ class TestTelemetryCollectorIntegration:
 
         assert event.source == "api-image"
         assert event.model.provider == "deepinfra/fp8"
+
+    def test_telemetry_event_stream_source(self):
+        """Test creating a telemetry event with api-stream source."""
+        from src.telemetry import TelemetryEvent
+
+        event = TelemetryEvent.create(
+            description="Streaming annotation request",
+            schema_version="8.4.0",
+            hed_string="Sensory-event, Visual-presentation",
+            iterations=2,
+            validation_errors=[],
+            model="anthropic/claude-haiku-4.5",
+            provider="anthropic",
+            temperature=0.1,
+            latency_ms=2000,
+            source="api-stream",
+        )
+
+        assert event.source == "api-stream"
+        assert event.input.description == "Streaming annotation request"
+        assert event.performance.latency_ms == 2000
+
+    def test_telemetry_event_image_stream_source(self):
+        """Test creating a telemetry event with api-image-stream source."""
+        from src.telemetry import TelemetryEvent
+
+        event = TelemetryEvent.create(
+            description="Image description from vision model",
+            schema_version="8.4.0",
+            hed_string="Visual-presentation",
+            iterations=1,
+            validation_errors=[],
+            model="openai/gpt-4o",
+            provider="deepinfra/fp8",
+            temperature=0.3,
+            latency_ms=4000,
+            source="api-image-stream",
+        )
+
+        assert event.source == "api-image-stream"
+        assert event.input.description == "Image description from vision model"
+
+
+class TestStreamingTelemetry:
+    """Tests for telemetry collection in streaming endpoints."""
+
+    @pytest.fixture
+    def client_with_telemetry(self):
+        """Create a test client with mocked workflow and telemetry collector."""
+        original_env = {}
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+            if key in os.environ:
+                original_env[key] = os.environ[key]
+
+        os.environ["REQUIRE_API_AUTH"] = "true"
+        os.environ["API_KEYS"] = "test-api-key-for-unit-tests"
+        os.environ["OPENROUTER_API_KEY"] = "test-openrouter-key"
+
+        from src.api import security
+
+        importlib.reload(security)
+
+        # Create mock workflow
+        mock_workflow = MagicMock()
+        mock_graph = MagicMock()
+
+        async def mock_stream_events(*args, **kwargs):
+            yield {"event": "on_chain_start", "name": "annotate", "data": {}}
+            yield {
+                "event": "on_chain_end",
+                "name": "annotate",
+                "data": {
+                    "output": {
+                        "current_annotation": "Sensory-event, Visual-presentation",
+                        "validation_attempts": 1,
+                    }
+                },
+            }
+            yield {"event": "on_chain_start", "name": "validate", "data": {}}
+            yield {
+                "event": "on_chain_end",
+                "name": "validate",
+                "data": {"output": {"is_valid": True, "validation_errors": []}},
+            }
+            yield {"event": "on_chain_start", "name": "evaluate", "data": {}}
+            yield {
+                "event": "on_chain_end",
+                "name": "evaluate",
+                "data": {"output": {"is_faithful": True, "is_complete": True}},
+            }
+
+        mock_graph.astream_events = mock_stream_events
+        mock_workflow.graph = mock_graph
+
+        # Create mock telemetry collector with a list to track collected events
+        mock_collector = MagicMock()
+        collected_events = []
+
+        async def track_collect(event):
+            collected_events.append(event)
+            return True
+
+        mock_collector.collect = track_collect
+
+        with (
+            patch("src.api.main.workflow", mock_workflow),
+            patch("src.api.main.telemetry_collector", mock_collector),
+        ):
+            from src.api.main import app
+
+            client = TestClient(app, raise_server_exceptions=False)
+            yield client, collected_events
+
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+            if key in original_env:
+                os.environ[key] = original_env[key]
+            elif key in os.environ:
+                del os.environ[key]
+
+        importlib.reload(security)
+
+    @pytest.fixture
+    def client_with_telemetry_disabled(self):
+        """Create a test client with mocked workflow but no telemetry collector."""
+        original_env = {}
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+            if key in os.environ:
+                original_env[key] = os.environ[key]
+
+        os.environ["REQUIRE_API_AUTH"] = "true"
+        os.environ["API_KEYS"] = "test-api-key-for-unit-tests"
+        os.environ["OPENROUTER_API_KEY"] = "test-openrouter-key"
+
+        from src.api import security
+
+        importlib.reload(security)
+
+        mock_workflow = MagicMock()
+        mock_graph = MagicMock()
+
+        async def mock_stream_events(*args, **kwargs):
+            yield {"event": "on_chain_start", "name": "annotate", "data": {}}
+            yield {
+                "event": "on_chain_end",
+                "name": "annotate",
+                "data": {
+                    "output": {
+                        "current_annotation": "Sensory-event",
+                        "validation_attempts": 1,
+                    }
+                },
+            }
+            yield {"event": "on_chain_start", "name": "validate", "data": {}}
+            yield {
+                "event": "on_chain_end",
+                "name": "validate",
+                "data": {"output": {"is_valid": True, "validation_errors": []}},
+            }
+
+        mock_graph.astream_events = mock_stream_events
+        mock_workflow.graph = mock_graph
+
+        # Track if collect was called
+        collected_events = []
+
+        async def track_collect(event):
+            collected_events.append(event)
+            return True
+
+        mock_collector = MagicMock()
+        mock_collector.collect = track_collect
+
+        with (
+            patch("src.api.main.workflow", mock_workflow),
+            patch("src.api.main.telemetry_collector", mock_collector),
+        ):
+            from src.api.main import app
+
+            client = TestClient(app, raise_server_exceptions=False)
+            yield client, collected_events
+
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+            if key in original_env:
+                os.environ[key] = original_env[key]
+            elif key in os.environ:
+                del os.environ[key]
+
+        importlib.reload(security)
+
+    @pytest.fixture
+    def client_with_failing_workflow(self):
+        """Create a test client with a workflow that raises an error."""
+        original_env = {}
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+            if key in os.environ:
+                original_env[key] = os.environ[key]
+
+        os.environ["REQUIRE_API_AUTH"] = "true"
+        os.environ["API_KEYS"] = "test-api-key-for-unit-tests"
+        os.environ["OPENROUTER_API_KEY"] = "test-openrouter-key"
+
+        from src.api import security
+
+        importlib.reload(security)
+
+        mock_workflow = MagicMock()
+        mock_graph = MagicMock()
+
+        async def mock_stream_events_error(*args, **kwargs):
+            yield {"event": "on_chain_start", "name": "annotate", "data": {}}
+            yield {
+                "event": "on_chain_end",
+                "name": "annotate",
+                "data": {
+                    "output": {
+                        "current_annotation": "Partial-annotation",
+                        "validation_attempts": 0,
+                    }
+                },
+            }
+            raise RuntimeError("Simulated workflow failure")
+
+        mock_graph.astream_events = mock_stream_events_error
+        mock_workflow.graph = mock_graph
+
+        collected_events = []
+
+        async def track_collect(event):
+            collected_events.append(event)
+            return True
+
+        mock_collector = MagicMock()
+        mock_collector.collect = track_collect
+
+        with (
+            patch("src.api.main.workflow", mock_workflow),
+            patch("src.api.main.telemetry_collector", mock_collector),
+        ):
+            from src.api.main import app
+
+            client = TestClient(app, raise_server_exceptions=False)
+            yield client, collected_events
+
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+            if key in original_env:
+                os.environ[key] = original_env[key]
+            elif key in os.environ:
+                del os.environ[key]
+
+        importlib.reload(security)
+
+    def test_stream_telemetry_collected_on_success(self, client_with_telemetry):
+        """Test that telemetry is collected for successful streaming requests."""
+        client, collected_events = client_with_telemetry
+        request_data = {
+            "description": "A red circle appears on screen",
+            "schema_version": "8.3.0",
+            "telemetry_enabled": True,
+        }
+        response = client.post("/annotate/stream", json=request_data, headers=TEST_AUTH_HEADERS)
+        assert response.status_code == 200
+        assert len(collected_events) == 1
+
+        event = collected_events[0]
+        assert event.source == "api-stream"
+        assert event.input.description == "A red circle appears on screen"
+        assert event.input.schema_version == "8.3.0"
+        assert event.performance.latency_ms >= 0
+
+    def test_stream_telemetry_not_collected_when_disabled(self, client_with_telemetry_disabled):
+        """Test that telemetry is not collected when telemetry_enabled=False."""
+        client, collected_events = client_with_telemetry_disabled
+        request_data = {
+            "description": "A red circle appears on screen",
+            "schema_version": "8.3.0",
+            "telemetry_enabled": False,
+        }
+        response = client.post("/annotate/stream", json=request_data, headers=TEST_AUTH_HEADERS)
+        assert response.status_code == 200
+        assert len(collected_events) == 0
+
+    def test_stream_telemetry_collected_on_workflow_error(self, client_with_failing_workflow):
+        """Test that telemetry is collected even when workflow fails."""
+        client, collected_events = client_with_failing_workflow
+        request_data = {
+            "description": "A red circle appears on screen",
+            "schema_version": "8.3.0",
+            "telemetry_enabled": True,
+        }
+        response = client.post("/annotate/stream", json=request_data, headers=TEST_AUTH_HEADERS)
+        assert response.status_code == 200
+        # Telemetry should still be collected on error
+        assert len(collected_events) == 1
+
+        event = collected_events[0]
+        assert event.source == "api-stream"
+        # Partial state should be captured
+        assert event.output.hed_string == "Partial-annotation"
+
+    def test_stream_telemetry_has_correct_model_info(self, client_with_telemetry):
+        """Test that telemetry captures model info from headers."""
+        client, collected_events = client_with_telemetry
+        request_data = {
+            "description": "A blue square flashes",
+            "schema_version": "8.4.0",
+            "telemetry_enabled": True,
+            "model": "anthropic/claude-haiku-4.5",
+            "provider": "anthropic",
+            "temperature": 0.3,
+        }
+        response = client.post("/annotate/stream", json=request_data, headers=TEST_AUTH_HEADERS)
+        assert response.status_code == 200
+        assert len(collected_events) == 1
+
+        event = collected_events[0]
+        assert event.model.model == "anthropic/claude-haiku-4.5"
+        assert event.model.provider == "anthropic"
+        assert event.model.temperature == 0.3
+
+    def test_stream_telemetry_result_still_sent(self, client_with_telemetry):
+        """Test that result and done events are still sent with telemetry."""
+        client, collected_events = client_with_telemetry
+        request_data = {
+            "description": "Test event",
+            "schema_version": "8.3.0",
+            "telemetry_enabled": True,
+        }
+        response = client.post("/annotate/stream", json=request_data, headers=TEST_AUTH_HEADERS)
+        assert response.status_code == 200
+        content = response.text
+        # Result and done events should still be present
+        assert "event: result" in content
+        assert "event: done" in content
+
+
+class TestCollectStreamTelemetryHelper:
+    """Tests for the _collect_stream_telemetry helper function."""
+
+    def test_helper_function_exists(self):
+        """Test that _collect_stream_telemetry is importable."""
+        from src.api.main import _collect_stream_telemetry
+
+        assert callable(_collect_stream_telemetry)
+
+    @pytest.mark.asyncio
+    async def test_helper_skips_when_telemetry_disabled(self):
+        """Test helper returns without collecting when telemetry is disabled."""
+        from src.api.main import _collect_stream_telemetry
+        from src.api.models import AnnotationRequest
+
+        request = AnnotationRequest(description="Test", telemetry_enabled=False)
+        mock_req = MagicMock()
+
+        # Should not raise even with no collector
+        with patch("src.api.main.telemetry_collector", None):
+            await _collect_stream_telemetry(
+                request=request,
+                req=mock_req,
+                current_state={},
+                start_time=time.time(),
+                source="api-stream",
+                description="Test",
+            )
+
+    @pytest.mark.asyncio
+    async def test_helper_skips_when_collector_is_none(self):
+        """Test helper returns without collecting when collector is None."""
+        from src.api.main import _collect_stream_telemetry
+        from src.api.models import AnnotationRequest
+
+        request = AnnotationRequest(description="Test", telemetry_enabled=True)
+        mock_req = MagicMock()
+
+        with patch("src.api.main.telemetry_collector", None):
+            await _collect_stream_telemetry(
+                request=request,
+                req=mock_req,
+                current_state={},
+                start_time=time.time(),
+                source="api-stream",
+                description="Test",
+            )
+
+    @pytest.mark.asyncio
+    async def test_helper_collects_when_enabled(self):
+        """Test helper collects telemetry when enabled with collector."""
+        from src.api.main import _collect_stream_telemetry
+        from src.api.models import AnnotationRequest
+
+        request = AnnotationRequest(
+            description="Test event description",
+            schema_version="8.4.0",
+            telemetry_enabled=True,
+            model="test/model",
+            temperature=0.2,
+        )
+
+        mock_req = MagicMock()
+        mock_req.headers = {}
+
+        collected = []
+
+        async def mock_collect(event):
+            collected.append(event)
+            return True
+
+        mock_collector = MagicMock()
+        mock_collector.collect = mock_collect
+
+        with patch("src.api.main.telemetry_collector", mock_collector):
+            await _collect_stream_telemetry(
+                request=request,
+                req=mock_req,
+                current_state={
+                    "current_annotation": "Sensory-event",
+                    "validation_attempts": 2,
+                    "validation_errors": [],
+                },
+                start_time=time.time() - 1.5,
+                source="api-stream",
+                description="Test event description",
+            )
+
+        assert len(collected) == 1
+        event = collected[0]
+        assert event.source == "api-stream"
+        assert event.input.description == "Test event description"
+        assert event.output.hed_string == "Sensory-event"
+        assert event.output.iterations == 2
+        assert event.performance.latency_ms >= 1400  # ~1.5 seconds

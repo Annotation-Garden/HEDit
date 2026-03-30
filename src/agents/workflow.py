@@ -4,11 +4,13 @@ This module defines the multi-agent workflow that orchestrates
 annotation, validation, evaluation, and assessment.
 """
 
+import asyncio
 import logging
 import time
 from pathlib import Path
 
 from langchain_core.language_models import BaseChatModel
+from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import END, StateGraph
 
 from src.agents.annotation_agent import AnnotationAgent
@@ -17,6 +19,7 @@ from src.agents.evaluation_agent import EvaluationAgent
 from src.agents.feedback_summarizer import FeedbackSummarizer
 from src.agents.state import HedAnnotationState
 from src.agents.validation_agent import ValidationAgent
+from src.utils import extract_text_content
 from src.utils.schema_loader import HedSchemaLoader
 from src.validation.hed_lsp import HedLspClient, is_hed_lsp_available
 
@@ -63,8 +66,8 @@ class HedAnnotationWorkflow:
         """
         # Store schema directory (None means use HED library to fetch from GitHub)
         self.schema_dir = schema_dir
-        # Enable semantic search only if hed-lsp CLI is available
-        self.enable_semantic_search = enable_semantic_search and is_hed_lsp_available()
+        # Keyword extraction always runs; LSP enrichment requires hed-lsp CLI
+        self.enable_semantic_search = enable_semantic_search
 
         # Initialize legacy schema loader for validation
         self.schema_loader = HedSchemaLoader()
@@ -73,6 +76,9 @@ class HedAnnotationWorkflow:
         eval_llm = evaluation_llm or llm
         assess_llm = assessment_llm or llm
         feed_llm = feedback_llm or llm
+
+        # Store feedback LLM for keyword extraction (cheap/fast model)
+        self.feedback_llm = feed_llm
 
         # Initialize agents with JSON schema support and per-agent LLMs
         self.annotation_agent = AnnotationAgent(llm, schema_dir=self.schema_dir)
@@ -85,15 +91,19 @@ class HedAnnotationWorkflow:
         self.assessment_agent = AssessmentAgent(assess_llm, schema_dir=self.schema_dir)
         self.feedback_summarizer = FeedbackSummarizer(feed_llm)
 
-        # Initialize hed-lsp client for semantic search
+        # Initialize hed-lsp client for semantic search (optional enrichment)
         self.hed_lsp_client: HedLspClient | None = None
-        if self.enable_semantic_search:
+        if self.enable_semantic_search and is_hed_lsp_available():
             try:
                 self.hed_lsp_client = HedLspClient()
                 logger.info("[WORKFLOW] hed-lsp CLI available for semantic tag suggestions")
             except RuntimeError as e:
                 logger.warning(f"[WORKFLOW] hed-lsp CLI not available: {e}")
-                self.enable_semantic_search = False
+        elif self.enable_semantic_search:
+            logger.info(
+                "[WORKFLOW] hed-lsp CLI not in PATH; "
+                "keyword extraction will run without LSP enrichment"
+            )
 
         # Build graph
         self.graph = self._build_graph()
@@ -156,11 +166,58 @@ class HedAnnotationWorkflow:
 
         return workflow.compile()  # type: ignore[return-value]
 
+    async def _extract_keywords(self, description: str) -> list[str]:
+        """Extract HED-relevant keywords from a natural language description.
+
+        Uses the feedback LLM (cheap/fast model) to identify key concepts
+        that can be mapped to HED tags via the LSP suggest tool.
+
+        Args:
+            description: Natural language event or image description
+
+        Returns:
+            List of extracted keywords (max 20)
+        """
+        system_prompt = (
+            "You are a keyword extractor for neuroscience event descriptions. "
+            "Extract the most important concepts that could map to HED "
+            "(Hierarchical Event Descriptors) tags.\n\n"
+            "Extract:\n"
+            "- Objects/entities (person, car, button, screen, face, etc.)\n"
+            "- Actions/events (pressing, flashing, appearing, moving, etc.)\n"
+            "- Properties/attributes (red, large, fast, loud, etc.)\n"
+            "- Spatial relationships (left, center, above, etc.)\n"
+            "- Temporal aspects (onset, offset, duration, etc.)\n"
+            "- Sensory modalities (visual, auditory, tactile, etc.)\n\n"
+            "Return ONLY a comma-separated list of single words or short phrases "
+            "(2-3 words max). Return at most 20 keywords. "
+            "Do not include any other text, explanation, or formatting."
+        )
+
+        try:
+            response = await self.feedback_llm.ainvoke(
+                [
+                    SystemMessage(content=system_prompt),
+                    HumanMessage(content=f"Description: {description}"),
+                ]
+            )
+            raw_text = extract_text_content(response.content)
+            # Parse comma-separated keywords, strip whitespace, filter empty
+            keywords = [kw.strip() for kw in raw_text.split(",") if kw.strip()]
+            # Limit to 20 keywords
+            keywords = keywords[:20]
+            logger.info(f"[WORKFLOW] Extracted {len(keywords)} keywords: {keywords}")
+            return keywords
+        except Exception as e:
+            logger.warning("[WORKFLOW] Keyword extraction failed: %s", e, exc_info=True)
+            return []
+
     async def _semantic_preprocess_node(self, state: HedAnnotationState) -> dict:
-        """Semantic preprocessing node: Use hed-lsp CLI to suggest relevant tags.
+        """Semantic preprocessing node: Extract keywords and suggest HED tags.
 
         This node runs before annotation to provide semantic hints based on
-        the input description. Uses hed-lsp CLI for tag suggestions.
+        the input description. It uses the feedback LLM to extract keywords,
+        then passes those keywords to hed-lsp CLI for tag suggestions.
         Only runs on the first iteration.
 
         Args:
@@ -176,33 +233,57 @@ class HedAnnotationWorkflow:
 
         logger.info("[WORKFLOW] Entering semantic_preprocess node")
 
-        # Use hed-lsp CLI to suggest tags from the description
-        semantic_hints = []
-        keywords: list[str] = []
+        # Step 1: Extract keywords from the description using LLM
+        keywords = await self._extract_keywords(state["input_description"])
 
-        if self.hed_lsp_client:
-            try:
-                # Get tag suggestions directly from the description
-                result = self.hed_lsp_client.suggest(state["input_description"])
+        # Step 2: Use hed-lsp CLI to get tag suggestions for each keyword
+        semantic_hints: list[dict] = []
+
+        if keywords and self.hed_lsp_client:
+            # Query hed-lsp for each keyword individually for better results
+            for keyword in keywords:
+                try:
+                    result = await asyncio.to_thread(self.hed_lsp_client.suggest, keyword)
+                except Exception as e:
+                    logger.warning("[WORKFLOW] hed-lsp error for '%s': %s", keyword, e)
+                    continue
                 if result.success:
-                    semantic_hints = [
-                        {
-                            "tag": s.tag,
-                            "prefix": "",  # hed-lsp returns full tags
-                            "score": s.score or 0.0,
-                            "source": "hed-lsp",
-                        }
-                        for s in result.suggestions
-                    ]
-                    # Extract keywords from the tags for logging
-                    keywords = [s.tag.split("/")[-1] for s in result.suggestions]
-                    logger.info(
-                        f"[WORKFLOW] hed-lsp suggested {len(semantic_hints)} tags: {keywords[:5]}..."
-                    )
+                    for s in result.suggestions:
+                        semantic_hints.append(
+                            {
+                                "tag": s.tag,
+                                "keyword": keyword,
+                                "score": s.score or 0.0,
+                                "source": "hed-lsp",
+                            }
+                        )
                 else:
-                    logger.warning(f"[WORKFLOW] hed-lsp suggestion failed: {result.error}")
-            except Exception as e:
-                logger.warning("[WORKFLOW] hed-lsp error: %s", e, exc_info=True)
+                    logger.debug(
+                        "[WORKFLOW] hed-lsp suggestion failed for '%s': %s",
+                        keyword,
+                        result.error,
+                    )
+
+            # Deduplicate by tag, keeping highest score
+            if semantic_hints:
+                seen_tags: dict[str, dict] = {}
+                for hint in semantic_hints:
+                    tag = hint["tag"]
+                    if tag not in seen_tags or hint["score"] > seen_tags[tag]["score"]:
+                        seen_tags[tag] = hint
+                semantic_hints = sorted(seen_tags.values(), key=lambda h: h["score"], reverse=True)
+
+            logger.info(
+                "[WORKFLOW] hed-lsp suggested %d unique tags from %d keywords",
+                len(semantic_hints),
+                len(keywords),
+            )
+        elif keywords:
+            # LSP not available; still store keywords for the annotation agent
+            logger.info(
+                "[WORKFLOW] hed-lsp not available; storing %d extracted keywords",
+                len(keywords),
+            )
 
         return {
             "extracted_keywords": keywords,

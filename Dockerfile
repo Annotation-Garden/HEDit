@@ -42,11 +42,18 @@ WORKDIR /app
 # Clone HED repositories (self-contained)
 # Using schemas_latest_json from official hed-schemas repo (JSON inheritance fix now merged)
 RUN git clone --depth 1 https://github.com/hed-standard/hed-schemas.git /app/hed-schemas && \
-    git clone --depth 1 https://github.com/hed-standard/hed-javascript.git /app/hed-javascript
+    git clone --depth 1 https://github.com/hed-standard/hed-javascript.git /app/hed-javascript && \
+    git clone --depth 1 https://github.com/hed-standard/hed-lsp.git /app/hed-lsp
 
 # Build HED JavaScript validator
 WORKDIR /app/hed-javascript
 RUN npm install && npm run build
+
+# Build and install hed-suggest CLI from hed-lsp server
+WORKDIR /app/hed-lsp
+RUN npm install && npm run compile
+WORKDIR /app/hed-lsp/server
+RUN npm install && npm link
 
 # Return to app directory
 WORKDIR /app

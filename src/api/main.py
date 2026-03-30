@@ -649,6 +649,7 @@ async def annotate(
             schema_version=request.schema_version,
             max_validation_attempts=request.max_validation_attempts,
             run_assessment=request.run_assessment,
+            no_extend=request.no_extend,
             config=config,
         )
         latency_ms = int((time.time() - start_time) * 1000)
@@ -667,11 +668,16 @@ async def annotate(
                 or req.headers.get("x-openrouter-model")
                 or os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b")
             )
-            temperature = (
-                request.temperature
-                or float(req.headers.get("x-openrouter-temperature", 0))
-                or _byok_config.get("temperature", 0.1)
-            )
+            temperature = request.temperature
+            if temperature is None:
+                temp_header = req.headers.get("x-openrouter-temperature")
+                if temp_header is not None:
+                    try:
+                        temperature = float(temp_header)
+                    except ValueError:
+                        temperature = None
+            if temperature is None:
+                temperature = _byok_config.get("temperature", 0.1)
 
             event = TelemetryEvent.create(
                 description=request.description,
@@ -856,6 +862,7 @@ async def annotate_from_image(
             schema_version=request.schema_version,
             max_validation_attempts=request.max_validation_attempts,
             run_assessment=request.run_assessment,
+            no_extend=request.no_extend,
             config=config,
         )
         latency_ms = int((time.time() - start_time) * 1000)
@@ -872,11 +879,16 @@ async def annotate_from_image(
                 or req.headers.get("x-openrouter-model")
                 or os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b")
             )
-            temperature = (
-                request.temperature
-                or float(req.headers.get("x-openrouter-temperature", 0))
-                or _byok_config.get("temperature", 0.1)
-            )
+            temperature = request.temperature
+            if temperature is None:
+                temp_header = req.headers.get("x-openrouter-temperature")
+                if temp_header is not None:
+                    try:
+                        temperature = float(temp_header)
+                    except ValueError:
+                        temperature = None
+            if temperature is None:
+                temperature = _byok_config.get("temperature", 0.1)
 
             event = TelemetryEvent.create(
                 description=image_description,  # Use generated image description
@@ -923,6 +935,64 @@ async def annotate_from_image(
             status_code=500,
             detail="An error occurred during image annotation processing.",
         ) from e
+
+
+async def _collect_stream_telemetry(
+    request: AnnotationRequest | ImageAnnotationRequest,
+    req: Request,
+    current_state: dict,
+    start_time: float,
+    source: str,
+    description: str,
+) -> None:
+    """Collect telemetry for streaming endpoints.
+
+    Shared helper used by both /annotate/stream and /annotate-from-image/stream.
+    Silently returns if telemetry is disabled or collector is not initialized.
+
+    Args:
+        request: The annotation request (text or image)
+        req: FastAPI request for header extraction
+        current_state: Current workflow state dict
+        start_time: Workflow start time (from time.time())
+        source: Telemetry source identifier (e.g., "api-stream", "api-image-stream")
+        description: Input description text (or image description for image endpoints)
+    """
+    if not request.telemetry_enabled or not telemetry_collector:
+        return
+
+    latency_ms = int((time.time() - start_time) * 1000)
+
+    # Get model info from request body, BYOK headers, or server config
+    model_name = (
+        request.model
+        or req.headers.get("x-openrouter-model")
+        or os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b")
+    )
+    temperature = request.temperature
+    if temperature is None:
+        temp_header = req.headers.get("x-openrouter-temperature")
+        if temp_header is not None:
+            try:
+                temperature = float(temp_header)
+            except ValueError:
+                temperature = None
+    if temperature is None:
+        temperature = _byok_config.get("temperature", 0.1)
+
+    event = TelemetryEvent.create(
+        description=description,
+        schema_version=request.schema_version,
+        hed_string=current_state.get("current_annotation", ""),
+        iterations=current_state.get("validation_attempts", 0),
+        validation_errors=current_state.get("validation_errors", []),
+        model=model_name,
+        provider=request.provider or req.headers.get("x-openrouter-provider"),
+        temperature=temperature,
+        latency_ms=latency_ms,
+        source=source,
+    )
+    await telemetry_collector.collect(event)
 
 
 @app.post("/annotate/stream")
@@ -1019,6 +1089,7 @@ async def annotate_stream(
         request.schema_version,
         request.max_validation_attempts,
         run_assessment=request.run_assessment,
+        no_extend=request.no_extend,
     )
 
     # Node name to user-friendly stage mapping
@@ -1039,6 +1110,9 @@ async def annotate_stream(
         # SSE padding comment to force Safari to open the stream
         yield ": stream opened\n\n"
 
+        start_time = time.time()
+        current_state = initial_state.copy()
+
         try:
             # Send initial start event
             yield send_event(
@@ -1046,7 +1120,6 @@ async def annotate_stream(
             )
 
             # Track state and progress
-            current_state = initial_state.copy()
             last_stage = None
             validation_attempt = 0
 
@@ -1129,6 +1202,20 @@ async def annotate_stream(
             }
 
             yield send_event("result", result)
+
+            # Collect telemetry after sending result but before done event
+            try:
+                await _collect_stream_telemetry(
+                    request=request,
+                    req=req,
+                    current_state=current_state,
+                    start_time=start_time,
+                    source="api-stream",
+                    description=request.description,
+                )
+            except Exception:
+                logging.warning("Telemetry collection failed for streaming request", exc_info=True)
+
             yield send_event("done", {"message": "Workflow completed"})
 
         except asyncio.CancelledError:
@@ -1142,6 +1229,18 @@ async def annotate_stream(
                     "error_type": "timeout",
                 },
             )
+            # Collect telemetry on error
+            try:
+                await _collect_stream_telemetry(
+                    request=request,
+                    req=req,
+                    current_state=current_state,
+                    start_time=start_time,
+                    source="api-stream",
+                    description=request.description,
+                )
+            except Exception:
+                logging.warning("Telemetry collection failed on timeout", exc_info=True)
             yield send_event("done", {"message": "Workflow ended with error"})
         except RateLimitError:
             logging.exception("Streaming workflow rate limit")
@@ -1152,6 +1251,18 @@ async def annotate_stream(
                     "error_type": "rate_limit",
                 },
             )
+            # Collect telemetry on error
+            try:
+                await _collect_stream_telemetry(
+                    request=request,
+                    req=req,
+                    current_state=current_state,
+                    start_time=start_time,
+                    source="api-stream",
+                    description=request.description,
+                )
+            except Exception:
+                logging.warning("Telemetry collection failed on rate limit", exc_info=True)
             yield send_event("done", {"message": "Workflow ended with error"})
         except Exception:
             logging.exception("Streaming workflow error")
@@ -1162,6 +1273,18 @@ async def annotate_stream(
                     "error_type": "internal",
                 },
             )
+            # Collect telemetry on error
+            try:
+                await _collect_stream_telemetry(
+                    request=request,
+                    req=req,
+                    current_state=current_state,
+                    start_time=start_time,
+                    source="api-stream",
+                    description=request.description,
+                )
+            except Exception:
+                logging.warning("Telemetry collection failed on error", exc_info=True)
             yield send_event("done", {"message": "Workflow ended with error"})
 
     return StreamingResponse(
@@ -1306,6 +1429,10 @@ async def annotate_from_image_stream(
         # SSE padding comment to force Safari to open the stream
         yield ": stream opened\n\n"
 
+        start_time = time.time()
+        current_state: dict = {}
+        image_description = ""
+
         try:
             # Send initial start event
             yield send_event(
@@ -1337,6 +1464,7 @@ async def annotate_from_image_stream(
                 request.schema_version,
                 request.max_validation_attempts,
                 run_assessment=request.run_assessment,
+                no_extend=request.no_extend,
             )
 
             # Track state and progress
@@ -1425,6 +1553,22 @@ async def annotate_from_image_stream(
             }
 
             yield send_event("result", result)
+
+            # Collect telemetry after sending result but before done event
+            try:
+                await _collect_stream_telemetry(
+                    request=request,
+                    req=req,
+                    current_state=current_state,
+                    start_time=start_time,
+                    source="api-image-stream",
+                    description=image_description,
+                )
+            except Exception:
+                logging.debug(
+                    "Telemetry collection failed for image streaming request", exc_info=True
+                )
+
             yield send_event("done", {"message": "Workflow completed"})
 
         except asyncio.CancelledError:
@@ -1438,6 +1582,18 @@ async def annotate_from_image_stream(
                     "error_type": "timeout",
                 },
             )
+            # Collect telemetry on error
+            try:
+                await _collect_stream_telemetry(
+                    request=request,
+                    req=req,
+                    current_state=current_state,
+                    start_time=start_time,
+                    source="api-image-stream",
+                    description=image_description or "image-annotation-failed",
+                )
+            except Exception:
+                logging.warning("Telemetry collection failed on image timeout", exc_info=True)
             yield send_event("done", {"message": "Workflow ended with error"})
         except RateLimitError:
             logging.exception("Streaming image workflow rate limit")
@@ -1448,6 +1604,18 @@ async def annotate_from_image_stream(
                     "error_type": "rate_limit",
                 },
             )
+            # Collect telemetry on error
+            try:
+                await _collect_stream_telemetry(
+                    request=request,
+                    req=req,
+                    current_state=current_state,
+                    start_time=start_time,
+                    source="api-image-stream",
+                    description=image_description or "image-annotation-failed",
+                )
+            except Exception:
+                logging.warning("Telemetry collection failed on image rate limit", exc_info=True)
             yield send_event("done", {"message": "Workflow ended with error"})
         except Exception:
             logging.exception("Streaming image annotation workflow error")
@@ -1458,6 +1626,18 @@ async def annotate_from_image_stream(
                     "error_type": "internal",
                 },
             )
+            # Collect telemetry on error
+            try:
+                await _collect_stream_telemetry(
+                    request=request,
+                    req=req,
+                    current_state=current_state,
+                    start_time=start_time,
+                    source="api-image-stream",
+                    description=image_description or "image-annotation-failed",
+                )
+            except Exception:
+                logging.warning("Telemetry collection failed on image error", exc_info=True)
             yield send_event("done", {"message": "Workflow ended with error"})
 
     return StreamingResponse(
