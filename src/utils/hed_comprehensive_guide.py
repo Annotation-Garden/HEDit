@@ -10,8 +10,8 @@ assembles them into the full system prompt.
 """
 
 
-def _format_semantic_hints(hints: list[dict]) -> str:
-    """Format semantic hints for inclusion in the guide.
+def format_semantic_hints(hints: list[dict]) -> str:
+    """Format semantic hints for inclusion in the user prompt.
 
     Args:
         hints: List of semantic search results, each with:
@@ -21,7 +21,7 @@ def _format_semantic_hints(hints: list[dict]) -> str:
               - prefix: Optional library prefix (e.g., "sc:")
 
     Returns:
-        Formatted hints section for the guide
+        Formatted hints section for the user prompt
     """
     if not hints:
         return ""
@@ -33,6 +33,8 @@ def _format_semantic_hints(hints: list[dict]) -> str:
 
     for hint in hints:
         tag = hint.get("tag", "")
+        if not tag:
+            continue
         prefix = hint.get("prefix", "")
         score = hint.get("score", 0)
         full_tag = f"{prefix}{tag}" if prefix else tag
@@ -45,7 +47,7 @@ def _format_semantic_hints(hints: list[dict]) -> str:
             low_conf.append(full_tag)
 
     lines = [
-        "## POTENTIALLY RELEVANT TAGS",
+        "## SEMANTIC HINTS",
         "",
         "Based on your description, these schema tags may be relevant.",
         "Note: this list may contain false positives - use your judgment.",
@@ -1009,9 +1011,10 @@ def get_comprehensive_hed_guide(
         _build_correction_workflow_section(),
         (
             "## SEMANTIC HINTS\n\n"
-            "Check the user message for a SEMANTIC HINTS section with "
-            "potentially relevant tags from schema search. Use these as "
-            "guidance for tag selection, but verify each against the vocabulary.\n\n"
+            "The user message may include a SEMANTIC HINTS section with "
+            "potentially relevant tags from schema search. If present, use "
+            "these as guidance for tag selection, but verify each against "
+            "the vocabulary. If no hints section is present, proceed without them.\n\n"
             "---\n\n"
         ),
         _build_semantic_rules_section(),

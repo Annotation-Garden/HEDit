@@ -12,7 +12,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from src.agents.state import HedAnnotationState
 from src.utils import extract_text_content
-from src.utils.hed_comprehensive_guide import get_comprehensive_hed_guide
+from src.utils.hed_comprehensive_guide import format_semantic_hints, get_comprehensive_hed_guide
 from src.utils.json_schema_loader import HedJsonSchemaLoader, load_latest_schema
 
 logger = logging.getLogger(__name__)
@@ -112,9 +112,8 @@ class AnnotationAgent:
         if not semantic_hints:
             return ""
 
-        from src.utils.hed_comprehensive_guide import _format_semantic_hints
-
-        return "\n" + _format_semantic_hints(semantic_hints)
+        logger.debug("Including %d semantic hints in user prompt", len(semantic_hints))
+        return "\n" + format_semantic_hints(semantic_hints)
 
     def _build_user_prompt(
         self,

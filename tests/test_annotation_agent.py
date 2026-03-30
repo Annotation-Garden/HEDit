@@ -193,6 +193,132 @@ class TestBuildUserPrompt:
 
         assert "Previous annotation:" not in result
 
+    def test_first_pass_with_semantic_hints(self):
+        """Semantic hints should appear in the user prompt on first pass."""
+        agent = self._make_agent()
+        result = agent._build_user_prompt(
+            "A dog chasing a cat",
+            semantic_hints=[
+                {"tag": "Animal-agent", "score": 0.9, "source": "hed-lsp"},
+                {"tag": "Chase", "score": 0.7, "source": "hed-lsp"},
+            ],
+        )
+
+        assert "SEMANTIC HINTS" in result
+        assert "Animal-agent" in result
+        assert "Chase" in result
+        assert "A dog chasing a cat" in result
+
+    def test_correction_pass_with_semantic_hints(self):
+        """Semantic hints should also appear in correction prompts."""
+        agent = self._make_agent()
+        result = agent._build_user_prompt(
+            "A dog chasing a cat",
+            validation_errors=["[TAG_INVALID] 'Chase' is not valid"],
+            semantic_hints=[
+                {"tag": "Animal-agent", "score": 0.9, "source": "hed-lsp"},
+            ],
+        )
+
+        assert "SEMANTIC HINTS" in result
+        assert "Animal-agent" in result
+        assert "TAG_INVALID" in result
+
+    def test_no_hints_no_hints_section(self):
+        """No hints should not add a hints section to the user prompt."""
+        agent = self._make_agent()
+        result = agent._build_user_prompt("A red circle")
+
+        assert "SEMANTIC HINTS" not in result
+
+    def test_empty_hints_no_hints_section(self):
+        """Empty hints list should not add a hints section."""
+        agent = self._make_agent()
+        result = agent._build_user_prompt("A red circle", semantic_hints=[])
+
+        assert "SEMANTIC HINTS" not in result
+
+
+class TestFormatSemanticHints:
+    """Tests for _format_semantic_hints method on AnnotationAgent."""
+
+    def _make_agent(self):
+        agent = object.__new__(AnnotationAgent)
+        return agent
+
+    def test_none_returns_empty(self):
+        """None input should return empty string."""
+        agent = self._make_agent()
+        assert agent._format_semantic_hints(None) == ""
+
+    def test_empty_list_returns_empty(self):
+        """Empty list should return empty string."""
+        agent = self._make_agent()
+        assert agent._format_semantic_hints([]) == ""
+
+    def test_valid_hints_returns_content(self):
+        """Valid hints should produce formatted output."""
+        agent = self._make_agent()
+        result = agent._format_semantic_hints(
+            [
+                {"tag": "Red", "score": 0.9, "source": "hed-lsp"},
+            ]
+        )
+
+        assert "SEMANTIC HINTS" in result
+        assert "Red" in result
+
+    def test_confidence_bucketing(self):
+        """Hints should be categorized by confidence level."""
+        agent = self._make_agent()
+        result = agent._format_semantic_hints(
+            [
+                {"tag": "HighTag", "score": 0.95, "source": "hed-lsp"},
+                {"tag": "MedTag", "score": 0.6, "source": "hed-lsp"},
+                {"tag": "LowTag", "score": 0.3, "source": "hed-lsp"},
+            ]
+        )
+
+        assert "High confidence" in result
+        assert "HighTag" in result
+        assert "Medium confidence" in result
+        assert "MedTag" in result
+        assert "Lower confidence" in result
+        assert "LowTag" in result
+
+    def test_skips_empty_tags(self):
+        """Hints with empty tag should be skipped."""
+        agent = self._make_agent()
+        result = agent._format_semantic_hints(
+            [
+                {"tag": "", "score": 0.9, "source": "hed-lsp"},
+                {"tag": "ValidTag", "score": 0.8, "source": "hed-lsp"},
+            ]
+        )
+
+        assert "ValidTag" in result
+
+
+class TestSystemPromptCaching:
+    """Tests that system prompt is static (no dynamic content) for caching."""
+
+    def test_system_prompt_has_hints_pointer_not_content(self):
+        """System prompt should reference hints but not contain actual hint data."""
+        from src.utils.hed_comprehensive_guide import get_comprehensive_hed_guide
+
+        guide = get_comprehensive_hed_guide(
+            vocabulary_sample=["Red", "Circle"],
+            extendable_tags=["Animal"],
+        )
+
+        # Should have the pointer section
+        assert "## SEMANTIC HINTS" in guide
+        assert "may include" in guide
+        # Should NOT contain dynamic hint content
+        assert "High confidence" not in guide
+        assert "Medium confidence" not in guide
+        assert "Lower confidence" not in guide
+
 
 class TestPromptSections:
     """Tests for prompt structure and sections."""
