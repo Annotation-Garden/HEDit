@@ -56,7 +56,7 @@ async def process_feedback_file(
         sys.exit(1)
 
     # Get model configuration from environment
-    model = os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b")
+    model = os.getenv("ANNOTATION_MODEL", "anthropic/claude-haiku-4.5")
     provider = os.getenv("LLM_PROVIDER_PREFERENCE", "")
 
     # Create LLM

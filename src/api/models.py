@@ -41,7 +41,7 @@ class AnnotationRequest(BaseModel):
     model: str | None = Field(
         default=None,
         description="Override model for annotation (BYOK mode only, e.g., 'openai/gpt-4o')",
-        examples=["openai/gpt-4o", "anthropic/claude-3.5-sonnet", "qwen/qwen3-235b-a22b-2507"],
+        examples=["anthropic/claude-haiku-4.5", "qwen/qwen3.5-122b-a10b", "qwen/qwen3.5-397b-a17b"],
     )
     provider: str | None = Field(
         default=None,
@@ -177,7 +177,7 @@ class ImageAnnotationRequest(BaseModel):
     vision_model: str | None = Field(
         default=None,
         description="Override vision model for image description (BYOK mode only)",
-        examples=["qwen/qwen3-vl-30b-a3b-instruct", "openai/gpt-4o"],
+        examples=["qwen/qwen3-vl-32b-instruct", "qwen/qwen3-vl-235b-a22b-instruct"],
     )
     provider: str | None = Field(
         default=None,

@@ -77,11 +77,10 @@ class LocalExecutionBackend(ExecutionBackend):
 
         Args:
             api_key: OpenRouter API key (required for LLM operations, optional for health/validate)
-            model: Model for text annotation (default: openai/gpt-oss-120b)
-            eval_model: Model for evaluation/assessment agents (default: same as model).
-                       Use a consistent model like qwen/qwen3-235b-a22b for fair benchmarking.
-            eval_provider: Provider for evaluation model (e.g., Cerebras for qwen models)
-            vision_model: Model for image annotation (default: qwen/qwen3-vl-30b-a3b-instruct)
+            model: Model for text annotation (default: anthropic/claude-haiku-4.5)
+            eval_model: Model for evaluation/assessment agents (default: qwen/qwen3.5-397b-a17b)
+            eval_provider: Provider for evaluation model (None = OpenRouter auto-routes)
+            vision_model: Model for image annotation (default: qwen/qwen3-vl-32b-instruct)
             provider: Provider preference (cleared if custom model specified)
             temperature: LLM temperature (0.0-1.0)
             schema_dir: Optional directory with JSON schemas (None = fetch from GitHub)

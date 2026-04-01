@@ -102,7 +102,7 @@ ModelOption = Annotated[
     typer.Option(
         "--model",
         "-m",
-        help="Model to use (e.g., openai/gpt-oss-120b, gpt-4o-mini)",
+        help="Model to use (e.g., anthropic/claude-haiku-4.5, qwen/qwen3.5-122b-a10b)",
     ),
 ]
 

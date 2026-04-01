@@ -41,13 +41,13 @@ DEFAULT_DEV_API_URL = "https://api.annotation.garden/hedit-dev"
 DEFAULT_MODEL = "anthropic/claude-haiku-4.5"
 DEFAULT_PROVIDER = "anthropic"
 
-# Evaluation model: Qwen3-235B (auto-routed by OpenRouter)
-DEFAULT_EVAL_MODEL = "qwen/qwen3-235b-a22b-2507"
+# Evaluation model: Qwen3.5-397B MoE (most capable Qwen, high throughput)
+DEFAULT_EVAL_MODEL = "qwen/qwen3.5-397b-a17b"
 DEFAULT_EVAL_PROVIDER = None
 
-# Vision model: Qwen3-VL for image descriptions
-DEFAULT_VISION_MODEL = "qwen/qwen3-vl-30b-a3b-instruct"
-DEFAULT_VISION_PROVIDER = "deepinfra/fp8"
+# Vision model: Qwen3-VL-32B for image descriptions
+DEFAULT_VISION_MODEL = "qwen/qwen3-vl-32b-instruct"
+DEFAULT_VISION_PROVIDER = None
 
 
 class CredentialsConfig(BaseModel):
