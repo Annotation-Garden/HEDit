@@ -451,7 +451,9 @@ class TestAPIEndpointIntegration:
         os.environ["LLM_PROVIDER"] = "openrouter"
         os.environ["OPENROUTER_API_KEY"] = test_api_key
         os.environ["ANNOTATION_MODEL"] = TEST_MODEL
+        os.environ["ANNOTATION_PROVIDER"] = TEST_PROVIDER or ""
         os.environ["EVALUATION_MODEL"] = os.getenv("EVALUATION_MODEL", TEST_MODEL)
+        os.environ["EVALUATION_PROVIDER"] = os.getenv("EVALUATION_PROVIDER", TEST_PROVIDER or "")
         os.environ["ASSESSMENT_MODEL"] = os.getenv("ASSESSMENT_MODEL", TEST_MODEL)
         os.environ["FEEDBACK_MODEL"] = os.getenv("FEEDBACK_MODEL", TEST_MODEL)
         if TEST_PROVIDER:
