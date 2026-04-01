@@ -113,8 +113,8 @@ def create_openrouter_workflow(
     # Apply defaults from environment
     default_annotation_model = os.getenv("ANNOTATION_MODEL", "anthropic/claude-haiku-4.5")
     default_annotation_provider = os.getenv("ANNOTATION_PROVIDER", "anthropic")
-    default_eval_model = os.getenv("EVALUATION_MODEL", "openai/gpt-oss-120b")
-    default_eval_provider = os.getenv("EVALUATION_PROVIDER", "groq")
+    default_eval_model = os.getenv("EVALUATION_MODEL", "qwen/qwen3.5-397b-a17b")
+    default_eval_provider = os.getenv("EVALUATION_PROVIDER")
 
     # Resolve final values: parameter > env var > default
     actual_annotation_model = get_model_name(annotation_model or default_annotation_model)
@@ -240,8 +240,8 @@ def create_byok_vision_agent(
         Configured VisionAgent using the user's key and model settings
     """
     # Use user-provided settings or fall back to server defaults
-    default_vision_model = os.getenv("VISION_MODEL", "qwen/qwen3-vl-30b-a3b-instruct")
-    default_vision_provider = os.getenv("VISION_PROVIDER", "deepinfra/fp8")
+    default_vision_model = os.getenv("VISION_MODEL", "qwen/qwen3-vl-32b-instruct")
+    default_vision_provider = os.getenv("VISION_PROVIDER", "novita")
 
     actual_model = vision_model if vision_model else default_vision_model
     actual_temperature = temperature if temperature is not None else 0.3
@@ -354,7 +354,7 @@ async def lifespan(app: FastAPI):
         # Log configuration (env vars are read by create_openrouter_workflow)
         print("Using OpenRouter with models:")
         print(f"  Annotation: {os.getenv('ANNOTATION_MODEL', 'anthropic/claude-haiku-4.5')}")
-        print(f"  Evaluation: {os.getenv('EVALUATION_MODEL', 'qwen/qwen3-235b-a22b-2507')}")
+        print(f"  Evaluation: {os.getenv('EVALUATION_MODEL', 'qwen/qwen3.5-397b-a17b')}")
         print(f"  Provider (annotation): {os.getenv('ANNOTATION_PROVIDER', 'anthropic')}")
         print(f"  Provider (eval): {os.getenv('EVALUATION_PROVIDER', '') or '(auto-routed)'}")
 
@@ -395,8 +395,8 @@ async def lifespan(app: FastAPI):
 
     # Initialize vision agent (only for OpenRouter)
     if llm_provider == "openrouter":
-        vision_model = os.getenv("VISION_MODEL", "qwen/qwen3-vl-30b-a3b-instruct")
-        vision_provider = os.getenv("VISION_PROVIDER", "deepinfra/fp8")
+        vision_model = os.getenv("VISION_MODEL", "qwen/qwen3-vl-32b-instruct")
+        vision_provider = os.getenv("VISION_PROVIDER", "novita")
 
         print(f"Initializing vision model: {vision_model} (provider: {vision_provider})")
 
@@ -666,7 +666,7 @@ async def annotate(
             model_name = (
                 request.model
                 or req.headers.get("x-openrouter-model")
-                or os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b")
+                or os.getenv("ANNOTATION_MODEL", "anthropic/claude-haiku-4.5")
             )
             temperature = request.temperature
             if temperature is None:
@@ -815,7 +815,7 @@ async def annotate_from_image(
                 validator_path=_byok_config.get("validator_path"),
                 use_js_validator=_byok_config.get("use_js_validator", True),
             )
-            # Note: Vision agent uses its own provider (deepinfra/fp8 for qwen-vl)
+            # Note: Vision agent uses its own provider (novita for qwen-vl)
             # Only pass provider_override to vision if a custom vision_model was specified
             vision_provider = provider_override if vision_model_override else None
             active_vision_agent = create_byok_vision_agent(
@@ -877,7 +877,7 @@ async def annotate_from_image(
             model_name = (
                 request.model
                 or req.headers.get("x-openrouter-model")
-                or os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b")
+                or os.getenv("ANNOTATION_MODEL", "anthropic/claude-haiku-4.5")
             )
             temperature = request.temperature
             if temperature is None:
@@ -967,7 +967,7 @@ async def _collect_stream_telemetry(
     model_name = (
         request.model
         or req.headers.get("x-openrouter-model")
-        or os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b")
+        or os.getenv("ANNOTATION_MODEL", "anthropic/claude-haiku-4.5")
     )
     temperature = request.temperature
     if temperature is None:
@@ -1386,7 +1386,7 @@ async def annotate_from_image_stream(
                 validator_path=_byok_config.get("validator_path"),
                 use_js_validator=_byok_config.get("use_js_validator", True),
             )
-            # Note: Vision agent uses its own provider (deepinfra/fp8 for qwen-vl)
+            # Note: Vision agent uses its own provider (novita for qwen-vl)
             # Only pass provider_override to vision if a custom vision_model was specified
             vision_provider = provider_override if vision_model_override else None
             active_vision_agent = create_byok_vision_agent(
@@ -1785,7 +1785,7 @@ async def submit_feedback(request: FeedbackRequest) -> FeedbackResponse:
                 )
 
                 # Create LLM for triage
-                model = os.getenv("ANNOTATION_MODEL", "openai/gpt-oss-120b")
+                model = os.getenv("ANNOTATION_MODEL", "anthropic/claude-haiku-4.5")
                 provider = os.getenv("LLM_PROVIDER_PREFERENCE", "")
                 llm = create_openrouter_llm(
                     model=model,

@@ -29,7 +29,7 @@ from langchain_core.messages import BaseMessage
 
 
 def create_litellm_openrouter(
-    model: str = "openai/gpt-oss-120b",
+    model: str = "anthropic/claude-haiku-4.5",
     api_key: str | None = None,
     temperature: float = 0.1,
     max_tokens: int | None = None,

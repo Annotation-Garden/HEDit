@@ -13,7 +13,7 @@ from langchain_core.messages import BaseMessage
 
 
 def create_openrouter_llm(
-    model: str = "openai/gpt-oss-120b",
+    model: str = "anthropic/claude-haiku-4.5",
     api_key: str | None = None,
     temperature: float = 0.1,
     max_tokens: int | None = None,
@@ -28,7 +28,7 @@ def create_openrouter_llm(
     to include cache_control markers for 90% cost reduction on cache hits.
 
     Args:
-        model: Model identifier (e.g., "openai/gpt-oss-120b", "anthropic/claude-haiku-4.5")
+        model: Model identifier (e.g., "anthropic/claude-haiku-4.5", "qwen/qwen3.5-397b-a17b")
         api_key: OpenRouter API key (defaults to OPENROUTER_API_KEY env var)
         temperature: Sampling temperature (0.0-1.0)
         max_tokens: Maximum tokens to generate
