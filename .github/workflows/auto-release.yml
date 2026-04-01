@@ -19,9 +19,11 @@ jobs:
   auto-release:
     name: Auto Version and Release
     runs-on: ubuntu-latest
-    # Skip if commit message contains version bump (avoid loops) or [skip-release]
+    # Skip if commit TITLE starts with version bump (avoid loops) or contains [skip-release]
+    # Note: uses head_commit.message which includes the full body for squash merges,
+    # so we check only if the title (first line) starts with "Bump version"
     if: >-
-      !contains(github.event.head_commit.message, 'Bump version to') &&
+      !startsWith(github.event.head_commit.message, 'Bump version to') &&
       !contains(github.event.head_commit.message, '[skip-release]')
 
     steps:
