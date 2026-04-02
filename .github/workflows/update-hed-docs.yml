@@ -1,0 +1,73 @@
+name: Update HED Docs
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # Weekly Monday at 6am UTC
+  workflow_dispatch:       # Manual trigger
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-docs:
+    name: Fetch Latest HED Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: develop
+          token: ${{ secrets.RELEASE_PAT }}
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - uses: astral-sh/setup-uv@v7
+
+      - name: Install dependencies
+        run: uv pip install --system httpx
+
+      - name: Fetch latest HED docs
+        run: python scripts/fetch_hed_docs.py
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet src/data/hed-docs/; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create PR if docs changed
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          BRANCH="auto/update-hed-docs-$(date +%Y%m%d)"
+          git checkout -b "$BRANCH"
+          git add src/data/hed-docs/
+          git commit -m "Update bundled HED docs from upstream
+
+          Automated update from official HED documentation.
+
+          [skip-release]"
+          git push origin "$BRANCH"
+          gh pr create \
+            --base develop \
+            --title "Update bundled HED documentation" \
+            --body "$(cat <<'BODY'
+          ## Summary
+          Automated weekly update of bundled HED documentation from upstream sources.
+
+          Sources:
+          - hed-standard/hed-resources (HedAnnotationSemantics.md)
+          - hed-standard/hed-specification (02_Terminology.md)
+
+          This PR was created by the update-hed-docs workflow.
+          BODY
+          )" \
+            --label "documentation"
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}

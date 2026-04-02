@@ -1,6 +1,11 @@
 # HEDit vs OSA/HBD Comparison Analysis
 
-## Summary
+## Status
+As of issue #137, the documentation gap has been closed. HEDit now preloads
+official HED docs (HedAnnotationSemantics.md, 02_Terminology.md) from bundled
+files, matching OSA's approach. A weekly CI workflow keeps the docs current.
+
+## Original Summary (historical)
 The Open Science Assistant (OSA) HED assistant produces more thorough and accurate responses than HEDit. This analysis identifies the key differences and recommends improvements.
 
 ## Key Differences
