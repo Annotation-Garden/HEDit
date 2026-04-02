@@ -759,15 +759,15 @@ Reserved tags (tags with the `reserved` schema attribute) implement HED infrastr
 
 | Tag | Example | Rules |
 | --- | --- | --- |
-| `Definition` | `(Definition/Red-triangle, (Sensory-event, Visual-presentation, (Red, Triangle)))` | * Used to name frequently used strings |
-| `Def` | `Def/Red-triangle` | * Used to anchor `Onset`, `Inset`, `Offset` |
-| `Def-expand` | `(Def-expand/Red-triangle, (Red, Triangle))` | * Used to anchor `Onset`, `Inset`, `Offset` |
-| `Onset` | `(Def/Red-triangle, Onset)` | * Mark the start of an unfolding event |
-| `Offset` | `(Def/Red-triangle, Offset)` | * Marks the end of an unfolding event |
-| `Inset` | `(Def/Red-triangle, (Luminance-contrast/0.5), Inset)` | * Marks an interesting point during the unfolding of an event process. |
-| `Duration` | `(Duration/2 s, (Sensory-event, Auditory-presentation, Feedback Buzz))` | * Designates length of event that starts at that point |
-| `Delay` | `(Delay/0.5 ms, (Sensory-event, Auditory-presentation, Feedback Buzz))` | * Delays the start of the event by the indicated amount |
-| `Event-context` | `(Event-context, (Def/Task-a, (Blue, Square)), (Def/Task-b, (Red, Triangle)))` | * Should only be created by tools |
+| `Definition` | `(Definition/Red-triangle, (Sensory-event, Visual-presentation, (Red, Triangle)))` | * Used to name frequently used strings * Can only be defined in sidecars or externally * Defining tags are in inner group * Definition group cannot contain any other reserved tags |
+| `Def` | `Def/Red-triangle` | * Used to anchor `Onset`, `Inset`, `Offset` * Must correspond to a `Definition` * Cannot appear in definitions |
+| `Def-expand` | `(Def-expand/Red-triangle, (Red, Triangle))` | * Used to anchor `Onset`, `Inset`, `Offset` * Must correspond to `Definition` * Cannot appear in definitions * DO NOT USE -- Tools use during processing |
+| `Onset` | `(Def/Red-triangle, Onset)` | * Mark the start of an unfolding event * Must have a `Def` anchor corresponding to a `Definition`. * Can include an internal tag group * Must be in a top-level tag group * Event ends when an `Offset` or `Onset` with same `Def` name is encountered |
+| `Offset` | `(Def/Red-triangle, Offset)` | * Marks the end of an unfolding event * Must have a `Def` tag anchor * Must be in a top-level tag group * Must correspond to an ongoing `Onset` group of same name |
+| `Inset` | `(Def/Red-triangle, (Luminance-contrast/0.5), Inset)` | * Marks an interesting point during the unfolding of an event process. * Must have a `Def` tag anchor * Can include an internal tag group * Must be in a top-level tag group * Must be between an `Onset` and the ending time of that event process |
+| `Duration` | `(Duration/2 s, (Sensory-event, Auditory-presentation, Feedback Buzz))` | * Designates length of event that starts at that point * Must be in a top-level tag group * Cannot be used in group with `Onset`, `Inset`, or `Offset`. * May be used in both timeline and description data. * Inner tag group defines the event that starts at that point * If used with `Delay`, the event start is delayed by indicated amount |
+| `Delay` | `(Delay/0.5 ms, (Sensory-event, Auditory-presentation, Feedback Buzz))` | * Delays the start of the event by the indicated amount * Must be a top-level tag group |
+| `Event-context` | `(Event-context, (Def/Task-a, (Blue, Square)), (Def/Task-b, (Red, Triangle)))` | * Should only be created by tools * Must be a top-level tag group * Keeps track of ongoing events at intermediate time points * Represents concurrent active event processes |
 
 
 #### Values and units

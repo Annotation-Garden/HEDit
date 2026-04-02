@@ -30,8 +30,9 @@ _DOC_FILES = {
 def _get_docs_dir() -> Path:
     """Get path to bundled HED docs directory.
 
-    Uses importlib.resources for installed packages,
-    falls back to __file__-relative path for development.
+    Uses importlib.resources to locate the 'src.data' package (matching
+    the setuptools find-packages configuration), falling back to a
+    __file__-relative path for editable installs or development.
     """
     try:
         docs_dir = files("src.data") / "hed-docs"
@@ -42,8 +43,13 @@ def _get_docs_dir() -> Path:
         resolved = Path(str(docs_dir))
         if resolved.is_dir():
             return resolved
-    except (TypeError, ModuleNotFoundError):
-        pass
+    except (TypeError, ModuleNotFoundError) as e:
+        logger.debug(
+            "importlib.resources lookup for 'src.data' failed (%s: %s); "
+            "falling back to __file__-relative path",
+            type(e).__name__,
+            e,
+        )
 
     # Fallback: relative to this file
     fallback = Path(__file__).parent.parent / "data" / "hed-docs"
@@ -53,22 +59,57 @@ def _get_docs_dir() -> Path:
     return fallback  # Return anyway; caller handles missing files
 
 
-def load_hed_docs() -> dict[str, str]:
+def load_hed_docs(*, docs_dir: Path | None = None) -> dict[str, str]:
     """Load official HED documentation content.
 
     Returns a dict mapping doc identifiers to processed markdown content.
-    Results are cached after the first call.
+    Results are cached after the first successful load (non-empty).
+    Empty results are not cached, allowing retry in long-running processes.
+
+    When docs_dir is provided, bypasses both the cache and default path
+    resolution, loading directly from the given directory. This is used
+    by tests to point at real temporary directories.
+
+    Args:
+        docs_dir: Optional override for the docs directory path.
+                  Bypasses cache when provided.
 
     Returns:
-        Dict with keys "annotation_semantics" and "terminology".
-        Empty dict if bundled docs are missing.
+        Dict with keys "annotation_semantics" and/or "terminology".
+        Partial dict if only some docs are available, empty if none found.
     """
     global _cached_docs
+
+    # When an explicit directory is provided, skip cache entirely
+    if docs_dir is not None:
+        return _load_from_dir(docs_dir)
 
     if _cached_docs is not None:
         return _cached_docs
 
-    docs_dir = _get_docs_dir()
+    result = _load_from_dir(_get_docs_dir())
+
+    if not result:
+        logger.warning(
+            "No bundled HED docs found. System prompt will use "
+            "HEDit-specific sections only. Will retry on next call."
+        )
+        # Do NOT cache empty results; allow retry in long-running processes
+        return result
+
+    _cached_docs = result
+    return result
+
+
+def _load_from_dir(docs_dir: Path) -> dict[str, str]:
+    """Load docs from a specific directory.
+
+    Args:
+        docs_dir: Directory containing the processed markdown files.
+
+    Returns:
+        Dict mapping doc identifiers to content strings.
+    """
     result: dict[str, str] = {}
 
     for doc_id, filename in _DOC_FILES.items():
@@ -88,12 +129,6 @@ def load_hed_docs() -> dict[str, str]:
         except OSError as e:
             logger.warning("Error reading %s: %s", doc_path, e)
 
-    if not result:
-        logger.warning(
-            "No bundled HED docs found. System prompt will use HEDit-specific sections only."
-        )
-
-    _cached_docs = result
     return result
 
 

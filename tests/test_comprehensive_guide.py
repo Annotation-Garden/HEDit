@@ -1,7 +1,5 @@
 """Tests for HED comprehensive guide generation."""
 
-from unittest.mock import patch
-
 from src.utils.hed_comprehensive_guide import get_comprehensive_hed_guide
 
 
@@ -127,13 +125,12 @@ class TestComprehensiveGuide:
         assert "## TAG USAGE BY CATEGORY" not in guide
         assert "## COMMON PATTERNS" not in guide
 
-    def test_guide_fallback_when_docs_missing(self):
+    def test_guide_fallback_when_docs_missing(self, tmp_path):
         """Test guide still works when official docs are unavailable."""
         vocabulary = ["Event", "Sensory-event"]
         extendable_tags = ["Label"]
 
-        with patch("src.utils.hed_comprehensive_guide.load_hed_docs", return_value={}):
-            guide = get_comprehensive_hed_guide(vocabulary, extendable_tags)
+        guide = get_comprehensive_hed_guide(vocabulary, extendable_tags, docs_dir=tmp_path)
 
         # HEDit-specific sections should still be present
         assert "## CRITICAL RULE: CHECK VOCABULARY FIRST" in guide

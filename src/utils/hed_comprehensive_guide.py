@@ -9,7 +9,10 @@ The top-level get_comprehensive_hed_guide() assembles the full prompt.
 Semantic hints are placed in the user prompt (not here) for prompt caching.
 """
 
+from __future__ import annotations
+
 import logging
+from pathlib import Path
 
 from src.utils.hed_docs_loader import load_hed_docs
 
@@ -23,8 +26,9 @@ def format_semantic_hints(hints: list[dict]) -> str:
         hints: List of semantic search results, each with:
               - tag: HED tag name
               - score: Relevance score (0-1)
-              - source: "keyword", "embedding", or "both"
-              - prefix: Optional library prefix (e.g., "sc:")
+              - source: Origin of the suggestion (e.g., "hed-lsp")
+              - keyword: The input keyword that triggered this suggestion
+              - prefix: Optional library prefix (e.g., "sc:"), unused in current workflow
 
     Returns:
         Formatted hints section for the user prompt
@@ -180,20 +184,17 @@ IF YOU SEE TAG_EXTENSION_INVALID ERROR -> You extended a tag that exists in voca
 
 
 def _build_official_docs_section(docs: dict[str, str]) -> str:
-    """Build the official HED documentation section from loaded docs.
+    """Format bundled HED documentation for the system prompt.
 
-    Replaces the previous hand-written semantic rules, relation tags,
-    event/agent rules, extension rules, definition system, temporal
-    scoping, sidecar syntax, event classification, tag usage, and
-    common patterns sections with authoritative content from the
-    hed-standard GitHub repositories.
+    Inserts the official HedAnnotationSemantics.md and 02_Terminology.md
+    content as labeled sections with source attribution.
 
     Args:
         docs: Dict from load_hed_docs() with keys
               "annotation_semantics" and "terminology"
 
     Returns:
-        Formatted official docs section for the system prompt
+        Formatted official docs section, or empty string if no docs available
     """
     sections = []
 
@@ -403,6 +404,8 @@ def get_comprehensive_hed_guide(
     vocabulary_sample: list[str],
     extendable_tags: list[str],
     no_extend: bool = False,
+    *,
+    docs_dir: Path | None = None,
 ) -> str:
     """Generate comprehensive HED annotation guide.
 
@@ -419,6 +422,7 @@ def get_comprehensive_hed_guide(
         vocabulary_sample: Full list of valid HED tags (complete vocabulary)
         extendable_tags: Tags that allow extension
         no_extend: If True, add strict instructions to prohibit tag extensions
+        docs_dir: Optional override for docs directory (used by tests)
 
     Returns:
         Complete HED annotation guide
@@ -427,7 +431,7 @@ def get_comprehensive_hed_guide(
     extend_str = ", ".join(extendable_tags) if not no_extend else "(Extensions disabled)"
 
     # Load official HED documentation
-    docs = load_hed_docs()
+    docs = load_hed_docs(docs_dir=docs_dir)
 
     # Format optional sections
     no_extend_warning = _build_no_extend_warning() if no_extend else ""

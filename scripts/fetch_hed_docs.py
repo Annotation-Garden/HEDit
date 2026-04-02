@@ -133,18 +133,25 @@ def clean_myst_markdown(text: str) -> str:
 
                 stripped = lines[i].rstrip()
                 if stripped.startswith("* - "):
-                    # New row, first cell
-                    if current_row or current_cell_lines:
-                        if current_cell_lines:
-                            current_row.append(" ".join(current_cell_lines).strip())
-                        if current_row:
-                            rows.append(current_row)
+                    # New row, first cell -- flush continuation into last cell
+                    if current_cell_lines and current_row:
+                        last = current_row[-1]
+                        current_row[-1] = (last + " " + " ".join(current_cell_lines)).strip()
+                        current_cell_lines = []
+                    if current_row:
+                        rows.append(current_row)
                     current_row = [stripped[4:].strip()]
                     current_cell_lines = []
                 elif stripped.startswith("  - "):
-                    # New cell in current row
+                    # New cell in current row -- flush any continuation
                     if current_cell_lines:
-                        current_row.append(" ".join(current_cell_lines).strip())
+                        # Append continuation to the last cell
+                        last = current_row[-1] if current_row else ""
+                        joined = (last + " " + " ".join(current_cell_lines)).strip()
+                        if current_row:
+                            current_row[-1] = joined
+                        else:
+                            current_row.append(joined)
                         current_cell_lines = []
                     current_row.append(stripped[4:].strip())
                 elif stripped.startswith("    "):
@@ -152,9 +159,14 @@ def clean_myst_markdown(text: str) -> str:
                     current_cell_lines.append(stripped.strip())
                 i += 1
 
-            # Flush last row
+            # Flush continuation lines into last cell
             if current_cell_lines:
-                current_row.append(" ".join(current_cell_lines).strip())
+                last = current_row[-1] if current_row else ""
+                joined = (last + " " + " ".join(current_cell_lines)).strip()
+                if current_row:
+                    current_row[-1] = joined
+                else:
+                    current_row.append(joined)
             if current_row:
                 rows.append(current_row)
 
@@ -223,9 +235,19 @@ def sha256_hash(content: str) -> str:
 
 
 def load_manifest() -> dict:
-    """Load existing manifest or return empty structure."""
+    """Load existing manifest or return empty structure.
+
+    Recovers gracefully from corrupt manifest files (e.g., truncated
+    writes, merge conflicts) by starting fresh.
+    """
     if MANIFEST_PATH.exists():
-        return json.loads(MANIFEST_PATH.read_text())
+        try:
+            return json.loads(MANIFEST_PATH.read_text())
+        except (json.JSONDecodeError, OSError) as e:
+            print(
+                f"Warning: Could not read manifest ({e}); starting fresh.",
+                file=sys.stderr,
+            )
     return {"docs": [], "schema_version": "1.0"}
 
 
@@ -235,9 +257,18 @@ def save_manifest(manifest: dict) -> None:
 
 
 def fetch_and_process(force: bool = False) -> bool:
-    """Fetch official HED docs, process, and save.
+    """Fetch official HED docs from GitHub, strip MyST directives, and save.
 
-    Returns True if any docs were updated.
+    Compares SHA-256 hashes of processed content against the manifest to
+    skip unchanged documents. Updates manifest.json with fetch metadata.
+    Individual document failures are handled gracefully; remaining docs
+    are still processed.
+
+    Args:
+        force: If True, overwrite files regardless of hash match.
+
+    Returns:
+        True if any docs were updated, False if all unchanged.
     """
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -253,8 +284,17 @@ def fetch_and_process(force: bool = False) -> bool:
         output_path = OUTPUT_DIR / filename
 
         print(f"Fetching {filename} from {source_url}...")
-        response = httpx.get(source_url, follow_redirects=True, timeout=30)
-        response.raise_for_status()
+        try:
+            response = httpx.get(source_url, follow_redirects=True, timeout=30)
+            response.raise_for_status()
+        except httpx.HTTPError as e:
+            print(f"  Error fetching {filename}: {e}", file=sys.stderr)
+            # Keep existing manifest entry if available
+            for d in manifest.get("docs", []):
+                if d["filename"] == filename:
+                    new_docs.append(d)
+                    break
+            continue
 
         raw_content = response.text
         processed = clean_myst_markdown(raw_content)
@@ -297,6 +337,9 @@ def main() -> None:
         updated = fetch_and_process(force=force)
     except httpx.HTTPError as e:
         print(f"Error fetching docs: {e}", file=sys.stderr)
+        sys.exit(1)
+    except OSError as e:
+        print(f"Error writing docs to disk: {e}", file=sys.stderr)
         sys.exit(1)
 
     if updated:

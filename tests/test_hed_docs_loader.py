@@ -1,7 +1,5 @@
 """Tests for HED documentation loader."""
 
-from unittest.mock import patch
-
 from src.utils.hed_docs_loader import MAX_DOC_CHARS, clear_cache, load_hed_docs
 
 
@@ -57,16 +55,33 @@ class TestLoadHedDocs:
         assert docs1 is not docs2
         assert docs1 == docs2
 
-    def test_missing_files_returns_empty(self):
+    def test_missing_files_returns_empty(self, tmp_path):
         """Test graceful fallback when files are missing."""
-        with patch(
-            "src.utils.hed_docs_loader._get_docs_dir",
-            return_value=__import__("pathlib").Path("/nonexistent/path"),
-        ):
-            clear_cache()
-            docs = load_hed_docs()
+        docs = load_hed_docs(docs_dir=tmp_path)
 
         assert docs == {}
+
+    def test_partial_docs_returns_partial(self, tmp_path):
+        """Test that one missing doc returns partial result."""
+        # Only create one of the two expected files
+        (tmp_path / "HedAnnotationSemantics.md").write_text("# Test content")
+
+        docs = load_hed_docs(docs_dir=tmp_path)
+
+        assert "annotation_semantics" in docs
+        assert "terminology" not in docs
+
+    def test_truncation_applied(self, tmp_path):
+        """Test that docs exceeding MAX_DOC_CHARS are truncated."""
+        large_content = "x" * (MAX_DOC_CHARS + 1000)
+        (tmp_path / "HedAnnotationSemantics.md").write_text(large_content)
+        (tmp_path / "02_Terminology.md").write_text("small content")
+
+        docs = load_hed_docs(docs_dir=tmp_path)
+
+        assert len(docs["annotation_semantics"]) <= MAX_DOC_CHARS
+        assert docs["annotation_semantics"].endswith("... [truncated for length]")
+        assert docs["terminology"] == "small content"
 
     def test_truncation_not_needed(self):
         """Test that bundled docs are under the truncation limit."""
@@ -77,9 +92,19 @@ class TestLoadHedDocs:
                 f"{doc_id} exceeds {MAX_DOC_CHARS} chars: {len(content)}"
             )
 
+    def test_empty_result_not_cached(self, tmp_path):
+        """Test that empty results are not cached, allowing retry."""
+        # First call with empty dir returns empty
+        docs1 = load_hed_docs(docs_dir=tmp_path)
+        assert docs1 == {}
 
-class TestCleanMystMarkdown:
-    """Tests for MyST directive processing in fetched docs."""
+        # Default call should still work (not poisoned by empty result)
+        docs2 = load_hed_docs()
+        assert len(docs2) > 0
+
+
+class TestBundledDocsQuality:
+    """Tests for quality of the processed bundled docs."""
 
     def test_no_raw_myst_directives_in_bundled_docs(self):
         """Test that bundled docs have no raw MyST directives."""
