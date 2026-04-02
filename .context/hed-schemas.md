@@ -1,7 +1,7 @@
 # HED Schema Structure and Access
 
 ## Current Version
-- **Standard schema**: HED 8.3.0 (HEDit default), 8.4.0 (OSA/hedtools.org default)
+- **Standard schema**: HED 8.4.0 (HEDit default)
 - **Library schemas**: HED_score, HED_lang, etc.
 
 ## Schema Loaders
@@ -51,5 +51,6 @@ The JSON schema loader extracts:
 
 ## Usage in Agents
 - Annotation agent receives full vocabulary + extendable tags in system prompt
-- Only first 80 vocabulary tags shown as sample (full list would exceed context)
-- ExtensionAllowed tags shown (first 20) so agent knows what can be extended
+- Official HED docs (HedAnnotationSemantics.md, 02_Terminology.md) are preloaded
+  from bundled files in src/data/hed-docs/ (fetched by scripts/fetch_hed_docs.py)
+- ExtensionAllowed tags shown so agent knows what can be extended

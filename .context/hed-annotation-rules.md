@@ -1,7 +1,12 @@
 # HED Annotation Rules
 
 ## Source
-These rules are derived from the HED specification and implemented in `src/utils/hed_rules.py`. The complete system prompt generation is in `get_complete_system_prompt()`.
+The annotation agent system prompt now uses official HED documentation
+pulled from the hed-standard GitHub repos (HedAnnotationSemantics.md
+and 02_Terminology.md), bundled in `src/data/hed-docs/` and loaded by
+`src/utils/hed_docs_loader.py`. HEDit-specific sections (vocabulary
+check, correction workflow, error troubleshooting, output format)
+are in `src/utils/hed_comprehensive_guide.py`.
 
 ## Fundamental Principles
 

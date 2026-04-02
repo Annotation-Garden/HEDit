@@ -7,7 +7,7 @@ class TestComprehensiveGuide:
     """Tests for comprehensive HED guide generation."""
 
     def test_guide_basic_generation(self):
-        """Test basic guide generation."""
+        """Test basic guide generation includes key sections."""
         vocabulary = ["Event", "Sensory-event", "Visual-presentation"]
         extendable_tags = ["Label", "Description"]
 
@@ -16,6 +16,33 @@ class TestComprehensiveGuide:
         assert "## CRITICAL RULE: CHECK VOCABULARY FIRST" in guide
         assert "Event" in guide
         assert "Sensory-event" in guide
+
+    def test_guide_includes_official_docs(self):
+        """Test guide includes official HED documentation."""
+        vocabulary = ["Event", "Sensory-event"]
+        extendable_tags = ["Label"]
+
+        guide = get_comprehensive_hed_guide(vocabulary, extendable_tags)
+
+        assert "## OFFICIAL HED ANNOTATION SEMANTICS" in guide
+        assert "## HED TERMINOLOGY" in guide
+        # Key content from official docs
+        assert "reversibility" in guide.lower()
+
+    def test_guide_includes_hedit_specific_sections(self):
+        """Test guide preserves all HEDit-specific sections."""
+        vocabulary = ["Event", "Red", "Circle"]
+        extendable_tags = ["Label"]
+
+        guide = get_comprehensive_hed_guide(vocabulary, extendable_tags)
+
+        assert "## CRITICAL RULE: CHECK VOCABULARY FIRST" in guide
+        assert "## CORRECTION WORKFLOW" in guide
+        assert "## SEMANTIC HINTS" in guide
+        assert "## VOCABULARY LOOKUP" in guide
+        assert "## EXTENDABLE TAGS" in guide
+        assert "## COMMON ERRORS AND TROUBLESHOOTING" in guide
+        assert "## OUTPUT FORMAT" in guide
 
     def test_guide_with_no_extend_false(self):
         """Test guide generation with no_extend=False (default)."""
@@ -66,3 +93,59 @@ class TestComprehensiveGuide:
         assert "SEMANTIC HINTS" in guide
         assert "EXTENSIONS STRICTLY PROHIBITED" in guide
         assert "(Extensions disabled)" in guide
+
+    def test_guide_vocabulary_injected(self):
+        """Test vocabulary and extendable tags are injected into the guide."""
+        vocabulary = ["MyCustomTag1", "MyCustomTag2", "MyCustomTag3"]
+        extendable_tags = ["ExtendableParent"]
+
+        guide = get_comprehensive_hed_guide(vocabulary, extendable_tags)
+
+        assert "MyCustomTag1" in guide
+        assert "MyCustomTag2" in guide
+        assert "MyCustomTag3" in guide
+        assert "ExtendableParent" in guide
+
+    def test_guide_old_sections_removed(self):
+        """Test that hand-written sections replaced by official docs are gone."""
+        vocabulary = ["Event"]
+        extendable_tags = ["Label"]
+
+        guide = get_comprehensive_hed_guide(vocabulary, extendable_tags)
+
+        # These old section headers should no longer appear
+        assert "## SEMANTIC GROUPING RULES" not in guide
+        assert "## RELATION TAGS" not in guide
+        assert "## CRITICAL: EVENT AND AGENT SUBTREES" not in guide
+        assert "## EXTENSION RULES (for extendable tags)" not in guide
+        assert "## DEFINITION SYSTEM" not in guide
+        assert "## TEMPORAL SCOPING" not in guide
+        assert "## SIDECAR SYNTAX" not in guide
+        assert "## EVENT AND TASK-EVENT-ROLE CLASSIFICATION" not in guide
+        assert "## TAG USAGE BY CATEGORY" not in guide
+        assert "## COMMON PATTERNS" not in guide
+
+    def test_guide_fallback_when_docs_missing(self, tmp_path):
+        """Test guide still works when official docs are unavailable."""
+        vocabulary = ["Event", "Sensory-event"]
+        extendable_tags = ["Label"]
+
+        guide = get_comprehensive_hed_guide(vocabulary, extendable_tags, docs_dir=tmp_path)
+
+        # HEDit-specific sections should still be present
+        assert "## CRITICAL RULE: CHECK VOCABULARY FIRST" in guide
+        assert "## CORRECTION WORKFLOW" in guide
+        assert "## COMMON ERRORS AND TROUBLESHOOTING" in guide
+        assert "## OUTPUT FORMAT" in guide
+        # Official docs sections should be absent
+        assert "## OFFICIAL HED ANNOTATION SEMANTICS" not in guide
+
+    def test_guide_is_deterministic(self):
+        """Test that same inputs produce same output (for prompt caching)."""
+        vocabulary = ["Event", "Sensory-event", "Red"]
+        extendable_tags = ["Label"]
+
+        guide1 = get_comprehensive_hed_guide(vocabulary, extendable_tags)
+        guide2 = get_comprehensive_hed_guide(vocabulary, extendable_tags)
+
+        assert guide1 == guide2
