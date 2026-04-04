@@ -204,6 +204,7 @@ def get_executor(
             eval_model=config.models.evaluation,
             eval_provider=config.models.eval_provider,
             vision_model=config.models.vision,
+            vision_provider=config.models.vision_provider,
             provider=config.models.provider,
             temperature=config.models.temperature,
             user_id=user_id,
