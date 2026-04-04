@@ -68,6 +68,7 @@ class LocalExecutionBackend(ExecutionBackend):
         eval_model: str | None = None,
         eval_provider: str | None = None,
         vision_model: str | None = None,
+        vision_provider: str | None = None,
         provider: str | None = None,
         temperature: float = 0.1,
         schema_dir: Path | str | None = None,
@@ -78,9 +79,10 @@ class LocalExecutionBackend(ExecutionBackend):
         Args:
             api_key: OpenRouter API key (required for LLM operations, optional for health/validate)
             model: Model for text annotation (default: anthropic/claude-haiku-4.5)
-            eval_model: Model for evaluation/assessment agents (default: qwen/qwen3.5-397b-a17b)
-            eval_provider: Provider for evaluation model (None = OpenRouter auto-routes)
-            vision_model: Model for image annotation (default: qwen/qwen3-vl-32b-instruct)
+            eval_model: Model for evaluation/assessment agents (default: qwen/qwen3.5-122b-a10b)
+            eval_provider: Provider for evaluation model (default: alibaba)
+            vision_model: Model for image annotation (default: qwen/qwen3.5-122b-a10b)
+            vision_provider: Provider for vision model (default: alibaba)
             provider: Provider preference (cleared if custom model specified)
             temperature: LLM temperature (0.0-1.0)
             schema_dir: Optional directory with JSON schemas (None = fetch from GitHub)
@@ -102,7 +104,7 @@ class LocalExecutionBackend(ExecutionBackend):
         self._eval_model = eval_model or DEFAULT_EVAL_MODEL
         self._eval_provider = eval_provider or DEFAULT_EVAL_PROVIDER
         self._vision_model = vision_model or DEFAULT_VISION_MODEL
-        self._vision_provider = DEFAULT_VISION_PROVIDER
+        self._vision_provider = vision_provider or DEFAULT_VISION_PROVIDER
         self._temperature = temperature
         self._schema_dir = Path(schema_dir) if schema_dir else None
         self._user_id = user_id  # Custom user ID (None = use auto-generated machine ID)

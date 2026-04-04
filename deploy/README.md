@@ -269,17 +269,18 @@ AUDIT_LOG_FILE=/var/log/hed-bot/audit.log
 # CORS Configuration (optional extra origins)
 # EXTRA_CORS_ORIGINS=https://staging.hed-bot.pages.dev,https://dev.hed-bot.pages.dev
 
-# LLM Configuration (Cerebras + OpenRouter for ultra-fast inference)
+# LLM Configuration (OpenRouter with Alibaba for fast inference)
 LLM_PROVIDER=openrouter
 OPENROUTER_API_KEY=your_openrouter_key_here
-LLM_PROVIDER_PREFERENCE=Cerebras
 LLM_TEMPERATURE=0.1
 
-# Model configuration (Cerebras-optimized defaults)
-ANNOTATION_MODEL=openai/gpt-oss-120b
-EVALUATION_MODEL=qwen/qwen3-235b-a22b-2507
-ASSESSMENT_MODEL=openai/gpt-oss-120b
-FEEDBACK_MODEL=openai/gpt-oss-120b
+# Model configuration
+ANNOTATION_MODEL=anthropic/claude-haiku-4.5
+ANNOTATION_PROVIDER=anthropic
+EVALUATION_MODEL=qwen/qwen3.5-122b-a10b
+EVALUATION_PROVIDER=alibaba
+VISION_MODEL=qwen/qwen3.5-122b-a10b
+VISION_PROVIDER=alibaba
 
 # Optional: HED Schema and Validator paths (if not using defaults)
 # HED_SCHEMA_DIR=/path/to/hed-schemas
