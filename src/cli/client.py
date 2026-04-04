@@ -141,6 +141,13 @@ class HEDitClient:
                 status_code=503,
                 detail="The API is temporarily unavailable. Please try again later.",
             )
+        elif response.status_code == 504:
+            raise APIError(
+                "Gateway timeout",
+                status_code=504,
+                detail="The server took too long to respond. Try a faster model/provider "
+                "or use --standalone mode.",
+            )
         else:
             raise APIError(
                 f"Request failed with status {response.status_code}",

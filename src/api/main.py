@@ -100,7 +100,7 @@ def create_openrouter_workflow(
         annotation_model: Model for annotation (default: ANNOTATION_MODEL env or Claude Haiku 4.5)
         annotation_provider: Provider for annotation model (default: ANNOTATION_PROVIDER env or "anthropic")
         eval_model: Model for eval/assessment/feedback (default: EVALUATION_MODEL env or GPT-OSS-120B)
-        eval_provider: Provider for eval models (default: EVALUATION_PROVIDER env or "groq")
+        eval_provider: Provider for eval models (default: EVALUATION_PROVIDER env or "alibaba")
         temperature: LLM temperature (default: 0.1)
         user_id: User ID for cache optimization (derived from API key if not provided)
         schema_dir: Path to HED schemas (None = fetch from GitHub)
@@ -113,8 +113,8 @@ def create_openrouter_workflow(
     # Apply defaults from environment
     default_annotation_model = os.getenv("ANNOTATION_MODEL", "anthropic/claude-haiku-4.5")
     default_annotation_provider = os.getenv("ANNOTATION_PROVIDER", "anthropic")
-    default_eval_model = os.getenv("EVALUATION_MODEL", "qwen/qwen3.5-397b-a17b")
-    default_eval_provider = os.getenv("EVALUATION_PROVIDER")
+    default_eval_model = os.getenv("EVALUATION_MODEL", "qwen/qwen3.5-122b-a10b")
+    default_eval_provider = os.getenv("EVALUATION_PROVIDER", "alibaba")
 
     # Resolve final values: parameter > env var > default
     actual_annotation_model = get_model_name(annotation_model or default_annotation_model)
@@ -240,8 +240,8 @@ def create_byok_vision_agent(
         Configured VisionAgent using the user's key and model settings
     """
     # Use user-provided settings or fall back to server defaults
-    default_vision_model = os.getenv("VISION_MODEL", "qwen/qwen3-vl-32b-instruct")
-    default_vision_provider = os.getenv("VISION_PROVIDER", "novita")
+    default_vision_model = os.getenv("VISION_MODEL", "qwen/qwen3.5-122b-a10b")
+    default_vision_provider = os.getenv("VISION_PROVIDER", "alibaba")
 
     actual_model = vision_model if vision_model else default_vision_model
     actual_temperature = temperature if temperature is not None else 0.3
@@ -354,9 +354,9 @@ async def lifespan(app: FastAPI):
         # Log configuration (env vars are read by create_openrouter_workflow)
         print("Using OpenRouter with models:")
         print(f"  Annotation: {os.getenv('ANNOTATION_MODEL', 'anthropic/claude-haiku-4.5')}")
-        print(f"  Evaluation: {os.getenv('EVALUATION_MODEL', 'qwen/qwen3.5-397b-a17b')}")
+        print(f"  Evaluation: {os.getenv('EVALUATION_MODEL', 'qwen/qwen3.5-122b-a10b')}")
         print(f"  Provider (annotation): {os.getenv('ANNOTATION_PROVIDER', 'anthropic')}")
-        print(f"  Provider (eval): {os.getenv('EVALUATION_PROVIDER', '') or '(auto-routed)'}")
+        print(f"  Provider (eval): {os.getenv('EVALUATION_PROVIDER', 'alibaba')}")
 
         workflow = create_openrouter_workflow(
             api_key=openrouter_api_key,
@@ -395,8 +395,8 @@ async def lifespan(app: FastAPI):
 
     # Initialize vision agent (only for OpenRouter)
     if llm_provider == "openrouter":
-        vision_model = os.getenv("VISION_MODEL", "qwen/qwen3-vl-32b-instruct")
-        vision_provider = os.getenv("VISION_PROVIDER", "novita")
+        vision_model = os.getenv("VISION_MODEL", "qwen/qwen3.5-122b-a10b")
+        vision_provider = os.getenv("VISION_PROVIDER", "alibaba")
 
         print(f"Initializing vision model: {vision_model} (provider: {vision_provider})")
 
@@ -782,10 +782,13 @@ async def annotate_from_image(
                 temperature=temperature,
                 user_id_override=user_id_override,
             )
+            # Only pass provider_override to vision if a custom vision_model was specified
+            # (annotation provider like "anthropic" should not apply to vision model)
+            vision_provider = provider_override if vision_model_override else None
             active_vision_agent = create_byok_vision_agent(
                 openrouter_key,
                 vision_model=vision_model_override,
-                provider=provider_override,
+                provider=vision_provider,
                 temperature=temperature,
                 user_id_override=user_id_override,
             )
@@ -815,7 +818,7 @@ async def annotate_from_image(
                 validator_path=_byok_config.get("validator_path"),
                 use_js_validator=_byok_config.get("use_js_validator", True),
             )
-            # Note: Vision agent uses its own provider (novita for qwen-vl)
+            # Note: Vision agent uses its own provider (alibaba for qwen)
             # Only pass provider_override to vision if a custom vision_model was specified
             vision_provider = provider_override if vision_model_override else None
             active_vision_agent = create_byok_vision_agent(
@@ -1355,10 +1358,13 @@ async def annotate_from_image_stream(
                 temperature=temperature,
                 user_id_override=user_id_override,
             )
+            # Only pass provider_override to vision if a custom vision_model was specified
+            # (annotation provider like "anthropic" should not apply to vision model)
+            vision_provider = provider_override if vision_model_override else None
             active_vision_agent = create_byok_vision_agent(
                 openrouter_key,
                 vision_model=vision_model_override,
-                provider=provider_override,
+                provider=vision_provider,
                 temperature=temperature,
                 user_id_override=user_id_override,
             )
@@ -1386,7 +1392,7 @@ async def annotate_from_image_stream(
                 validator_path=_byok_config.get("validator_path"),
                 use_js_validator=_byok_config.get("use_js_validator", True),
             )
-            # Note: Vision agent uses its own provider (novita for qwen-vl)
+            # Note: Vision agent uses its own provider (alibaba for qwen)
             # Only pass provider_override to vision if a custom vision_model was specified
             vision_provider = provider_override if vision_model_override else None
             active_vision_agent = create_byok_vision_agent(

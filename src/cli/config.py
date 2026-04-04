@@ -41,13 +41,13 @@ DEFAULT_DEV_API_URL = "https://api.annotation.garden/hedit-dev"
 DEFAULT_MODEL = "anthropic/claude-haiku-4.5"
 DEFAULT_PROVIDER = "anthropic"
 
-# Evaluation model: Qwen3.5-397B MoE (most capable Qwen, high throughput)
-DEFAULT_EVAL_MODEL = "qwen/qwen3.5-397b-a17b"
-DEFAULT_EVAL_PROVIDER = None
+# Evaluation model: Qwen3.5-122B MoE (fast, capable, cost-effective via Alibaba)
+DEFAULT_EVAL_MODEL = "qwen/qwen3.5-122b-a10b"
+DEFAULT_EVAL_PROVIDER = "alibaba"
 
-# Vision model: Qwen3-VL-32B for image descriptions
-DEFAULT_VISION_MODEL = "qwen/qwen3-vl-32b-instruct"
-DEFAULT_VISION_PROVIDER = None
+# Vision model: Qwen3.5-122B MoE (accepts vision, fast via Alibaba)
+DEFAULT_VISION_MODEL = "qwen/qwen3.5-122b-a10b"
+DEFAULT_VISION_PROVIDER = "alibaba"
 
 
 class CredentialsConfig(BaseModel):
@@ -74,7 +74,7 @@ class ModelsConfig(BaseModel):
     vision: str = Field(default=DEFAULT_VISION_MODEL, description="Vision model for images")
     vision_provider: str | None = Field(
         default=DEFAULT_VISION_PROVIDER,
-        description="Provider for vision model (deepinfra/fp8 for qwen-vl)",
+        description="Provider for vision model (alibaba for qwen)",
     )
     temperature: float = Field(default=0.1, ge=0.0, le=1.0, description="Model temperature")
 
