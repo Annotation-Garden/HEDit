@@ -799,6 +799,7 @@ async def annotate_from_image(
                 user_id_override=user_id_override,
             )
         except Exception as e:
+            logging.exception("Failed to initialize BYOK agents")
             raise HTTPException(
                 status_code=500, detail=f"Failed to initialize BYOK agents: {str(e)}"
             ) from e
@@ -1381,6 +1382,7 @@ async def annotate_from_image_stream(
                 user_id_override=user_id_override,
             )
         except Exception as e:
+            logging.exception("Failed to initialize BYOK agents")
             raise HTTPException(
                 status_code=500, detail=f"Failed to initialize BYOK agents: {str(e)}"
             ) from e

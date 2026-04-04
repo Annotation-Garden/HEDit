@@ -139,7 +139,7 @@ class HEDitClient:
             raise APIError(
                 "Service unavailable",
                 status_code=503,
-                detail="The API is temporarily unavailable. Please try again later.",
+                detail=detail or "The API is temporarily unavailable. Please try again later.",
             )
         elif response.status_code == 504:
             raise APIError(
