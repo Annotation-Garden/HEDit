@@ -99,7 +99,7 @@ def create_openrouter_workflow(
         api_key: OpenRouter API key
         annotation_model: Model for annotation (default: ANNOTATION_MODEL env or Claude Haiku 4.5)
         annotation_provider: Provider for annotation model (default: ANNOTATION_PROVIDER env or "anthropic")
-        eval_model: Model for eval/assessment/feedback (default: EVALUATION_MODEL env or GPT-OSS-120B)
+        eval_model: Model for eval/assessment/feedback (default: EVALUATION_MODEL env or Qwen3.5-122B)
         eval_provider: Provider for eval models (default: EVALUATION_PROVIDER env or "alibaba")
         temperature: LLM temperature (default: 0.1)
         user_id: User ID for cache optimization (derived from API key if not provided)
@@ -486,6 +486,7 @@ app.add_middleware(
         "X-OpenRouter-Key",  # BYOK mode
         "X-OpenRouter-Model",  # BYOK model override
         "X-OpenRouter-Vision-Model",  # BYOK vision model override
+        "X-OpenRouter-Vision-Provider",  # BYOK vision provider override
         "X-OpenRouter-Provider",  # BYOK provider preference
         "X-OpenRouter-Temperature",  # BYOK temperature override
         "X-OpenRouter-Eval-Model",  # BYOK eval model override
@@ -754,6 +755,9 @@ async def annotate_from_image(
     # Check for model override headers (from frontend dropdown or CLI)
     model_override = request.model or req.headers.get("x-openrouter-model")
     vision_model_override = request.vision_model or req.headers.get("x-openrouter-vision-model")
+    vision_provider_override = request.vision_provider or req.headers.get(
+        "x-openrouter-vision-provider"
+    )
     provider_override = request.provider or req.headers.get("x-openrouter-provider")
     eval_model_override = req.headers.get("x-openrouter-eval-model")
     eval_provider_override = req.headers.get("x-openrouter-eval-provider")
@@ -782,9 +786,11 @@ async def annotate_from_image(
                 temperature=temperature,
                 user_id_override=user_id_override,
             )
-            # Only pass provider_override to vision if a custom vision_model was specified
-            # (annotation provider like "anthropic" should not apply to vision model)
-            vision_provider = provider_override if vision_model_override else None
+            # Vision uses its own provider; fall back to annotation provider only if
+            # a custom vision_model was specified without an explicit vision_provider
+            vision_provider = vision_provider_override or (
+                provider_override if vision_model_override else None
+            )
             active_vision_agent = create_byok_vision_agent(
                 openrouter_key,
                 vision_model=vision_model_override,
@@ -818,9 +824,10 @@ async def annotate_from_image(
                 validator_path=_byok_config.get("validator_path"),
                 use_js_validator=_byok_config.get("use_js_validator", True),
             )
-            # Note: Vision agent uses its own provider (alibaba for qwen)
-            # Only pass provider_override to vision if a custom vision_model was specified
-            vision_provider = provider_override if vision_model_override else None
+            # Note: Vision agent uses the vision-specific provider, not the annotation provider
+            vision_provider = vision_provider_override or (
+                provider_override if vision_model_override else None
+            )
             active_vision_agent = create_byok_vision_agent(
                 server_api_key,
                 vision_model=vision_model_override,
@@ -1332,6 +1339,9 @@ async def annotate_from_image_stream(
     # Determine which workflow and vision agent to use (same logic as /annotate-from-image)
     model_override = request.model or req.headers.get("x-openrouter-model")
     vision_model_override = request.vision_model or req.headers.get("x-openrouter-vision-model")
+    vision_provider_override = request.vision_provider or req.headers.get(
+        "x-openrouter-vision-provider"
+    )
     provider_override = request.provider or req.headers.get("x-openrouter-provider")
     eval_model_override = req.headers.get("x-openrouter-eval-model")
     eval_provider_override = req.headers.get("x-openrouter-eval-provider")
@@ -1358,9 +1368,11 @@ async def annotate_from_image_stream(
                 temperature=temperature,
                 user_id_override=user_id_override,
             )
-            # Only pass provider_override to vision if a custom vision_model was specified
-            # (annotation provider like "anthropic" should not apply to vision model)
-            vision_provider = provider_override if vision_model_override else None
+            # Vision uses its own provider; fall back to annotation provider only if
+            # a custom vision_model was specified without an explicit vision_provider
+            vision_provider = vision_provider_override or (
+                provider_override if vision_model_override else None
+            )
             active_vision_agent = create_byok_vision_agent(
                 openrouter_key,
                 vision_model=vision_model_override,
@@ -1392,9 +1404,10 @@ async def annotate_from_image_stream(
                 validator_path=_byok_config.get("validator_path"),
                 use_js_validator=_byok_config.get("use_js_validator", True),
             )
-            # Note: Vision agent uses its own provider (alibaba for qwen)
-            # Only pass provider_override to vision if a custom vision_model was specified
-            vision_provider = provider_override if vision_model_override else None
+            # Note: Vision agent uses the vision-specific provider, not the annotation provider
+            vision_provider = vision_provider_override or (
+                provider_override if vision_model_override else None
+            )
             active_vision_agent = create_byok_vision_agent(
                 server_api_key,
                 vision_model=vision_model_override,

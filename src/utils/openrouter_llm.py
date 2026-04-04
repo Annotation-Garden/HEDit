@@ -32,7 +32,7 @@ def create_openrouter_llm(
         api_key: OpenRouter API key (defaults to OPENROUTER_API_KEY env var)
         temperature: Sampling temperature (0.0-1.0)
         max_tokens: Maximum tokens to generate
-        provider: Specific provider to use (e.g., "Cerebras", "Anthropic")
+        provider: Specific provider to use (e.g., "anthropic", "alibaba")
         user_id: User identifier for cache optimization (sticky routing)
         enable_caching: Enable Anthropic prompt caching. If None (default),
             auto-enables for Anthropic Claude models.

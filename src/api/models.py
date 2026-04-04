@@ -45,8 +45,8 @@ class AnnotationRequest(BaseModel):
     )
     provider: str | None = Field(
         default=None,
-        description="Override provider preference (BYOK mode only, e.g., 'Cerebras')",
-        examples=["Cerebras", "deepinfra/fp8", None],
+        description="Override provider preference (BYOK mode only, e.g., 'anthropic')",
+        examples=["anthropic", "alibaba", None],
     )
     temperature: float | None = Field(
         default=None,
@@ -179,10 +179,15 @@ class ImageAnnotationRequest(BaseModel):
         description="Override vision model for image description (BYOK mode only)",
         examples=["qwen/qwen3.5-122b-a10b", "qwen/qwen3-vl-235b-a22b-instruct"],
     )
+    vision_provider: str | None = Field(
+        default=None,
+        description="Override vision model provider (BYOK mode only, e.g., 'alibaba')",
+        examples=["alibaba", "novita", None],
+    )
     provider: str | None = Field(
         default=None,
-        description="Override provider preference (BYOK mode only, e.g., 'Cerebras')",
-        examples=["Cerebras", "deepinfra/fp8", None],
+        description="Override annotation provider preference (BYOK mode only, e.g., 'anthropic')",
+        examples=["anthropic", "alibaba", None],
     )
     temperature: float | None = Field(
         default=None,

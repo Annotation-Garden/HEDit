@@ -69,7 +69,7 @@ class ModelsConfig(BaseModel):
     )
     eval_provider: str | None = Field(
         default=DEFAULT_EVAL_PROVIDER,
-        description="Provider for evaluation model (None = OpenRouter auto-routes)",
+        description="Provider for evaluation model (default: alibaba)",
     )
     vision: str = Field(default=DEFAULT_VISION_MODEL, description="Vision model for images")
     vision_provider: str | None = Field(
@@ -237,8 +237,8 @@ def get_effective_config(
         api_url: Override API URL
         model: Override model (if non-default, clears provider unless explicitly set)
         eval_model: Override evaluation model (for consistent benchmarking)
-        eval_provider: Override provider for evaluation model (e.g., "Cerebras")
-        provider: Override provider preference (e.g., "Cerebras")
+        eval_provider: Override provider for evaluation model (e.g., "alibaba")
+        provider: Override provider preference (e.g., "anthropic")
         temperature: Override temperature
         schema_version: Override schema version
         output_format: Override output format
