@@ -1284,7 +1284,7 @@ By following these principles and patterns, you create annotations that are not 
 **Available tools:**
 
 - [HED online tools](https://hedtools.org/hed) - Fairly complete set of tools for a single tsv and json files.
-- [HED browser-based validation](https://www.hedtags.org/hed-javascript) - validate an entire BIDS dataset -- all local, no installation
+- [HED browser-based validation](https://www.hedtags.org/hed-web) - validate an entire BIDS dataset -- all local, no installation
 - [HED extension for NWB](https://github.com/hed-standard/ndx-hed) - incorporates HED into Neurodata Without Borders datasets.
 - [Python HEDTools](https://github.com/hed-standard/hed-python) - comprehensive set of tools for HED in Python.
 - [MATLAB HEDTools](https://github.com/hed-standard/hed-matlab) - HED interface in MATLAB
