@@ -2,89 +2,67 @@
   "width_mm": 240,
   "labels": [
     {
-      "text": "Pull perturbation  (1.0 s)",
-      "x": 384,
-      "y": 70,
-      "color": "#B45309",
-      "font_size_pt": 32
-    },
-    {
-      "text": "Visual field rotation  (0.5 s)",
-      "x": 1152,
-      "y": 70,
-      "color": "#4B4967",
-      "font_size_pt": 32
-    },
-    {
       "text": "F_pull",
-      "x": 80,
-      "y": 320,
+      "x": 620,
+      "y": 290,
       "color": "#DC2626",
       "font_size_pt": 30,
-      "arrow_to": [220, 320]
+      "arrow_to": [340, 340]
     },
     {
       "text": "EEG cap",
-      "x": 60,
-      "y": 200,
+      "x": 130,
+      "y": 70,
       "color": "#184A3D",
       "font_size_pt": 22,
-      "arrow_to": [200, 200]
+      "arrow_to": [185, 80]
     },
     {
       "text": "safety harness",
-      "x": 80,
-      "y": 250,
+      "x": 120,
+      "y": 230,
       "color": "#184A3D",
       "font_size_pt": 22,
-      "arrow_to": [225, 240]
+      "arrow_to": [210, 230]
     },
     {
       "text": "motor + load cell",
-      "x": 600,
-      "y": 530,
+      "x": 680,
+      "y": 480,
       "color": "#B45309",
       "font_size_pt": 22,
-      "arrow_to": [450, 510]
+      "arrow_to": [520, 440]
     },
     {
-      "text": "narrow beam  (2.5 × 12.7 cm)",
-      "x": 320,
-      "y": 940,
+      "text": "narrow beam",
+      "x": 110,
+      "y": 700,
       "color": "#1E293B",
       "font_size_pt": 22,
-      "arrow_to": [260, 760]
+      "arrow_to": [180, 605]
     },
     {
-      "text": "treadmill belt",
-      "x": 920,
-      "y": 940,
-      "color": "#1E293B",
-      "font_size_pt": 22,
-      "arrow_to": [990, 800]
+      "text": "(2.5 × 12.7 cm)",
+      "x": 110,
+      "y": 730,
+      "color": "#64748B",
+      "font_size_pt": 18
     },
     {
       "text": "Oculus Rift DK2",
-      "x": 1230,
-      "y": 200,
+      "x": 830,
+      "y": 100,
       "color": "#4B4967",
       "font_size_pt": 22,
-      "arrow_to": [1090, 180]
+      "arrow_to": [950, 90]
     },
     {
-      "text": "20° rotation",
-      "x": 1290,
-      "y": 320,
+      "text": "20° visual rotation",
+      "x": 1300,
+      "y": 410,
       "color": "#4B4967",
       "font_size_pt": 22,
-      "arrow_to": [1180, 300]
-    },
-    {
-      "text": "4 sessions × 150 perturbations per subject",
-      "x": 768,
-      "y": 1000,
-      "color": "#64748B",
-      "font_size_pt": 22
+      "arrow_to": [1240, 220]
     }
   ],
   "scale_bars": []
