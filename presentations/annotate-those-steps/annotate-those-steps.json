@@ -409,7 +409,7 @@
           {
             "type": "callout",
             "calloutType": "tip",
-            "content": "**Scope today (v0.6):** natural language -> HED.\n\n**Roadmap (hedify):** paper PDF extraction, events.tsv ingestion, GUI review.",
+            "content": "**Scope today (v0.6):** one **detailed** natural-language description -> one HED tag string per event value.\n\n**Not yet:** composite tags for events that co-occur (e.g. pull-while-walking). Lands in hedify with paper PDF extraction, events.tsv ingestion, and GUI review.",
             "animation": { "fragment": true, "type": "slide-up", "index": 4 },
             "position": { "area": "right" }
           }
@@ -468,25 +468,25 @@
         "elements": [
           {
             "type": "text",
-            "content": "## Demo -- the input you write",
+            "content": "## Demo -- write one rich description per event",
             "style": { "fontSize": "xl" },
             "position": { "area": "header" }
           },
           {
             "type": "code",
             "language": "json",
-            "code": "{\n  \"pull_left\":  \"motor pull at waist, left, 1 s, ~60 N\",\n  \"pull_right\": \"same, right side\",\n  \"rotate_cw\":  \"VR field rotation 20 deg CW, 0.5 s\",\n  \"rotate_ccw\": \"same, counterclockwise\"\n}",
+            "code": "{\n  \"pull_left\":\n    \"Mediolateral motor-driven pull on the\n     participant's waist belt, leftward, 1.0 s,\n     peak force ~60 N (load cell measured).\n     Sensorimotor balance perturbation during\n     beam standing or walking.\",\n\n  \"rotate_cw\":\n    \"Visual field rotation, 20 degrees clockwise,\n     via head-mounted VR display (Oculus Rift\n     DK2), 0.5 s. Sensorimotor balance\n     perturbation during beam standing or walking.\"\n}",
             "position": { "area": "content" }
           },
           {
             "type": "callout",
             "calloutType": "tip",
-            "content": "**Recipe per description:** body part + direction + magnitude + unit + condition. Be specific (\"mediolateral\", not \"lateral\"; \"20 deg\", not \"rotated\"). HEDit will not invent the magnitude -- garbage in, garbage out.",
+            "content": "**HEDit is tuned for detail.** Each description should include: action + body part + direction/laterality + magnitude with units + duration + modality + experimental context. \"mediolateral\", not \"lateral\". \"20 degrees\", not \"rotated\". HEDit will not invent the magnitude -- garbage in, garbage out.",
             "animation": { "fragment": true, "type": "slide-up", "index": 0 },
             "position": { "area": "footer" }
           }
         ],
-        "speakerNotes": "- This is the actual input. One JSON dictionary, one prose description per event value.\n- Recipe: body part + direction + magnitude + unit + condition. If your description is missing the magnitude, HEDit will produce a tag without a magnitude slot.\n- Frame this as a 5-minute task per dataset, replacing 'write a README paragraph' you would do anyway."
+        "speakerNotes": "- This is what HEDit's parser is tuned to consume. Each description is a paragraph, not a tag.\n- For the hands-on portion of the talk, two well-formed examples are enough -- pull_left and rotate_cw. Run them live.\n- HEDit v0.6 returns one HED tag string per description. It does NOT yet annotate multiple co-occurring events (e.g. pull-while-walking) as a single composite -- that lands in hedify.\n- Frame the input task as 'paragraph per event-value' -- it is the same paragraph you would write in your README."
       },
 
       {

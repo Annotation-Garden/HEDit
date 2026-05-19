@@ -52,7 +52,10 @@ Under the hood, three LangGraph agents grounded in the HED schema:
 
 The schema is the contract; agents do not invent vocabulary. The output is a BIDS-compliant `events.json` with HED keys plus a provenance trail noting which paper section and which schema version each tag was derived from.
 
-Today's scope is explicitly *natural-language to HED*. Paper PDF parsing, `events.tsv` ingestion, and a GUI editor live in the planned `hedify` layer (target: 2026 Q4).
+Today's scope is deliberately narrow: **one detailed natural-language description in, one validated HED tag string out, per event-value level.** Two shape constraints follow from that:
+
+- HEDit is tuned for *paragraph-grade* detail. Terse inputs ("same, right side") produce thin tags. Each description should include action, body part, direction, magnitude, unit, duration, modality, and experimental context.
+- HEDit does not yet emit composite tags for events that co-occur (e.g. *pull while walking*). Each event-value level is tagged independently. Compositional annotation, paper PDF parsing, `events.tsv` ingestion, and a GUI editor all land in the planned `hedify` layer (target: 2026 Q4).
 
 ## The Annotation Garden Initiative
 
