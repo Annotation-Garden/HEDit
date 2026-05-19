@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" width="960" height="460">
+  <title>hedify -- the next chapter</title>
+  <text x="480" y="26" font-family="sans-serif" font-size="15" fill="#1E293B" font-weight="bold" text-anchor="middle">hedify -- the GUI that closes the loop (planned)</text>
+
+  <!-- Mock GUI window -->
+  <g>
+    <rect x="40" y="60" width="880" height="320" rx="10" fill="#FFFFFF" stroke="#1E293B" stroke-width="1.8"/>
+    <!-- title bar -->
+    <rect x="40" y="60" width="880" height="32" rx="10" fill="#184A3D"/>
+    <rect x="40" y="74" width="880" height="18" fill="#184A3D"/>
+    <circle cx="62" cy="76" r="5" fill="#FCA5A5"/>
+    <circle cx="80" cy="76" r="5" fill="#FCD34D"/>
+    <circle cx="98" cy="76" r="5" fill="#86EFAC"/>
+    <text x="480" y="82" font-family="sans-serif" font-size="13" font-weight="bold" fill="#FFFFFF" text-anchor="middle">hedify -- annotation studio  -  ds003739/sub-003/ses-02</text>
+
+    <!-- LEFT pane: paper + events -->
+    <g>
+      <rect x="56" y="104" width="280" height="260" rx="6" fill="#F8FAFC" stroke="#475569" stroke-width="1"/>
+      <text x="196" y="124" font-family="sans-serif" font-size="12" font-weight="bold" fill="#1E293B" text-anchor="middle">Source documents</text>
+      <!-- Paper PDF preview -->
+      <rect x="70" y="138" width="252" height="86" rx="3" fill="#FFFFFF" stroke="#184A3D" stroke-width="1"/>
+      <rect x="78" y="146" width="34" height="62" fill="#FEF2F2" stroke="#DC2626" stroke-width="1"/>
+      <text x="120" y="160" font-family="sans-serif" font-size="10" font-weight="bold" fill="#1E293B">Peterson and Ferris 2018</text>
+      <text x="120" y="174" font-family="sans-serif" font-size="9" fill="#475569">Methods, p.4</text>
+      <g stroke="#94A3B8" stroke-width="0.6">
+        <line x1="120" y1="182" x2="310" y2="182"/>
+        <line x1="120" y1="190" x2="308" y2="190"/>
+        <line x1="120" y1="198" x2="306" y2="198"/>
+      </g>
+      <rect x="116" y="186" width="38" height="9" fill="#FEF3C7" opacity="0.7"/>
+
+      <!-- events.tsv mini -->
+      <rect x="70" y="232" width="252" height="64" rx="3" fill="#FFFFFF" stroke="#059669" stroke-width="1"/>
+      <text x="196" y="250" font-family="sans-serif" font-size="10" font-weight="bold" fill="#065F46" text-anchor="middle">events.tsv</text>
+      <g font-family="monospace" font-size="9" fill="#1E293B">
+        <text x="80" y="266">onset</text><text x="138" y="266">duration</text><text x="208" y="266">value</text>
+        <text x="80" y="278">14.42</text><text x="138" y="278">1.0</text><text x="208" y="278">pull_right</text>
+        <text x="80" y="290">18.29</text><text x="138" y="290">1.0</text><text x="208" y="290">pull_left</text>
+      </g>
+
+      <text x="196" y="318" font-family="sans-serif" font-size="10" font-weight="bold" fill="#B45309" text-anchor="middle">auto-extract candidates</text>
+      <rect x="80" y="326" width="232" height="28" rx="3" fill="#FEF3C7" stroke="#B45309" stroke-width="1"/>
+      <text x="196" y="344" font-family="monospace" font-size="10" fill="#7C2D12" text-anchor="middle">"mediolateral pull at the waist"</text>
+    </g>
+
+    <!-- CENTER pane: HED tag editor -->
+    <g>
+      <rect x="348" y="104" width="280" height="260" rx="6" fill="#FFFBF5" stroke="#E99852" stroke-width="1"/>
+      <text x="488" y="124" font-family="sans-serif" font-size="12" font-weight="bold" fill="#B45309" text-anchor="middle">HED tag editor</text>
+
+      <text x="360" y="146" font-family="monospace" font-size="10" fill="#7C2D12">value = pull_left</text>
+
+      <!-- chips -->
+      <g transform="translate(360, 156)">
+        <rect x="0" y="0" width="64" height="22" rx="11" fill="#184A3D"/>
+        <text x="32" y="14" font-family="monospace" font-size="10" fill="#FFFFFF" text-anchor="middle">Move</text>
+        <rect x="70" y="0" width="64" height="22" rx="11" fill="#184A3D"/>
+        <text x="102" y="14" font-family="monospace" font-size="10" fill="#FFFFFF" text-anchor="middle">Push</text>
+        <rect x="140" y="0" width="120" height="22" rx="11" fill="#184A3D"/>
+        <text x="200" y="14" font-family="monospace" font-size="10" fill="#FFFFFF" text-anchor="middle">Direction/Leftward</text>
+
+        <rect x="0" y="30" width="104" height="22" rx="11" fill="#184A3D"/>
+        <text x="52" y="44" font-family="monospace" font-size="10" fill="#FFFFFF" text-anchor="middle">Body-part/Hip</text>
+        <rect x="112" y="30" width="100" height="22" rx="11" fill="#E99852" stroke="#B45309" stroke-width="1"/>
+        <text x="162" y="44" font-family="monospace" font-size="10" fill="#7C2D12" text-anchor="middle">(Force, N, 60)</text>
+
+        <rect x="0" y="60" width="118" height="22" rx="11" fill="#FBBF24" opacity="0.5" stroke="#B45309" stroke-width="1" stroke-dasharray="3,2"/>
+        <text x="59" y="74" font-family="monospace" font-size="10" fill="#7C2D12" text-anchor="middle">+ suggest more</text>
+      </g>
+
+      <!-- preview text -->
+      <text x="360" y="258" font-family="monospace" font-size="9" font-weight="bold" fill="#475569">preview:</text>
+      <rect x="360" y="262" width="260" height="56" rx="4" fill="#FFFFFF" stroke="#475569" stroke-width="1"/>
+      <text x="368" y="276" font-family="monospace" font-size="9" fill="#1E293B">Move, Push,</text>
+      <text x="368" y="288" font-family="monospace" font-size="9" fill="#1E293B">Direction/Leftward,</text>
+      <text x="368" y="300" font-family="monospace" font-size="9" fill="#1E293B">Body-part/Hip,</text>
+      <text x="368" y="312" font-family="monospace" font-size="9" fill="#1E293B">(Force, N, 60)</text>
+
+      <rect x="360" y="328" width="124" height="26" rx="13" fill="#184A3D"/>
+      <text x="422" y="346" font-family="sans-serif" font-size="11" font-weight="bold" fill="#FFFFFF" text-anchor="middle">Apply HEDit</text>
+      <rect x="500" y="328" width="118" height="26" rx="13" fill="#FFFFFF" stroke="#184A3D" stroke-width="1.4"/>
+      <text x="558" y="346" font-family="sans-serif" font-size="11" font-weight="bold" fill="#184A3D" text-anchor="middle">Validate</text>
+    </g>
+
+    <!-- RIGHT pane: validator output -->
+    <g>
+      <rect x="640" y="104" width="264" height="260" rx="6" fill="#F0FDF4" stroke="#059669" stroke-width="1"/>
+      <text x="772" y="124" font-family="sans-serif" font-size="12" font-weight="bold" fill="#065F46" text-anchor="middle">Validator panel</text>
+
+      <rect x="652" y="138" width="240" height="28" rx="3" fill="#FFFFFF" stroke="#059669" stroke-width="1"/>
+      <circle cx="666" cy="152" r="6" fill="#059669"/>
+      <text x="672" y="156" font-family="monospace" font-size="10" font-weight="bold" fill="#FFFFFF" text-anchor="start">_</text>
+      <text x="664" y="156" font-family="monospace" font-size="9" font-weight="bold" fill="#FFFFFF">v</text>
+      <text x="688" y="156" font-family="sans-serif" font-size="11" fill="#065F46">all tags valid</text>
+
+      <rect x="652" y="172" width="240" height="28" rx="3" fill="#FEF3C7" stroke="#B45309" stroke-width="1"/>
+      <text x="664" y="190" font-family="monospace" font-size="10" font-weight="bold" fill="#B45309">!</text>
+      <text x="678" y="190" font-family="sans-serif" font-size="11" fill="#7C2D12">consider adding Perturbation</text>
+
+      <rect x="652" y="206" width="240" height="28" rx="3" fill="#FFFFFF" stroke="#059669" stroke-width="1"/>
+      <text x="660" y="224" font-family="monospace" font-size="10" font-weight="bold" fill="#059669">+</text>
+      <text x="676" y="224" font-family="sans-serif" font-size="11" fill="#065F46">tag traces to paper section</text>
+
+      <!-- mini provenance trail -->
+      <text x="660" y="256" font-family="monospace" font-size="10" font-weight="bold" fill="#065F46">provenance:</text>
+      <text x="660" y="272" font-family="monospace" font-size="9" fill="#1E293B">- Peterson 2018, p.4</text>
+      <text x="660" y="286" font-family="monospace" font-size="9" fill="#1E293B">- HED schema v8.3</text>
+      <text x="660" y="300" font-family="monospace" font-size="9" fill="#1E293B">- HEDit Tagger v0.6</text>
+
+      <rect x="652" y="316" width="240" height="38" rx="3" fill="#D1FAE5" stroke="#059669" stroke-width="1.4"/>
+      <text x="772" y="332" font-family="sans-serif" font-size="11" font-weight="bold" fill="#065F46" text-anchor="middle">ready to commit</text>
+      <text x="772" y="346" font-family="monospace" font-size="9" fill="#065F46" text-anchor="middle">events.json + provenance.log</text>
+    </g>
+  </g>
+
+  <!-- Bottom note -->
+  <g>
+    <rect x="40" y="396" width="880" height="48" rx="6" fill="#FEF3C7" stroke="#B45309" stroke-width="1.4"/>
+    <text x="480" y="416" font-family="sans-serif" font-size="12" font-weight="bold" fill="#7C2D12" text-anchor="middle">hedify adds paper-aware extraction, drag-and-drop tag editing, and reviewer provenance --</text>
+    <text x="480" y="434" font-family="sans-serif" font-size="12" fill="#7C2D12" text-anchor="middle">on top of the same HEDit conversion engine. Today: CLI + JSON. Tomorrow: GUI + audit trail.</text>
+  </g>
+</svg>

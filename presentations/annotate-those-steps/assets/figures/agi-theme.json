@@ -1,0 +1,47 @@
+{
+  "theme_id": "agi-mobi-talk",
+  "palette": {
+    "primary": "#184A3D",
+    "accent": "#E99852",
+    "secondary": "#4B4967",
+    "neutral": "#1E293B",
+    "bg": "#FFFFFF",
+    "warn": "#DC2626"
+  },
+  "stroke": {
+    "weight_px": 2,
+    "linejoin": "round",
+    "linecap": "round"
+  },
+  "style_tokens": [
+    "clean scientific illustration",
+    "Nature Neuroscience editorial style",
+    "soft flat shading",
+    "limited palette",
+    "side-on orthographic view",
+    "modern infographic",
+    "no labels in image",
+    "publication-ready"
+  ],
+  "negative_tokens": [
+    "text",
+    "labels",
+    "captions",
+    "watermark",
+    "letters",
+    "numbers",
+    "arrows",
+    "annotations",
+    "logos",
+    "photorealistic skin",
+    "blurry",
+    "cartoonish",
+    "ugly",
+    "low quality"
+  ],
+  "composition": {
+    "aspect": "16:9",
+    "padding_pct": 5,
+    "perspective": "orthographic"
+  }
+}

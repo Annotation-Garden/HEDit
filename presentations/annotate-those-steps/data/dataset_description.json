@@ -1,0 +1,24 @@
+{
+    "Name": "Perturbed beam-walking task",
+    "ReferencesAndLinks": [
+        "https://doi.org/10.1016/j.neuroimage.2019.05.038",
+        "https://doi.org/10.1523/ENEURO.0207-18.2018"
+    ],
+    "BIDSVersion": "v1.6.0",
+    "License": "CC0",
+    "Authors": [
+        "Steven Peterson",
+        "Daniel Ferris"
+    ],
+    "Funding": [
+        "National Science Foundation (DGE 1256260)",
+        "Army Research Laboratory (W911NF-10-2-0022)",
+        "National Institutes of Health (R01 NS104772)"
+    ],
+    "EthicsApprovals": [
+        "University of Michigan Health Sciences and Behavioral Sciences Institutional Review Board"
+    ],
+    "Acknowledgements": "We thank Estefania Rios and Zachary Ohs for their assistance with data collections and processing the motion capture data. We would also like to thank members of the Human Neuromechanics Laboratory for input regarding the experiment design and data processing.",
+    "HowToAcknowledge": "Please cite:\n\nPeterson SM & Ferris DP (2018). Differentiation in theta and beta electrocortical activity between visual and physical perturbations to walking and standing balance. eNeuro, 5(4): ENEURO.0207-18.2018.\nDOI: 10.1523/ENEURO.0207-18.2018",
+    "DatasetDOI": "10.18112/openneuro.ds003739.v1.0.2"
+}

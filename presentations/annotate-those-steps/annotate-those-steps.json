@@ -1,0 +1,608 @@
+{
+  "presentation": {
+    "metadata": {
+      "title": "Annotate Those Steps",
+      "author": "Seyed Yahya Shirazi, Ph.D.",
+      "description": "How to curate analysis-ready MoBI datasets using HEDit",
+      "theme": "default",
+      "aspectRatio": "16:9",
+      "controls": {
+        "slideNumbers": true,
+        "progress": true
+      },
+      "customTheme": {
+        "colors": {
+          "primary": "#184A3D",
+          "background": "#FFFFFF",
+          "text": "#1E293B",
+          "accent": "#E99852"
+        },
+        "fonts": {
+          "heading": "Inter, sans-serif",
+          "body": "Inter, sans-serif"
+        }
+      }
+    },
+    "slides": [
+      {
+        "id": "title",
+        "layout": "title",
+        "transition": "fade",
+        "elements": [
+          {
+            "type": "text",
+            "content": "# Annotate those steps",
+            "style": {
+              "fontSize": "xxl",
+              "alignment": "center",
+              "fontWeight": "bold",
+              "color": "#184A3D"
+            },
+            "position": { "area": "center" }
+          },
+          {
+            "type": "text",
+            "content": "How to curate analysis-ready MoBI datasets",
+            "style": {
+              "fontSize": "large",
+              "alignment": "center",
+              "color": "#E99852"
+            },
+            "position": { "area": "center", "order": 1 }
+          },
+          {
+            "type": "text",
+            "content": "**Seyed Yahya Shirazi, Ph.D.**\nSwartz Center for Computational Neuroscience, UC San Diego\n\n[Annotation Garden Initiative](https://annotation.garden) -- HEDit project",
+            "style": {
+              "fontSize": "medium",
+              "alignment": "center",
+              "color": "#475569"
+            },
+            "position": { "area": "center", "order": 2 }
+          },
+          {
+            "type": "text",
+            "content": "Case study: ds003739 (Peterson and Ferris, 2018) -- beam walking with mediolateral pull and visual rotation",
+            "style": {
+              "fontSize": "small",
+              "alignment": "center",
+              "color": "#4B4967"
+            },
+            "position": { "area": "center", "order": 3 }
+          }
+        ],
+        "speakerNotes": "- Welcome. Today's talk is about the gap between the rich data a MoBI lab collects and the thin annotations that reach re-users.\n- The case study is one of the cleanest MoBI shares on NEMAR -- and even there, the events.tsv is one column.\n- Goal: show why HED + HEDit close that gap, and what is on the roadmap (hedify)."
+      },
+
+      {
+        "id": "what-is-mobi",
+        "layout": "single-column",
+        "transition": "slide",
+        "elements": [
+          {
+            "type": "text",
+            "content": "## MoBI -- one experiment, many streams",
+            "style": { "fontSize": "xl" },
+            "position": { "area": "header" }
+          },
+          {
+            "type": "image",
+            "src": "./assets/icons/mobi-stack.svg",
+            "alt": "Subject silhouette surrounded by six modality cards (EEG, EMG, motion capture, VR, load cell, behavior), with a thin events.tsv strip at the bottom showing only 4 string labels survive sharing",
+            "width": "88%",
+            "position": { "area": "content" }
+          }
+        ],
+        "speakerNotes": "- MoBI = Mobile Brain/Body Imaging. EEG + EMG + motion capture + VR + force + behavior. All recorded synchronously.\n- The data side is dense and synchronized. The metadata side -- what the events meant -- is much thinner.\n- Today's talk targets that asymmetry."
+      },
+
+      {
+        "id": "annotation-reality",
+        "layout": "single-column",
+        "transition": "slide",
+        "elements": [
+          {
+            "type": "text",
+            "content": "## The MoBI annotation reality",
+            "style": { "fontSize": "xl" },
+            "position": { "area": "header" }
+          },
+          {
+            "type": "image",
+            "src": "./assets/icons/rich-vs-thin.svg",
+            "alt": "Left panel shows rich raw recording with EEG, EMG, motion capture, load cell, VR timestamps, task log. Right panel shows a thin events.tsv with only 4 columns: onset, duration, trial_type, value.",
+            "width": "92%",
+            "position": { "area": "content" }
+          },
+          {
+            "type": "callout",
+            "calloutType": "warning",
+            "content": "Source: **ds003739** (Peterson and Ferris, 2018). This is one of the **cleanest** MoBI shares -- a reasonable best case, not a worst case.",
+            "animation": { "fragment": true, "type": "slide-up", "index": 0 },
+            "position": { "area": "footer" }
+          }
+        ],
+        "speakerNotes": "- The raw side has six modalities. The shared side has four string labels.\n- This is not because the lab did poor work -- the opposite. The bottleneck is the format, not the data.\n- Frame the rest of the talk around closing that gap with HED + HEDit."
+      },
+
+      {
+        "id": "case-study",
+        "layout": "single-column",
+        "transition": "slide",
+        "elements": [
+          {
+            "type": "text",
+            "content": "## Case study -- ds003739: beam walking with pull and VR perturbations",
+            "style": { "fontSize": "xl" },
+            "position": { "area": "header" }
+          },
+          {
+            "type": "image",
+            "src": "./assets/figures/experiment-scene.svg",
+            "alt": "AI-generated scientific illustration. Two-panel side view. Left panel labeled 'Pull perturbation (1.0 s)': a subject in EEG cap and orange shirt stands on a wooden balance beam mounted on a treadmill, suspended by a chest harness from the ceiling, with a cable from the waist running through a pulley to an electromechanical motor + load cell on the floor; a red horizontal F_pull arrow points to the waist. Right panel labeled 'Visual field rotation (0.5 s)': the same subject, now wearing a black Oculus Rift DK2 VR headset, with an inset showing a 20-degree rotation of the virtual scene.",
+            "width": "82%",
+            "position": { "area": "content" }
+          }
+        ],
+        "speakerNotes": "- Read aloud: 30 subjects, 4 sessions each (stand-pull, walk-pull, stand-rotate, walk-rotate).\n- 150 perturbations per session, balanced left/right or CW/CCW.\n- Pull is 1 s mediolateral via motor + cable + harness. Rotation is 0.5 s, 20 deg via Oculus Rift DK2.\n- This is dense, controlled MoBI. The experiment is well-described in the paper -- not in the sidecar."
+      },
+
+      {
+        "id": "one-trial",
+        "layout": "single-column",
+        "transition": "slide",
+        "elements": [
+          {
+            "type": "text",
+            "content": "## One trial = baseline + perturbation + recovery",
+            "style": { "fontSize": "xl" },
+            "position": { "area": "header" }
+          },
+          {
+            "type": "image",
+            "src": "./assets/icons/one-trial.svg",
+            "alt": "Timeline of one perturbation trial showing baseline locomotion bar, perturbation event bar at t=0, and postural recovery bar. Gait phase pattern alternates underneath. Pull force trace rises briefly at t=0. A red callout shows events.tsv only captures the onset + label; a yellow callout below lists what is ALSO true and recoverable: gait phase, peak force, rotation angle/speed, balance-loss flag, recovery latency, task, direction.",
+            "width": "94%",
+            "position": { "area": "content" }
+          }
+        ],
+        "speakerNotes": "- The trial has structure on a ~4-second window. events.tsv records exactly one timestamp + one label per trial.\n- Everything else -- gait phase at onset, force magnitude, recovery latency, whether the subject lost balance -- is in the raw data but does not reach re-users.\n- The thin column is a triage decision (format + culture), not a data limitation."
+      },
+
+      {
+        "id": "missing-gait",
+        "layout": "single-column",
+        "transition": "slide",
+        "elements": [
+          {
+            "type": "text",
+            "content": "## Gap #1 -- gait phases and balance loss are recoverable, but not shared",
+            "style": { "fontSize": "xl" },
+            "position": { "area": "header" }
+          },
+          {
+            "type": "image",
+            "src": "./assets/figures/gait-cycle.svg",
+            "alt": "AI-generated scientific illustration of five sequential gait-cycle poses of the same subject walking heel-to-toe on a balance beam: heel strike, double support, mid stance, leg swing, and balance loss (in red). Title overlay reads 'Gait phases derivable from motion capture, but missing from events.tsv'. Caption notes that all five phases are in raw motion-capture markers but only the perturbation onset reaches the shared events.tsv.",
+            "width": "82%",
+            "position": { "area": "content" }
+          }
+        ],
+        "speakerNotes": "- 16 motion-capture markers track foot, sacrum, neck, head.\n- Heel-strike timing comes out of foot marker peaks. Balance-loss flag comes out of beam-foot distance or harness load.\n- The information exists. It is not surfaced in events.tsv, so any re-analysis that needs it has to start by recomputing it from raw data."
+      },
+
+      {
+        "id": "missing-physics",
+        "layout": "single-column",
+        "transition": "slide",
+        "elements": [
+          {
+            "type": "text",
+            "content": "## Gap #2 -- physical parameters of the perturbation itself",
+            "style": { "fontSize": "xl" },
+            "position": { "area": "header" }
+          },
+          {
+            "type": "image",
+            "src": "./assets/icons/missing-physics.svg",
+            "alt": "Three cards. Left card (pull mechanics) shows hip pulled by cable through a load cell to a motor, with recorded but unshared values: peak_force_N, cable_side, pull_duration_s, motor_rotation_deg. Center card (VR rotation parameters) shows a dial at 20 deg with values: rotation_angle_deg, rotation_direction, rotation_duration_s, angular_velocity. Right card (trial context) shows a 2x2 grid of stand/walk by pull/rotate sessions and values implied by filename only: task_locomotion, perturbation_modality, session_index, harness_active.",
+            "width": "94%",
+            "position": { "area": "content" }
+          }
+        ],
+        "speakerNotes": "- Pull force is measured by load cell. Rotation angle is set by the VR rig. Both are known per trial, neither is in events.tsv.\n- Trial context (stand vs walk, pull vs rotate) is implied only by the BIDS filename, which is a poor primary source.\n- A dose-response study on theta as a function of peak pull force is, today, blocked by the format."
+      },
+
+      {
+        "id": "missing-context",
+        "layout": "two-column",
+        "transition": "slide",
+        "elements": [
+          {
+            "type": "text",
+            "content": "## Gap #3 -- the why behind the trial",
+            "style": { "fontSize": "xl" },
+            "position": { "area": "header" }
+          },
+          {
+            "type": "bullets",
+            "items": [
+              {
+                "text": "**Was the subject standing or walking?** -- only in the filename.",
+                "animation": { "fragment": true, "type": "fade", "index": 0 }
+              },
+              {
+                "text": "**Modality** -- was the perturbation visual or physical? Re-user infers from the value string.",
+                "animation": { "fragment": true, "type": "fade", "index": 1 }
+              },
+              {
+                "text": "**Block / session structure** -- only via BIDS path conventions.",
+                "animation": { "fragment": true, "type": "fade", "index": 2 }
+              },
+              {
+                "text": "**Safety / scaffolding** -- harness on; beam dimensions; this matters for kinematic comparisons.",
+                "animation": { "fragment": true, "type": "fade", "index": 3 }
+              }
+            ],
+            "bulletStyle": "disc",
+            "style": { "fontSize": "large" },
+            "position": { "area": "left" }
+          },
+          {
+            "type": "callout",
+            "calloutType": "important",
+            "content": "**Filenames are not metadata.** A re-user opening `sub-003_ses-02_task-pullwalk_events.tsv` learns the condition from the filename string, not from the event row. That is fragile and not machine-queryable.",
+            "animation": { "fragment": true, "type": "slide-up", "index": 4 },
+            "position": { "area": "right" }
+          }
+        ],
+        "speakerNotes": "- This is the quietest gap. Filenames are human-readable but not designed to be parsed.\n- The right callout is the headline: filenames are not metadata. Sidecars are."
+      },
+
+      {
+        "id": "analysis-blocked",
+        "layout": "two-column",
+        "transition": "slide",
+        "elements": [
+          {
+            "type": "text",
+            "content": "## Re-analyses you can not do (today)",
+            "style": { "fontSize": "xl" },
+            "position": { "area": "header" }
+          },
+          {
+            "type": "bullets",
+            "items": [
+              {
+                "text": "**Phase-lock theta to heel-strike** -- requires gait phase column.",
+                "animation": { "fragment": true, "type": "fade", "index": 0 }
+              },
+              {
+                "text": "**Dose-response of beta to pull force** -- requires peak_force_N column.",
+                "animation": { "fragment": true, "type": "fade", "index": 1 }
+              },
+              {
+                "text": "**Compare ERSPs across labs** -- requires shared perturbation magnitude and modality semantics.",
+                "animation": { "fragment": true, "type": "fade", "index": 2 }
+              },
+              {
+                "text": "**Train across studies** -- requires controlled vocabulary for event types.",
+                "animation": { "fragment": true, "type": "fade", "index": 3 }
+              }
+            ],
+            "bulletStyle": "disc",
+            "style": { "fontSize": "large" },
+            "position": { "area": "left" }
+          },
+          {
+            "type": "callout",
+            "calloutType": "warning",
+            "content": "Each of these would take **days** to recover from the raw data; with proper annotation, they are one filter and one `groupby`.",
+            "animation": { "fragment": true, "type": "slide-up", "index": 4 },
+            "position": { "area": "right" }
+          }
+        ],
+        "speakerNotes": "- This is the concrete cost slide. Every gap above maps to a science question that does not get asked because the metadata is missing.\n- These re-analyses are the reason curating annotations is worth the effort."
+      },
+
+      {
+        "id": "hed-anatomy",
+        "layout": "single-column",
+        "transition": "slide",
+        "elements": [
+          {
+            "type": "text",
+            "content": "## The fix in principle -- HED",
+            "style": { "fontSize": "xl" },
+            "position": { "area": "header" }
+          },
+          {
+            "type": "image",
+            "src": "./assets/icons/hed-anatomy.svg",
+            "alt": "Top orange callout shows one HED tag as a comma-separated path through the schema tree on two lines: Sensory-event, Visual-presentation, Move, Rotation/(Direction/Clockwise), (Magnitude, deg, #). Underneath, left panel shows the HED hierarchy as inheritance of meaning with Event, Item, Action branches. Right panel shows a sidecar example with HED nested under value with pull_left and rotate_cw tag strings.",
+            "width": "94%",
+            "position": { "area": "content" }
+          }
+        ],
+        "speakerNotes": "- HED = Hierarchical Event Descriptors. Controlled vocabulary. Composable. Validatable.\n- One tag is a comma-separated path. Tags inherit from parents in the hierarchy. Value slots (the `#`) accept a typed number with units.\n- Crucially: the schema is the contract. If your tag is in the schema, it means the same thing across labs."
+      },
+
+      {
+        "id": "hed-sidecar",
+        "layout": "single-column",
+        "transition": "slide",
+        "elements": [
+          {
+            "type": "text",
+            "content": "## The HED sidecar pattern -- timeseries unchanged",
+            "style": { "fontSize": "xl" },
+            "position": { "area": "header" }
+          },
+          {
+            "type": "image",
+            "src": "./assets/icons/hed-sidecar.svg",
+            "alt": "Left: events.tsv table with onset, duration, trial_type, value columns unchanged. Right: events.json with HED keys nested under each column, mapping pull_left, pull_right, rotate_cw, rotate_ccw to full HED tag strings.",
+            "width": "94%",
+            "position": { "area": "content" }
+          }
+        ],
+        "speakerNotes": "- The events.tsv does not change. Existing analyses keep working.\n- All semantic richness lives in events.json -- column-level, value-level HED tags.\n- This is the same sidecar pattern BIDS already uses, just with HED keys."
+      },
+
+      {
+        "id": "workflow-pain",
+        "layout": "single-column",
+        "transition": "slide",
+        "elements": [
+          {
+            "type": "text",
+            "content": "## Why HED workflows stall for MoBI labs",
+            "style": { "fontSize": "xl" },
+            "position": { "area": "header" }
+          },
+          {
+            "type": "image",
+            "src": "./assets/icons/workflow-pain.svg",
+            "alt": "Four-step horizontal pain pipeline: Read the paper (hours per session, extract experiment structure by hand) -> Learn the schema (~2000 tags, expert-only) -> Write the sidecar (column-level levels, value slots, error-prone) -> Validate, Repeat (JS validator, cryptic messages, loop until clean). Bottom red bar: HED adoption stays in the labs that build HED.",
+            "width": "94%",
+            "position": { "area": "content" }
+          }
+        ],
+        "speakerNotes": "- Frame this as a workflow problem, not a will problem.\n- The labs that produce the schema can tag fluently. Everyone else looks at a 2000-tag tree and stops.\n- This is where HEDit enters."
+      },
+
+      {
+        "id": "hedit-intro",
+        "layout": "two-column",
+        "transition": "slide",
+        "elements": [
+          {
+            "type": "text",
+            "content": "## HEDit -- what it does, today",
+            "style": { "fontSize": "xl" },
+            "position": { "area": "header" }
+          },
+          {
+            "type": "bullets",
+            "items": [
+              {
+                "text": "**You describe** the events in plain English (one description per `value` level).",
+                "animation": { "fragment": true, "type": "fade", "index": 0 }
+              },
+              {
+                "text": "**HEDit converts** that natural-language description into a valid HED tag string.",
+                "animation": { "fragment": true, "type": "fade", "index": 1 }
+              },
+              {
+                "text": "**LangGraph multi-agent** pipeline: Parser -- Tagger -- Validator, with the HED JS validator in the loop.",
+                "animation": { "fragment": true, "type": "fade", "index": 2 }
+              },
+              {
+                "text": "**Output**: BIDS-compliant `events.json` with HED keys plus a provenance trail.",
+                "animation": { "fragment": true, "type": "fade", "index": 3 }
+              }
+            ],
+            "bulletStyle": "disc",
+            "style": { "fontSize": "large" },
+            "position": { "area": "left" }
+          },
+          {
+            "type": "callout",
+            "calloutType": "tip",
+            "content": "**Scope today (v0.6):** natural language -> HED.\n\n**Roadmap (hedify):** paper PDF extraction, events.tsv ingestion, GUI review.",
+            "animation": { "fragment": true, "type": "slide-up", "index": 4 },
+            "position": { "area": "right" }
+          }
+        ],
+        "speakerNotes": "- Make the scope explicit. HEDit today is a natural-language to HED converter. It does not parse papers; you do.\n- The reason that boundary matters: tagger fidelity depends on the description. Garbage-in stays garbage. We do not want to hide a hallucination behind a 'paper reader' chip.\n- hedify (the planned GUI) will close the input loop with PDF extraction and event-row suggestions."
+      },
+
+      {
+        "id": "hedit-overview",
+        "layout": "single-column",
+        "transition": "slide",
+        "elements": [
+          {
+            "type": "text",
+            "content": "## HEDit -- the architecture",
+            "style": { "fontSize": "xl" },
+            "position": { "area": "header" }
+          },
+          {
+            "type": "image",
+            "src": "./assets/icons/hedit-overview.svg",
+            "alt": "Left panel: user-provided natural-language descriptions for pull_left and rotate_cw. Middle: HEDit engine with three LangGraph agents (Parser, Tagger, Validator) on top of a HED schema + OpenRouter LLMs strip, with a loop arrow indicating re-tag with validator feedback. Right panel: HEDit returns a valid HED sidecar with pull_left and rotate_cw tag strings. Bottom note clarifies Today (v0.6) is natural language to HED and Planned (hedify) adds paper PDF extraction, GUI review, auto-suggest from events.tsv columns.",
+            "width": "92%",
+            "position": { "area": "content" }
+          }
+        ],
+        "speakerNotes": "- Left to right: user input -> agents -> validated HED.\n- Note the bottom strip: this slide is explicit about what HEDit does TODAY versus what is roadmap.\n- Why this matters: prevent overpromising and keep the boundary between automation and human-in-the-loop clear."
+      },
+
+      {
+        "id": "hedit-pipeline",
+        "layout": "single-column",
+        "transition": "slide",
+        "elements": [
+          {
+            "type": "text",
+            "content": "## Inside the pipeline -- three agents, one schema",
+            "style": { "fontSize": "xl" },
+            "position": { "area": "header" }
+          },
+          {
+            "type": "image",
+            "src": "./assets/icons/hedit-pipeline.svg",
+            "alt": "Horizontal pipeline of three stages: Parser (natural language to structured facts: action, body-part, direction, magnitude, unit), Tagger (retrieves HED nodes via RAG over schema, composes the tag string), Validator (HED JS validator on the composed tag, checks tag exists, units valid, value slot well-formed). A red dashed loop returns from Validator back to Tagger with validator error context if invalid. A bottom rail shows the HED schema v8.x is the single source of truth tagger queries and validator checks.",
+            "width": "94%",
+            "position": { "area": "content" }
+          }
+        ],
+        "speakerNotes": "- Parser: extract structured facts from the user's plain English (one body part, one direction, one number, one unit, ...).\n- Tagger: query the HED schema (RAG over node names + definitions) and compose a tag string.\n- Validator: run the official HED JS validator against the composed tag. If invalid, feed the error back to the tagger for another shot.\n- The schema is the contract. No agent invents vocabulary."
+      },
+
+      {
+        "id": "demo-input",
+        "layout": "single-column",
+        "transition": "slide",
+        "elements": [
+          {
+            "type": "text",
+            "content": "## Demo -- the input you write",
+            "style": { "fontSize": "xl" },
+            "position": { "area": "header" }
+          },
+          {
+            "type": "code",
+            "language": "json",
+            "code": "{\n  \"pull_left\":  \"motor pull at waist, left, 1 s, ~60 N\",\n  \"pull_right\": \"same, right side\",\n  \"rotate_cw\":  \"VR field rotation 20 deg CW, 0.5 s\",\n  \"rotate_ccw\": \"same, counterclockwise\"\n}",
+            "position": { "area": "content" }
+          },
+          {
+            "type": "callout",
+            "calloutType": "tip",
+            "content": "**Recipe per description:** body part + direction + magnitude + unit + condition. Be specific (\"mediolateral\", not \"lateral\"; \"20 deg\", not \"rotated\"). HEDit will not invent the magnitude -- garbage in, garbage out.",
+            "animation": { "fragment": true, "type": "slide-up", "index": 0 },
+            "position": { "area": "footer" }
+          }
+        ],
+        "speakerNotes": "- This is the actual input. One JSON dictionary, one prose description per event value.\n- Recipe: body part + direction + magnitude + unit + condition. If your description is missing the magnitude, HEDit will produce a tag without a magnitude slot.\n- Frame this as a 5-minute task per dataset, replacing 'write a README paragraph' you would do anyway."
+      },
+
+      {
+        "id": "demo-output",
+        "layout": "single-column",
+        "transition": "slide",
+        "elements": [
+          {
+            "type": "text",
+            "content": "## Demo -- the output HEDit returns",
+            "style": { "fontSize": "xl" },
+            "position": { "area": "header" }
+          },
+          {
+            "type": "image",
+            "src": "./assets/icons/before-after.svg",
+            "alt": "Side-by-side. Left panel shows the events.json currently shipped on NEMAR/OpenNeuro: human-readable level descriptions for stimulus, pull_left, pull_right, rotate_cw with no HED. Right panel shows the same events.json after HEDit: HED keys on onset, duration, trial_type, and value with composed tag strings for pull_left (Move, Push/Direction/Leftward, Body-part/Hip, Force N #, Mechanical-pull), pull_right (same with Rightward), rotate_cw (Visual-presentation, Rotation/Direction/Clockwise, Magnitude deg #, Visual-perturbation), and rotate_ccw. The center has an orange arrow labeled HEDit, 3 min.",
+            "width": "92%",
+            "position": { "area": "content" }
+          }
+        ],
+        "speakerNotes": "- Same dataset. Same events.tsv. Now machine-queryable.\n- The right side is what HEDit returns. The user wrote the four prose descriptions; HEDit composed and validated the eight tag strings.\n- This is the value proposition in one slide."
+      },
+
+      {
+        "id": "hedify-preview",
+        "layout": "single-column",
+        "transition": "slide",
+        "elements": [
+          {
+            "type": "text",
+            "content": "## What's next -- hedify, the GUI",
+            "style": { "fontSize": "xl" },
+            "position": { "area": "header" }
+          },
+          {
+            "type": "image",
+            "src": "./assets/icons/hedify-preview.svg",
+            "alt": "Mock GUI window titled hedify -- annotation studio. Three panes: left (source documents) shows a paper PDF preview, events.tsv mini-table, and an auto-extract candidates strip with a highlighted phrase 'mediolateral pull at the waist'. Center (HED tag editor) shows chips for Move, Push, Direction/Leftward, Body-part/Hip, (Force, N, 60), and a 'suggest more' chip, plus a preview block and Apply HEDit / Validate buttons. Right (Validator panel) shows three status rows: all tags valid (green check), consider adding Perturbation (yellow warn), tag traces to paper section (green plus), a provenance trail listing Peterson 2018 p.4, HED schema v8.3, HEDit Tagger v0.6, and a ready-to-commit green box. Bottom note explains hedify adds paper-aware extraction, drag-and-drop tag editing, and reviewer provenance on top of the same HEDit conversion engine.",
+            "width": "94%",
+            "position": { "area": "content" }
+          }
+        ],
+        "speakerNotes": "- This is a design mock, not a screenshot of shipping software. Be honest about that.\n- hedify adds: paper PDF reader (auto-extract candidate descriptions), drag-and-drop tag editor, reviewer provenance.\n- HEDit stays as the conversion engine underneath; hedify is the human-in-the-loop layer."
+      },
+
+      {
+        "id": "garden-roadmap",
+        "layout": "single-column",
+        "transition": "slide",
+        "elements": [
+          {
+            "type": "text",
+            "content": "## How it all fits -- Annotation Garden",
+            "style": { "fontSize": "xl" },
+            "position": { "area": "header" }
+          },
+          {
+            "type": "image",
+            "src": "./assets/icons/garden-roadmap.svg",
+            "alt": "Three stacked tiers. Top (orange, shipping): HEDit (today, v0.6) -- natural language to HED tag converter, LangGraph multi-agent, validator in the loop, CLI + JSON, BIDS-compliant, OpenRouter-backed, hosted at api.annotation.garden/hedit. Middle (purple dashed, design phase, 2026 Q4 target): hedify (planned) -- GUI annotation studio with paper PDF reader, drag-and-drop tags, reviewer audit trail. Bottom (green, launching): Annotation Garden Initiative (AGI) -- open infrastructure for collaborative annotation of naturalistic neuroscience stimuli, with badges for image-annotation, HEDit / hedify, flagship datasets, curation governance.",
+            "width": "94%",
+            "position": { "area": "content" }
+          }
+        ],
+        "speakerNotes": "- HEDit is the shipping engine. hedify is the next product on top. AGI is the ecosystem.\n- The path: ship the CLI now, ship the GUI next, share datasets through the same channel.\n- Strategic point: HEDit alone is useful even without hedify. The CLI is enough to enrich a dataset before sharing."
+      },
+
+      {
+        "id": "try-it",
+        "layout": "single-column",
+        "transition": "slide",
+        "elements": [
+          {
+            "type": "text",
+            "content": "## Try it / contribute / cite",
+            "style": { "fontSize": "xl" },
+            "position": { "area": "header" }
+          },
+          {
+            "type": "bullets",
+            "items": [
+              {
+                "text": "**Project:** [github.com/Annotation-Garden/hedit](https://github.com/Annotation-Garden/hedit) -- MIT licensed, contributions welcome.",
+                "animation": { "fragment": true, "type": "fade", "index": 0 }
+              },
+              {
+                "text": "**API:** `api.annotation.garden/hedit` -- POST your description, get HED back.",
+                "animation": { "fragment": true, "type": "fade", "index": 1 }
+              },
+              {
+                "text": "**Install:** `uv pip install hedit` (PyPI, planned for v0.6.0 release).",
+                "animation": { "fragment": true, "type": "fade", "index": 2 }
+              },
+              {
+                "text": "**Cite the case study:** Peterson SM and Ferris DP (2018). *Differentiation in theta and beta electrocortical activity between visual and physical perturbations to walking and standing balance.* eNeuro. doi:10.1523/ENEURO.0207-18.2018",
+                "animation": { "fragment": true, "type": "fade", "index": 3 }
+              },
+              {
+                "text": "**Acknowledgements:** Steven Peterson and Daniel Ferris for the open dataset; the HED working group; SCCN; the AGI contributors.",
+                "animation": { "fragment": true, "type": "fade", "index": 4 }
+              }
+            ],
+            "bulletStyle": "disc",
+            "style": { "fontSize": "large" },
+            "position": { "area": "content" }
+          },
+          {
+            "type": "text",
+            "content": "**Questions?** [shirazi@ieee.org](mailto:shirazi@ieee.org)  -  [annotation.garden](https://annotation.garden)",
+            "style": { "fontSize": "medium", "alignment": "center", "color": "#184A3D" },
+            "position": { "area": "footer" }
+          }
+        ],
+        "speakerNotes": "- Land the call to action. Three audiences: try it (researchers), contribute (developers), cite (anyone using the case study).\n- The Peterson 2018 paper is genuinely the right citation -- they did the hard work, we are just curating the metadata.\n- Last 60 seconds: thank-yous and open the floor for questions."
+      }
+    ]
+  }
+}

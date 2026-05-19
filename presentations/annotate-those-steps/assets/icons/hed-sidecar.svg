@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" width="960" height="420">
+  <title>The HED sidecar pattern</title>
+  <text x="480" y="26" font-family="sans-serif" font-size="15" fill="#1E293B" font-weight="bold" text-anchor="middle">The HED sidecar pattern -- events.tsv stays as-is; events.json carries the semantics</text>
+
+  <!-- Left: events.tsv (unchanged) -->
+  <g>
+    <rect x="40" y="60" width="380" height="260" rx="8" fill="#FFFFFF" stroke="#184A3D" stroke-width="1.6"/>
+    <text x="230" y="82" font-family="sans-serif" font-size="13" font-weight="bold" fill="#184A3D" text-anchor="middle">events.tsv (unchanged)</text>
+
+    <g transform="translate(60, 100)">
+      <rect x="0" y="0" width="340" height="22" fill="#184A3D"/>
+      <text x="20" y="15" font-family="monospace" font-size="10" font-weight="bold" fill="#FFFFFF">onset</text>
+      <text x="92" y="15" font-family="monospace" font-size="10" font-weight="bold" fill="#FFFFFF">duration</text>
+      <text x="172" y="15" font-family="monospace" font-size="10" font-weight="bold" fill="#FFFFFF">trial_type</text>
+      <text x="252" y="15" font-family="monospace" font-size="10" font-weight="bold" fill="#FFFFFF">value</text>
+
+      <g font-family="monospace" font-size="10" fill="#1E293B">
+        <rect x="0" y="22" width="340" height="18" fill="#F0FDF4"/>
+        <text x="6" y="35">14.42</text><text x="92" y="35">1.0</text><text x="172" y="35">stimulus</text><text x="252" y="35">pull_right</text>
+        <rect x="0" y="40" width="340" height="18" fill="#FFFFFF"/>
+        <text x="6" y="53">18.29</text><text x="92" y="53">1.0</text><text x="172" y="53">stimulus</text><text x="252" y="53">pull_left</text>
+        <rect x="0" y="58" width="340" height="18" fill="#F0FDF4"/>
+        <text x="6" y="71">22.83</text><text x="92" y="71">1.0</text><text x="172" y="71">stimulus</text><text x="252" y="71">pull_left</text>
+        <rect x="0" y="76" width="340" height="18" fill="#FFFFFF"/>
+        <text x="6" y="89">27.17</text><text x="92" y="89">1.0</text><text x="172" y="89">stimulus</text><text x="252" y="89">pull_left</text>
+        <rect x="0" y="94" width="340" height="18" fill="#F0FDF4"/>
+        <text x="160" y="107" text-anchor="middle">. . .</text>
+      </g>
+    </g>
+
+    <text x="230" y="298" font-family="monospace" font-size="11" fill="#065F46" text-anchor="middle">columns live in the timeseries</text>
+  </g>
+
+  <!-- Arrow -->
+  <g>
+    <path d="M430 190 L530 190" fill="none" stroke="#E99852" stroke-width="3"/>
+    <polygon points="530,190 518,182 518,198" fill="#E99852"/>
+    <text x="480" y="178" font-family="sans-serif" font-size="11" font-weight="bold" fill="#B45309" text-anchor="middle">column-level</text>
+    <text x="480" y="216" font-family="sans-serif" font-size="11" font-weight="bold" fill="#B45309" text-anchor="middle">HED attached</text>
+  </g>
+
+  <!-- Right: events.json with HED -->
+  <g>
+    <rect x="540" y="60" width="380" height="320" rx="8" fill="#FFFBF5" stroke="#E99852" stroke-width="1.6"/>
+    <text x="730" y="82" font-family="sans-serif" font-size="13" font-weight="bold" fill="#B45309" text-anchor="middle">events.json (HED-enriched)</text>
+
+    <g font-family="monospace" font-size="10" fill="#1E293B">
+      <text x="558" y="106">{</text>
+      <text x="574" y="120">"trial_type": {</text>
+      <text x="590" y="134">"HED": {</text>
+      <text x="606" y="148">"stimulus": "Sensory-event,</text>
+      <text x="636" y="162">Experimental-stimulus"</text>
+      <text x="590" y="176">}</text>
+      <text x="574" y="190">},</text>
+      <text x="574" y="206">"value": {</text>
+      <text x="590" y="220">"HED": {</text>
+      <text x="606" y="234" fill="#B45309" font-weight="bold">"pull_left": "Move,</text>
+      <text x="636" y="248" fill="#B45309" font-weight="bold">Push/(Direction/Leftward),</text>
+      <text x="636" y="262" fill="#B45309" font-weight="bold">(Body-part/Hip),</text>
+      <text x="636" y="276" fill="#B45309" font-weight="bold">(Force, N, #),</text>
+      <text x="636" y="290" fill="#B45309" font-weight="bold">Perturbation",</text>
+      <text x="606" y="306">"pull_right": "...",</text>
+      <text x="606" y="320">"rotate_cw": "...",</text>
+      <text x="606" y="334">"rotate_ccw": "..."</text>
+      <text x="590" y="350">}</text>
+      <text x="574" y="364">}</text>
+    </g>
+  </g>
+
+  <text x="480" y="408" font-family="sans-serif" font-size="11" fill="#64748B" font-style="italic" text-anchor="middle">Inherits BIDS conventions; no schema migration needed. Re-users get column-level semantics for free.</text>
+</svg>

@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" width="960" height="420">
+  <title>Missing physical parameters</title>
+  <text x="480" y="26" font-family="sans-serif" font-size="15" fill="#1E293B" font-weight="bold" text-anchor="middle">Gap #2 -- physical parameters of the perturbation itself are dropped</text>
+
+  <!-- Three cards: pull force, rotation angle, rotation speed -->
+  <!-- Card 1: pull force -->
+  <g>
+    <rect x="40" y="56" width="290" height="320" rx="8" fill="#FFFFFF" stroke="#E99852" stroke-width="1.8"/>
+    <text x="185" y="78" font-family="sans-serif" font-size="13" font-weight="bold" fill="#B45309" text-anchor="middle">Pull mechanics</text>
+
+    <!-- mini pull diagram -->
+    <g transform="translate(70, 92)">
+      <!-- subject hip stylized -->
+      <rect x="40" y="40" width="40" height="60" rx="6" fill="#FBE7D2" stroke="#184A3D" stroke-width="1.4"/>
+      <rect x="36" y="58" width="48" height="6" fill="#DC2626"/>
+      <!-- cable to motor -->
+      <line x1="84" y1="62" x2="180" y2="62" stroke="#1E293B" stroke-width="1.8"/>
+      <!-- motor block -->
+      <rect x="180" y="44" width="40" height="38" rx="3" fill="#4B4967" stroke="#1E293B" stroke-width="1.4"/>
+      <text x="200" y="60" font-family="monospace" font-size="8" fill="#FFFFFF" text-anchor="middle">MOTOR</text>
+      <text x="200" y="72" font-family="monospace" font-size="8" fill="#E99852" text-anchor="middle">90 deg</text>
+      <!-- load cell badge -->
+      <rect x="120" y="50" width="44" height="22" rx="3" fill="#FEF3C7" stroke="#B45309" stroke-width="1.4"/>
+      <text x="142" y="64" font-family="monospace" font-size="9" font-weight="bold" fill="#7C2D12" text-anchor="middle">load cell</text>
+      <!-- pull arrow -->
+      <path d="M40 62 L4 62" fill="none" stroke="#DC2626" stroke-width="2.4"/>
+      <polygon points="4,62 14,57 14,67" fill="#DC2626"/>
+    </g>
+
+    <!-- recorded but unshared values -->
+    <g transform="translate(60, 220)">
+      <text x="125" y="0" font-family="sans-serif" font-size="11" font-weight="bold" fill="#7C2D12" text-anchor="middle">recorded but unshared:</text>
+      <rect x="0" y="12" width="250" height="20" rx="3" fill="#FEF3C7" stroke="#B45309" stroke-width="1"/>
+      <text x="10" y="26" font-family="monospace" font-size="10" fill="#7C2D12">peak_force_N</text>
+      <text x="240" y="26" font-family="monospace" font-size="10" fill="#7C2D12" text-anchor="end">~40-80 N</text>
+
+      <rect x="0" y="38" width="250" height="20" rx="3" fill="#FEF3C7" stroke="#B45309" stroke-width="1"/>
+      <text x="10" y="52" font-family="monospace" font-size="10" fill="#7C2D12">cable_side</text>
+      <text x="240" y="52" font-family="monospace" font-size="10" fill="#7C2D12" text-anchor="end">left | right</text>
+
+      <rect x="0" y="64" width="250" height="20" rx="3" fill="#FEF3C7" stroke="#B45309" stroke-width="1"/>
+      <text x="10" y="78" font-family="monospace" font-size="10" fill="#7C2D12">pull_duration_s</text>
+      <text x="240" y="78" font-family="monospace" font-size="10" fill="#7C2D12" text-anchor="end">1.0</text>
+
+      <rect x="0" y="90" width="250" height="20" rx="3" fill="#FEF3C7" stroke="#B45309" stroke-width="1"/>
+      <text x="10" y="104" font-family="monospace" font-size="10" fill="#7C2D12">motor_rotation_deg</text>
+      <text x="240" y="104" font-family="monospace" font-size="10" fill="#7C2D12" text-anchor="end">90</text>
+    </g>
+  </g>
+
+  <!-- Card 2: rotation angle -->
+  <g>
+    <rect x="346" y="56" width="268" height="320" rx="8" fill="#FFFFFF" stroke="#4B4967" stroke-width="1.8"/>
+    <text x="480" y="78" font-family="sans-serif" font-size="13" font-weight="bold" fill="#4B4967" text-anchor="middle">VR rotation parameters</text>
+
+    <!-- big angle dial -->
+    <g transform="translate(480, 180)">
+      <circle cx="0" cy="0" r="62" fill="#F0F4FF" stroke="#4B4967" stroke-width="1.6"/>
+      <line x1="0" y1="0" x2="0" y2="-62" stroke="#94A3B8" stroke-width="1.4"/>
+      <line x1="0" y1="0" x2="22" y2="-58" stroke="#DC2626" stroke-width="2.6"/>
+      <path d="M0 -42 A 42 42 0 0 1 14 -39" fill="none" stroke="#DC2626" stroke-width="2"/>
+      <text x="0" y="32" font-family="monospace" font-size="13" font-weight="bold" fill="#4B4967" text-anchor="middle">20 deg</text>
+    </g>
+
+    <g transform="translate(366, 264)">
+      <text x="114" y="0" font-family="sans-serif" font-size="11" font-weight="bold" fill="#4B4967" text-anchor="middle">recorded but unshared:</text>
+      <rect x="0" y="12" width="228" height="20" rx="3" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1"/>
+      <text x="10" y="26" font-family="monospace" font-size="10" fill="#4B4967">rotation_angle_deg</text>
+      <text x="218" y="26" font-family="monospace" font-size="10" fill="#4B4967" text-anchor="end">20</text>
+
+      <rect x="0" y="38" width="228" height="20" rx="3" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1"/>
+      <text x="10" y="52" font-family="monospace" font-size="10" fill="#4B4967">rotation_direction</text>
+      <text x="218" y="52" font-family="monospace" font-size="10" fill="#4B4967" text-anchor="end">CW | CCW</text>
+
+      <rect x="0" y="64" width="228" height="20" rx="3" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1"/>
+      <text x="10" y="78" font-family="monospace" font-size="10" fill="#4B4967">rotation_duration_s</text>
+      <text x="218" y="78" font-family="monospace" font-size="10" fill="#4B4967" text-anchor="end">0.5</text>
+
+      <rect x="0" y="90" width="228" height="20" rx="3" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1"/>
+      <text x="10" y="104" font-family="monospace" font-size="10" fill="#4B4967">angular_velocity</text>
+      <text x="218" y="104" font-family="monospace" font-size="10" fill="#4B4967" text-anchor="end">40 deg/s</text>
+    </g>
+  </g>
+
+  <!-- Card 3: context -->
+  <g>
+    <rect x="630" y="56" width="290" height="320" rx="8" fill="#FFFFFF" stroke="#184A3D" stroke-width="1.8"/>
+    <text x="775" y="78" font-family="sans-serif" font-size="13" font-weight="bold" fill="#184A3D" text-anchor="middle">Trial context</text>
+
+    <!-- two-by-two grid: stand/walk x pull/rotate -->
+    <g transform="translate(650, 100)">
+      <rect x="0" y="0" width="125" height="40" rx="4" fill="#FFFBF5" stroke="#184A3D" stroke-width="1.4"/>
+      <text x="62" y="18" font-family="sans-serif" font-size="11" font-weight="bold" fill="#184A3D" text-anchor="middle">stand-pull</text>
+      <text x="62" y="32" font-family="monospace" font-size="9" fill="#475569" text-anchor="middle">ses-01</text>
+
+      <rect x="130" y="0" width="125" height="40" rx="4" fill="#FFFBF5" stroke="#184A3D" stroke-width="1.4"/>
+      <text x="192" y="18" font-family="sans-serif" font-size="11" font-weight="bold" fill="#184A3D" text-anchor="middle">walk-pull</text>
+      <text x="192" y="32" font-family="monospace" font-size="9" fill="#475569" text-anchor="middle">ses-02</text>
+
+      <rect x="0" y="48" width="125" height="40" rx="4" fill="#FFFBF5" stroke="#184A3D" stroke-width="1.4"/>
+      <text x="62" y="66" font-family="sans-serif" font-size="11" font-weight="bold" fill="#184A3D" text-anchor="middle">stand-rotate</text>
+      <text x="62" y="80" font-family="monospace" font-size="9" fill="#475569" text-anchor="middle">ses-03</text>
+
+      <rect x="130" y="48" width="125" height="40" rx="4" fill="#FFFBF5" stroke="#184A3D" stroke-width="1.4"/>
+      <text x="192" y="66" font-family="sans-serif" font-size="11" font-weight="bold" fill="#184A3D" text-anchor="middle">walk-rotate</text>
+      <text x="192" y="80" font-family="monospace" font-size="9" fill="#475569" text-anchor="middle">ses-04</text>
+    </g>
+
+    <g transform="translate(650, 220)">
+      <text x="125" y="0" font-family="sans-serif" font-size="11" font-weight="bold" fill="#184A3D" text-anchor="middle">implied by filename, not in events:</text>
+      <rect x="0" y="12" width="250" height="20" rx="3" fill="#F0FDF4" stroke="#059669" stroke-width="1"/>
+      <text x="10" y="26" font-family="monospace" font-size="10" fill="#065F46">task_locomotion</text>
+      <text x="240" y="26" font-family="monospace" font-size="10" fill="#065F46" text-anchor="end">stand | walk</text>
+
+      <rect x="0" y="38" width="250" height="20" rx="3" fill="#F0FDF4" stroke="#059669" stroke-width="1"/>
+      <text x="10" y="52" font-family="monospace" font-size="10" fill="#065F46">perturbation_modality</text>
+      <text x="240" y="52" font-family="monospace" font-size="10" fill="#065F46" text-anchor="end">visual | pull</text>
+
+      <rect x="0" y="64" width="250" height="20" rx="3" fill="#F0FDF4" stroke="#059669" stroke-width="1"/>
+      <text x="10" y="78" font-family="monospace" font-size="10" fill="#065F46">session_index</text>
+      <text x="240" y="78" font-family="monospace" font-size="10" fill="#065F46" text-anchor="end">1..4</text>
+
+      <rect x="0" y="90" width="250" height="20" rx="3" fill="#F0FDF4" stroke="#059669" stroke-width="1"/>
+      <text x="10" y="104" font-family="monospace" font-size="10" fill="#065F46">harness_active</text>
+      <text x="240" y="104" font-family="monospace" font-size="10" fill="#065F46" text-anchor="end">true</text>
+    </g>
+  </g>
+
+  <text x="480" y="406" font-family="sans-serif" font-size="11" fill="#64748B" font-style="italic" text-anchor="middle">A dose-response on theta to pull force needs the force. A re-user cannot recover it from a string label.</text>
+</svg>

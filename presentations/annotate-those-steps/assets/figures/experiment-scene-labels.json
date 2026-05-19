@@ -1,0 +1,91 @@
+{
+  "width_mm": 240,
+  "labels": [
+    {
+      "text": "Pull perturbation  (1.0 s)",
+      "x": 384,
+      "y": 70,
+      "color": "#B45309",
+      "font_size_pt": 32
+    },
+    {
+      "text": "Visual field rotation  (0.5 s)",
+      "x": 1152,
+      "y": 70,
+      "color": "#4B4967",
+      "font_size_pt": 32
+    },
+    {
+      "text": "F_pull",
+      "x": 80,
+      "y": 320,
+      "color": "#DC2626",
+      "font_size_pt": 30,
+      "arrow_to": [220, 320]
+    },
+    {
+      "text": "EEG cap",
+      "x": 60,
+      "y": 200,
+      "color": "#184A3D",
+      "font_size_pt": 22,
+      "arrow_to": [200, 200]
+    },
+    {
+      "text": "safety harness",
+      "x": 80,
+      "y": 250,
+      "color": "#184A3D",
+      "font_size_pt": 22,
+      "arrow_to": [225, 240]
+    },
+    {
+      "text": "motor + load cell",
+      "x": 600,
+      "y": 530,
+      "color": "#B45309",
+      "font_size_pt": 22,
+      "arrow_to": [450, 510]
+    },
+    {
+      "text": "narrow beam  (2.5 × 12.7 cm)",
+      "x": 320,
+      "y": 940,
+      "color": "#1E293B",
+      "font_size_pt": 22,
+      "arrow_to": [260, 760]
+    },
+    {
+      "text": "treadmill belt",
+      "x": 920,
+      "y": 940,
+      "color": "#1E293B",
+      "font_size_pt": 22,
+      "arrow_to": [990, 800]
+    },
+    {
+      "text": "Oculus Rift DK2",
+      "x": 1230,
+      "y": 200,
+      "color": "#4B4967",
+      "font_size_pt": 22,
+      "arrow_to": [1090, 180]
+    },
+    {
+      "text": "20° rotation",
+      "x": 1290,
+      "y": 320,
+      "color": "#4B4967",
+      "font_size_pt": 22,
+      "arrow_to": [1180, 300]
+    },
+    {
+      "text": "4 sessions × 150 perturbations per subject",
+      "x": 768,
+      "y": 1000,
+      "color": "#64748B",
+      "font_size_pt": 22
+    }
+  ],
+  "scale_bars": []
+}
