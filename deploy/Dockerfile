@@ -23,14 +23,14 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone HED repositories (self-contained)
-# Using schemas_latest_json from official hed-schemas repo (JSON inheritance fix now merged)
-# hed-lsp is pinned to the branch that adds the `hed/suggest` JSON-RPC
-# request handler; once that lands upstream this can switch back to a
-# tag-based clone of main.
-ARG HED_LSP_REF=feat/hed-suggest-request
+# hed-lsp is pinned to the merge commit on main that landed the
+# `hed/suggest` JSON-RPC request (hed-standard/hed-lsp#31, v0.4.0).
+# Pinning to a SHA (not a tag/branch) so the image is reproducible.
+ARG HED_LSP_REF=36447afb5e48bfecc45af0464b652614ba571414
 RUN git clone --depth 1 https://github.com/hed-standard/hed-schemas.git /app/hed-schemas && \
     git clone --depth 1 https://github.com/hed-standard/hed-javascript.git /app/hed-javascript && \
-    git clone --depth 1 --branch "${HED_LSP_REF}" https://github.com/hed-standard/hed-lsp.git /app/hed-lsp
+    git clone https://github.com/hed-standard/hed-lsp.git /app/hed-lsp && \
+    git -C /app/hed-lsp checkout --quiet "${HED_LSP_REF}"
 
 # Build HED JavaScript validator
 WORKDIR /app/hed-javascript

@@ -54,10 +54,10 @@ jobs:
 
       - name: Build hed-lsp (for tests/lsp/ real-LSP tests)
         env:
-          HED_LSP_REF: feat/hed-suggest-request
+          HED_LSP_REF: 36447afb5e48bfecc45af0464b652614ba571414
         run: |
-          git clone --depth 1 --branch "${HED_LSP_REF}" \
-            https://github.com/hed-standard/hed-lsp.git "$RUNNER_TEMP/hed-lsp"
+          git clone https://github.com/hed-standard/hed-lsp.git "$RUNNER_TEMP/hed-lsp"
+          git -C "$RUNNER_TEMP/hed-lsp" checkout --quiet "${HED_LSP_REF}"
           cd "$RUNNER_TEMP/hed-lsp"
           corepack enable
           corepack prepare pnpm@10.33.4 --activate
