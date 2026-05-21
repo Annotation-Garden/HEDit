@@ -266,7 +266,7 @@ class TestValidationAgentTagSuggestions:
     def validation_agent(self):
         """Create a validation agent using Python validator (no LSP)."""
         loader = HedSchemaLoader()
-        return ValidationAgent(loader, use_javascript=False, use_hed_lsp=False)
+        return ValidationAgent(loader, use_javascript=False, lsp_client=None)
 
     @pytest.mark.asyncio
     async def test_tag_suggestions_present_when_valid(self, validation_agent):

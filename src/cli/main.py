@@ -14,6 +14,7 @@ from rich.console import Console
 
 from src.cli import output
 from src.cli.client import APIError
+from src.cli.commands import lsp as lsp_commands
 from src.cli.config import (
     CONFIG_FILE,
     CREDENTIALS_FILE,
@@ -48,6 +49,7 @@ config_app = typer.Typer(
     no_args_is_help=True,
 )
 app.add_typer(config_app, name="config")
+app.add_typer(lsp_commands.app, name="lsp")
 
 console = Console()
 

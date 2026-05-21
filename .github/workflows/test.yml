@@ -47,6 +47,24 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Set up Node.js for hed-lsp
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Build hed-lsp (for tests/lsp/ real-LSP tests)
+        env:
+          HED_LSP_REF: 36447afb5e48bfecc45af0464b652614ba571414
+        run: |
+          git clone https://github.com/hed-standard/hed-lsp.git "$RUNNER_TEMP/hed-lsp"
+          git -C "$RUNNER_TEMP/hed-lsp" checkout --quiet "${HED_LSP_REF}"
+          cd "$RUNNER_TEMP/hed-lsp"
+          corepack enable
+          corepack prepare pnpm@10.33.4 --activate
+          pnpm install --frozen-lockfile
+          pnpm run -r compile
+          echo "HED_LSP_SERVER_JS=$RUNNER_TEMP/hed-lsp/server/out/server.js" >> "$GITHUB_ENV"
+
       - name: Install uv
         uses: astral-sh/setup-uv@v7
 

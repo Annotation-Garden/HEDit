@@ -4,9 +4,9 @@ This module provides HED validation and tag suggestion capabilities:
 
 - HedPythonValidator: Validates HED strings using hed-python library
 - HedJavaScriptValidator: Validates HED strings using hed-javascript (legacy)
-- HedLspClient: Suggests HED tags using hed-lsp CLI
+- HedLspClient: Persistent async client for the hed-lsp Node server
 - get_validator: Factory function to get the appropriate validator
-- is_hed_lsp_available: Check if hed-lsp CLI is installed
+- is_hed_lsp_available: Whether node + hed-lsp server.js are reachable
 
 Note: Imports are lazy to avoid requiring hed-python for hed-lsp functionality.
 """
@@ -18,9 +18,8 @@ from src.validation.hed_lsp import (
     HedLspClient,
     HedSuggestion,
     HedSuggestResult,
-    get_hed_suggestions,
+    find_lsp_server_js,
     is_hed_lsp_available,
-    suggest_tags_for_keywords,
 )
 
 # Type hints only - actual imports happen at runtime when used via __getattr__
@@ -46,9 +45,8 @@ __all__ = [
     "HedLspClient",
     "HedSuggestion",
     "HedSuggestResult",
-    "get_hed_suggestions",
+    "find_lsp_server_js",
     "is_hed_lsp_available",
-    "suggest_tags_for_keywords",
 ]
 
 

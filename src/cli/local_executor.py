@@ -10,15 +10,20 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import logging
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from src.cli.executor import ExecutionBackend, ExecutionError
 from src.version import __version__
 
+logger = logging.getLogger(__name__)
+
 if TYPE_CHECKING:
     from src.agents.vision_agent import VisionAgent
     from src.agents.workflow import HedAnnotationWorkflow
+    from src.lsp import HedLspClient
 
 # Flag to track if standalone dependencies are available
 _STANDALONE_AVAILABLE: bool | None = None
@@ -122,6 +127,15 @@ class LocalExecutionBackend(ExecutionBackend):
         self._workflow: HedAnnotationWorkflow | None = None
         self._vision_agent: VisionAgent | None = None
 
+        # LSP client resolution is async, so it happens on first use; None
+        # means "not yet attempted". After resolution it's either a live
+        # HedLspClient (daemon was running) or stays None (use without LSP).
+        self._lsp_client: HedLspClient | None = None
+        self._lsp_resolved = False
+        # When True, we created the client ourselves (one-shot spawn) and
+        # are responsible for shutting it down at executor close.
+        self._owns_lsp_client = False
+
     @property
     def mode(self) -> str:
         """Get execution mode name."""
@@ -192,9 +206,45 @@ class LocalExecutionBackend(ExecutionBackend):
                 feedback_llm=evaluation_llm,
                 schema_dir=self._schema_dir,
                 use_js_validator=False,  # Use Python validator in standalone
+                lsp_client=self._lsp_client,
             )
 
         return self._workflow
+
+    async def _ensure_lsp_client(self) -> None:
+        """Decide whether to use a hed-lsp client for this command.
+
+        Opt-in behavior: if a daemon socket is present at the per-user
+        runtime dir, connect and use it. Otherwise leave the client as
+        None — the workflow will run without LSP enrichment. Users who
+        want LSP enrichment without a daemon can run `hedit lsp start`
+        first. Setting HEDIT_LSP=0 disables LSP entirely.
+        """
+        if self._lsp_resolved:
+            return
+        self._lsp_resolved = True
+
+        if os.environ.get("HEDIT_LSP", "").lower() in ("0", "false", "no"):
+            return
+
+        from src.lsp import HedLspClient as _Client
+        from src.lsp.daemon import socket_file_path
+
+        socket = socket_file_path()
+        if not socket.exists():
+            return
+        try:
+            self._lsp_client = await _Client.connect_unix(socket)
+        except (ConnectionRefusedError, FileNotFoundError, OSError, TimeoutError) as exc:
+            # Stale socket file or daemon refusing connections — fall back
+            # to no-LSP. Log at debug since this is a normal degraded path
+            # when the daemon was started and then crashed.
+            logger.debug(
+                "Could not connect to hedit-lspd at %s (%s); running without LSP enrichment",
+                socket,
+                exc,
+            )
+            self._lsp_client = None
 
     def _get_vision_agent(self) -> VisionAgent:
         """Get or create the vision agent."""
@@ -249,9 +299,9 @@ class LocalExecutionBackend(ExecutionBackend):
         """Generate HED annotation locally."""
         self._ensure_deps()
 
-        workflow = self._get_workflow()
-
         async def _run() -> Any:
+            await self._ensure_lsp_client()
+            workflow = self._get_workflow()
             return await workflow.run(
                 input_description=description,
                 schema_version=schema_version,
@@ -322,10 +372,11 @@ class LocalExecutionBackend(ExecutionBackend):
             image_data = base64.b64encode(f.read()).decode("utf-8")
         image_uri = f"data:{mime_type};base64,{image_data}"
 
-        vision_agent = self._get_vision_agent()
-        workflow = self._get_workflow()
-
         async def _run() -> tuple[str, dict[str, Any], Any]:
+            await self._ensure_lsp_client()
+            vision_agent = self._get_vision_agent()
+            workflow = self._get_workflow()
+
             # Step 1: Generate image description
             vision_result = await vision_agent.describe_image(
                 image_data=image_uri,
