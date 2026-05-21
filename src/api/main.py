@@ -35,6 +35,7 @@ from src.api.models import (
     ValidationResponse,
 )
 from src.api.security import api_key_auth, audit_logger
+from src.lsp import HedLspClient
 from src.telemetry import LocalFileStorage, TelemetryCollector, TelemetryEvent
 from src.utils.openrouter_llm import create_openrouter_llm, get_model_name
 from src.utils.schema_loader import HedSchemaLoader
@@ -47,6 +48,11 @@ load_dotenv()
 workflow: HedAnnotationWorkflow | None = None
 vision_agent: VisionAgent | None = None
 schema_loader: HedSchemaLoader | None = None
+
+# Persistent LSP client; lifetime = process lifetime. Spawned in lifespan
+# so every request reuses one warm Node child instead of cold-booting
+# hed-suggest per keyword.
+lsp_client: HedLspClient | None = None
 
 # Telemetry collector (initialized in lifespan)
 telemetry_collector: TelemetryCollector | None = None
@@ -78,6 +84,25 @@ def _derive_user_id(token: str) -> str:
     return derived.hex()
 
 
+# Sentinel used by the workflow factories to mean "fall back to the
+# server-wide lsp_client global". Per-request callers can pass an
+# explicit None to opt out, or another HedLspClient instance to override.
+_USE_GLOBAL_LSP: HedLspClient = object()  # type: ignore[assignment]
+
+
+def _resolve_lsp_client(
+    explicit: HedLspClient | None,
+) -> HedLspClient | None:
+    """Pick the per-request LSP client.
+
+    Explicit values (including ``None``) win. The sentinel
+    ``_USE_GLOBAL_LSP`` means "use the lifespan-managed global".
+    """
+    if explicit is _USE_GLOBAL_LSP:
+        return lsp_client
+    return explicit
+
+
 def create_openrouter_workflow(
     api_key: str,
     annotation_model: str | None = None,
@@ -89,6 +114,7 @@ def create_openrouter_workflow(
     schema_dir: str | Path | None = None,
     validator_path: str | Path | None = None,
     use_js_validator: bool = True,
+    lsp_client: HedLspClient | None = _USE_GLOBAL_LSP,
 ) -> HedAnnotationWorkflow:
     """Create a workflow with OpenRouter LLMs.
 
@@ -164,8 +190,9 @@ def create_openrouter_workflow(
     )
 
     # Create and return workflow
-    # Only use JS validator if validator_path is available
-    # Note: Semantic search now uses hed-lsp CLI instead of keyword extraction LLM
+    # Only use JS validator if validator_path is available.
+    # The LSP client (when provided) backs the persistent hed-lsp connection
+    # used for both semantic preprocessing and tag-replacement suggestions.
     actual_use_js = use_js_validator and validator_path is not None
     return HedAnnotationWorkflow(
         llm=annotation_llm,
@@ -175,6 +202,7 @@ def create_openrouter_workflow(
         schema_dir=Path(schema_dir) if schema_dir else None,
         validator_path=Path(validator_path) if validator_path else None,
         use_js_validator=actual_use_js,
+        lsp_client=_resolve_lsp_client(lsp_client),
     )
 
 
@@ -186,6 +214,7 @@ def create_byok_workflow(
     eval_provider: str | None = None,
     temperature: float | None = None,
     user_id_override: str | None = None,
+    lsp_client: HedLspClient | None = _USE_GLOBAL_LSP,
 ) -> HedAnnotationWorkflow:
     """Create a workflow for BYOK mode using the user's OpenRouter key.
 
@@ -217,6 +246,7 @@ def create_byok_workflow(
         schema_dir=_byok_config.get("schema_dir"),
         validator_path=_byok_config.get("validator_path"),
         use_js_validator=_byok_config.get("use_js_validator", True),
+        lsp_client=lsp_client,
     )
 
 
@@ -342,6 +372,35 @@ async def lifespan(app: FastAPI):
     print(f"Schema directory: {schema_dir or 'GitHub (dynamic fetch)'}")
     print(f"Validator path: {validator_path or 'None (using Python validator)'}")
 
+    # Spawn the persistent hed-lsp child once for the lifetime of the
+    # process. Per-request workflows reuse this single warm connection
+    # instead of cold-booting hed-suggest per keyword. Set HED_LSP_DISABLE=1
+    # to fall back to keyword-only preprocessing (no LSP enrichment).
+    global lsp_client
+    if os.getenv("HED_LSP_DISABLE", "").lower() in ("1", "true", "yes"):
+        print("LSP client: disabled via HED_LSP_DISABLE")
+        lsp_client = None
+    else:
+        server_js_env = os.getenv("HED_LSP_SERVER_JS")
+        default_server_js = Path("/app/hed-lsp/server/out/server.js")
+        server_js_path = Path(server_js_env) if server_js_env else default_server_js
+        if not server_js_path.exists():
+            print(
+                f"LSP client: server.js not found at {server_js_path}; "
+                "set HED_LSP_SERVER_JS or install hed-lsp. Continuing without LSP."
+            )
+            lsp_client = None
+        else:
+            try:
+                lsp_client = await HedLspClient.spawn_stdio(
+                    server_js_path,
+                    schema_version=os.getenv("HED_SCHEMA_VERSION", "8.4.0"),
+                )
+                print(f"LSP client: connected (server.js={server_js_path})")
+            except Exception as exc:
+                print(f"LSP client: spawn failed ({exc}); continuing without LSP")
+                lsp_client = None
+
     # Initialize workflow based on provider
     if llm_provider == "openrouter":
         # OpenRouter configuration - use unified workflow creation
@@ -364,6 +423,7 @@ async def lifespan(app: FastAPI):
             schema_dir=schema_dir,
             validator_path=validator_path if use_js_validator else None,
             use_js_validator=use_js_validator,
+            lsp_client=lsp_client,
         )
     else:
         # Ollama configuration (default)
@@ -384,6 +444,7 @@ async def lifespan(app: FastAPI):
             schema_dir=Path(schema_dir) if schema_dir else None,
             validator_path=Path(validator_path) if use_js_validator and validator_path else None,
             use_js_validator=use_js_validator,
+            lsp_client=lsp_client,
         )
 
     # Set global schema_loader from workflow
@@ -428,6 +489,12 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     print("Shutting down HEDit...")
+    if lsp_client is not None:
+        try:
+            await lsp_client.shutdown()
+            print("LSP client: shut down cleanly")
+        except Exception as exc:
+            print(f"LSP client: shutdown error ({exc})")
 
 
 # Create FastAPI app

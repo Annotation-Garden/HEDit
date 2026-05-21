@@ -4,7 +4,6 @@ This module defines the multi-agent workflow that orchestrates
 annotation, validation, evaluation, and assessment.
 """
 
-import asyncio
 import logging
 import time
 from pathlib import Path
@@ -19,9 +18,9 @@ from src.agents.evaluation_agent import EvaluationAgent
 from src.agents.feedback_summarizer import FeedbackSummarizer
 from src.agents.state import HedAnnotationState
 from src.agents.validation_agent import ValidationAgent
+from src.lsp import HedLspClient
 from src.utils import extract_text_content
 from src.utils.schema_loader import HedSchemaLoader
-from src.validation.hed_lsp import HedLspClient, is_hed_lsp_available
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +50,7 @@ class HedAnnotationWorkflow:
         validator_path: Path | None = None,
         use_js_validator: bool = True,
         enable_semantic_search: bool = True,
+        lsp_client: HedLspClient | None = None,
     ) -> None:
         """Initialize the workflow.
 
@@ -62,12 +62,18 @@ class HedAnnotationWorkflow:
             schema_dir: Directory containing JSON schemas
             validator_path: Path to hed-javascript for validation
             use_js_validator: Whether to use JavaScript validator
-            enable_semantic_search: Whether to use hed-lsp CLI for tag suggestions
+            enable_semantic_search: Whether to include the semantic_preprocess
+                node in the graph. The node is only useful when an
+                `lsp_client` is also provided.
+            lsp_client: Pre-built, already-initialized HedLspClient. The
+                caller (FastAPI lifespan, CLI executor) owns the client's
+                lifetime. None disables LSP-backed tag enrichment.
         """
         # Store schema directory (None means use HED library to fetch from GitHub)
         self.schema_dir = schema_dir
-        # Keyword extraction always runs; LSP enrichment requires hed-lsp CLI
+        # Keyword extraction always runs; LSP enrichment requires an injected client
         self.enable_semantic_search = enable_semantic_search
+        self.lsp_client: HedLspClient | None = lsp_client
 
         # Initialize legacy schema loader for validation
         self.schema_loader = HedSchemaLoader()
@@ -86,22 +92,17 @@ class HedAnnotationWorkflow:
             self.schema_loader,
             use_javascript=use_js_validator,
             validator_path=validator_path,
+            lsp_client=self.lsp_client,
         )
         self.evaluation_agent = EvaluationAgent(eval_llm, schema_dir=self.schema_dir)
         self.assessment_agent = AssessmentAgent(assess_llm, schema_dir=self.schema_dir)
         self.feedback_summarizer = FeedbackSummarizer(feed_llm)
 
-        # Initialize hed-lsp client for semantic search (optional enrichment)
-        self.hed_lsp_client: HedLspClient | None = None
-        if self.enable_semantic_search and is_hed_lsp_available():
-            try:
-                self.hed_lsp_client = HedLspClient()
-                logger.info("[WORKFLOW] hed-lsp CLI available for semantic tag suggestions")
-            except RuntimeError as e:
-                logger.warning(f"[WORKFLOW] hed-lsp CLI not available: {e}")
+        if self.enable_semantic_search and self.lsp_client is not None:
+            logger.info("[WORKFLOW] hed-lsp client connected for semantic tag suggestions")
         elif self.enable_semantic_search:
             logger.info(
-                "[WORKFLOW] hed-lsp CLI not in PATH; "
+                "[WORKFLOW] semantic_preprocess enabled but no lsp_client provided; "
                 "keyword extraction will run without LSP enrichment"
             )
 
@@ -236,52 +237,43 @@ class HedAnnotationWorkflow:
         # Step 1: Extract keywords from the description using LLM
         keywords = await self._extract_keywords(state["input_description"])
 
-        # Step 2: Use hed-lsp CLI to get tag suggestions for each keyword
+        # Step 2: One batched hed/suggest call over the persistent LSP
+        # connection. The previous per-keyword loop spawned the hed-suggest
+        # CLI once per keyword and dominated request latency (~6 s/spawn).
         semantic_hints: list[dict] = []
 
-        if keywords and self.hed_lsp_client:
-            # Query hed-lsp for each keyword individually for better results
-            for keyword in keywords:
-                try:
-                    result = await asyncio.to_thread(self.hed_lsp_client.suggest, keyword)
-                except Exception as e:
-                    logger.warning("[WORKFLOW] hed-lsp error for '%s': %s", keyword, e)
-                    continue
-                if result.success:
-                    for s in result.suggestions:
-                        semantic_hints.append(
-                            {
-                                "tag": s.tag,
+        if keywords and self.lsp_client is not None:
+            try:
+                result = await self.lsp_client.suggest(*keywords)
+            except Exception as e:
+                logger.warning("[WORKFLOW] hed-lsp suggest failed: %s", e)
+                result = None
+
+            if result is not None and result.success:
+                seen_tags: dict[str, dict] = {}
+                for keyword, tags in result.raw.items():
+                    for idx, tag in enumerate(tags):
+                        # Higher score for earlier (more relevant) hits.
+                        score = max(0.0, 1.0 - idx * 0.05)
+                        existing = seen_tags.get(tag)
+                        if existing is None or score > existing["score"]:
+                            seen_tags[tag] = {
+                                "tag": tag,
                                 "keyword": keyword,
-                                "score": s.score or 0.0,
+                                "score": score,
                                 "source": "hed-lsp",
                             }
-                        )
-                else:
-                    logger.debug(
-                        "[WORKFLOW] hed-lsp suggestion failed for '%s': %s",
-                        keyword,
-                        result.error,
-                    )
-
-            # Deduplicate by tag, keeping highest score
-            if semantic_hints:
-                seen_tags: dict[str, dict] = {}
-                for hint in semantic_hints:
-                    tag = hint["tag"]
-                    if tag not in seen_tags or hint["score"] > seen_tags[tag]["score"]:
-                        seen_tags[tag] = hint
                 semantic_hints = sorted(seen_tags.values(), key=lambda h: h["score"], reverse=True)
-
-            logger.info(
-                "[WORKFLOW] hed-lsp suggested %d unique tags from %d keywords",
-                len(semantic_hints),
-                len(keywords),
-            )
+                logger.info(
+                    "[WORKFLOW] hed-lsp suggested %d unique tags from %d keywords",
+                    len(semantic_hints),
+                    len(keywords),
+                )
+            elif result is not None:
+                logger.debug("[WORKFLOW] hed-lsp suggest returned failure: %s", result.error)
         elif keywords:
-            # LSP not available; still store keywords for the annotation agent
             logger.info(
-                "[WORKFLOW] hed-lsp not available; storing %d extracted keywords",
+                "[WORKFLOW] no lsp_client; storing %d extracted keywords without enrichment",
                 len(keywords),
             )
 

@@ -12,9 +12,9 @@ import re
 from pathlib import Path
 
 from src.agents.state import HedAnnotationState
+from src.lsp import HedLspClient
 from src.utils.error_remediation import get_remediator
 from src.utils.schema_loader import HedSchemaLoader
-from src.validation.hed_lsp import is_hed_lsp_available, suggest_tags_for_keywords
 from src.validation.hed_validator import (
     HedJavaScriptValidator,
     HedPythonValidator,
@@ -81,7 +81,7 @@ class ValidationAgent:
         use_javascript: bool = True,
         validator_path: Path | None = None,
         tests_json_path: Path | str | None = None,
-        use_hed_lsp: bool = True,
+        lsp_client: HedLspClient | None = None,
     ) -> None:
         """Initialize the validation agent.
 
@@ -90,13 +90,14 @@ class ValidationAgent:
             use_javascript: Whether to use JavaScript validator (more detailed)
             validator_path: Path to hed-javascript repository (required if use_javascript=True)
             tests_json_path: Optional path to javascriptTests.json for error remediation
-            use_hed_lsp: Whether to use hed-lsp for tag suggestions (auto-detected)
+            lsp_client: Pre-built HedLspClient for tag-replacement suggestions
+                when validation finds invalid tags. None disables suggestions.
         """
         self.schema_loader = schema_loader
         self.use_javascript = use_javascript
         self.validator_path = validator_path
         self.error_remediator = get_remediator(tests_json_path)
-        self.use_hed_lsp = use_hed_lsp and is_hed_lsp_available()
+        self.lsp_client = lsp_client
 
         # Validator is lazily initialized on first use via _get_or_create_validator
         self._validator: HedJavaScriptValidator | HedPythonValidator | None = None
@@ -134,34 +135,29 @@ class ValidationAgent:
 
         return problematic_tags
 
-    def _get_tag_suggestions(
-        self, problematic_tags: list[str], schema_version: str
-    ) -> dict[str, list[str]]:
-        """Get suggested valid tags for problematic tags using hed-lsp.
+    async def _get_tag_suggestions(self, problematic_tags: list[str]) -> dict[str, list[str]]:
+        """Get suggested valid tags for problematic tags via persistent LSP.
 
         Args:
             problematic_tags: List of problematic tag names
-            schema_version: HED schema version
 
         Returns:
-            Dictionary mapping problematic tags to suggested alternatives
+            Dictionary mapping each problematic tag to a list of suggested
+            valid alternatives. Empty if no LSP client is configured or the
+            server returned no matches.
         """
-        if not self.use_hed_lsp or not problematic_tags:
+        if self.lsp_client is None or not problematic_tags:
             return {}
 
         try:
-            return suggest_tags_for_keywords(
-                problematic_tags,
-                schema_version=schema_version,
-                max_results=5,  # Limit suggestions for clarity
-            )
-        except (RuntimeError, OSError) as e:
-            logger.warning(
-                "Failed to get tag suggestions from hed-lsp for tags %s: %s",
-                problematic_tags,
-                e,
-            )
+            result = await self.lsp_client.suggest(*problematic_tags)
+        except Exception as exc:
+            logger.warning("hed-lsp suggest call failed for tags %s: %s", problematic_tags, exc)
             return {}
+        if not result.success:
+            logger.debug("hed-lsp suggest returned failure: %s", result.error)
+            return {}
+        return result.raw
 
     async def validate(self, state: HedAnnotationState) -> dict:
         """Validate the current HED annotation.
@@ -202,10 +198,10 @@ class ValidationAgent:
 
         # Extract problematic tags and get suggestions from hed-lsp
         tag_suggestions: dict[str, list[str]] = {}
-        if not result.is_valid and self.use_hed_lsp:
+        if not result.is_valid and self.lsp_client is not None:
             problematic_tags = self._extract_problematic_tags(result.errors, result.warnings)
             if problematic_tags:
-                tag_suggestions = self._get_tag_suggestions(problematic_tags, schema_version)
+                tag_suggestions = await self._get_tag_suggestions(problematic_tags)
 
         # Determine validation status
         validation_attempts = state["validation_attempts"] + 1
