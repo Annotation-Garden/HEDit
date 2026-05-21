@@ -12,6 +12,7 @@ import os
 import signal
 import sys
 import tempfile
+import time
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -36,8 +37,8 @@ def short_runtime_dir() -> Iterator[Path]:
 
 
 async def _wait_for_socket(socket_path: Path, timeout: float) -> None:
-    deadline = asyncio.get_event_loop().time() + timeout
-    while asyncio.get_event_loop().time() < deadline:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
         if socket_path.exists():
             return
         await asyncio.sleep(0.05)

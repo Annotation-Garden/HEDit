@@ -152,7 +152,15 @@ class ValidationAgent:
         try:
             result = await self.lsp_client.suggest(*problematic_tags)
         except Exception as exc:
-            logger.warning("hed-lsp suggest call failed for tags %s: %s", problematic_tags, exc)
+            # `suggest()` already converts transport errors to a failure
+            # result; anything that lands here is a programming error and
+            # deserves a traceback.
+            logger.warning(
+                "hed-lsp suggest call failed for tags %s: %s",
+                problematic_tags,
+                exc,
+                exc_info=True,
+            )
             return {}
         if not result.success:
             logger.debug("hed-lsp suggest returned failure: %s", result.error)

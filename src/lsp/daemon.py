@@ -134,11 +134,22 @@ class _NodeChild:
                     # Notification or unclaimed message; broadcast.
                     for queue in list(self._broadcast):
                         await queue.put(msg)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Node child reader loop crashed unexpectedly")
         finally:
-            # Drop any waiters whose responses will never come.
-            for queue in list(self._pending.values()):
+            # Drop any waiters whose responses will never come. Each
+            # synthetic error response must echo the request id so the
+            # peer's HedLspClient can resolve the correct future; without
+            # the id the response is silently dropped by _dispatch.
+            for pending_id, queue in list(self._pending.items()):
                 await queue.put(
-                    {"jsonrpc": "2.0", "error": {"code": -32603, "message": "Node child exited"}}
+                    {
+                        "jsonrpc": "2.0",
+                        "id": pending_id,
+                        "error": {"code": -32603, "message": "Node child exited"},
+                    }
                 )
             self._pending.clear()
 
@@ -237,7 +248,10 @@ class _Daemon:
             for task in done:
                 exc = task.exception()
                 if exc is not None and not isinstance(exc, asyncio.CancelledError):
-                    logger.warning("daemon task ended with %s", exc)
+                    logger.error(
+                        "Daemon server task ended unexpectedly; initiating shutdown",
+                        exc_info=exc,
+                    )
         await self.stop()
 
     async def stop(self) -> None:
@@ -320,8 +334,8 @@ class _Daemon:
             try:
                 writer.close()
                 await writer.wait_closed()
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("Peer writer close error: %s", exc)
             if task is not None:
                 self._connections.discard(task)
 

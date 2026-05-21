@@ -155,12 +155,13 @@ class HedLspClient:
         await self._notify("initialized", {})
 
     async def _read_loop(self) -> None:
+        transport = "stdio" if self._process is not None else "unix-socket"
         try:
             while True:
                 try:
                     msg = await read_message(self._reader)
                 except LspProtocolError as exc:
-                    logger.warning("LSP protocol error: %s", exc)
+                    logger.warning("LSP protocol error on %s transport: %s", transport, exc)
                     break
                 if msg is None:
                     break
@@ -168,17 +169,32 @@ class HedLspClient:
         except asyncio.CancelledError:
             raise
         except Exception:
-            logger.exception("LSP reader loop crashed")
+            logger.exception("LSP reader loop crashed on %s transport", transport)
         finally:
+            # Once the reader exits we can never resolve future responses;
+            # mark the client as shutting down so subsequent _request calls
+            # fail fast with a clear error instead of hanging on a future
+            # that will never complete.
+            self._shutdown_started = True
             self._fail_pending(RuntimeError("LSP connection closed"))
 
     def _dispatch(self, msg: dict[str, Any]) -> None:
         msg_id = msg.get("id")
         if msg_id is None:
-            # Notification from the server; we don't subscribe to any today.
+            method = msg.get("method")
+            if method is not None:
+                logger.debug("LSP server notification (unhandled): method=%s", method)
             return
         fut = self._pending.pop(msg_id, None)
-        if fut is None or fut.done():
+        if fut is None:
+            logger.warning(
+                "LSP response for unknown id=%r; client may have already given up", msg_id
+            )
+            return
+        if fut.done():
+            logger.warning(
+                "LSP response for id=%r arrived after future was already resolved", msg_id
+            )
             return
         if "error" in msg:
             err = msg["error"]
@@ -280,12 +296,9 @@ class HedLspClient:
         except Exception as exc:
             logger.debug("LSP exit notification failed: %s", exc)
 
-        try:
-            self._writer.close()
-            await self._writer.wait_closed()
-        except Exception:
-            pass
-
+        # Cancel the reader first so it doesn't see a half-closed writer
+        # and report a spurious "LSP connection closed" before shutdown
+        # finishes; the canceller waits on the reader task to drain.
         for task in (self._reader_task, self._stderr_task):
             if task is not None and not task.done():
                 task.cancel()
@@ -293,6 +306,12 @@ class HedLspClient:
                     await task
                 except (asyncio.CancelledError, Exception):
                     pass
+
+        try:
+            self._writer.close()
+            await self._writer.wait_closed()
+        except Exception as exc:
+            logger.debug("LSP writer close error during shutdown: %s", exc)
 
         if self._process is not None and self._process.returncode is None:
             try:
@@ -304,7 +323,13 @@ class HedLspClient:
         self._fail_pending(RuntimeError("LSP client shut down"))
 
     async def _request_unshutdownable(self, method: str, params: Any) -> Any:
-        """Send a request even after `_shutdown_started` was set (for the shutdown request itself)."""
+        """Send a request even after `_shutdown_started` was set.
+
+        Used for the `shutdown` request itself, since `_request` rejects
+        calls once the shutdown flag is set. Mirrors `_request`'s
+        write-error handling so a failed write doesn't leave a stranded
+        future in `_pending`.
+        """
         msg_id = self._next_id
         self._next_id += 1
         loop = asyncio.get_running_loop()
@@ -312,7 +337,11 @@ class HedLspClient:
         self._pending[msg_id] = fut
         msg = {"jsonrpc": "2.0", "id": msg_id, "method": method, "params": params}
         async with self._write_lock:
-            await write_message(self._writer, msg)
+            try:
+                await write_message(self._writer, msg)
+            except Exception as exc:
+                self._pending.pop(msg_id, None)
+                raise RuntimeError(f"Failed to send LSP request {method}: {exc}") from exc
         return await fut
 
 

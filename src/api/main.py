@@ -376,18 +376,23 @@ async def lifespan(app: FastAPI):
     # process. Per-request workflows reuse this single warm connection
     # instead of cold-booting hed-suggest per keyword. Set HED_LSP_DISABLE=1
     # to fall back to keyword-only preprocessing (no LSP enrichment).
+    # Failures here are logged via the structured logger (not print) so
+    # operators can detect a silently-degraded server from log
+    # aggregation.
     global lsp_client
+    lsp_logger = logging.getLogger("hedit.lsp")
     if os.getenv("HED_LSP_DISABLE", "").lower() in ("1", "true", "yes"):
-        print("LSP client: disabled via HED_LSP_DISABLE")
+        lsp_logger.info("LSP client disabled via HED_LSP_DISABLE")
         lsp_client = None
     else:
         server_js_env = os.getenv("HED_LSP_SERVER_JS")
         default_server_js = Path("/app/hed-lsp/server/out/server.js")
         server_js_path = Path(server_js_env) if server_js_env else default_server_js
         if not server_js_path.exists():
-            print(
-                f"LSP client: server.js not found at {server_js_path}; "
-                "set HED_LSP_SERVER_JS or install hed-lsp. Continuing without LSP."
+            lsp_logger.error(
+                "LSP server.js not found at %s; set HED_LSP_SERVER_JS or install "
+                "hed-lsp. Continuing without LSP enrichment.",
+                server_js_path,
             )
             lsp_client = None
         else:
@@ -396,9 +401,13 @@ async def lifespan(app: FastAPI):
                     server_js_path,
                     schema_version=os.getenv("HED_SCHEMA_VERSION", "8.4.0"),
                 )
-                print(f"LSP client: connected (server.js={server_js_path})")
-            except Exception as exc:
-                print(f"LSP client: spawn failed ({exc}); continuing without LSP")
+                lsp_logger.info("LSP client connected (server.js=%s)", server_js_path)
+            except (RuntimeError, OSError, TimeoutError) as exc:
+                lsp_logger.error(
+                    "LSP client spawn failed; continuing without LSP enrichment. "
+                    "Set HED_LSP_DISABLE=1 to suppress this error.",
+                    exc_info=exc,
+                )
                 lsp_client = None
 
     # Initialize workflow based on provider
@@ -492,9 +501,9 @@ async def lifespan(app: FastAPI):
     if lsp_client is not None:
         try:
             await lsp_client.shutdown()
-            print("LSP client: shut down cleanly")
+            lsp_logger.info("LSP client shut down cleanly")
         except Exception as exc:
-            print(f"LSP client: shutdown error ({exc})")
+            lsp_logger.error("LSP client shutdown error", exc_info=exc)
 
 
 # Create FastAPI app

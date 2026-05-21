@@ -82,3 +82,14 @@ async def test_shutdown_is_idempotent(hed_lsp_server_js: Path) -> None:
 async def test_spawn_with_missing_server_js_raises() -> None:
     with pytest.raises(RuntimeError, match="not found"):
         await HedLspClient.spawn_stdio(Path("/nonexistent/server.js"))
+
+
+async def test_suggest_after_shutdown_fails_fast(hed_lsp_server_js: Path) -> None:
+    """Once the connection is gone, new requests must not hang on a future
+    that will never resolve. The client should fail fast instead.
+    """
+    client = await HedLspClient.spawn_stdio(hed_lsp_server_js)
+    await client.shutdown()
+    result = await client.suggest("red square")
+    assert result.success is False
+    assert result.error is not None

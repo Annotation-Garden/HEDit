@@ -10,12 +10,15 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import logging
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from src.cli.executor import ExecutionBackend, ExecutionError
 from src.version import __version__
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from src.agents.vision_agent import VisionAgent
@@ -232,8 +235,15 @@ class LocalExecutionBackend(ExecutionBackend):
             return
         try:
             self._lsp_client = await _Client.connect_unix(socket)
-        except Exception:
-            # Stale socket or daemon dying; fall back silently to no-LSP.
+        except (ConnectionRefusedError, FileNotFoundError, OSError, TimeoutError) as exc:
+            # Stale socket file or daemon refusing connections — fall back
+            # to no-LSP. Log at debug since this is a normal degraded path
+            # when the daemon was started and then crashed.
+            logger.debug(
+                "Could not connect to hedit-lspd at %s (%s); running without LSP enrichment",
+                socket,
+                exc,
+            )
             self._lsp_client = None
 
     def _get_vision_agent(self) -> VisionAgent:

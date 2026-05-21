@@ -246,7 +246,10 @@ class HedAnnotationWorkflow:
             try:
                 result = await self.lsp_client.suggest(*keywords)
             except Exception as e:
-                logger.warning("[WORKFLOW] hed-lsp suggest failed: %s", e)
+                # `suggest()` already swallows transport errors and returns a
+                # failure result; anything that reaches here is unexpected
+                # and deserves a full traceback in logs.
+                logger.warning("[WORKFLOW] hed-lsp suggest failed: %s", e, exc_info=True)
                 result = None
 
             if result is not None and result.success:
