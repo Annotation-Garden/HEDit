@@ -20,6 +20,7 @@ def create_openrouter_llm(
     provider: str | None = None,
     user_id: str | None = None,
     enable_caching: bool | None = None,
+    disable_reasoning: bool = False,
 ) -> BaseChatModel:
     """Create an OpenRouter LLM instance with optional prompt caching.
 
@@ -36,6 +37,12 @@ def create_openrouter_llm(
         user_id: User identifier for cache optimization (sticky routing)
         enable_caching: Enable Anthropic prompt caching. If None (default),
             auto-enables for Anthropic Claude models.
+        disable_reasoning: When True, disable extended thinking / reasoning
+            tokens via OpenRouter's portable ``reasoning.enabled=false``
+            flag. Useful for short structured tasks (keyword extraction,
+            judge prompts, summarization) where reasoning adds latency
+            without quality benefit. Default False preserves prior
+            behavior for callers that opt in explicitly.
 
     Returns:
         LLM instance configured for OpenRouter
@@ -61,6 +68,13 @@ def create_openrouter_llm(
     # User ID for sticky cache routing
     if user_id:
         model_kwargs["user"] = user_id
+
+    # OpenRouter normalizes this knob across providers (Anthropic
+    # "thinking", Qwen reasoning, OpenAI reasoning_effort, ...) so a
+    # single setting cleanly disables reasoning regardless of the
+    # underlying model family.
+    if disable_reasoning:
+        model_kwargs["reasoning"] = {"enabled": False}
 
     # Create base LLM with timeout to prevent hanging on slow providers
     llm = ChatLiteLLM(

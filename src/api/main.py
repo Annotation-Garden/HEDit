@@ -159,7 +159,10 @@ def create_openrouter_workflow(
 
     actual_eval_provider = eval_provider or default_eval_provider or None
 
-    # Create LLMs
+    # Create LLMs.
+    # The annotation LLM keeps reasoning enabled — that's the model
+    # doing the actual HED tag synthesis where extended thinking
+    # measurably improves first-attempt quality.
     annotation_llm = create_openrouter_llm(
         model=actual_annotation_model,
         api_key=api_key,
@@ -167,12 +170,16 @@ def create_openrouter_workflow(
         provider=actual_annotation_provider,
         user_id=actual_user_id,
     )
+    # Evaluation / assessment / feedback / keyword extraction are short
+    # structured tasks; reasoning adds 5-10 s per call without
+    # measurable quality benefit. See #150.
     evaluation_llm = create_openrouter_llm(
         model=actual_eval_model,
         api_key=api_key,
         temperature=actual_temperature,
         provider=actual_eval_provider,
         user_id=actual_user_id,
+        disable_reasoning=True,
     )
     assessment_llm = create_openrouter_llm(
         model=actual_eval_model,
@@ -180,6 +187,7 @@ def create_openrouter_workflow(
         temperature=actual_temperature,
         provider=actual_eval_provider,
         user_id=actual_user_id,
+        disable_reasoning=True,
     )
     feedback_llm = create_openrouter_llm(
         model=actual_eval_model,
@@ -187,6 +195,20 @@ def create_openrouter_workflow(
         temperature=actual_temperature,
         provider=actual_eval_provider,
         user_id=actual_user_id,
+        disable_reasoning=True,
+    )
+    # Keyword extraction (#148): use the fast annotation model with
+    # reasoning explicitly disabled and a small token cap. The
+    # task is "list 5-10 keywords"; the heavier eval model used here
+    # previously cost ~10 s per call.
+    keyword_llm = create_openrouter_llm(
+        model=actual_annotation_model,
+        api_key=api_key,
+        temperature=actual_temperature,
+        provider=actual_annotation_provider,
+        user_id=actual_user_id,
+        max_tokens=200,
+        disable_reasoning=True,
     )
 
     # Create and return workflow
@@ -199,6 +221,7 @@ def create_openrouter_workflow(
         evaluation_llm=evaluation_llm,
         assessment_llm=assessment_llm,
         feedback_llm=feedback_llm,
+        keyword_llm=keyword_llm,
         schema_dir=Path(schema_dir) if schema_dir else None,
         validator_path=Path(validator_path) if validator_path else None,
         use_js_validator=actual_use_js,

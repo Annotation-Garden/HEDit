@@ -98,6 +98,40 @@ class TestCreateOpenRouterLLM:
 
         assert llm.max_tokens == 1000
 
+    def test_disable_reasoning_sets_openrouter_flag(self):
+        """`disable_reasoning=True` adds the OpenRouter portable
+        reasoning-off flag to model_kwargs. OpenRouter normalizes the
+        flag across providers (Anthropic, Qwen, OpenAI), so a single
+        setting cleanly disables thinking regardless of model family.
+        """
+        from src.utils.openrouter_llm import create_openrouter_llm
+
+        llm = create_openrouter_llm(
+            api_key="test-key",
+            enable_caching=False,
+            disable_reasoning=True,
+        )
+
+        assert llm.model_kwargs is not None
+        assert llm.model_kwargs.get("reasoning") == {"enabled": False}
+
+    def test_reasoning_not_set_by_default(self):
+        """Default (`disable_reasoning=False`) leaves model_kwargs alone.
+
+        This preserves backward-compatible behavior so callers that
+        rely on the underlying model's default reasoning posture (e.g.
+        the annotation LLM) are unaffected.
+        """
+        from src.utils.openrouter_llm import create_openrouter_llm
+
+        llm = create_openrouter_llm(
+            api_key="test-key",
+            enable_caching=False,
+        )
+
+        assert llm.model_kwargs is not None
+        assert "reasoning" not in llm.model_kwargs
+
     def test_auto_enables_caching_for_anthropic_models(self):
         """Test that caching is auto-enabled for Anthropic models."""
         from src.utils.openrouter_llm import CachingLLMWrapper, create_openrouter_llm
