@@ -176,7 +176,7 @@ class LocalExecutionBackend(ExecutionBackend):
             # Use custom user_id if provided, otherwise auto-generate
             user_id = self._user_id or get_machine_id()
 
-            # Create annotation LLM with user's key
+            # Annotation LLM keeps reasoning enabled (real HED tag work).
             annotation_llm = create_openrouter_llm(
                 model=self._model,
                 api_key=self._api_key,
@@ -185,25 +185,46 @@ class LocalExecutionBackend(ExecutionBackend):
                 user_id=user_id,
             )
 
-            # Create evaluation LLM (separate model for fair benchmarking)
-            # If eval_model is specified, use it for evaluation, assessment, and feedback
-            # Otherwise, use the same model as annotation
+            # Evaluation / assessment / feedback share a model with
+            # reasoning disabled -- these are short structured tasks
+            # where extended thinking only adds latency. See #150.
             if self._eval_model:
                 evaluation_llm = create_openrouter_llm(
                     model=self._eval_model,
                     api_key=self._api_key,
                     temperature=self._temperature,
-                    provider=self._eval_provider,  # Use specified provider (e.g., Cerebras)
+                    provider=self._eval_provider,
                     user_id=user_id,
+                    disable_reasoning=True,
                 )
             else:
-                evaluation_llm = annotation_llm
+                evaluation_llm = create_openrouter_llm(
+                    model=self._model,
+                    api_key=self._api_key,
+                    temperature=self._temperature,
+                    provider=self._provider,
+                    user_id=user_id,
+                    disable_reasoning=True,
+                )
+
+            # Lightweight keyword-extraction model (#148): annotation
+            # model with reasoning off and a small token cap.
+            keyword_llm = create_openrouter_llm(
+                model=self._model,
+                api_key=self._api_key,
+                temperature=self._temperature,
+                provider=self._provider,
+                user_id=user_id,
+                max_tokens=200,
+                disable_reasoning=True,
+            )
 
             self._workflow = HedAnnotationWorkflow(
                 llm=annotation_llm,
                 evaluation_llm=evaluation_llm,
                 assessment_llm=evaluation_llm,
                 feedback_llm=evaluation_llm,
+                keyword_llm=keyword_llm,
                 schema_dir=self._schema_dir,
                 use_js_validator=False,  # Use Python validator in standalone
                 lsp_client=self._lsp_client,

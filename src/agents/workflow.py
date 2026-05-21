@@ -46,6 +46,7 @@ class HedAnnotationWorkflow:
         evaluation_llm: BaseChatModel | None = None,
         assessment_llm: BaseChatModel | None = None,
         feedback_llm: BaseChatModel | None = None,
+        keyword_llm: BaseChatModel | None = None,
         schema_dir: Path | str | None = None,
         validator_path: Path | None = None,
         use_js_validator: bool = True,
@@ -59,6 +60,13 @@ class HedAnnotationWorkflow:
             evaluation_llm: Language model for evaluation agent (defaults to llm)
             assessment_llm: Language model for assessment agent (defaults to llm)
             feedback_llm: Language model for feedback summarization (defaults to llm)
+            keyword_llm: Lightweight LLM for keyword extraction inside
+                ``_semantic_preprocess_node``. Defaults to ``llm`` (the
+                annotation LLM, typically a fast model like claude-haiku
+                with reasoning disabled). Previously this task piggy-backed
+                on ``feedback_llm`` which in prod is wired to the heavier
+                evaluation model — a five-keyword extraction does not
+                need a 35B-parameter model with extended reasoning.
             schema_dir: Directory containing JSON schemas
             validator_path: Path to hed-javascript for validation
             use_js_validator: Whether to use JavaScript validator
@@ -82,9 +90,12 @@ class HedAnnotationWorkflow:
         eval_llm = evaluation_llm or llm
         assess_llm = assessment_llm or llm
         feed_llm = feedback_llm or llm
+        kw_llm = keyword_llm or llm
 
-        # Store feedback LLM for keyword extraction (cheap/fast model)
-        self.feedback_llm = feed_llm
+        # Keyword extraction uses a dedicated lightweight model
+        # (defaults to the annotation LLM, which is typically fast +
+        # reasoning-disabled for this short structured task).
+        self.keyword_llm = kw_llm
 
         # Initialize agents with JSON schema support and per-agent LLMs
         self.annotation_agent = AnnotationAgent(llm, schema_dir=self.schema_dir)
@@ -196,7 +207,7 @@ class HedAnnotationWorkflow:
         )
 
         try:
-            response = await self.feedback_llm.ainvoke(
+            response = await self.keyword_llm.ainvoke(
                 [
                     SystemMessage(content=system_prompt),
                     HumanMessage(content=f"Description: {description}"),
