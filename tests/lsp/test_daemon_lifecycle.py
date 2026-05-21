@@ -1,8 +1,10 @@
-"""Real-LSP integration tests for the hedit-lspd daemon.
+"""Real-LSP tests for the hedit-lspd daemon.
 
 Spawns the actual daemon supervisor in a child process bound to a
 temporary runtime dir, connects to it over the Unix socket, issues a
-real `hed/suggest` query, then shuts the daemon down. No mocks.
+real `hed/suggest` query, then shuts the daemon down. No mocks. The
+shared `hed_lsp_server_js` fixture skips cleanly when node or a hed-lsp
+build is not available.
 """
 
 from __future__ import annotations
@@ -20,8 +22,6 @@ import pytest
 
 from src.lsp import HedLspClient
 from src.lsp.daemon import meta_file_path, pid_file_path, socket_file_path
-
-pytestmark = pytest.mark.integration
 
 
 @pytest.fixture

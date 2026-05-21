@@ -1,8 +1,11 @@
-"""Real-LSP integration tests for HedLspClient over stdio.
+"""Real-LSP tests for HedLspClient over stdio.
 
 No mocks. Spawns the actual `node server.js --stdio` child, runs the
 LSP initialize handshake, issues `hed/suggest` requests, and asserts
 the server answered with the documented `{query: [tag, ...]}` shape.
+The `hed_lsp_server_js` fixture skips these tests cleanly when node
+or a hed-lsp build is not available, so they're safe to include in
+the standard unit-test lane.
 """
 
 from __future__ import annotations
@@ -12,8 +15,6 @@ from pathlib import Path
 import pytest
 
 from src.lsp import HedLspClient
-
-pytestmark = pytest.mark.integration
 
 
 async def test_initialize_and_suggest_single_query(hed_lsp_server_js: Path) -> None:
