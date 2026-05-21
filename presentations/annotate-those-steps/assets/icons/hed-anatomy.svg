@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440">
+  <title>HED tag anatomy</title>
+  <text x="480" y="26" font-family="sans-serif" font-size="15" fill="#1E293B" font-weight="bold" text-anchor="middle">HED in one slide -- composable, machine-readable, hierarchical event descriptors</text>
+
+  <!-- Single tag breakdown across top -->
+  <g>
+    <rect x="40" y="56" width="880" height="108" rx="8" fill="#FFFBF5" stroke="#E99852" stroke-width="1.6"/>
+    <text x="480" y="78" font-family="sans-serif" font-size="13" font-weight="bold" fill="#B45309" text-anchor="middle">one HED tag = comma-separated path through the schema tree</text>
+
+    <!-- Tag text broken into two lines, smaller font -->
+    <text x="480" y="108" font-family="monospace" font-size="13" font-weight="bold" fill="#1E293B" text-anchor="middle">Sensory-event, Visual-presentation, Move,</text>
+    <text x="480" y="128" font-family="monospace" font-size="13" font-weight="bold" fill="#1E293B" text-anchor="middle">Rotation/(Direction/Clockwise), (Magnitude, deg, #)</text>
+
+    <!-- annotation lines under tag parts on the second line -->
+    <g font-family="monospace" font-size="10" fill="#475569" text-anchor="middle">
+      <text x="266" y="150">action + parameter</text>
+      <text x="640" y="150">value slot (deg)</text>
+    </g>
+  </g>
+
+  <!-- Hierarchy tree on left -->
+  <g>
+    <rect x="40" y="180" width="430" height="220" rx="8" fill="#FFFFFF" stroke="#184A3D" stroke-width="1.6"/>
+    <text x="255" y="202" font-family="sans-serif" font-size="13" font-weight="bold" fill="#184A3D" text-anchor="middle">Hierarchy = inheritance of meaning</text>
+
+    <g font-family="monospace" font-size="11" fill="#1E293B">
+      <text x="68" y="228">Event</text>
+      <line x1="104" y1="226" x2="124" y2="226" stroke="#94A3B8" stroke-width="1.2"/>
+      <text x="128" y="228">Sensory-event</text>
+      <text x="86" y="248">|--</text>
+      <text x="120" y="248">Visual-presentation</text>
+      <text x="86" y="266">|--</text>
+      <text x="120" y="266">Tactile-presentation</text>
+
+      <text x="68" y="294">Item</text>
+      <line x1="100" y1="292" x2="120" y2="292" stroke="#94A3B8" stroke-width="1.2"/>
+      <text x="124" y="294">Object</text>
+      <text x="86" y="314">|--</text>
+      <text x="120" y="314">Body-part/Hip</text>
+
+      <text x="68" y="342">Action</text>
+      <line x1="108" y1="340" x2="128" y2="340" stroke="#94A3B8" stroke-width="1.2"/>
+      <text x="132" y="342">Move</text>
+      <text x="86" y="362">|--</text>
+      <text x="120" y="362">Walk</text>
+      <text x="86" y="380">|--</text>
+      <text x="120" y="380">Lose-balance</text>
+    </g>
+  </g>
+
+  <!-- Sidecar example on right -->
+  <g>
+    <rect x="490" y="180" width="430" height="220" rx="8" fill="#F8FAFC" stroke="#475569" stroke-width="1.6"/>
+    <text x="705" y="202" font-family="sans-serif" font-size="13" font-weight="bold" fill="#1E293B" text-anchor="middle">attached to a column in events.json</text>
+
+    <g font-family="monospace" font-size="10" fill="#1E293B">
+      <text x="506" y="224">"value": {</text>
+      <text x="520" y="240">"HED": {</text>
+      <text x="534" y="256">"pull_left":</text>
+      <text x="556" y="270">"Tactile-presentation,</text>
+      <text x="556" y="284">Push/(Direction/Leftward),</text>
+      <text x="556" y="298">(Force, N, #)",</text>
+      <text x="534" y="316">"rotate_cw":</text>
+      <text x="556" y="330">"Visual-presentation,</text>
+      <text x="556" y="344">Rotation/(Direction/Clockwise),</text>
+      <text x="556" y="358">(Magnitude, deg, #)"</text>
+      <text x="520" y="376">}</text>
+      <text x="506" y="390">}</text>
+    </g>
+  </g>
+
+  <text x="480" y="426" font-family="sans-serif" font-size="11" fill="#64748B" font-style="italic" text-anchor="middle">Tags compose, inherit, and validate. The schema (hedtags.org) is the controlled vocabulary.</text>
+</svg>

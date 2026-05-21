@@ -1,0 +1,55 @@
+{
+  "width_mm": 240,
+  "labels": [
+    {
+      "text": "Gait phases derivable from motion capture, but missing from events.tsv",
+      "x": 768,
+      "y": 50,
+      "color": "#1E293B",
+      "font_size_pt": 28
+    },
+    {
+      "text": "heel strike",
+      "x": 195,
+      "y": 880,
+      "color": "#184A3D",
+      "font_size_pt": 26
+    },
+    {
+      "text": "double support",
+      "x": 460,
+      "y": 880,
+      "color": "#184A3D",
+      "font_size_pt": 26
+    },
+    {
+      "text": "mid stance",
+      "x": 730,
+      "y": 880,
+      "color": "#184A3D",
+      "font_size_pt": 26
+    },
+    {
+      "text": "leg swing",
+      "x": 990,
+      "y": 880,
+      "color": "#184A3D",
+      "font_size_pt": 26
+    },
+    {
+      "text": "balance loss",
+      "x": 1280,
+      "y": 880,
+      "color": "#DC2626",
+      "font_size_pt": 26
+    },
+    {
+      "text": "all five phases are in the raw motion-capture markers; only the perturbation onset reaches the shared events.tsv",
+      "x": 768,
+      "y": 990,
+      "color": "#64748B",
+      "font_size_pt": 18
+    }
+  ],
+  "scale_bars": []
+}

@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" width="960" height="460">
+  <title>HEDit pipeline -- detailed flow</title>
+  <text x="480" y="26" font-family="sans-serif" font-size="15" fill="#1E293B" font-weight="bold" text-anchor="middle">HEDit pipeline -- three agents, grounded in the HED schema</text>
+
+  <!-- Stage 1: Parser -->
+  <g>
+    <rect x="60" y="64" width="240" height="200" rx="10" fill="#DBEAFE" stroke="#2563EB" stroke-width="1.8"/>
+    <circle cx="180" cy="100" r="22" fill="#FFFFFF" stroke="#2563EB" stroke-width="2"/>
+    <text x="180" y="106" font-family="sans-serif" font-size="18" font-weight="bold" fill="#2563EB" text-anchor="middle">P</text>
+    <text x="180" y="144" font-family="sans-serif" font-size="13" font-weight="bold" fill="#1E40AF" text-anchor="middle">Parser</text>
+    <text x="180" y="166" font-family="monospace" font-size="10" fill="#1E40AF" text-anchor="middle">natural language</text>
+    <text x="180" y="180" font-family="monospace" font-size="10" fill="#1E40AF" text-anchor="middle">-&gt; structured facts</text>
+    <line x1="80" y1="198" x2="280" y2="198" stroke="#2563EB" stroke-width="0.8" stroke-dasharray="2,2"/>
+    <text x="180" y="216" font-family="monospace" font-size="10" font-weight="bold" fill="#1E40AF" text-anchor="middle">identifies:</text>
+    <text x="180" y="230" font-family="monospace" font-size="9" fill="#1E40AF" text-anchor="middle">action, body-part,</text>
+    <text x="180" y="244" font-family="monospace" font-size="9" fill="#1E40AF" text-anchor="middle">direction, magnitude, unit</text>
+  </g>
+
+  <!-- arrow -->
+  <g>
+    <path d="M300 164 L336 164" stroke="#1E293B" stroke-width="2"/>
+    <polygon points="336,164 328,160 328,168" fill="#1E293B"/>
+    <text x="318" y="156" font-family="monospace" font-size="9" fill="#475569" text-anchor="middle">facts</text>
+  </g>
+
+  <!-- Stage 2: Tagger -->
+  <g>
+    <rect x="340" y="64" width="240" height="200" rx="10" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1.8"/>
+    <circle cx="460" cy="100" r="22" fill="#FFFFFF" stroke="#F59E0B" stroke-width="2"/>
+    <text x="460" y="106" font-family="sans-serif" font-size="18" font-weight="bold" fill="#B45309" text-anchor="middle">T</text>
+    <text x="460" y="144" font-family="sans-serif" font-size="13" font-weight="bold" fill="#7C2D12" text-anchor="middle">Tagger</text>
+    <text x="460" y="166" font-family="monospace" font-size="10" fill="#7C2D12" text-anchor="middle">retrieves HED nodes,</text>
+    <text x="460" y="180" font-family="monospace" font-size="10" fill="#7C2D12" text-anchor="middle">composes the tag string</text>
+    <line x1="360" y1="198" x2="560" y2="198" stroke="#F59E0B" stroke-width="0.8" stroke-dasharray="2,2"/>
+    <text x="460" y="216" font-family="monospace" font-size="10" font-weight="bold" fill="#7C2D12" text-anchor="middle">RAG over schema:</text>
+    <text x="460" y="230" font-family="monospace" font-size="9" fill="#7C2D12" text-anchor="middle">Move, Push, Body-part,</text>
+    <text x="460" y="244" font-family="monospace" font-size="9" fill="#7C2D12" text-anchor="middle">Direction, value slots</text>
+  </g>
+
+  <!-- arrow -->
+  <g>
+    <path d="M580 164 L616 164" stroke="#1E293B" stroke-width="2"/>
+    <polygon points="616,164 608,160 608,168" fill="#1E293B"/>
+    <text x="598" y="156" font-family="monospace" font-size="9" fill="#475569" text-anchor="middle">draft</text>
+  </g>
+
+  <!-- Stage 3: Validator -->
+  <g>
+    <rect x="620" y="64" width="240" height="200" rx="10" fill="#D1FAE5" stroke="#059669" stroke-width="1.8"/>
+    <circle cx="740" cy="100" r="22" fill="#FFFFFF" stroke="#059669" stroke-width="2"/>
+    <text x="740" y="106" font-family="sans-serif" font-size="18" font-weight="bold" fill="#059669" text-anchor="middle">V</text>
+    <text x="740" y="144" font-family="sans-serif" font-size="13" font-weight="bold" fill="#065F46" text-anchor="middle">Validator</text>
+    <text x="740" y="166" font-family="monospace" font-size="10" fill="#065F46" text-anchor="middle">HED JS validator</text>
+    <text x="740" y="180" font-family="monospace" font-size="10" fill="#065F46" text-anchor="middle">on the composed tag</text>
+    <line x1="640" y1="198" x2="840" y2="198" stroke="#059669" stroke-width="0.8" stroke-dasharray="2,2"/>
+    <text x="740" y="216" font-family="monospace" font-size="10" font-weight="bold" fill="#065F46" text-anchor="middle">checks:</text>
+    <text x="740" y="230" font-family="monospace" font-size="9" fill="#065F46" text-anchor="middle">tag exists, units valid,</text>
+    <text x="740" y="244" font-family="monospace" font-size="9" fill="#065F46" text-anchor="middle">value slot well-formed</text>
+  </g>
+
+  <!-- Loopback arrow from Validator back to Tagger when invalid -->
+  <g>
+    <path d="M740 264 C 740 318, 460 318, 460 268" fill="none" stroke="#DC2626" stroke-width="2" stroke-dasharray="5,4"/>
+    <polygon points="460,260 454,272 466,272" fill="#DC2626"/>
+    <rect x="430" y="296" width="340" height="26" rx="5" fill="#FEE2E2" stroke="#DC2626" stroke-width="1.2"/>
+    <text x="600" y="314" font-family="monospace" font-size="11" fill="#991B1B" text-anchor="middle">re-tag with validator error context</text>
+  </g>
+
+  <!-- HED schema rail underneath -->
+  <g>
+    <rect x="40" y="346" width="880" height="58" rx="6" fill="#FFFBF5" stroke="#E99852" stroke-width="1.6"/>
+    <text x="60" y="370" font-family="sans-serif" font-size="13" font-weight="bold" fill="#B45309">HED schema (v8.x)</text>
+    <text x="60" y="392" font-family="monospace" font-size="11" fill="#7C2D12">single source of truth -- tagger queries it, validator checks against it</text>
+    <!-- schema badge -->
+    <g transform="translate(820, 354)">
+      <rect x="0" y="0" width="76" height="44" rx="4" fill="#FEF3C7" stroke="#B45309" stroke-width="1.4"/>
+      <text x="38" y="18" font-family="monospace" font-size="10" font-weight="bold" fill="#7C2D12" text-anchor="middle">hedtags.org</text>
+      <text x="38" y="34" font-family="monospace" font-size="9" fill="#7C2D12" text-anchor="middle">~2000 tags</text>
+    </g>
+  </g>
+
+  <text x="480" y="436" font-family="sans-serif" font-size="11" fill="#64748B" font-style="italic" text-anchor="middle">You provide the descriptions (today). HEDit grounds them in HED. Paper-level extraction lands later in hedify.</text>
+</svg>

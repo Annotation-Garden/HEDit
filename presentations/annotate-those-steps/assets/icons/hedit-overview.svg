@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" width="960" height="400">
+  <title>HEDit overview -- natural language to HED</title>
+  <text x="480" y="26" font-family="sans-serif" font-size="15" fill="#1E293B" font-weight="bold" text-anchor="middle">HEDit today -- you describe the events in plain English, HEDit returns valid HED</text>
+
+  <!-- INPUT on the left: user-written descriptions -->
+  <g>
+    <rect x="40" y="64" width="240" height="260" rx="8" fill="#F0FDF4" stroke="#184A3D" stroke-width="1.6"/>
+    <text x="160" y="86" font-family="sans-serif" font-size="13" font-weight="bold" fill="#184A3D" text-anchor="middle">You provide -- natural language</text>
+
+    <!-- Description card -->
+    <g transform="translate(56, 104)">
+      <rect x="0" y="0" width="208" height="200" rx="5" fill="#FFFFFF" stroke="#184A3D" stroke-width="1.2"/>
+      <text x="12" y="20" font-family="monospace" font-size="10" font-weight="bold" fill="#065F46">pull_left:</text>
+      <text x="12" y="36" font-family="sans-serif" font-size="11" fill="#1E293B">"A mediolateral pull at</text>
+      <text x="12" y="50" font-family="sans-serif" font-size="11" fill="#1E293B">the participant's waist,</text>
+      <text x="12" y="64" font-family="sans-serif" font-size="11" fill="#1E293B">delivered by motor on the</text>
+      <text x="12" y="78" font-family="sans-serif" font-size="11" fill="#1E293B">left side, 1 s duration,</text>
+      <text x="12" y="92" font-family="sans-serif" font-size="11" fill="#1E293B">peak ~60 N."</text>
+
+      <line x1="12" y1="106" x2="196" y2="106" stroke="#94A3B8" stroke-width="0.6" stroke-dasharray="2,2"/>
+
+      <text x="12" y="124" font-family="monospace" font-size="10" font-weight="bold" fill="#065F46">rotate_cw:</text>
+      <text x="12" y="140" font-family="sans-serif" font-size="11" fill="#1E293B">"Visual field rotated 20 deg</text>
+      <text x="12" y="154" font-family="sans-serif" font-size="11" fill="#1E293B">clockwise via VR headset</text>
+      <text x="12" y="168" font-family="sans-serif" font-size="11" fill="#1E293B">over 0.5 s, while subject</text>
+      <text x="12" y="182" font-family="sans-serif" font-size="11" fill="#1E293B">walked on a beam."</text>
+    </g>
+
+  </g>
+
+  <!-- HEDit engine center -->
+  <g>
+    <rect x="320" y="64" width="320" height="260" rx="12" fill="#FFFBF5" stroke="#E99852" stroke-width="2.4"/>
+    <text x="480" y="86" font-family="sans-serif" font-size="14" font-weight="bold" fill="#B45309" text-anchor="middle">HEDit -- LangGraph agents</text>
+
+    <!-- Three agent boxes -->
+    <g transform="translate(340, 110)">
+      <!-- Parser -->
+      <g>
+        <rect x="0" y="0" width="84" height="84" rx="6" fill="#FFFFFF" stroke="#E99852" stroke-width="1.6"/>
+        <circle cx="42" cy="26" r="14" fill="#FEF3C7" stroke="#B45309" stroke-width="1.4"/>
+        <text x="42" y="31" font-family="sans-serif" font-size="14" font-weight="bold" fill="#B45309" text-anchor="middle">P</text>
+        <text x="42" y="58" font-family="sans-serif" font-size="11" font-weight="bold" fill="#1E293B" text-anchor="middle">Parser</text>
+        <text x="42" y="72" font-family="monospace" font-size="9" fill="#475569" text-anchor="middle">NL -&gt; facts</text>
+      </g>
+
+      <line x1="84" y1="42" x2="106" y2="42" stroke="#1E293B" stroke-width="1.6"/>
+      <polygon points="106,42 100,38 100,46" fill="#1E293B"/>
+
+      <!-- Tagger -->
+      <g transform="translate(106, 0)">
+        <rect x="0" y="0" width="84" height="84" rx="6" fill="#FFFFFF" stroke="#E99852" stroke-width="1.6"/>
+        <circle cx="42" cy="26" r="14" fill="#FEF3C7" stroke="#B45309" stroke-width="1.4"/>
+        <text x="42" y="31" font-family="sans-serif" font-size="14" font-weight="bold" fill="#B45309" text-anchor="middle">T</text>
+        <text x="42" y="58" font-family="sans-serif" font-size="11" font-weight="bold" fill="#1E293B" text-anchor="middle">Tagger</text>
+        <text x="42" y="72" font-family="monospace" font-size="9" fill="#475569" text-anchor="middle">facts -&gt; HED</text>
+      </g>
+
+      <line x1="190" y1="42" x2="212" y2="42" stroke="#1E293B" stroke-width="1.6"/>
+      <polygon points="212,42 206,38 206,46" fill="#1E293B"/>
+
+      <!-- Validator -->
+      <g transform="translate(212, 0)">
+        <rect x="0" y="0" width="84" height="84" rx="6" fill="#FFFFFF" stroke="#E99852" stroke-width="1.6"/>
+        <circle cx="42" cy="26" r="14" fill="#FEF3C7" stroke="#B45309" stroke-width="1.4"/>
+        <text x="42" y="31" font-family="sans-serif" font-size="14" font-weight="bold" fill="#B45309" text-anchor="middle">V</text>
+        <text x="42" y="58" font-family="sans-serif" font-size="11" font-weight="bold" fill="#1E293B" text-anchor="middle">Validator</text>
+        <text x="42" y="72" font-family="monospace" font-size="9" fill="#475569" text-anchor="middle">HED JS</text>
+      </g>
+    </g>
+
+    <!-- Schema base -->
+    <rect x="340" y="218" width="280" height="32" rx="4" fill="#FEF3C7" stroke="#B45309" stroke-width="1.4"/>
+    <text x="480" y="239" font-family="monospace" font-size="11" fill="#7C2D12" text-anchor="middle">HED schema v8.x  -  OpenRouter LLMs</text>
+
+    <!-- Loop arrow: V box bottom -> curve down -> Parser/Tagger area, arrow pointing UP into the row -->
+    <path d="M572 264 C 572 300, 388 300, 388 268" fill="none" stroke="#B45309" stroke-width="2" stroke-dasharray="5,4"/>
+    <polygon points="388,260 382,272 394,272" fill="#B45309"/>
+    <text x="480" y="318" font-family="sans-serif" font-size="11" fill="#7C2D12" font-style="italic" text-anchor="middle">if invalid -- re-tag with validator feedback</text>
+  </g>
+
+  <!-- Output on right: HED sidecar -->
+  <g>
+    <rect x="680" y="64" width="240" height="260" rx="8" fill="#FFFBF5" stroke="#B45309" stroke-width="1.6"/>
+    <text x="800" y="86" font-family="sans-serif" font-size="13" font-weight="bold" fill="#B45309" text-anchor="middle">HEDit returns -- valid HED</text>
+
+    <g transform="translate(696, 104)">
+      <rect x="0" y="0" width="208" height="200" rx="5" fill="#FFFFFF" stroke="#B45309" stroke-width="1.2"/>
+      <g font-family="monospace" font-size="9" fill="#1E293B">
+        <text x="10" y="18">"value": {</text>
+        <text x="22" y="32">"HED": {</text>
+        <text x="34" y="46" fill="#B45309">"pull_left":</text>
+        <text x="42" y="58" fill="#B45309">"Move, Push/</text>
+        <text x="42" y="70" fill="#B45309">(Direction/Leftward),</text>
+        <text x="42" y="82" fill="#B45309">(Body-part/Hip),</text>
+        <text x="42" y="94" fill="#B45309">(Force, N, #),</text>
+        <text x="42" y="106" fill="#B45309">Perturbation",</text>
+        <text x="34" y="124" fill="#B45309">"rotate_cw":</text>
+        <text x="42" y="136" fill="#B45309">"Visual-presentation,</text>
+        <text x="42" y="148" fill="#B45309">Rotation/(Direction/</text>
+        <text x="42" y="160" fill="#B45309">Clockwise),</text>
+        <text x="42" y="172" fill="#B45309">(Magnitude, deg, #)"</text>
+        <text x="22" y="186">}</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Connecting arrows -->
+  <path d="M280 194 L320 194" stroke="#1E293B" stroke-width="2"/>
+  <polygon points="320,194 312,190 312,198" fill="#1E293B"/>
+  <path d="M640 194 L680 194" stroke="#1E293B" stroke-width="2"/>
+  <polygon points="680,194 672,190 672,198" fill="#1E293B"/>
+
+  <!-- Note about roadmap -->
+  <g>
+    <rect x="40" y="346" width="880" height="38" rx="6" fill="#FEF3C7" stroke="#B45309" stroke-width="1"/>
+    <text x="60" y="370" font-family="sans-serif" font-size="12" font-weight="bold" fill="#7C2D12">Today (v0.6):</text>
+    <text x="160" y="370" font-family="sans-serif" font-size="12" fill="#1E293B">natural language -&gt; HED.</text>
+    <text x="376" y="370" font-family="sans-serif" font-size="12" font-weight="bold" fill="#7C2D12">Planned (hedify):</text>
+    <text x="510" y="370" font-family="sans-serif" font-size="12" fill="#1E293B">paper PDF extraction, GUI review, auto-suggest from events.tsv columns.</text>
+  </g>
+</svg>

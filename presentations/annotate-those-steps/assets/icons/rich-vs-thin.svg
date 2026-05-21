@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" width="960" height="420">
+  <title>Rich raw data vs thin shared events</title>
+  <text x="480" y="26" font-family="sans-serif" font-size="15" fill="#1E293B" font-weight="bold" text-anchor="middle">The MoBI annotation reality: rich raw data, thin shared annotations</text>
+
+  <!-- LEFT: rich raw recording stack -->
+  <g>
+    <rect x="40" y="56" width="380" height="320" rx="10" fill="#F0FDF4" stroke="#184A3D" stroke-width="1.8"/>
+    <text x="230" y="80" font-family="sans-serif" font-size="14" font-weight="bold" fill="#184A3D" text-anchor="middle">Raw recording (per subject)</text>
+
+    <!-- waveform stack -->
+    <g transform="translate(60, 98)">
+      <text x="0" y="0" font-family="monospace" font-size="11" font-weight="bold" fill="#184A3D">EEG 128ch @ 512 Hz</text>
+      <path d="M0 8 Q15 -4 30 8 T60 8 T90 8 T120 8 T150 8 T180 8 T210 8 T240 8 T270 8 T300 8 T330 8" fill="none" stroke="#184A3D" stroke-width="1.2"/>
+      <path d="M0 22 Q12 12 24 22 T48 22 T72 22 T96 22 T120 22 T144 22 T168 22 T192 22 T216 22 T240 22 T264 22 T288 22 T312 22 T336 22" fill="none" stroke="#184A3D" stroke-width="1.2"/>
+      <path d="M0 36 Q18 24 36 36 T72 36 T108 36 T144 36 T180 36 T216 36 T252 36 T288 36 T324 36" fill="none" stroke="#184A3D" stroke-width="1.2"/>
+
+      <text x="0" y="62" font-family="monospace" font-size="11" font-weight="bold" fill="#B45309">EMG leg+neck @ 1 kHz</text>
+      <path d="M0 70 L20 70 L25 56 L30 84 L35 56 L40 84 L45 70 L80 70 L85 60 L90 80 L95 60 L100 80 L105 70 L160 70" fill="none" stroke="#B45309" stroke-width="1.2"/>
+      <path d="M180 70 L200 70 L205 58 L210 82 L215 58 L220 82 L225 70 L280 70 L285 62 L290 78 L295 62 L300 78 L305 70 L336 70" fill="none" stroke="#B45309" stroke-width="1.2"/>
+
+      <text x="0" y="100" font-family="monospace" font-size="11" font-weight="bold" fill="#4B4967">Motion capture (16 markers)</text>
+      <path d="M0 110 Q42 84 84 110 T168 110 T252 110 T336 110" fill="none" stroke="#4B4967" stroke-width="1.4"/>
+      <path d="M0 122 Q42 138 84 122 T168 122 T252 122 T336 122" fill="none" stroke="#4B4967" stroke-width="1.4"/>
+
+      <text x="0" y="146" font-family="monospace" font-size="11" font-weight="bold" fill="#DC2626">Load cell (pull force)</text>
+      <path d="M0 156 L70 156 L70 134 L100 134 L100 156 L160 156 L160 138 L190 138 L190 156 L250 156 L250 132 L280 132 L280 156 L336 156" fill="none" stroke="#DC2626" stroke-width="1.4"/>
+
+      <text x="0" y="182" font-family="monospace" font-size="11" font-weight="bold" fill="#1E293B">VR rotation timestamps</text>
+      <g fill="#1E293B">
+        <rect x="40" y="188" width="3" height="14"/>
+        <rect x="118" y="188" width="3" height="14"/>
+        <rect x="186" y="188" width="3" height="14"/>
+        <rect x="244" y="188" width="3" height="14"/>
+        <rect x="298" y="188" width="3" height="14"/>
+      </g>
+
+      <text x="0" y="222" font-family="monospace" font-size="11" font-weight="bold" fill="#0E7490">Task / behavior log</text>
+      <rect x="0" y="230" width="336" height="14" rx="2" fill="#CFFAFE" stroke="#0E7490" stroke-width="1"/>
+      <text x="168" y="241" font-family="monospace" font-size="10" fill="#0E7490" text-anchor="middle">stand | walk | balance loss | recovery</text>
+    </g>
+
+    <text x="230" y="358" font-family="sans-serif" font-size="11" fill="#065F46" text-anchor="middle">~5 GB per session, captured in lab</text>
+  </g>
+
+  <!-- ARROW: filtering down -->
+  <g>
+    <path d="M430 220 L530 220" fill="none" stroke="#475569" stroke-width="3"/>
+    <polygon points="530,220 518,212 518,228" fill="#475569"/>
+    <text x="480" y="206" font-family="sans-serif" font-size="11" font-weight="bold" fill="#475569" text-anchor="middle">shared on</text>
+    <text x="480" y="246" font-family="sans-serif" font-size="11" font-weight="bold" fill="#475569" text-anchor="middle">OpenNeuro / NEMAR</text>
+  </g>
+
+  <!-- RIGHT: thin events.tsv -->
+  <g>
+    <rect x="540" y="56" width="380" height="320" rx="10" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.8"/>
+    <text x="730" y="80" font-family="sans-serif" font-size="14" font-weight="bold" fill="#991B1B" text-anchor="middle">events.tsv (what re-users see)</text>
+
+    <!-- column headers -->
+    <g transform="translate(560, 100)">
+      <rect x="0" y="0" width="340" height="22" fill="#FCA5A5"/>
+      <text x="22" y="15" font-family="monospace" font-size="10" font-weight="bold" fill="#7F1D1D">onset</text>
+      <text x="92" y="15" font-family="monospace" font-size="10" font-weight="bold" fill="#7F1D1D">duration</text>
+      <text x="172" y="15" font-family="monospace" font-size="10" font-weight="bold" fill="#7F1D1D">trial_type</text>
+      <text x="252" y="15" font-family="monospace" font-size="10" font-weight="bold" fill="#7F1D1D">value</text>
+
+      <!-- data rows -->
+      <g font-family="monospace" font-size="10" fill="#7F1D1D">
+        <rect x="0" y="22" width="340" height="18" fill="#FFFFFF"/>
+        <text x="6" y="35">14.42</text><text x="92" y="35">1.0</text><text x="172" y="35">stimulus</text><text x="252" y="35">pull_right</text>
+
+        <rect x="0" y="40" width="340" height="18" fill="#FEF2F2"/>
+        <text x="6" y="53">18.29</text><text x="92" y="53">1.0</text><text x="172" y="53">stimulus</text><text x="252" y="53">pull_left</text>
+
+        <rect x="0" y="58" width="340" height="18" fill="#FFFFFF"/>
+        <text x="6" y="71">22.83</text><text x="92" y="71">1.0</text><text x="172" y="71">stimulus</text><text x="252" y="71">pull_left</text>
+
+        <rect x="0" y="76" width="340" height="18" fill="#FEF2F2"/>
+        <text x="6" y="89">27.17</text><text x="92" y="89">1.0</text><text x="172" y="89">stimulus</text><text x="252" y="89">pull_left</text>
+
+        <rect x="0" y="94" width="340" height="18" fill="#FFFFFF"/>
+        <text x="6" y="107">30.37</text><text x="92" y="107">1.0</text><text x="172" y="107">stimulus</text><text x="252" y="107">pull_left</text>
+
+        <rect x="0" y="112" width="340" height="18" fill="#FEF2F2"/>
+        <text x="6" y="125">33.60</text><text x="92" y="125">1.0</text><text x="172" y="125">stimulus</text><text x="252" y="125">pull_right</text>
+
+        <rect x="0" y="130" width="340" height="18" fill="#FFFFFF"/>
+        <text x="6" y="143">37.81</text><text x="92" y="143">1.0</text><text x="172" y="143">stimulus</text><text x="252" y="143">pull_left</text>
+
+        <rect x="0" y="148" width="340" height="18" fill="#FEF2F2"/>
+        <text x="160" y="161" text-anchor="middle">. . . 150 rows</text>
+      </g>
+    </g>
+
+    <!-- callout box -->
+    <rect x="560" y="290" width="340" height="68" rx="5" fill="#FFFFFF" stroke="#DC2626" stroke-width="1.4"/>
+    <text x="730" y="310" font-family="sans-serif" font-size="11" font-weight="bold" fill="#991B1B" text-anchor="middle">4 string labels.</text>
+    <text x="730" y="326" font-family="sans-serif" font-size="11" fill="#991B1B" text-anchor="middle">No force, no rotation angle, no gait phase,</text>
+    <text x="730" y="342" font-family="sans-serif" font-size="11" fill="#991B1B" text-anchor="middle">no condition (stand/walk), no balance loss.</text>
+  </g>
+
+  <text x="480" y="406" font-family="sans-serif" font-size="11" fill="#64748B" font-style="italic" text-anchor="middle">Source: ds003739 (Peterson and Ferris, 2018) -- one of the cleanest MoBI shares. This is the ceiling, not the floor.</text>
+</svg>
