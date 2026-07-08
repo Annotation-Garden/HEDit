@@ -59,10 +59,10 @@ class LocalExecutionBackend(ExecutionBackend):
     - No dependency on external HEDit infrastructure
     - Better privacy (all processing local except LLM calls)
     - Faster response times (no extra network hop to backend)
-    - Works offline except for OpenRouter LLM calls
+    - Works offline except for LLM calls (OpenRouter, or Anthropic when backend="anthropic")
 
     Requirements:
-    - OpenRouter API key
+    - An LLM API key (OpenRouter, or ANTHROPIC_API_KEY when backend="anthropic")
     - Standalone dependencies installed
     """
 

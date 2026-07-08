@@ -16,12 +16,15 @@ one-image smoke test; it is centralised in ``ANTHROPIC_WORKSPACE_HEADER`` so it
 can be adjusted in one place.
 """
 
+import logging
 import os
 from typing import Any
 
 from langchain_core.language_models import BaseChatModel
 
 from src.utils.openrouter_llm import CachingLLMWrapper, is_cacheable_model
+
+logger = logging.getLogger(__name__)
 
 # Header carrying the workspace id to the AWS-external Anthropic endpoint.
 # Adjust here if the smoke test shows the gateway expects a different name.
@@ -77,7 +80,8 @@ def create_anthropic_llm(
             the AWS-external URL to bill usage to AWS.
         workspace_id: Workspace id (defaults to ``ANTHROPIC_WORKSPACE_ID``); sent
             as the ``ANTHROPIC_WORKSPACE_HEADER`` request header when present.
-        temperature: Sampling temperature.
+        temperature: Sampling temperature. Silently dropped (via ``drop_params``)
+            for models that only accept a fixed value, e.g. Opus 4.8 -> temperature=1.
         max_tokens: Optional max output tokens.
         enable_caching: Force caching on/off. If None, auto-enables for Claude
             models (reuses ``CachingLLMWrapper``).
@@ -95,23 +99,35 @@ def create_anthropic_llm(
     resolved_base = base_url or os.getenv("ANTHROPIC_BASE_URL")
     resolved_workspace = workspace_id or os.getenv("ANTHROPIC_WORKSPACE_ID")
 
+    # AWS-external (non-Bedrock) billing needs BOTH the base URL and the workspace
+    # id; with only one set, requests silently hit the wrong endpoint/account.
+    if bool(resolved_base) != bool(resolved_workspace):
+        logger.warning(
+            "Anthropic backend: only one of base_url/workspace_id is set "
+            "(base_url=%s, workspace_id=%s). AWS-external billing needs both; "
+            "requests may hit the default Anthropic endpoint.",
+            bool(resolved_base),
+            bool(resolved_workspace),
+        )
+
     model_kwargs: dict[str, Any] = {
         # Reasoning-tier Anthropic models (e.g. Opus 4.8) only accept
         # temperature=1, and other params vary by model. Let LiteLLM drop
         # per-model-unsupported params instead of raising UnsupportedParamsError.
         "drop_params": True,
     }
-    # LiteLLM's Anthropic provider reads ``ANTHROPIC_API_BASE`` (not the SDK's
-    # ``ANTHROPIC_BASE_URL``), so pass the endpoint explicitly rather than relying
-    # on the env-var name matching.
-    if resolved_base:
-        model_kwargs["api_base"] = resolved_base
     if resolved_workspace:
         model_kwargs["extra_headers"] = {ANTHROPIC_WORKSPACE_HEADER: resolved_workspace}
 
+    # Pass ``api_base`` as a ChatLiteLLM field, NOT via model_kwargs: the wrapper's
+    # _client_params merges its own ``api_base`` (from this field) last, so a
+    # model_kwargs entry would be silently overwritten to None. LiteLLM also honors
+    # ANTHROPIC_BASE_URL from the environment; setting the field makes an
+    # explicitly passed base_url work without relying on the env var.
     llm = ChatLiteLLM(
         model=litellm_model,
         api_key=api_key or os.getenv("ANTHROPIC_API_KEY"),
+        api_base=resolved_base,
         temperature=temperature,
         max_tokens=max_tokens,
         model_kwargs=model_kwargs,

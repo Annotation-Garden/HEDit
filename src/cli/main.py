@@ -188,6 +188,42 @@ BackendOption = Annotated[
 ]
 
 
+def _resolve_backend(
+    backend: str | None,
+    api_mode: bool,
+    mode_override: str | None,
+) -> tuple[str, str | None, str | None]:
+    """Resolve the LLM backend and, for the anthropic backend, its mode and key.
+
+    Returns ``(backend_name, mode_override, anthropic_key)``:
+    - `backend_name`: validated backend ("openrouter" or "anthropic"), from
+      ``--backend`` then the ``LLM_PROVIDER`` env var, defaulting to "openrouter".
+    - For the anthropic backend, mode is forced to "standalone" and
+      `anthropic_key` is ``ANTHROPIC_API_KEY`` (env-only in Phase 1); the caller
+      uses it as the effective key so a stored OpenRouter key is never reused.
+    - Otherwise `mode_override` is returned unchanged and `anthropic_key` is None.
+
+    Raises ``typer.Exit`` on an unknown backend value or on ``--backend anthropic``
+    combined with an explicit ``--api``.
+    """
+    backend_name = (backend or os.getenv("LLM_PROVIDER") or "openrouter").strip().lower()
+    if backend_name not in ("openrouter", "anthropic"):
+        output.print_error(
+            f"Unknown backend '{backend_name}'",
+            hint="Use --backend openrouter or --backend anthropic.",
+        )
+        raise typer.Exit(1)
+    if backend_name == "anthropic":
+        if api_mode:
+            output.print_error(
+                "The 'anthropic' backend is only available in standalone mode",
+                hint="Drop --api (the anthropic backend always runs standalone).",
+            )
+            raise typer.Exit(1)
+        return backend_name, "standalone", os.getenv("ANTHROPIC_API_KEY")
+    return backend_name, mode_override, None
+
+
 def get_executor(
     config: CLIConfig,
     api_key: str | None,
@@ -208,7 +244,8 @@ def get_executor(
         Configured ExecutionBackend instance
 
     Raises:
-        typer.Exit: If standalone mode requested but dependencies not available
+        typer.Exit: If standalone mode requested but dependencies not available,
+            or if backend="anthropic" is requested outside standalone mode.
     """
     mode = mode_override or config.execution.mode
 
@@ -496,17 +533,23 @@ def annotate(
     )
 
     # Resolve the LLM backend (Phase 1, epic #155). The native Anthropic backend
-    # is standalone-only and authenticates with ANTHROPIC_API_KEY.
-    backend_name = (backend or os.getenv("LLM_PROVIDER") or "openrouter").strip().lower()
+    # is standalone-only and authenticates from ANTHROPIC_API_KEY (env-only) --
+    # never a stored OpenRouter key.
+    backend_name, mode_override, anthropic_key = _resolve_backend(backend, api_mode, mode_override)
     if backend_name == "anthropic":
-        mode_override = "standalone"
-        effective_key = os.getenv("ANTHROPIC_API_KEY") or effective_key
+        effective_key = anthropic_key
 
     if not effective_key:
-        output.print_error(
-            "No API key configured",
-            hint="Run 'hedit init' or provide --api-key",
-        )
+        if backend_name == "anthropic":
+            output.print_error(
+                "No API key configured",
+                hint="Set the ANTHROPIC_API_KEY environment variable.",
+            )
+        else:
+            output.print_error(
+                "No API key configured",
+                hint="Run 'hedit init' or provide --api-key.",
+            )
         raise typer.Exit(1)
 
     mode_name = mode_override or config.execution.mode
@@ -667,17 +710,23 @@ def annotate_image(
     )
 
     # Resolve the LLM backend (Phase 1, epic #155). The native Anthropic backend
-    # is standalone-only and authenticates with ANTHROPIC_API_KEY.
-    backend_name = (backend or os.getenv("LLM_PROVIDER") or "openrouter").strip().lower()
+    # is standalone-only and authenticates from ANTHROPIC_API_KEY (env-only) --
+    # never a stored OpenRouter key.
+    backend_name, mode_override, anthropic_key = _resolve_backend(backend, api_mode, mode_override)
     if backend_name == "anthropic":
-        mode_override = "standalone"
-        effective_key = os.getenv("ANTHROPIC_API_KEY") or effective_key
+        effective_key = anthropic_key
 
     if not effective_key:
-        output.print_error(
-            "No API key configured",
-            hint="Run 'hedit init' or provide --api-key",
-        )
+        if backend_name == "anthropic":
+            output.print_error(
+                "No API key configured",
+                hint="Set the ANTHROPIC_API_KEY environment variable.",
+            )
+        else:
+            output.print_error(
+                "No API key configured",
+                hint="Run 'hedit init' or provide --api-key.",
+            )
         raise typer.Exit(1)
 
     mode_name = mode_override or config.execution.mode

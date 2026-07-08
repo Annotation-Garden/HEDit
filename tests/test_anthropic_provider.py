@@ -36,6 +36,7 @@ def test_to_native_anthropic_id():
 
 def test_create_anthropic_llm_builds_and_wraps_for_caching():
     from src.utils.anthropic_llm import create_anthropic_llm
+    from src.utils.openrouter_llm import CachingLLMWrapper
 
     llm = create_anthropic_llm(
         model="claude-opus-4-8",
@@ -44,7 +45,85 @@ def test_create_anthropic_llm_builds_and_wraps_for_caching():
         workspace_id="wrkspc_test",
     )
     # Claude models auto-enable caching -> wrapped, no network call made here.
-    assert llm.__class__.__name__ == "CachingLLMWrapper"
+    assert isinstance(llm, CachingLLMWrapper)
+
+
+def test_create_anthropic_llm_wires_aws_endpoint():
+    """The AWS-billing route (api_base + workspace header) must reach the client."""
+    from src.utils.anthropic_llm import create_anthropic_llm
+
+    llm = create_anthropic_llm(
+        model="claude-opus-4-8",
+        api_key="sk-ant-test",
+        base_url="https://aws-external-anthropic.us-east-2.api.aws",
+        workspace_id="wrkspc_test",
+    )
+    inner = llm.llm  # unwrap CachingLLMWrapper -> ChatLiteLLM
+    assert inner.model == "anthropic/claude-opus-4-8"
+    # api_base must be a real client field (not model_kwargs, which the wrapper overwrites).
+    assert inner.api_base == "https://aws-external-anthropic.us-east-2.api.aws"
+    assert inner.model_kwargs["extra_headers"] == {"anthropic-workspace-id": "wrkspc_test"}
+    # Opus 4.8 rejects temperature != 1; drop_params lets LiteLLM drop it.
+    assert inner.model_kwargs["drop_params"] is True
+
+
+def test_create_anthropic_llm_enable_caching_false():
+    from src.utils.anthropic_llm import create_anthropic_llm
+    from src.utils.openrouter_llm import CachingLLMWrapper
+
+    llm = create_anthropic_llm(model="claude-opus-4-8", api_key="x", enable_caching=False)
+    assert not isinstance(llm, CachingLLMWrapper)
+
+
+def test_to_native_anthropic_id_non_aliased_only_strips_prefix():
+    """Locks current Phase-1 behavior: non-aliased ids only get the prefix stripped."""
+    from src.utils.anthropic_llm import to_native_anthropic_id
+
+    # No dot->dash normalization for ids outside the small alias table (documented limit).
+    assert to_native_anthropic_id("anthropic/claude-3.7-sonnet") == "claude-3.7-sonnet"
+
+
+def test_resolve_backend_default_and_anthropic(monkeypatch):
+    from src.cli.main import _resolve_backend
+
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+
+    # Default -> openrouter, mode unchanged, no anthropic key.
+    assert _resolve_backend(None, False, "api") == ("openrouter", "api", None)
+    # Anthropic -> forced standalone, key from ANTHROPIC_API_KEY.
+    assert _resolve_backend("anthropic", False, None) == ("anthropic", "standalone", "sk-ant-test")
+
+
+def test_resolve_backend_unknown_value_errors(monkeypatch):
+    import typer
+
+    from src.cli.main import _resolve_backend
+
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    with pytest.raises(typer.Exit):
+        _resolve_backend("anthropc", False, None)  # typo must not silently fall through
+
+
+def test_resolve_backend_anthropic_rejects_api_mode(monkeypatch):
+    import typer
+
+    from src.cli.main import _resolve_backend
+
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    with pytest.raises(typer.Exit):
+        _resolve_backend("anthropic", True, None)  # explicit --api must not be silently overridden
+
+
+def test_get_executor_anthropic_requires_standalone():
+    import typer
+
+    from src.cli.config import CLIConfig
+    from src.cli.main import get_executor
+
+    # Default execution mode is "api"; the anthropic backend must refuse it.
+    with pytest.raises(typer.Exit):
+        get_executor(CLIConfig(), api_key="x", backend="anthropic")
 
 
 @pytest.mark.skipif(
