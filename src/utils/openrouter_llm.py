@@ -229,5 +229,6 @@ def is_cacheable_model(model: str) -> bool:
     # Check exact match in aliases
     if model in CACHEABLE_MODELS:
         return True
-    # Check if it's an Anthropic Claude model
-    return model.startswith("anthropic/claude-")
+    # Anthropic Claude models support caching whether named with the OpenRouter
+    # namespace ("anthropic/claude-...") or as a native id ("claude-...").
+    return model.startswith("anthropic/claude-") or model.startswith("claude-")

@@ -6,6 +6,7 @@ Supports two execution modes:
 - Standalone mode: Runs LangGraph workflow locally (requires hedit[standalone])
 """
 
+import os
 from pathlib import Path
 from typing import Annotated
 
@@ -174,20 +175,34 @@ NoExtendOption = Annotated[
     ),
 ]
 
+BackendOption = Annotated[
+    str | None,
+    typer.Option(
+        "--backend",
+        help=(
+            "LLM backend: 'openrouter' (default) or 'anthropic' "
+            "(native Anthropic API, AWS-billable; standalone only). "
+            "Falls back to the LLM_PROVIDER env var."
+        ),
+    ),
+]
+
 
 def get_executor(
     config: CLIConfig,
     api_key: str | None,
     mode_override: str | None = None,
     user_id: str | None = None,
+    backend: str = "openrouter",
 ) -> ExecutionBackend:
     """Get the appropriate execution backend based on configuration.
 
     Args:
         config: CLI configuration
-        api_key: OpenRouter API key
+        api_key: LLM API key (OpenRouter, or Anthropic when backend="anthropic")
         mode_override: Override mode from --standalone/--api flags
         user_id: Custom user ID for cache optimization (default: auto-generated)
+        backend: LLM backend, "openrouter" (default) or "anthropic"
 
     Returns:
         Configured ExecutionBackend instance
@@ -196,6 +211,15 @@ def get_executor(
         typer.Exit: If standalone mode requested but dependencies not available
     """
     mode = mode_override or config.execution.mode
+
+    if backend == "anthropic" and mode != "standalone":
+        # Phase 1 (epic #155): the native Anthropic backend is standalone-only;
+        # the hosted API path stays OpenRouter until Phase 4 (#159).
+        output.print_error(
+            "The 'anthropic' backend is only available in standalone mode",
+            hint="Re-run with --standalone (or omit --api).",
+        )
+        raise typer.Exit(1)
 
     if mode == "standalone":
         from src.cli.local_executor import LocalExecutionBackend
@@ -210,6 +234,7 @@ def get_executor(
             provider=config.models.provider,
             temperature=config.models.temperature,
             user_id=user_id,
+            backend=backend,
         )
 
         if not executor.is_available():
@@ -428,6 +453,7 @@ def annotate(
         ),
     ] = False,
     no_extend: NoExtendOption = False,
+    backend: BackendOption = None,
     standalone: StandaloneOption = False,
     api_mode: ApiModeOption = False,
     verbose: VerboseOption = False,
@@ -469,6 +495,13 @@ def annotate(
         user_id=user_id,
     )
 
+    # Resolve the LLM backend (Phase 1, epic #155). The native Anthropic backend
+    # is standalone-only and authenticates with ANTHROPIC_API_KEY.
+    backend_name = (backend or os.getenv("LLM_PROVIDER") or "openrouter").strip().lower()
+    if backend_name == "anthropic":
+        mode_override = "standalone"
+        effective_key = os.getenv("ANTHROPIC_API_KEY") or effective_key
+
     if not effective_key:
         output.print_error(
             "No API key configured",
@@ -487,7 +520,9 @@ def annotate(
     )
 
     try:
-        executor = get_executor(config, effective_key, mode_override, config.settings.user_id)
+        executor = get_executor(
+            config, effective_key, mode_override, config.settings.user_id, backend=backend_name
+        )
 
         if use_streaming and hasattr(executor, "annotate_stream"):
             # Use streaming mode with live progress updates
@@ -583,6 +618,7 @@ def annotate_image(
         ),
     ] = False,
     no_extend: NoExtendOption = False,
+    backend: BackendOption = None,
     standalone: StandaloneOption = False,
     api_mode: ApiModeOption = False,
     verbose: VerboseOption = False,
@@ -630,6 +666,13 @@ def annotate_image(
         user_id=user_id,
     )
 
+    # Resolve the LLM backend (Phase 1, epic #155). The native Anthropic backend
+    # is standalone-only and authenticates with ANTHROPIC_API_KEY.
+    backend_name = (backend or os.getenv("LLM_PROVIDER") or "openrouter").strip().lower()
+    if backend_name == "anthropic":
+        mode_override = "standalone"
+        effective_key = os.getenv("ANTHROPIC_API_KEY") or effective_key
+
     if not effective_key:
         output.print_error(
             "No API key configured",
@@ -648,7 +691,9 @@ def annotate_image(
     )
 
     try:
-        executor = get_executor(config, effective_key, mode_override, config.settings.user_id)
+        executor = get_executor(
+            config, effective_key, mode_override, config.settings.user_id, backend=backend_name
+        )
 
         if use_streaming and hasattr(executor, "annotate_image_stream"):
             # Use streaming mode with live progress updates

@@ -78,11 +78,13 @@ class LocalExecutionBackend(ExecutionBackend):
         temperature: float = 0.1,
         schema_dir: Path | str | None = None,
         user_id: str | None = None,
+        backend: str = "openrouter",
     ):
         """Initialize local execution backend.
 
         Args:
-            api_key: OpenRouter API key (required for LLM operations, optional for health/validate)
+            api_key: LLM API key (required for LLM operations, optional for health/validate).
+                OpenRouter key for the default backend, Anthropic key when backend="anthropic".
             model: Model for text annotation (default: anthropic/claude-haiku-4.5)
             eval_model: Model for evaluation/assessment agents (default: qwen/qwen3.5-122b-a10b)
             eval_provider: Provider for evaluation model (default: alibaba)
@@ -92,6 +94,9 @@ class LocalExecutionBackend(ExecutionBackend):
             temperature: LLM temperature (0.0-1.0)
             schema_dir: Optional directory with JSON schemas (None = fetch from GitHub)
             user_id: Custom user ID for cache optimization (default: auto-generated machine ID)
+            backend: LLM backend, "openrouter" (default) or "anthropic" (native
+                Anthropic Messages API, AWS-billable). On the anthropic backend the
+                single ``model`` is used for every role (Phase 1, epic #155).
         """
         # Import defaults from config
         from src.cli.config import (
@@ -113,6 +118,7 @@ class LocalExecutionBackend(ExecutionBackend):
         self._temperature = temperature
         self._schema_dir = Path(schema_dir) if schema_dir else None
         self._user_id = user_id  # Custom user ID (None = use auto-generated machine ID)
+        self._backend = backend
 
         # Handle provider logic for annotation model:
         # clear if custom model specified without explicit provider
@@ -157,10 +163,16 @@ class LocalExecutionBackend(ExecutionBackend):
     def _ensure_api_key(self) -> None:
         """Ensure API key is available for LLM operations."""
         if not self._api_key:
+            key_name = "ANTHROPIC_API_KEY" if self._backend == "anthropic" else "OpenRouter API key"
+            detail = (
+                "Set ANTHROPIC_API_KEY for the anthropic backend"
+                if self._backend == "anthropic"
+                else "Provide --api-key or run 'hedit init'"
+            )
             raise ExecutionError(
-                "OpenRouter API key required for standalone mode",
+                f"{key_name} required for standalone mode",
                 code="missing_api_key",
-                detail="Provide --api-key or run 'hedit init'",
+                detail=detail,
             )
 
     def _get_workflow(self) -> HedAnnotationWorkflow:
@@ -170,54 +182,79 @@ class LocalExecutionBackend(ExecutionBackend):
             self._ensure_api_key()
 
             from src.agents.workflow import HedAnnotationWorkflow
-            from src.cli.config import get_machine_id
-            from src.utils.openrouter_llm import create_openrouter_llm
 
-            # Use custom user_id if provided, otherwise auto-generate
-            user_id = self._user_id or get_machine_id()
+            if self._backend == "anthropic":
+                from src.utils.anthropic_llm import create_anthropic_llm
 
-            # Annotation LLM keeps reasoning enabled (real HED tag work).
-            annotation_llm = create_openrouter_llm(
-                model=self._model,
-                api_key=self._api_key,
-                temperature=self._temperature,
-                provider=self._provider,
-                user_id=user_id,
-            )
-
-            # Evaluation / assessment / feedback share a model with
-            # reasoning disabled -- these are short structured tasks
-            # where extended thinking only adds latency. See #150.
-            if self._eval_model:
-                evaluation_llm = create_openrouter_llm(
-                    model=self._eval_model,
+                # Phase 1 (epic #155): the native Anthropic backend uses a single
+                # model for every role (the word-blurb run uses Opus 4.8
+                # throughout). Extended thinking is off by default on native
+                # Anthropic, so eval/keyword need no explicit reasoning-disable knob.
+                annotation_llm = create_anthropic_llm(
+                    model=self._model,
                     api_key=self._api_key,
                     temperature=self._temperature,
-                    provider=self._eval_provider,
-                    user_id=user_id,
-                    disable_reasoning=True,
+                )
+                evaluation_llm = create_anthropic_llm(
+                    model=self._model,
+                    api_key=self._api_key,
+                    temperature=self._temperature,
+                )
+                keyword_llm = create_anthropic_llm(
+                    model=self._model,
+                    api_key=self._api_key,
+                    temperature=self._temperature,
+                    max_tokens=200,
                 )
             else:
-                evaluation_llm = create_openrouter_llm(
+                from src.cli.config import get_machine_id
+                from src.utils.openrouter_llm import create_openrouter_llm
+
+                # Use custom user_id if provided, otherwise auto-generate
+                user_id = self._user_id or get_machine_id()
+
+                # Annotation LLM keeps reasoning enabled (real HED tag work).
+                annotation_llm = create_openrouter_llm(
                     model=self._model,
                     api_key=self._api_key,
                     temperature=self._temperature,
                     provider=self._provider,
                     user_id=user_id,
-                    disable_reasoning=True,
                 )
 
-            # Lightweight keyword-extraction model (#148): annotation
-            # model with reasoning off and a small token cap.
-            keyword_llm = create_openrouter_llm(
-                model=self._model,
-                api_key=self._api_key,
-                temperature=self._temperature,
-                provider=self._provider,
-                user_id=user_id,
-                max_tokens=200,
-                disable_reasoning=True,
-            )
+                # Evaluation / assessment / feedback share a model with
+                # reasoning disabled -- these are short structured tasks
+                # where extended thinking only adds latency. See #150.
+                if self._eval_model:
+                    evaluation_llm = create_openrouter_llm(
+                        model=self._eval_model,
+                        api_key=self._api_key,
+                        temperature=self._temperature,
+                        provider=self._eval_provider,
+                        user_id=user_id,
+                        disable_reasoning=True,
+                    )
+                else:
+                    evaluation_llm = create_openrouter_llm(
+                        model=self._model,
+                        api_key=self._api_key,
+                        temperature=self._temperature,
+                        provider=self._provider,
+                        user_id=user_id,
+                        disable_reasoning=True,
+                    )
+
+                # Lightweight keyword-extraction model (#148): annotation
+                # model with reasoning off and a small token cap.
+                keyword_llm = create_openrouter_llm(
+                    model=self._model,
+                    api_key=self._api_key,
+                    temperature=self._temperature,
+                    provider=self._provider,
+                    user_id=user_id,
+                    max_tokens=200,
+                    disable_reasoning=True,
+                )
 
             self._workflow = HedAnnotationWorkflow(
                 llm=annotation_llm,
@@ -274,19 +311,31 @@ class LocalExecutionBackend(ExecutionBackend):
             self._ensure_api_key()
 
             from src.agents.vision_agent import VisionAgent
-            from src.cli.config import get_machine_id
-            from src.utils.openrouter_llm import create_openrouter_llm
 
-            # Use custom user_id if provided, otherwise auto-generate
-            user_id = self._user_id or get_machine_id()
+            if self._backend == "anthropic":
+                from src.utils.anthropic_llm import create_anthropic_llm
 
-            vision_llm = create_openrouter_llm(
-                model=self._vision_model,
-                api_key=self._api_key,
-                temperature=0.3,  # Slightly higher for vision tasks
-                provider=self._vision_provider,
-                user_id=user_id,
-            )
+                # Claude is multimodal; on the anthropic backend the annotation
+                # model also describes images (single model for all roles, Phase 1).
+                vision_llm = create_anthropic_llm(
+                    model=self._model,
+                    api_key=self._api_key,
+                    temperature=0.3,  # Slightly higher for vision tasks
+                )
+            else:
+                from src.cli.config import get_machine_id
+                from src.utils.openrouter_llm import create_openrouter_llm
+
+                # Use custom user_id if provided, otherwise auto-generate
+                user_id = self._user_id or get_machine_id()
+
+                vision_llm = create_openrouter_llm(
+                    model=self._vision_model,
+                    api_key=self._api_key,
+                    temperature=0.3,  # Slightly higher for vision tasks
+                    provider=self._vision_provider,
+                    user_id=user_id,
+                )
 
             self._vision_agent = VisionAgent(llm=vision_llm)
 
