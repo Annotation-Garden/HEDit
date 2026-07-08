@@ -95,7 +95,12 @@ def create_anthropic_llm(
     resolved_base = base_url or os.getenv("ANTHROPIC_BASE_URL")
     resolved_workspace = workspace_id or os.getenv("ANTHROPIC_WORKSPACE_ID")
 
-    model_kwargs: dict[str, Any] = {}
+    model_kwargs: dict[str, Any] = {
+        # Reasoning-tier Anthropic models (e.g. Opus 4.8) only accept
+        # temperature=1, and other params vary by model. Let LiteLLM drop
+        # per-model-unsupported params instead of raising UnsupportedParamsError.
+        "drop_params": True,
+    }
     # LiteLLM's Anthropic provider reads ``ANTHROPIC_API_BASE`` (not the SDK's
     # ``ANTHROPIC_BASE_URL``), so pass the endpoint explicitly rather than relying
     # on the env-var name matching.
