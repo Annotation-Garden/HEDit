@@ -37,7 +37,7 @@ from src.api.models import (
 from src.api.security import api_key_auth, audit_logger
 from src.lsp import HedLspClient
 from src.telemetry import LocalFileStorage, TelemetryCollector, TelemetryEvent
-from src.utils.anthropic_llm import DEFAULT_MODEL, create_anthropic_llm
+from src.utils.anthropic_llm import DEFAULT_MODEL, create_anthropic_llm, normalize_model
 from src.utils.schema_loader import HedSchemaLoader
 from src.validation.hed_validator import HedPythonValidator
 
@@ -152,6 +152,12 @@ def create_anthropic_workflow(
     # The evaluation judge stays on Haiku regardless of the annotation model.
     actual_eval_model = eval_model or os.getenv("EVALUATION_MODEL", DEFAULT_MODEL)
     actual_temperature = temperature if temperature is not None else 0.1
+
+    # Validate both models up front so a bad request is rejected with a 400
+    # even when server credentials are missing (which would otherwise
+    # surface first as a 503 from the annotation LLM's credential check).
+    normalize_model(actual_annotation_model)
+    normalize_model(actual_eval_model)
 
     # Create LLMs.
     # The annotation LLM keeps reasoning enabled — that's the model
