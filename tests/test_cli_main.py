@@ -348,3 +348,65 @@ class TestInitCommand:
                 ],
             )
             assert result.exit_code == 0
+
+
+class TestStandaloneCredentials:
+    """Tests for the standalone-mode credential gate (env credentials)."""
+
+    _MOCK_RESPONSE = {
+        "annotation": "Test-annotation",
+        "is_valid": True,
+        "is_faithful": True,
+        "is_complete": False,
+        "validation_attempts": 1,
+        "validation_errors": [],
+        "validation_warnings": [],
+        "status": "success",
+    }
+
+    def test_standalone_runs_on_env_credentials(self, tmp_path, monkeypatch):
+        """Standalone mode works with ANTHROPIC_API_KEY env and no --api-key."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "server-key")
+        monkeypatch.delenv("HEDIT_ANTHROPIC_API_KEY", raising=False)
+
+        with (
+            patch("src.cli.config.CONFIG_DIR", tmp_path),
+            patch("src.cli.config.CONFIG_FILE", tmp_path / "config.yaml"),
+            patch("src.cli.config.CREDENTIALS_FILE", tmp_path / "credentials.yaml"),
+            patch(
+                "src.cli.local_executor.LocalExecutionBackend.annotate",
+                return_value=self._MOCK_RESPONSE,
+            ),
+        ):
+            result = runner.invoke(app, ["annotate", "test description", "--standalone"])
+            assert "No API key" not in result.output
+            assert result.exit_code == 0
+            assert "Test-annotation" in result.output
+
+    def test_standalone_without_any_credentials_errors(self, tmp_path, monkeypatch):
+        """Standalone mode with no key anywhere fails via the executor's check."""
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("HEDIT_ANTHROPIC_API_KEY", raising=False)
+
+        with (
+            patch("src.cli.config.CONFIG_DIR", tmp_path),
+            patch("src.cli.config.CONFIG_FILE", tmp_path / "config.yaml"),
+            patch("src.cli.config.CREDENTIALS_FILE", tmp_path / "credentials.yaml"),
+        ):
+            result = runner.invoke(app, ["annotate", "test description", "--standalone"])
+            assert result.exit_code == 1
+            assert "credentials" in result.output.lower() or "api key" in result.output.lower()
+
+    def test_api_mode_still_requires_key(self, tmp_path, monkeypatch):
+        """API mode without a BYOK key errors before any request is made."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "server-key")
+        monkeypatch.delenv("HEDIT_ANTHROPIC_API_KEY", raising=False)
+
+        with (
+            patch("src.cli.config.CONFIG_DIR", tmp_path),
+            patch("src.cli.config.CONFIG_FILE", tmp_path / "config.yaml"),
+            patch("src.cli.config.CREDENTIALS_FILE", tmp_path / "credentials.yaml"),
+        ):
+            result = runner.invoke(app, ["annotate", "test description", "--api"])
+            assert result.exit_code == 1
+            assert "No API key" in result.output
