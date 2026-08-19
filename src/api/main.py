@@ -598,6 +598,8 @@ async def annotate(
             )
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e)) from e
+        except RuntimeError as e:
+            raise HTTPException(status_code=503, detail=str(e)) from e
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -774,6 +776,8 @@ async def annotate_from_image(
             )
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e)) from e
+        except RuntimeError as e:
+            raise HTTPException(status_code=503, detail=str(e)) from e
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -1011,6 +1015,8 @@ async def annotate_stream(
             )
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e)) from e
+        except RuntimeError as e:
+            raise HTTPException(status_code=503, detail=str(e)) from e
         except Exception as e:
             raise HTTPException(
                 status_code=500, detail=f"Failed to initialize workflow: {str(e)}"
@@ -1314,6 +1320,8 @@ async def annotate_from_image_stream(
             )
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e)) from e
+        except RuntimeError as e:
+            raise HTTPException(status_code=503, detail=str(e)) from e
         except Exception as e:
             raise HTTPException(
                 status_code=500, detail=f"Failed to initialize workflow: {str(e)}"

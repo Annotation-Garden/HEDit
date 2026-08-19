@@ -112,7 +112,8 @@ def create_anthropic_llm(
         LLM instance configured for the Claude Messages API
 
     Raises:
-        ValueError: If the model is not offered, or no API key is available
+        ValueError: If the model is not offered
+        RuntimeError: If server mode is used without ANTHROPIC_API_KEY set
     """
     from langchain_anthropic import ChatAnthropic
 
@@ -125,7 +126,7 @@ def create_anthropic_llm(
     else:
         server_key = os.getenv("ANTHROPIC_API_KEY")
         if not server_key:
-            raise ValueError("ANTHROPIC_API_KEY is not set (server mode requires it)")
+            raise RuntimeError("ANTHROPIC_API_KEY is not set (server mode requires it)")
         kwargs["api_key"] = server_key
         base_url = os.getenv("ANTHROPIC_BASE_URL")
         workspace_id = os.getenv("ANTHROPIC_WORKSPACE_ID")
