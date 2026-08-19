@@ -35,7 +35,8 @@ python scripts/generate_api_key.py
 
 # Create .env file with your configuration
 cp .env.example .env
-# Edit .env with your API keys (both OPENROUTER_API_KEY and API_KEYS)
+# Edit .env with your credentials (ANTHROPIC_API_KEY, ANTHROPIC_BASE_URL,
+# ANTHROPIC_WORKSPACE_ID, and API_KEYS)
 
 # Deploy
 ./deploy/deploy.sh prod
@@ -269,18 +270,18 @@ AUDIT_LOG_FILE=/var/log/hed-bot/audit.log
 # CORS Configuration (optional extra origins)
 # EXTRA_CORS_ORIGINS=https://staging.hed-bot.pages.dev,https://dev.hed-bot.pages.dev
 
-# LLM Configuration (OpenRouter with Alibaba for fast inference)
-LLM_PROVIDER=openrouter
-OPENROUTER_API_KEY=your_openrouter_key_here
+# LLM Configuration (Claude Platform on AWS; all three credentials required)
+LLM_PROVIDER=anthropic
+ANTHROPIC_API_KEY=your_anthropic_key_here
+ANTHROPIC_BASE_URL=https://aws-external-anthropic.us-east-2.api.aws
+ANTHROPIC_WORKSPACE_ID=wrkspc_your_workspace_id
 LLM_TEMPERATURE=0.1
 
-# Model configuration
-ANNOTATION_MODEL=anthropic/claude-haiku-4.5
-ANNOTATION_PROVIDER=anthropic
-EVALUATION_MODEL=qwen/qwen3.5-122b-a10b
-EVALUATION_PROVIDER=alibaba
-VISION_MODEL=qwen/qwen3.5-122b-a10b
-VISION_PROVIDER=alibaba
+# Model configuration (claude-haiku-4-5 is the default;
+# claude-sonnet-5 is optional for highest quality)
+ANNOTATION_MODEL=claude-haiku-4-5
+EVALUATION_MODEL=claude-haiku-4-5
+VISION_MODEL=claude-haiku-4-5
 
 # Optional: HED Schema and Validator paths (if not using defaults)
 # HED_SCHEMA_DIR=/path/to/hed-schemas
@@ -396,7 +397,7 @@ docker logs hed-bot
 
 **Common issues:**
 - Missing `.env` file → Copy from `.env.example`
-- Invalid API key → Check OPENROUTER_API_KEY
+- Invalid API key → Check ANTHROPIC_API_KEY (and ANTHROPIC_WORKSPACE_ID; the endpoint rejects requests without the workspace header)
 - Port already in use → `sudo lsof -i :38427`
 
 ### Auto-Update Not Working

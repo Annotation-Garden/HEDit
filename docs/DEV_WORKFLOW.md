@@ -49,7 +49,8 @@ Run the full backend locally for integration testing.
 1. **Environment file**: Copy `.env.example` to `.env` and configure:
    ```bash
    cp .env.example .env
-   # Edit .env with your OPENROUTER_API_KEY
+   # Edit .env with your Claude Platform on AWS credentials:
+   # ANTHROPIC_API_KEY, ANTHROPIC_BASE_URL, ANTHROPIC_WORKSPACE_ID
    ```
 
 2. **HED repositories**: Clone these locally:
@@ -171,7 +172,7 @@ Look for `REMEDIATION` in the output to confirm the feature is working.
 
 ### Server won't start
 
-1. Check `.env` file exists with valid `OPENROUTER_API_KEY`
+1. Check `.env` file exists with valid `ANTHROPIC_API_KEY`, `ANTHROPIC_BASE_URL`, and `ANTHROPIC_WORKSPACE_ID`
 2. Verify HED schema/validator paths exist
 3. Check port 38427 is not in use: `lsof -i :38427`
 
@@ -183,6 +184,7 @@ Look for `REMEDIATION` in the output to confirm the feature is working.
 
 ### LLM errors
 
-1. Verify `OPENROUTER_API_KEY` is set in `.env`
-2. Check API key has credits at openrouter.ai
+1. Verify `ANTHROPIC_API_KEY`, `ANTHROPIC_BASE_URL`, and `ANTHROPIC_WORKSPACE_ID` are set in `.env`
+   (the endpoint rejects requests without the workspace header)
+2. Check the key in the AWS Console under Claude Platform on AWS -> API keys
 3. Check network connectivity

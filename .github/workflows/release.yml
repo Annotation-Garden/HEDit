@@ -82,7 +82,7 @@ jobs:
 
             ### Quick Start
             ```bash
-            # Initialize with your OpenRouter API key
+            # Initialize the CLI (optionally with a BYOK Anthropic key)
             hedit init --api-key YOUR_KEY
 
             # Generate HED annotation

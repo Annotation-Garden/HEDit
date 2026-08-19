@@ -15,33 +15,22 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-OPENROUTER_TEST_KEY = os.getenv("OPENROUTER_API_KEY_FOR_TESTING")
-SKIP_REASON = "OPENROUTER_API_KEY_FOR_TESTING not set"
+ANTHROPIC_TEST_KEY = os.getenv("ANTHROPIC_API_KEY")
+SKIP_REASON = "ANTHROPIC_API_KEY not set"
 
 
 @pytest.fixture
-def test_api_key() -> str:
-    """Get OpenRouter API key for testing."""
-    if not OPENROUTER_TEST_KEY:
-        pytest.skip(SKIP_REASON)
-    return OPENROUTER_TEST_KEY
-
-
-@pytest.fixture
-def triage_agent(test_api_key: str):
+def triage_agent():
     """Create a triage agent for testing (no GitHub client - dry run only)."""
     from src.agents.feedback_triage_agent import FeedbackTriageAgent
-    from src.utils.openrouter_llm import create_openrouter_llm
+    from src.utils.anthropic_llm import create_anthropic_llm
 
-    model = os.getenv("ANNOTATION_MODEL", "mistralai/mistral-small-3.2-24b-instruct")
-    provider = os.getenv("ANNOTATION_PROVIDER", "mistral")
+    model = os.getenv("ANNOTATION_MODEL", "claude-haiku-4-5")
 
-    llm = create_openrouter_llm(
+    llm = create_anthropic_llm(
         model=model,
-        api_key=test_api_key,
         temperature=0.1,
         max_tokens=1000,
-        provider=provider if provider else None,
     )
 
     # No GitHub client - we're testing classification only
@@ -49,7 +38,7 @@ def triage_agent(test_api_key: str):
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not OPENROUTER_TEST_KEY, reason=SKIP_REASON)
+@pytest.mark.skipif(not ANTHROPIC_TEST_KEY, reason=SKIP_REASON)
 class TestFeedbackClassification:
     """Test LLM-based feedback classification."""
 
@@ -145,7 +134,7 @@ class TestFeedbackClassification:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not OPENROUTER_TEST_KEY, reason=SKIP_REASON)
+@pytest.mark.skipif(not ANTHROPIC_TEST_KEY, reason=SKIP_REASON)
 class TestFeedbackTriage:
     """Test full triage flow with dry_run mode."""
 
@@ -282,8 +271,8 @@ class TestGitHubClientIntegration:
 
 @pytest.mark.integration
 @pytest.mark.skipif(
-    not OPENROUTER_TEST_KEY or not GITHUB_TOKEN,
-    reason="OPENROUTER_API_KEY_FOR_TESTING or GITHUB_TOKEN not set",
+    not ANTHROPIC_TEST_KEY or not GITHUB_TOKEN,
+    reason="ANTHROPIC_API_KEY or GITHUB_TOKEN not set",
 )
 class TestTriageWithGitHub:
     """Test triage agent with real GitHub data."""
@@ -292,18 +281,15 @@ class TestTriageWithGitHub:
     def triage_agent_with_github(self):
         """Create a triage agent with GitHub client."""
         from src.agents.feedback_triage_agent import FeedbackTriageAgent
+        from src.utils.anthropic_llm import create_anthropic_llm
         from src.utils.github_client import GitHubClient
-        from src.utils.openrouter_llm import create_openrouter_llm
 
-        model = os.getenv("ANNOTATION_MODEL", "mistralai/mistral-small-3.2-24b-instruct")
-        provider = os.getenv("ANNOTATION_PROVIDER", "mistral")
+        model = os.getenv("ANNOTATION_MODEL", "claude-haiku-4-5")
 
-        llm = create_openrouter_llm(
+        llm = create_anthropic_llm(
             model=model,
-            api_key=OPENROUTER_TEST_KEY,
             temperature=0.1,
             max_tokens=1000,
-            provider=provider if provider else None,
         )
 
         github_client = GitHubClient(
@@ -380,7 +366,7 @@ class TestTriageWithGitHub:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not OPENROUTER_TEST_KEY, reason=SKIP_REASON)
+@pytest.mark.skipif(not ANTHROPIC_TEST_KEY, reason=SKIP_REASON)
 class TestProcessFeedbackScript:
     """Test the process_feedback CLI script."""
 

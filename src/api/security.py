@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
 
 # API Key header names
 API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=False)
+ANTHROPIC_KEY_HEADER = APIKeyHeader(name="X-Anthropic-Key", auto_error=False)
+# Legacy BYOK header, still accepted as transport for older clients
 OPENROUTER_KEY_HEADER = APIKeyHeader(name="X-OpenRouter-Key", auto_error=False)
 
 # Audit log format
@@ -28,14 +30,14 @@ class APIKeyAuth:
 
     Supports two authentication modes:
     1. Server API key (X-API-Key header) - for server-level access control
-    2. BYOK mode (X-OpenRouter-Key header) - users provide their own OpenRouter key
+    2. BYOK mode (X-Anthropic-Key header) - users provide their own Anthropic key
     """
 
     def __init__(self):
         """Initialize API key authentication."""
         # Set require_auth first (needed by _load_api_keys)
         self.require_auth = os.getenv("REQUIRE_API_AUTH", "true").lower() == "true"
-        # Allow BYOK mode (users can provide their own OpenRouter key)
+        # Allow BYOK mode (users can provide their own Anthropic key)
         self.allow_byok = os.getenv("ALLOW_BYOK", "true").lower() == "true"
         # Load API keys from environment
         self.api_keys = self._load_api_keys()
@@ -85,34 +87,38 @@ class APIKeyAuth:
         # Check if key exists in configured keys
         return api_key in self.api_keys
 
-    def is_valid_openrouter_key(self, key: str | None) -> bool:
-        """Check if an OpenRouter key appears valid (basic format check).
+    def is_valid_byok_key(self, key: str | None) -> bool:
+        """Check if a BYOK Anthropic key appears valid (basic format check).
 
         Args:
-            key: OpenRouter API key to check
+            key: Anthropic API key to check
 
         Returns:
             True if key has valid format
         """
         if not key:
             return False
-        # OpenRouter keys typically start with "sk-or-" and are reasonably long
-        return key.startswith("sk-or-") and len(key) > 20
+        # Anthropic keys start with "sk-ant-" and are reasonably long
+        return key.startswith("sk-ant-") and len(key) > 20
 
     async def __call__(
         self,
         api_key: str | None = Security(API_KEY_HEADER),
+        anthropic_key: str | None = Security(ANTHROPIC_KEY_HEADER),
         openrouter_key: str | None = Security(OPENROUTER_KEY_HEADER),
     ) -> str:
         """FastAPI dependency for API key authentication.
 
         Supports two modes:
         1. X-API-Key header - server-level authentication
-        2. X-OpenRouter-Key header - BYOK mode (users provide their own key)
+        2. X-Anthropic-Key header - BYOK mode (users provide their own
+           Anthropic key; the legacy X-OpenRouter-Key header is still
+           accepted as transport but must carry an Anthropic key)
 
         Args:
             api_key: API key from X-API-Key header
-            openrouter_key: OpenRouter key from X-OpenRouter-Key header
+            anthropic_key: Anthropic key from X-Anthropic-Key header
+            openrouter_key: Key from the legacy X-OpenRouter-Key header
 
         Returns:
             The validated API key or "byok" for BYOK mode
@@ -124,16 +130,17 @@ class APIKeyAuth:
         if not self.require_auth:
             return "auth_disabled"
 
-        # Check for BYOK mode first (X-OpenRouter-Key header)
-        if self.allow_byok and openrouter_key:
-            if self.is_valid_openrouter_key(openrouter_key):
-                logger.info("Request authenticated via BYOK (X-OpenRouter-Key)")
+        # Check for BYOK mode first (X-Anthropic-Key or legacy header)
+        byok_key = anthropic_key or openrouter_key
+        if self.allow_byok and byok_key:
+            if self.is_valid_byok_key(byok_key):
+                logger.info("Request authenticated via BYOK (Anthropic key)")
                 return "byok"
             else:
-                logger.warning("Request rejected: Invalid OpenRouter key format")
+                logger.warning("Request rejected: Invalid BYOK key format")
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid OpenRouter key format. Keys should start with 'sk-or-'.",
+                    detail="Invalid BYOK key format. Provide an Anthropic API key (sk-ant-...).",
                     headers={"WWW-Authenticate": "ApiKey"},
                 )
 
@@ -152,9 +159,9 @@ class APIKeyAuth:
 
         # No valid authentication provided
         logger.warning("Request rejected: No API key provided")
-        hint = "Include X-OpenRouter-Key header with your OpenRouter API key"
+        hint = "Include X-Anthropic-Key header with your Anthropic API key"
         if self.api_keys:
-            hint = "Include X-API-Key or X-OpenRouter-Key header"
+            hint = "Include X-API-Key or X-Anthropic-Key header"
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Authentication required. {hint}.",

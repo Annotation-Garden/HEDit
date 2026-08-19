@@ -11,9 +11,9 @@ class AnnotationRequest(BaseModel):
         schema_version: HED schema version to use
         max_validation_attempts: Maximum validation retry attempts
         run_assessment: Whether to run final assessment (adds extra time)
-        model: Override model for annotation (BYOK mode only)
-        provider: Override provider preference (BYOK mode only)
-        temperature: Override LLM temperature (BYOK mode only)
+        model: Override model for annotation
+        provider: Deprecated; ignored (all models are served by Anthropic)
+        temperature: Override LLM temperature
     """
 
     description: str = Field(
@@ -37,20 +37,20 @@ class AnnotationRequest(BaseModel):
         default=False,
         description="Run final assessment for completeness (adds extra processing time)",
     )
-    # BYOK model configuration (optional, only used when X-OpenRouter-Key is provided)
+    # Model configuration (optional)
     model: str | None = Field(
         default=None,
-        description="Override model for annotation (BYOK mode only, e.g., 'openai/gpt-4o')",
-        examples=["anthropic/claude-haiku-4.5", "qwen/qwen3.5-122b-a10b"],
+        description="Override annotation model (e.g., 'claude-sonnet-5')",
+        examples=["claude-haiku-4-5", "claude-sonnet-5"],
     )
     provider: str | None = Field(
         default=None,
-        description="Override provider preference (BYOK mode only, e.g., 'anthropic')",
-        examples=["anthropic", "alibaba", None],
+        description="Deprecated; ignored (all models are served by Anthropic)",
+        examples=[None],
     )
     temperature: float | None = Field(
         default=None,
-        description="Override LLM temperature (BYOK mode only, 0.0-1.0)",
+        description="Override LLM temperature (0.0-1.0)",
         ge=0.0,
         le=1.0,
         examples=[0.1, 0.3, 0.7],
@@ -137,10 +137,10 @@ class ImageAnnotationRequest(BaseModel):
         schema_version: HED schema version to use
         max_validation_attempts: Maximum validation retry attempts
         run_assessment: Whether to run final assessment (adds extra time)
-        model: Override model for annotation (BYOK mode only)
-        vision_model: Override vision model for image description (BYOK mode only)
-        provider: Override provider preference (BYOK mode only)
-        temperature: Override LLM temperature (BYOK mode only)
+        model: Override model for annotation
+        vision_model: Override vision model for image description
+        provider: Deprecated; ignored (all models are served by Anthropic)
+        temperature: Override LLM temperature
     """
 
     image: str = Field(
@@ -168,30 +168,30 @@ class ImageAnnotationRequest(BaseModel):
         default=False,
         description="Run final assessment for completeness (adds extra processing time)",
     )
-    # BYOK model configuration (optional, only used when X-OpenRouter-Key is provided)
+    # Model configuration (optional)
     model: str | None = Field(
         default=None,
-        description="Override model for annotation (BYOK mode only, e.g., 'openai/gpt-4o')",
-        examples=["openai/gpt-4o", "anthropic/claude-3.5-sonnet"],
+        description="Override annotation model (e.g., 'claude-sonnet-5')",
+        examples=["claude-haiku-4-5", "claude-sonnet-5"],
     )
     vision_model: str | None = Field(
         default=None,
-        description="Override vision model for image description (BYOK mode only)",
-        examples=["qwen/qwen3.5-122b-a10b", "qwen/qwen3-vl-235b-a22b-instruct"],
+        description="Override vision model for image description",
+        examples=["claude-haiku-4-5", "claude-sonnet-5"],
     )
     vision_provider: str | None = Field(
         default=None,
-        description="Override vision model provider (BYOK mode only, e.g., 'alibaba')",
-        examples=["alibaba", "novita", None],
+        description="Deprecated; ignored (all models are served by Anthropic)",
+        examples=[None],
     )
     provider: str | None = Field(
         default=None,
-        description="Override annotation provider preference (BYOK mode only, e.g., 'anthropic')",
-        examples=["anthropic", "alibaba", None],
+        description="Deprecated; ignored (all models are served by Anthropic)",
+        examples=[None],
     )
     temperature: float | None = Field(
         default=None,
-        description="Override LLM temperature (BYOK mode only, 0.0-1.0)",
+        description="Override LLM temperature (0.0-1.0)",
         ge=0.0,
         le=1.0,
         examples=[0.1, 0.3, 0.7],

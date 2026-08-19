@@ -137,7 +137,7 @@ docker-compose ps
 # Stop all services
 docker-compose down
 
-# Stop and remove volumes (⚠️ deletes Ollama models!)
+# Stop and remove volumes (deletes persisted container data!)
 docker-compose down -v
 
 # Execute command in container
@@ -237,9 +237,11 @@ docker-compose up -d
 # Activate conda environment
 conda activate hed-bot
 
-# Set environment variables (if using OpenRouter)
-export LLM_PROVIDER=openrouter
-export OPENROUTER_API_KEY=your-key
+# Set environment variables (Claude Platform on AWS; all three required)
+export LLM_PROVIDER=anthropic
+export ANTHROPIC_API_KEY=your-key
+export ANTHROPIC_BASE_URL=https://aws-external-anthropic.us-east-2.api.aws
+export ANTHROPIC_WORKSPACE_ID=wrkspc_your_workspace_id
 
 # Run with auto-reload
 uvicorn src.api.main:app --host 0.0.0.0 --port 38427 --reload

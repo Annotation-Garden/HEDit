@@ -15,8 +15,8 @@ pip install hedit
 ## Quick Start
 
 ```bash
-# Initialize with your OpenRouter API key (get one at https://openrouter.ai)
-hedit init --api-key sk-or-v1-xxx
+# Initialize the CLI (API mode needs no key; add an Anthropic key for BYOK)
+hedit init
 
 # Generate HED annotation from natural language
 hedit annotate "participant pressed the left button with their index finger"
@@ -66,7 +66,7 @@ Config files are stored in `~/.config/hedit/`:
 - **Natural Language to HED**: Describe events in plain English, get valid HED annotations
 - **Image Annotation**: Annotate visual stimuli directly from image files
 - **Multi-Stage Validation**: AI agents generate, validate, evaluate, and refine annotations
-- **Bring Your Own Key**: Uses OpenRouter API; you control your LLM costs and model choice
+- **Claude-Powered**: Anthropic Claude models (Haiku 4.5 default, Sonnet 5 optional); bring your own Anthropic key if you prefer your own billing
 - **JSON Output**: Easy integration with scripts and pipelines
 - **HED Schema Support**: Works with official HED schemas (8.x)
 
@@ -84,7 +84,6 @@ The agents work in feedback loops, automatically refining the annotation until i
 ## Documentation
 
 - [HED Standard](https://hedtags.org) - Learn about HED annotations
-- [OpenRouter](https://openrouter.ai) - Get an API key for LLM access
 - [GitHub Issues](https://github.com/Annotation-Garden/HEDit/issues) - Report bugs or request features
 
 ## Server Deployment

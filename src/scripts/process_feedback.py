@@ -44,28 +44,25 @@ async def process_feedback_file(
         load_feedback_file,
         save_processed_feedback,
     )
+    from src.utils.anthropic_llm import DEFAULT_MODEL, create_anthropic_llm
     from src.utils.github_client import GitHubClient
-    from src.utils.openrouter_llm import create_openrouter_llm
 
-    # Get API keys from environment (prefer testing key for CI/tests)
-    openrouter_key = os.getenv("OPENROUTER_API_KEY_FOR_TESTING") or os.getenv("OPENROUTER_API_KEY")
+    # Anthropic credentials come from the environment (ANTHROPIC_API_KEY,
+    # plus ANTHROPIC_BASE_URL/ANTHROPIC_WORKSPACE_ID for the AWS platform)
     github_token = os.getenv("GITHUB_TOKEN")
 
-    if not openrouter_key:
-        logger.error("OPENROUTER_API_KEY or OPENROUTER_API_KEY_FOR_TESTING not set")
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        logger.error("ANTHROPIC_API_KEY not set")
         sys.exit(1)
 
     # Get model configuration from environment
-    model = os.getenv("ANNOTATION_MODEL", "anthropic/claude-haiku-4.5")
-    provider = os.getenv("LLM_PROVIDER_PREFERENCE", "")
+    model = os.getenv("ANNOTATION_MODEL", DEFAULT_MODEL)
 
     # Create LLM
-    llm = create_openrouter_llm(
+    llm = create_anthropic_llm(
         model=model,
-        api_key=openrouter_key,
         temperature=0.1,
         max_tokens=1000,
-        provider=provider if provider else None,
     )
 
     # Create GitHub client if token available
@@ -117,7 +114,7 @@ async def process_feedback_file(
                 save_processed_feedback(record, result, output_dir)
 
         except Exception as e:
-            logger.error(f"Failed to process record {i + 1}: {e}")
+            logger.exception(f"Failed to process record {i + 1}: {e}")
             results.append({"error": str(e)})
 
     return results

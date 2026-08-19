@@ -33,49 +33,45 @@ FIRST_RUN_FILE = CONFIG_DIR / ".first_run"
 DEFAULT_API_URL = "https://api.annotation.garden/hedit"
 DEFAULT_DEV_API_URL = "https://api.annotation.garden/hedit-dev"
 
-# Default models and providers
-# Annotation model: Claude Haiku 4.5 (best quality for diverse inputs)
-# - Near-frontier intelligence at lower cost
-# - Excellent at reasoning and coding
-# - Uses "anthropic" provider for optimal caching
-DEFAULT_MODEL = "anthropic/claude-haiku-4.5"
-DEFAULT_PROVIDER = "anthropic"
+# Default models (Anthropic Claude only since the 2026-08-18 migration).
+# Annotation model: Claude Haiku 4.5 (fast, near-frontier quality).
+# Claude Sonnet 5 ("claude-sonnet-5") is offered for highest quality.
+DEFAULT_MODEL = "claude-haiku-4-5"
 
-# Evaluation model: Qwen3.5-122B MoE (fast, capable, cost-effective via Alibaba)
-DEFAULT_EVAL_MODEL = "qwen/qwen3.5-122b-a10b"
-DEFAULT_EVAL_PROVIDER = "alibaba"
+# Evaluation judge stays on Haiku regardless of the annotation model.
+DEFAULT_EVAL_MODEL = "claude-haiku-4-5"
 
-# Vision model: Qwen3.5-122B MoE (accepts vision, fast via Alibaba)
-DEFAULT_VISION_MODEL = "qwen/qwen3.5-122b-a10b"
-DEFAULT_VISION_PROVIDER = "alibaba"
+# Vision model: Claude models are natively multimodal.
+DEFAULT_VISION_MODEL = "claude-haiku-4-5"
 
 
 class CredentialsConfig(BaseModel):
     """Credentials stored separately with restricted permissions."""
 
-    openrouter_api_key: str | None = Field(default=None, description="OpenRouter API key")
+    anthropic_api_key: str | None = Field(
+        default=None, description="Anthropic API key for BYOK mode (sk-ant-...)"
+    )
+    # Legacy field from pre-migration configs; no longer used
+    openrouter_api_key: str | None = Field(default=None, description="Deprecated (unused)")
+
+    @property
+    def api_key(self) -> str | None:
+        """The active BYOK key (Anthropic only)."""
+        return self.anthropic_api_key
 
 
 class ModelsConfig(BaseModel):
     """Model configuration for different agents."""
 
     default: str = Field(default=DEFAULT_MODEL, description="Default model for annotation")
-    provider: str | None = Field(
-        default=DEFAULT_PROVIDER, description="Provider for annotation model"
-    )
+    provider: str | None = Field(default=None, description="Deprecated (unused)")
     evaluation: str | None = Field(
         default=DEFAULT_EVAL_MODEL,
         description="Model for evaluation/assessment agents",
     )
-    eval_provider: str | None = Field(
-        default=DEFAULT_EVAL_PROVIDER,
-        description="Provider for evaluation model (default: alibaba)",
-    )
+    eval_provider: str | None = Field(default=None, description="Deprecated (unused)")
     vision: str = Field(default=DEFAULT_VISION_MODEL, description="Vision model for images")
-    vision_provider: str | None = Field(
-        default=DEFAULT_VISION_PROVIDER,
-        description="Provider for vision model (alibaba for qwen)",
-    )
+    vision_provider: str | None = Field(default=None, description="Deprecated (unused)")
     temperature: float = Field(default=0.1, ge=0.0, le=1.0, description="Model temperature")
 
 
@@ -96,7 +92,7 @@ class SettingsConfig(BaseModel):
     run_assessment: bool = Field(default=False, description="Run assessment by default")
     user_id: str | None = Field(
         default=None,
-        description="Custom user ID for cache optimization (default: auto-generated machine ID)",
+        description="Optional user ID sent as the X-User-Id header (currently unused server-side)",
     )
 
 
@@ -157,10 +153,25 @@ def load_credentials() -> CredentialsConfig:
         except (yaml.YAMLError, ValueError):
             pass  # Use defaults if file is corrupted
 
-    # Environment variables override file
-    env_key = os.environ.get("OPENROUTER_API_KEY")
+    # A legacy OpenRouter key on file no longer works; say so once instead
+    # of letting a previously-working setup fail with a generic auth error.
+    if creds.openrouter_api_key and not creds.anthropic_api_key:
+        import sys
+
+        print(
+            "hedit: found a legacy OpenRouter key in the credentials file; "
+            "it is no longer used. Run 'hedit init --api-key sk-ant-...' "
+            "for BYOK mode, or no key for the hosted API.",
+            file=sys.stderr,
+        )
+
+    # Environment variables override file. HEDIT_ANTHROPIC_API_KEY is the
+    # BYOK override; the plain ANTHROPIC_API_KEY env var is deliberately NOT
+    # read here because it may hold Claude Platform on AWS credentials that
+    # only work with the server-mode base URL and workspace header.
+    env_key = os.environ.get("HEDIT_ANTHROPIC_API_KEY")
     if env_key:
-        creds.openrouter_api_key = env_key
+        creds.anthropic_api_key = env_key
 
     return creds
 
@@ -214,7 +225,7 @@ def get_api_key(override: str | None = None) -> str | None:
         return override
 
     creds = load_credentials()
-    return creds.openrouter_api_key
+    return creds.api_key
 
 
 def get_effective_config(
@@ -222,8 +233,6 @@ def get_effective_config(
     api_url: str | None = None,
     model: str | None = None,
     eval_model: str | None = None,
-    eval_provider: str | None = None,
-    provider: str | None = None,
     temperature: float | None = None,
     schema_version: str | None = None,
     output_format: str | None = None,
@@ -235,23 +244,16 @@ def get_effective_config(
     Args:
         api_key: Override API key
         api_url: Override API URL
-        model: Override model (if non-default, clears provider unless explicitly set)
+        model: Override model
         eval_model: Override evaluation model (for consistent benchmarking)
-        eval_provider: Override provider for evaluation model (e.g., "alibaba")
-        provider: Override provider preference (e.g., "anthropic")
         temperature: Override temperature
         schema_version: Override schema version
         output_format: Override output format
         mode: Override execution mode ("api" or "standalone")
-        user_id: Override user ID for cache optimization
+        user_id: Optional ID sent as X-User-Id in API mode (server ignores it)
 
     Returns:
         Tuple of (effective config, effective API key)
-
-    Note:
-        When a custom model is specified without an explicit provider, the provider
-        is cleared. This is because a pinned provider may only support
-        specific models.
     """
     config = load_config()
     effective_key = get_api_key(api_key)
@@ -260,20 +262,10 @@ def get_effective_config(
     if api_url:
         config.api.url = api_url
 
-    # Handle model/provider interaction:
-    # If user specifies a model different from default but doesn't specify provider,
-    # clear the provider (a pinned provider may not support the custom model)
     if model:
         config.models.default = model
-        # Clear provider if model changed and provider not explicitly set
-        if provider is None and model != DEFAULT_MODEL:
-            config.models.provider = None
     if eval_model:
         config.models.evaluation = eval_model
-    if eval_provider is not None:
-        config.models.eval_provider = eval_provider if eval_provider else None
-    if provider is not None:  # Allow empty string to clear provider
-        config.models.provider = provider if provider else None
 
     if temperature is not None:
         config.models.temperature = temperature
@@ -354,12 +346,11 @@ def reset_config(preserve_credentials: bool = True) -> CLIConfig:
 
 
 def get_machine_id() -> str:
-    """Get or generate a stable machine ID for cache optimization.
+    """Get or generate a stable machine ID.
 
-    This ID is used by OpenRouter for sticky cache routing to reduce costs.
-    It is NOT used for telemetry and is never transmitted except to OpenRouter.
-
-    The ID is generated once and persists across pip updates.
+    Historically used for provider cache routing; kept as a stable local
+    identifier (e.g., as a default X-User-Id). It is generated once and
+    persists across pip updates.
 
     Returns:
         16-character hexadecimal machine ID

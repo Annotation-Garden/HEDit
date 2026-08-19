@@ -41,8 +41,6 @@ class HEDitClient:
         api_key: str | None = None,
         model: str | None = None,
         eval_model: str | None = None,
-        eval_provider: str | None = None,
-        provider: str | None = None,
         temperature: float | None = None,
         timeout: httpx.Timeout = DEFAULT_TIMEOUT,
         user_id: str | None = None,
@@ -51,46 +49,39 @@ class HEDitClient:
 
         Args:
             api_url: Base API URL
-            api_key: OpenRouter API key for BYOK mode
+            api_key: Anthropic API key for BYOK mode (sk-ant-...)
             model: Model to use for annotation
             eval_model: Model for evaluation/assessment agents (for fair benchmarking)
-            eval_provider: Provider for evaluation model (e.g., Cerebras for qwen models)
-            provider: Provider preference (e.g., "Cerebras")
             temperature: LLM temperature (0.0-1.0)
             timeout: Request timeout settings
-            user_id: Custom user ID for cache optimization (default: derived from API key)
+            user_id: Optional ID sent as X-User-Id (server ignores it)
         """
         self.api_url = api_url.rstrip("/")
         self.api_key = api_key
         self.model = model
         self.eval_model = eval_model
-        self.eval_provider = eval_provider
-        self.provider = provider
         self.temperature = temperature
         self.timeout = timeout
         self.user_id = user_id
 
     def _get_headers(self) -> dict[str, str]:
-        """Get request headers with BYOK configuration."""
+        """Get request headers with BYOK and model configuration."""
         headers = {
             "Content-Type": "application/json",
             "User-Agent": "hedit-cli",
         }
         if self.api_key:
-            # Use X-OpenRouter-Key header for BYOK mode
-            headers["X-OpenRouter-Key"] = self.api_key
-        # Include model configuration in headers for BYOK
+            # Use X-Anthropic-Key header for BYOK mode
+            headers["X-Anthropic-Key"] = self.api_key
+        # Include model configuration in headers (the header names keep the
+        # legacy X-OpenRouter-* wire spelling for compatibility)
         if self.model:
             headers["X-OpenRouter-Model"] = self.model
         if self.eval_model:
             headers["X-OpenRouter-Eval-Model"] = self.eval_model
-        if self.eval_provider:
-            headers["X-OpenRouter-Eval-Provider"] = self.eval_provider
-        if self.provider:
-            headers["X-OpenRouter-Provider"] = self.provider
         if self.temperature is not None:
             headers["X-OpenRouter-Temperature"] = str(self.temperature)
-        # Custom user ID for cache optimization
+        # Optional user ID header (currently unused server-side)
         if self.user_id:
             headers["X-User-Id"] = self.user_id
         return headers
@@ -121,7 +112,19 @@ class HEDitClient:
             raise APIError(
                 "Authentication required",
                 status_code=401,
-                detail="Please provide an OpenRouter API key with --api-key or run 'hedit init'",
+                detail="Please provide an Anthropic API key with --api-key or run 'hedit init'",
+            )
+        elif response.status_code == 400:
+            raise APIError(
+                "Invalid request",
+                status_code=400,
+                detail=detail,
+            )
+        elif response.status_code == 429:
+            raise APIError(
+                "Rate limited",
+                status_code=429,
+                detail=detail or "LLM rate limit exceeded. Please wait and try again.",
             )
         elif response.status_code == 422:
             raise APIError(
@@ -145,7 +148,7 @@ class HEDitClient:
             raise APIError(
                 "Gateway timeout",
                 status_code=504,
-                detail="The server took too long to respond. Try a faster model/provider "
+                detail="The server took too long to respond. Try a faster model "
                 "or use --standalone mode.",
             )
         else:
@@ -436,6 +439,5 @@ def create_client(config: CLIConfig, api_key: str | None = None) -> HEDitClient:
         api_url=config.api.url,
         api_key=api_key,
         model=config.models.default,
-        provider=config.models.provider,
         temperature=config.models.temperature,
     )

@@ -16,7 +16,7 @@ Multi-agent system for converting natural language event descriptions into valid
 
 ### Technology Stack
 - **Agent Framework**: LangGraph
-- **LLM Provider**: OpenRouter API (production default)
+- **LLM Provider**: Anthropic Claude via the Claude Platform on AWS (migrated from OpenRouter on 2026-08-18); models claude-haiku-4-5 (default) and claude-sonnet-5
 - **Validation**: HED JavaScript validator + HED Python tools
 - **Backend**: FastAPI
 - **Frontend**: Cloudflare Pages

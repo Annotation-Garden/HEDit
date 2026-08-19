@@ -376,7 +376,7 @@ class TestStreamingEndpoint:
         }
         headers = {
             **TEST_AUTH_HEADERS,
-            "X-OpenRouter-Model": "anthropic/claude-haiku-4.5",
+            "X-OpenRouter-Model": "claude-haiku-4-5",
             "X-OpenRouter-Provider": "anthropic",
         }
         response = client.post("/annotate/stream", json=request_data, headers=headers)
@@ -410,18 +410,16 @@ class TestStreamingEndpoint:
         response = client.post("/annotate/stream", json=request_data, headers=headers)
         assert response.status_code in [200, 503]
 
-    def test_stream_endpoint_byok_mode_requires_key(self, client):
-        """Test that BYOK mode streaming requires OpenRouter key."""
+    def test_stream_endpoint_byok_rejects_non_anthropic_key(self, client):
+        """A BYOK key that is not an Anthropic key is rejected at auth (401)."""
         request_data = {
             "description": "A red circle appears",
             "schema_version": "8.3.0",
         }
-        # Provide a valid BYOK key header pattern but with an invalid key
-        # This should trigger BYOK mode check
-        headers = {"X-OpenRouter-Key": "sk-or-v1-test"}
+        headers = {"X-OpenRouter-Key": "sk-or-v1-validformatbutwrongprovider123"}
         response = client.post("/annotate/stream", json=request_data, headers=headers)
-        # Should accept BYOK mode (503 because workflow can't be created with fake key)
-        assert response.status_code in [401, 500, 503]
+        assert response.status_code == 401
+        assert "Invalid BYOK key format" in response.json()["detail"]
 
     def test_stream_endpoint_returns_sse_content_type(self, client):
         """Test that streaming endpoint returns SSE content type when successful."""
@@ -454,8 +452,7 @@ class TestStreamingEndpoint:
         }
         headers = {
             **TEST_AUTH_HEADERS,
-            "X-OpenRouter-Eval-Model": "qwen/qwen3-235b-a22b-2507",
-            "X-OpenRouter-Eval-Provider": "Cerebras",
+            "X-OpenRouter-Eval-Model": "claude-haiku-4-5",
         }
         response = client.post("/annotate/stream", json=request_data, headers=headers)
         assert response.status_code in [200, 503]
@@ -488,13 +485,13 @@ class TestStreamingWithMockedWorkflow:
     def client_with_workflow(self):
         """Create a test client with a mocked workflow."""
         original_env = {}
-        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "ANTHROPIC_API_KEY"]:
             if key in os.environ:
                 original_env[key] = os.environ[key]
 
         os.environ["REQUIRE_API_AUTH"] = "true"
         os.environ["API_KEYS"] = "test-api-key-for-unit-tests"
-        os.environ["OPENROUTER_API_KEY"] = "test-openrouter-key"
+        os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
 
         from src.api import security
 
@@ -536,7 +533,7 @@ class TestStreamingWithMockedWorkflow:
             yield TestClient(app, raise_server_exceptions=False)
 
         # Restore original values
-        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "ANTHROPIC_API_KEY"]:
             if key in original_env:
                 os.environ[key] = original_env[key]
             elif key in os.environ:
@@ -601,15 +598,15 @@ class TestModelOverrideWithEnv:
 
     @pytest.fixture
     def client_with_env(self):
-        """Create a test client with OPENROUTER_API_KEY set."""
+        """Create a test client with ANTHROPIC_API_KEY set."""
         original_env = {}
-        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "ANTHROPIC_API_KEY"]:
             if key in os.environ:
                 original_env[key] = os.environ[key]
 
         os.environ["REQUIRE_API_AUTH"] = "true"
         os.environ["API_KEYS"] = "test-api-key-for-unit-tests"
-        os.environ["OPENROUTER_API_KEY"] = "test-openrouter-key"
+        os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
 
         from src.api import security
 
@@ -619,7 +616,7 @@ class TestModelOverrideWithEnv:
         yield TestClient(app, raise_server_exceptions=False)
 
         # Restore original values
-        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "ANTHROPIC_API_KEY"]:
             if key in original_env:
                 os.environ[key] = original_env[key]
             elif key in os.environ:
@@ -635,12 +632,13 @@ class TestModelOverrideWithEnv:
         }
         headers = {
             **TEST_AUTH_HEADERS,
-            "X-OpenRouter-Model": "anthropic/claude-haiku-4.5",
+            "X-OpenRouter-Model": "claude-haiku-4-5",
             "X-OpenRouter-Provider": "anthropic",
         }
         response = client_with_env.post("/annotate", json=request_data, headers=headers)
-        # Will fail to create workflow with fake key, but tests the code path
-        assert response.status_code in [200, 500, 503]
+        # The fake key passes workflow creation but fails at the LLM call,
+        # which now surfaces as 401 (auth) rather than a generic 500
+        assert response.status_code in [200, 401, 503]
 
     def test_stream_with_model_override(self, client_with_env):
         """Test streaming endpoint with model override headers."""
@@ -650,7 +648,7 @@ class TestModelOverrideWithEnv:
         }
         headers = {
             **TEST_AUTH_HEADERS,
-            "X-OpenRouter-Model": "anthropic/claude-haiku-4.5",
+            "X-OpenRouter-Model": "claude-haiku-4-5",
             "X-OpenRouter-Provider": "anthropic",
         }
         response = client_with_env.post("/annotate/stream", json=request_data, headers=headers)
@@ -667,11 +665,9 @@ class TestModelOverrideWithEnv:
         }
         headers = {
             **TEST_AUTH_HEADERS,
-            "X-OpenRouter-Model": "anthropic/claude-haiku-4.5",
-            "X-OpenRouter-Provider": "anthropic",
+            "X-OpenRouter-Model": "claude-sonnet-5",
             "X-OpenRouter-Temperature": "0.5",
-            "X-OpenRouter-Eval-Model": "qwen/qwen3-235b-a22b-2507",
-            "X-OpenRouter-Eval-Provider": "Cerebras",
+            "X-OpenRouter-Eval-Model": "claude-haiku-4-5",
             "X-User-Id": "test-user-123",
         }
         response = client_with_env.post("/annotate/stream", json=request_data, headers=headers)
@@ -688,40 +684,6 @@ class TestVersionEndpointExtended:
         data = response.json()
         assert "version" in data
         assert "commit" in data
-
-
-class TestUserIDDerivation:
-    """Tests for user ID derivation from API keys."""
-
-    def test_derive_user_id(self):
-        """Test that user ID is derived consistently from API key."""
-        from src.api.main import _derive_user_id
-
-        api_key = "sk-or-test-key-12345"
-        user_id = _derive_user_id(api_key)
-
-        # Should be 16 hex characters
-        assert len(user_id) == 16
-        assert all(c in "0123456789abcdef" for c in user_id)
-
-    def test_derive_user_id_consistency(self):
-        """Test that same API key produces same user ID."""
-        from src.api.main import _derive_user_id
-
-        api_key = "sk-or-test-key-12345"
-        user_id1 = _derive_user_id(api_key)
-        user_id2 = _derive_user_id(api_key)
-
-        assert user_id1 == user_id2
-
-    def test_derive_user_id_uniqueness(self):
-        """Test that different API keys produce different user IDs."""
-        from src.api.main import _derive_user_id
-
-        user_id1 = _derive_user_id("key1")
-        user_id2 = _derive_user_id("key2")
-
-        assert user_id1 != user_id2
 
 
 class TestTelemetryEnabledField:
@@ -808,8 +770,8 @@ class TestTelemetryCollectorIntegration:
             hed_string="Sensory-event, Visual-presentation",
             iterations=2,
             validation_errors=[],
-            model="mistralai/mistral-small-3.2-24b-instruct",
-            provider="mistral",
+            model="claude-haiku-4-5",
+            provider="anthropic",
             temperature=0.1,
             latency_ms=1500,
             source="api",
@@ -833,15 +795,15 @@ class TestTelemetryCollectorIntegration:
             hed_string="Visual-presentation",
             iterations=1,
             validation_errors=[],
-            model="openai/gpt-4o",
-            provider="deepinfra/fp8",
+            model="claude-sonnet-5",
+            provider="anthropic",
             temperature=0.3,
             latency_ms=3000,
             source="api-image",
         )
 
         assert event.source == "api-image"
-        assert event.model.provider == "deepinfra/fp8"
+        assert event.model.provider == "anthropic"
 
     def test_telemetry_event_stream_source(self):
         """Test creating a telemetry event with api-stream source."""
@@ -853,7 +815,7 @@ class TestTelemetryCollectorIntegration:
             hed_string="Sensory-event, Visual-presentation",
             iterations=2,
             validation_errors=[],
-            model="anthropic/claude-haiku-4.5",
+            model="claude-haiku-4-5",
             provider="anthropic",
             temperature=0.1,
             latency_ms=2000,
@@ -874,8 +836,8 @@ class TestTelemetryCollectorIntegration:
             hed_string="Visual-presentation",
             iterations=1,
             validation_errors=[],
-            model="openai/gpt-4o",
-            provider="deepinfra/fp8",
+            model="claude-sonnet-5",
+            provider="anthropic",
             temperature=0.3,
             latency_ms=4000,
             source="api-image-stream",
@@ -892,13 +854,13 @@ class TestStreamingTelemetry:
     def client_with_telemetry(self):
         """Create a test client with mocked workflow and telemetry collector."""
         original_env = {}
-        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "ANTHROPIC_API_KEY"]:
             if key in os.environ:
                 original_env[key] = os.environ[key]
 
         os.environ["REQUIRE_API_AUTH"] = "true"
         os.environ["API_KEYS"] = "test-api-key-for-unit-tests"
-        os.environ["OPENROUTER_API_KEY"] = "test-openrouter-key"
+        os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
 
         from src.api import security
 
@@ -955,7 +917,7 @@ class TestStreamingTelemetry:
             client = TestClient(app, raise_server_exceptions=False)
             yield client, collected_events
 
-        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "ANTHROPIC_API_KEY"]:
             if key in original_env:
                 os.environ[key] = original_env[key]
             elif key in os.environ:
@@ -967,13 +929,13 @@ class TestStreamingTelemetry:
     def client_with_telemetry_disabled(self):
         """Create a test client with mocked workflow but no telemetry collector."""
         original_env = {}
-        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "ANTHROPIC_API_KEY"]:
             if key in os.environ:
                 original_env[key] = os.environ[key]
 
         os.environ["REQUIRE_API_AUTH"] = "true"
         os.environ["API_KEYS"] = "test-api-key-for-unit-tests"
-        os.environ["OPENROUTER_API_KEY"] = "test-openrouter-key"
+        os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
 
         from src.api import security
 
@@ -1023,7 +985,7 @@ class TestStreamingTelemetry:
             client = TestClient(app, raise_server_exceptions=False)
             yield client, collected_events
 
-        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "ANTHROPIC_API_KEY"]:
             if key in original_env:
                 os.environ[key] = original_env[key]
             elif key in os.environ:
@@ -1035,13 +997,13 @@ class TestStreamingTelemetry:
     def client_with_failing_workflow(self):
         """Create a test client with a workflow that raises an error."""
         original_env = {}
-        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "ANTHROPIC_API_KEY"]:
             if key in os.environ:
                 original_env[key] = os.environ[key]
 
         os.environ["REQUIRE_API_AUTH"] = "true"
         os.environ["API_KEYS"] = "test-api-key-for-unit-tests"
-        os.environ["OPENROUTER_API_KEY"] = "test-openrouter-key"
+        os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
 
         from src.api import security
 
@@ -1085,7 +1047,7 @@ class TestStreamingTelemetry:
             client = TestClient(app, raise_server_exceptions=False)
             yield client, collected_events
 
-        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "ANTHROPIC_API_KEY"]:
             if key in original_env:
                 os.environ[key] = original_env[key]
             elif key in os.environ:
@@ -1148,7 +1110,7 @@ class TestStreamingTelemetry:
             "description": "A blue square flashes",
             "schema_version": "8.4.0",
             "telemetry_enabled": True,
-            "model": "anthropic/claude-haiku-4.5",
+            "model": "claude-haiku-4-5",
             "provider": "anthropic",
             "temperature": 0.3,
         }
@@ -1157,7 +1119,7 @@ class TestStreamingTelemetry:
         assert len(collected_events) == 1
 
         event = collected_events[0]
-        assert event.model.model == "anthropic/claude-haiku-4.5"
+        assert event.model.model == "claude-haiku-4-5"
         assert event.model.provider == "anthropic"
         assert event.model.temperature == 0.3
 
@@ -1272,3 +1234,85 @@ class TestCollectStreamTelemetryHelper:
         assert event.output.hed_string == "Sensory-event"
         assert event.output.iterations == 2
         assert event.performance.latency_ms >= 1400  # ~1.5 seconds
+
+
+class TestModelValidationHTTP:
+    """Model validation and credential errors observed through the HTTP layer.
+
+    These exercise the endpoint dispatch wiring (ValueError -> 400,
+    RuntimeError -> 503, BYOK header extraction) without any network calls:
+    model rejection fires inside normalize_model before credentials are read,
+    and the 503 case fires on the missing-env check before any request.
+    """
+
+    REQUEST = {"description": "A red circle appears", "schema_version": "8.4.0"}
+
+    @pytest.mark.parametrize(
+        "path,payload",
+        [
+            ("/annotate", REQUEST),
+            ("/annotate/stream", REQUEST),
+            ("/annotate-from-image", {**REQUEST, "image": "data:image/png;base64,aGk="}),
+            ("/annotate-from-image/stream", {**REQUEST, "image": "data:image/png;base64,aGk="}),
+        ],
+    )
+    def test_rejected_model_returns_400(self, client, path, payload):
+        """Non-Anthropic model ids are rejected with 400 on every endpoint."""
+        headers = {
+            **TEST_AUTH_HEADERS,
+            "X-OpenRouter-Model": "mistralai/mistral-small-3.2-24b-instruct",
+        }
+        response = client.post(path, json=payload, headers=headers)
+        assert response.status_code == 400
+        assert "not available" in response.json()["detail"]
+
+    def test_rejected_eval_model_returns_400(self, client):
+        """A non-Anthropic eval model override is rejected with 400."""
+        headers = {**TEST_AUTH_HEADERS, "X-OpenRouter-Eval-Model": "qwen/qwen3.5-122b-a10b"}
+        response = client.post("/annotate", json=self.REQUEST, headers=headers)
+        assert response.status_code == 400
+        assert "not available" in response.json()["detail"]
+
+    def test_missing_server_credentials_return_503(self, client, monkeypatch):
+        """A valid model override without ANTHROPIC_API_KEY maps to exactly 503."""
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        headers = {**TEST_AUTH_HEADERS, "X-OpenRouter-Model": "claude-sonnet-5"}
+        response = client.post("/annotate", json=self.REQUEST, headers=headers)
+        assert response.status_code == 503
+        assert "ANTHROPIC_API_KEY" in response.json()["detail"]
+
+    def test_legacy_alias_accepted_through_http(self, client, monkeypatch):
+        """Legacy OpenRouter-style ids pass model validation over HTTP.
+
+        With credentials removed, an accepted alias proceeds to the
+        credential check (503); a rejected model would return 400 instead.
+        """
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        headers = {**TEST_AUTH_HEADERS, "X-OpenRouter-Model": "anthropic/claude-haiku-4.5"}
+        response = client.post("/annotate", json=self.REQUEST, headers=headers)
+        assert response.status_code == 503
+
+    def test_byok_key_extracted_from_legacy_header(self, client):
+        """A BYOK key sent via legacy X-OpenRouter-Key reaches the endpoint logic.
+
+        The invalid model triggers 400 from inside create_byok_workflow; if the
+        endpoint's legacy-header fallback were dropped, this would be a 401
+        (Missing X-Anthropic-Key header) instead.
+        """
+        headers = {
+            "X-OpenRouter-Key": "sk-ant-api03-validformatkey1234567890",
+            "X-OpenRouter-Model": "openai/gpt-oss-120b",
+        }
+        response = client.post("/annotate", json=self.REQUEST, headers=headers)
+        assert response.status_code == 400
+        assert "not available" in response.json()["detail"]
+
+    def test_byok_key_via_new_header(self, client):
+        """Same as above through the canonical X-Anthropic-Key header."""
+        headers = {
+            "X-Anthropic-Key": "sk-ant-api03-validformatkey1234567890",
+            "X-OpenRouter-Model": "openai/gpt-oss-120b",
+        }
+        response = client.post("/annotate", json=self.REQUEST, headers=headers)
+        assert response.status_code == 400
+        assert "not available" in response.json()["detail"]
