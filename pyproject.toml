@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hedit"
-version = "0.7.11.dev1"
+version = "0.7.11.dev2"
 description = "Multi-agent system for HED annotation generation and validation"
 readme = "PKG_README.md"
 requires-python = ">=3.12"
@@ -124,7 +124,7 @@ addopts = [
 # Unit tests alone get ~18%, integration tests combined get 70%+
 markers = [
     "integration: marks tests that make real API calls (deselect with '-m \"not integration\"')",
-    "standalone: marks tests that run locally without backend (requires OPENROUTER_API_KEY_FOR_TESTING)",
+    "standalone: marks tests that run locally without backend (requires ANTHROPIC_API_KEY)",
     "timeout: marks tests with a timeout (requires pytest-timeout)",
 ]
 asyncio_mode = "auto"
