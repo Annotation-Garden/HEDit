@@ -32,7 +32,7 @@ class TelemetryOutput(BaseModel):
 class TelemetryModel(BaseModel):
     """Model configuration used for annotation."""
 
-    model: str = Field(..., description="Model identifier (e.g., anthropic/claude-haiku-4.5)")
+    model: str = Field(..., description="Model identifier (e.g., claude-haiku-4-5)")
     provider: str | None = Field(None, description="Provider preference (if specified)")
     temperature: float = Field(..., description="Model temperature")
 
