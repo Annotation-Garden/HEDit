@@ -115,7 +115,7 @@ class TestAPIKeyAuth:
 
         auth = APIKeyAuth()
         with pytest.raises(HTTPException) as exc_info:
-            await auth(api_key=None, openrouter_key=None)
+            await auth(api_key=None, anthropic_key=None, openrouter_key=None)
 
         assert exc_info.value.status_code == 401
         assert "Authentication required" in exc_info.value.detail
@@ -128,7 +128,7 @@ class TestAPIKeyAuth:
 
         auth = APIKeyAuth()
         with pytest.raises(HTTPException) as exc_info:
-            await auth(api_key="wrong_key", openrouter_key=None)
+            await auth(api_key="wrong_key", anthropic_key=None, openrouter_key=None)
 
         assert exc_info.value.status_code == 401
         assert "Invalid API key" in exc_info.value.detail
@@ -140,32 +140,55 @@ class TestAPIKeyAuth:
         monkeypatch.setenv("REQUIRE_API_AUTH", "true")
 
         auth = APIKeyAuth()
-        result = await auth(api_key="valid_key", openrouter_key=None)
+        result = await auth(api_key="valid_key", anthropic_key=None, openrouter_key=None)
         assert result == "valid_key"
 
     @pytest.mark.asyncio
     async def test_call_byok_valid_key(self, monkeypatch):
-        """Test __call__ accepts valid OpenRouter key in BYOK mode."""
+        """Test __call__ accepts valid Anthropic key in BYOK mode."""
         monkeypatch.setenv("REQUIRE_API_AUTH", "true")
         monkeypatch.setenv("ALLOW_BYOK", "true")
         monkeypatch.delenv("API_KEYS", raising=False)
 
         auth = APIKeyAuth()
-        result = await auth(api_key=None, openrouter_key="sk-or-v1-validkey12345678901234567890")
+        result = await auth(
+            api_key=None,
+            anthropic_key="sk-ant-api03-validkey12345678901234567890",
+            openrouter_key=None,
+        )
+        assert result == "byok"
+
+    @pytest.mark.asyncio
+    async def test_call_byok_valid_key_legacy_header(self, monkeypatch):
+        """Test __call__ accepts an Anthropic key sent via the legacy header."""
+        monkeypatch.setenv("REQUIRE_API_AUTH", "true")
+        monkeypatch.setenv("ALLOW_BYOK", "true")
+        monkeypatch.delenv("API_KEYS", raising=False)
+
+        auth = APIKeyAuth()
+        result = await auth(
+            api_key=None,
+            anthropic_key=None,
+            openrouter_key="sk-ant-api03-validkey12345678901234567890",
+        )
         assert result == "byok"
 
     @pytest.mark.asyncio
     async def test_call_byok_invalid_key_format(self, monkeypatch):
-        """Test __call__ rejects invalid OpenRouter key format."""
+        """Test __call__ rejects non-Anthropic BYOK key formats."""
         monkeypatch.setenv("REQUIRE_API_AUTH", "true")
         monkeypatch.setenv("ALLOW_BYOK", "true")
 
         auth = APIKeyAuth()
         with pytest.raises(HTTPException) as exc_info:
-            await auth(api_key=None, openrouter_key="invalid-key")
+            await auth(
+                api_key=None,
+                anthropic_key=None,
+                openrouter_key="sk-or-v1-validkey12345678901234567890",
+            )
 
         assert exc_info.value.status_code == 401
-        assert "Invalid OpenRouter key format" in exc_info.value.detail
+        assert "Invalid BYOK key format" in exc_info.value.detail
 
 
 class TestAuditLogger:

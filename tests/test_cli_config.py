@@ -45,12 +45,12 @@ class TestCredentialsConfig:
     def test_default_credentials(self):
         """Test default credentials are None."""
         creds = CredentialsConfig()
-        assert creds.openrouter_api_key is None
+        assert creds.anthropic_api_key is None
 
     def test_credentials_with_key(self):
         """Test credentials with API key."""
-        creds = CredentialsConfig(openrouter_api_key="sk-or-test-key")
-        assert creds.openrouter_api_key == "sk-or-test-key"
+        creds = CredentialsConfig(anthropic_api_key="sk-ant-test-key")
+        assert creds.anthropic_api_key == "sk-ant-test-key"
 
 
 class TestCLIConfig:
@@ -60,8 +60,8 @@ class TestCLIConfig:
         """Test default configuration values."""
         config = CLIConfig()
         assert config.api.url == "https://api.annotation.garden/hedit"
-        assert config.models.default == "anthropic/claude-haiku-4.5"
-        assert config.models.provider == "anthropic"
+        assert config.models.default == "claude-haiku-4-5"
+        assert config.models.provider is None
         assert config.models.temperature == 0.1
         assert config.settings.schema_version == "8.4.0"
         assert config.output.format == "text"
@@ -72,12 +72,12 @@ class TestCLIConfig:
 
         config = CLIConfig(
             api=APIConfig(url="https://custom.api.com"),
-            models=ModelsConfig(default="gpt-4o", provider="OpenAI", temperature=0.5),
+            models=ModelsConfig(default="claude-sonnet-5", temperature=0.5),
             settings=SettingsConfig(schema_version="8.3.0"),
             output=OutputConfig(format="json"),
         )
         assert config.api.url == "https://custom.api.com"
-        assert config.models.default == "gpt-4o"
+        assert config.models.default == "claude-sonnet-5"
         assert config.models.temperature == 0.5
         assert config.output.format == "json"
 
@@ -87,14 +87,14 @@ class TestConfigPersistence:
 
     def test_save_and_load_credentials(self, temp_config_dir):
         """Test saving and loading credentials."""
-        creds = CredentialsConfig(openrouter_api_key="test-key-12345")
+        creds = CredentialsConfig(anthropic_api_key="test-key-12345")
         save_credentials(creds)
 
         # Clear env var to test file loading (env vars take precedence)
         with patch.dict(os.environ, {}, clear=True):
-            os.environ.pop("OPENROUTER_API_KEY", None)
+            os.environ.pop("HEDIT_ANTHROPIC_API_KEY", None)
             loaded = load_credentials()
-            assert loaded.openrouter_api_key == "test-key-12345"
+            assert loaded.anthropic_api_key == "test-key-12345"
 
     def test_save_and_load_config(self, temp_config_dir):
         """Test saving and loading config."""
@@ -116,16 +116,16 @@ class TestConfigPersistence:
 
     def test_clear_credentials(self, temp_config_dir):
         """Test clearing credentials."""
-        creds = CredentialsConfig(openrouter_api_key="test-key")
+        creds = CredentialsConfig(anthropic_api_key="test-key")
         save_credentials(creds)
 
         clear_credentials()
 
         # Should return empty credentials (clear env var for test)
         with patch.dict(os.environ, {}, clear=True):
-            os.environ.pop("OPENROUTER_API_KEY", None)
+            os.environ.pop("HEDIT_ANTHROPIC_API_KEY", None)
             loaded = load_credentials()
-            assert loaded.openrouter_api_key is None
+            assert loaded.anthropic_api_key is None
 
 
 class TestAPIKeyResolution:
@@ -134,7 +134,7 @@ class TestAPIKeyResolution:
     def test_override_takes_precedence(self, temp_config_dir):
         """Test that explicit override takes precedence."""
         # Save a key to file
-        creds = CredentialsConfig(openrouter_api_key="stored-key")
+        creds = CredentialsConfig(anthropic_api_key="stored-key")
         save_credentials(creds)
 
         # Override should win
@@ -144,22 +144,22 @@ class TestAPIKeyResolution:
     def test_env_var_takes_precedence_over_file(self, temp_config_dir):
         """Test that env var takes precedence over stored file."""
         # Save a key to file
-        creds = CredentialsConfig(openrouter_api_key="stored-key")
+        creds = CredentialsConfig(anthropic_api_key="stored-key")
         save_credentials(creds)
 
-        with patch.dict(os.environ, {"OPENROUTER_API_KEY": "env-key"}):
+        with patch.dict(os.environ, {"HEDIT_ANTHROPIC_API_KEY": "env-key"}):
             key = get_api_key()
             assert key == "env-key"
 
     def test_stored_key_used_when_no_override_or_env(self, temp_config_dir):
         """Test that stored key is used as fallback."""
-        creds = CredentialsConfig(openrouter_api_key="stored-key")
+        creds = CredentialsConfig(anthropic_api_key="stored-key")
         save_credentials(creds)
 
         # Remove env var if present
         with patch.dict(os.environ, {}, clear=True):
             # Clear the specific key if it exists
-            os.environ.pop("OPENROUTER_API_KEY", None)
+            os.environ.pop("HEDIT_ANTHROPIC_API_KEY", None)
             key = get_api_key()
             assert key == "stored-key"
 
@@ -403,20 +403,20 @@ class TestResetConfig:
         new_config = reset_config()
 
         # Verify defaults are restored
-        assert new_config.models.default == "anthropic/claude-haiku-4.5"
+        assert new_config.models.default == "claude-haiku-4-5"
         assert new_config.models.temperature == 0.1
         assert new_config.output.streaming is True
 
         # Verify file was updated
         reloaded = load_config()
-        assert reloaded.models.default == "anthropic/claude-haiku-4.5"
+        assert reloaded.models.default == "claude-haiku-4-5"
 
     def test_reset_config_preserves_credentials(self, temp_config_dir):
         """Test that reset_config does not affect credentials."""
         from src.cli.config import reset_config
 
         # Save credentials
-        creds = CredentialsConfig(openrouter_api_key="my-secret-key")
+        creds = CredentialsConfig(anthropic_api_key="my-secret-key")
         save_credentials(creds)
 
         # Modify config
@@ -429,9 +429,9 @@ class TestResetConfig:
 
         # Verify credentials are still there
         with patch.dict(os.environ, {}, clear=True):
-            os.environ.pop("OPENROUTER_API_KEY", None)
+            os.environ.pop("HEDIT_ANTHROPIC_API_KEY", None)
             loaded_creds = load_credentials()
-            assert loaded_creds.openrouter_api_key == "my-secret-key"
+            assert loaded_creds.anthropic_api_key == "my-secret-key"
 
 
 class TestStreamingConfig:

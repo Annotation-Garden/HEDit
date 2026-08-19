@@ -376,7 +376,7 @@ class TestStreamingEndpoint:
         }
         headers = {
             **TEST_AUTH_HEADERS,
-            "X-OpenRouter-Model": "anthropic/claude-haiku-4.5",
+            "X-OpenRouter-Model": "claude-haiku-4-5",
             "X-OpenRouter-Provider": "anthropic",
         }
         response = client.post("/annotate/stream", json=request_data, headers=headers)
@@ -454,8 +454,7 @@ class TestStreamingEndpoint:
         }
         headers = {
             **TEST_AUTH_HEADERS,
-            "X-OpenRouter-Eval-Model": "qwen/qwen3-235b-a22b-2507",
-            "X-OpenRouter-Eval-Provider": "Cerebras",
+            "X-OpenRouter-Eval-Model": "claude-haiku-4-5",
         }
         response = client.post("/annotate/stream", json=request_data, headers=headers)
         assert response.status_code in [200, 503]
@@ -488,13 +487,13 @@ class TestStreamingWithMockedWorkflow:
     def client_with_workflow(self):
         """Create a test client with a mocked workflow."""
         original_env = {}
-        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "ANTHROPIC_API_KEY"]:
             if key in os.environ:
                 original_env[key] = os.environ[key]
 
         os.environ["REQUIRE_API_AUTH"] = "true"
         os.environ["API_KEYS"] = "test-api-key-for-unit-tests"
-        os.environ["OPENROUTER_API_KEY"] = "test-openrouter-key"
+        os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
 
         from src.api import security
 
@@ -536,7 +535,7 @@ class TestStreamingWithMockedWorkflow:
             yield TestClient(app, raise_server_exceptions=False)
 
         # Restore original values
-        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "ANTHROPIC_API_KEY"]:
             if key in original_env:
                 os.environ[key] = original_env[key]
             elif key in os.environ:
@@ -601,15 +600,15 @@ class TestModelOverrideWithEnv:
 
     @pytest.fixture
     def client_with_env(self):
-        """Create a test client with OPENROUTER_API_KEY set."""
+        """Create a test client with ANTHROPIC_API_KEY set."""
         original_env = {}
-        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "ANTHROPIC_API_KEY"]:
             if key in os.environ:
                 original_env[key] = os.environ[key]
 
         os.environ["REQUIRE_API_AUTH"] = "true"
         os.environ["API_KEYS"] = "test-api-key-for-unit-tests"
-        os.environ["OPENROUTER_API_KEY"] = "test-openrouter-key"
+        os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
 
         from src.api import security
 
@@ -619,7 +618,7 @@ class TestModelOverrideWithEnv:
         yield TestClient(app, raise_server_exceptions=False)
 
         # Restore original values
-        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "ANTHROPIC_API_KEY"]:
             if key in original_env:
                 os.environ[key] = original_env[key]
             elif key in os.environ:
@@ -635,7 +634,7 @@ class TestModelOverrideWithEnv:
         }
         headers = {
             **TEST_AUTH_HEADERS,
-            "X-OpenRouter-Model": "anthropic/claude-haiku-4.5",
+            "X-OpenRouter-Model": "claude-haiku-4-5",
             "X-OpenRouter-Provider": "anthropic",
         }
         response = client_with_env.post("/annotate", json=request_data, headers=headers)
@@ -650,7 +649,7 @@ class TestModelOverrideWithEnv:
         }
         headers = {
             **TEST_AUTH_HEADERS,
-            "X-OpenRouter-Model": "anthropic/claude-haiku-4.5",
+            "X-OpenRouter-Model": "claude-haiku-4-5",
             "X-OpenRouter-Provider": "anthropic",
         }
         response = client_with_env.post("/annotate/stream", json=request_data, headers=headers)
@@ -667,11 +666,9 @@ class TestModelOverrideWithEnv:
         }
         headers = {
             **TEST_AUTH_HEADERS,
-            "X-OpenRouter-Model": "anthropic/claude-haiku-4.5",
-            "X-OpenRouter-Provider": "anthropic",
+            "X-OpenRouter-Model": "claude-sonnet-5",
             "X-OpenRouter-Temperature": "0.5",
-            "X-OpenRouter-Eval-Model": "qwen/qwen3-235b-a22b-2507",
-            "X-OpenRouter-Eval-Provider": "Cerebras",
+            "X-OpenRouter-Eval-Model": "claude-haiku-4-5",
             "X-User-Id": "test-user-123",
         }
         response = client_with_env.post("/annotate/stream", json=request_data, headers=headers)
@@ -688,40 +685,6 @@ class TestVersionEndpointExtended:
         data = response.json()
         assert "version" in data
         assert "commit" in data
-
-
-class TestUserIDDerivation:
-    """Tests for user ID derivation from API keys."""
-
-    def test_derive_user_id(self):
-        """Test that user ID is derived consistently from API key."""
-        from src.api.main import _derive_user_id
-
-        api_key = "sk-or-test-key-12345"
-        user_id = _derive_user_id(api_key)
-
-        # Should be 16 hex characters
-        assert len(user_id) == 16
-        assert all(c in "0123456789abcdef" for c in user_id)
-
-    def test_derive_user_id_consistency(self):
-        """Test that same API key produces same user ID."""
-        from src.api.main import _derive_user_id
-
-        api_key = "sk-or-test-key-12345"
-        user_id1 = _derive_user_id(api_key)
-        user_id2 = _derive_user_id(api_key)
-
-        assert user_id1 == user_id2
-
-    def test_derive_user_id_uniqueness(self):
-        """Test that different API keys produce different user IDs."""
-        from src.api.main import _derive_user_id
-
-        user_id1 = _derive_user_id("key1")
-        user_id2 = _derive_user_id("key2")
-
-        assert user_id1 != user_id2
 
 
 class TestTelemetryEnabledField:
@@ -853,7 +816,7 @@ class TestTelemetryCollectorIntegration:
             hed_string="Sensory-event, Visual-presentation",
             iterations=2,
             validation_errors=[],
-            model="anthropic/claude-haiku-4.5",
+            model="claude-haiku-4-5",
             provider="anthropic",
             temperature=0.1,
             latency_ms=2000,
@@ -892,13 +855,13 @@ class TestStreamingTelemetry:
     def client_with_telemetry(self):
         """Create a test client with mocked workflow and telemetry collector."""
         original_env = {}
-        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "ANTHROPIC_API_KEY"]:
             if key in os.environ:
                 original_env[key] = os.environ[key]
 
         os.environ["REQUIRE_API_AUTH"] = "true"
         os.environ["API_KEYS"] = "test-api-key-for-unit-tests"
-        os.environ["OPENROUTER_API_KEY"] = "test-openrouter-key"
+        os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
 
         from src.api import security
 
@@ -955,7 +918,7 @@ class TestStreamingTelemetry:
             client = TestClient(app, raise_server_exceptions=False)
             yield client, collected_events
 
-        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "ANTHROPIC_API_KEY"]:
             if key in original_env:
                 os.environ[key] = original_env[key]
             elif key in os.environ:
@@ -967,13 +930,13 @@ class TestStreamingTelemetry:
     def client_with_telemetry_disabled(self):
         """Create a test client with mocked workflow but no telemetry collector."""
         original_env = {}
-        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "ANTHROPIC_API_KEY"]:
             if key in os.environ:
                 original_env[key] = os.environ[key]
 
         os.environ["REQUIRE_API_AUTH"] = "true"
         os.environ["API_KEYS"] = "test-api-key-for-unit-tests"
-        os.environ["OPENROUTER_API_KEY"] = "test-openrouter-key"
+        os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
 
         from src.api import security
 
@@ -1023,7 +986,7 @@ class TestStreamingTelemetry:
             client = TestClient(app, raise_server_exceptions=False)
             yield client, collected_events
 
-        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "ANTHROPIC_API_KEY"]:
             if key in original_env:
                 os.environ[key] = original_env[key]
             elif key in os.environ:
@@ -1035,13 +998,13 @@ class TestStreamingTelemetry:
     def client_with_failing_workflow(self):
         """Create a test client with a workflow that raises an error."""
         original_env = {}
-        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "ANTHROPIC_API_KEY"]:
             if key in os.environ:
                 original_env[key] = os.environ[key]
 
         os.environ["REQUIRE_API_AUTH"] = "true"
         os.environ["API_KEYS"] = "test-api-key-for-unit-tests"
-        os.environ["OPENROUTER_API_KEY"] = "test-openrouter-key"
+        os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
 
         from src.api import security
 
@@ -1085,7 +1048,7 @@ class TestStreamingTelemetry:
             client = TestClient(app, raise_server_exceptions=False)
             yield client, collected_events
 
-        for key in ["REQUIRE_API_AUTH", "API_KEYS", "OPENROUTER_API_KEY"]:
+        for key in ["REQUIRE_API_AUTH", "API_KEYS", "ANTHROPIC_API_KEY"]:
             if key in original_env:
                 os.environ[key] = original_env[key]
             elif key in os.environ:
@@ -1148,7 +1111,7 @@ class TestStreamingTelemetry:
             "description": "A blue square flashes",
             "schema_version": "8.4.0",
             "telemetry_enabled": True,
-            "model": "anthropic/claude-haiku-4.5",
+            "model": "claude-haiku-4-5",
             "provider": "anthropic",
             "temperature": 0.3,
         }
@@ -1157,7 +1120,7 @@ class TestStreamingTelemetry:
         assert len(collected_events) == 1
 
         event = collected_events[0]
-        assert event.model.model == "anthropic/claude-haiku-4.5"
+        assert event.model.model == "claude-haiku-4-5"
         assert event.model.provider == "anthropic"
         assert event.model.temperature == 0.3
 

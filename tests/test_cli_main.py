@@ -75,7 +75,7 @@ class TestAnnotateCommand:
     def test_annotate_no_api_key(self, tmp_path):
         """Test annotate fails without API key."""
         # Clear any env vars that might leak from other tests
-        env_backup = os.environ.pop("OPENROUTER_API_KEY", None)
+        env_backup = os.environ.pop("HEDIT_ANTHROPIC_API_KEY", None)
         try:
             with (
                 patch("src.cli.config.CONFIG_DIR", tmp_path),
@@ -87,7 +87,7 @@ class TestAnnotateCommand:
                 assert "No API key" in result.output or "api key" in result.output.lower()
         finally:
             if env_backup:
-                os.environ["OPENROUTER_API_KEY"] = env_backup
+                os.environ["HEDIT_ANTHROPIC_API_KEY"] = env_backup
 
     def test_annotate_with_api_key(self, tmp_path):
         """Test annotate with API key makes request."""
@@ -325,7 +325,7 @@ class TestInitCommand:
             assert "Success" in result.output or "saved" in result.output.lower()
 
     def test_init_with_custom_settings(self, tmp_path):
-        """Test init with custom model and provider."""
+        """Test init with a custom model."""
         with (
             patch("src.cli.config.CONFIG_DIR", tmp_path),
             patch("src.cli.config.CONFIG_FILE", tmp_path / "config.yaml"),
@@ -344,9 +344,7 @@ class TestInitCommand:
                     "--api-key",
                     "test-key",
                     "--model",
-                    "gpt-4o",
-                    "--provider",
-                    "OpenAI",
+                    "claude-sonnet-5",
                 ],
             )
             assert result.exit_code == 0
