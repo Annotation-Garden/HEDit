@@ -4,19 +4,19 @@ This guide provides deployment options for HED-BOT.
 
 ## Deployment Options
 
-### ⭐ Option 1: Cloudflare Pages + Workers (RECOMMENDED)
-**Best for:** Using OpenRouter/Cerebras API (no local LLM)
+### Option 1: Cloudflare Pages + Workers (RECOMMENDED)
+**Best for:** Fully serverless use of the Claude Platform on AWS (no self-hosted backend)
 - Fully serverless
 - No backend infrastructure
-- ~$2-5/month total cost
+- LLM usage billed through your AWS account
 - 100,000 requests/day FREE
 - See: `workers/README.md`
 
 ### Option 2: Cloudflare Pages + Tunnel
-**Best for:** Using local LLM on your GPU machine
+**Best for:** Hosting the backend on your own machine
 - Frontend on CDN
-- Backend on local GPU
-- $0/month (both free)
+- Backend on your own machine (LLM calls go to the Claude Platform on AWS)
+- $0/month for Cloudflare (both services free)
 - See guide below
 
 ---
@@ -25,7 +25,7 @@ This guide provides deployment options for HED-BOT.
 
 ```
 ┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
-│  User Browser   │────────▶│ Cloudflare Pages │         │  Your GPU       │
+│  User Browser   │────────▶│ Cloudflare Pages │         │  Your Server    │
 │                 │         │   (Frontend CDN)  │         │   Machine       │
 └─────────────────┘         └──────────────────┘         │                 │
                                       │                   │  ┌───────────┐  │
@@ -42,7 +42,7 @@ This guide provides deployment options for HED-BOT.
 - **Cost-effective**: Both Cloudflare services are free for basic use
 - **Scalable**: Frontend on global CDN
 - **Secure**: No port forwarding, tunnel handles encryption
-- **GPU on your machine**: Keep expensive GPU workload local
+- **Backend on your machine**: Full control over the API server; LLM inference runs on the Claude Platform on AWS
 
 ---
 
@@ -97,7 +97,7 @@ Cloudflare Pages will auto-deploy on every push!
 
 ### Step 1: Install cloudflared
 
-On your GPU machine:
+On your backend machine:
 
 ```bash
 # Download cloudflared
@@ -253,7 +253,7 @@ docker compose logs -f hed-bot
 
 - **Cloudflare Pages**: Free (500 builds/month, unlimited requests)
 - **Cloudflare Tunnel**: Free (unlimited bandwidth)
-- **GPU Machine**: Your existing machine (no cloud GPU costs!)
+- **Backend Machine**: Your existing machine (LLM usage billed through your AWS account)
 
 ---
 
@@ -304,19 +304,19 @@ For even more advanced setups, you could:
 - Consider adding authentication if needed
 # HED-BOT Deployment Guide
 
-This guide covers deploying HED-BOT on a GPU workstation with persistent URL access.
+This guide covers deploying HED-BOT on your own workstation or server with persistent URL access.
 
 ## Prerequisites
 
 ### Hardware
-- NVIDIA GPU (tested on RTX 4090)
-- CUDA 12.2+ installed
-- Minimum 16GB RAM (32GB recommended for 10-15 concurrent users)
-- Minimum 50GB disk space (includes model + HED resources)
+- Minimum 8GB RAM (16GB recommended for 10-15 concurrent users)
+- Minimum 10GB disk space (includes HED resources)
+- No GPU required; LLM inference runs on the Claude Platform on AWS
 
 ### Software
-- Docker with NVIDIA Container Toolkit
+- Docker
 - Docker Compose
+- Claude Platform on AWS credentials (see [claude-platform-aws.md](claude-platform-aws.md))
 
 **Note**: Python, Node.js, HED schemas, and HED JavaScript validator are all included in the Docker image. No external dependencies needed!
 
@@ -334,11 +334,10 @@ cd /path/to/hed-bot
 # Build and start all services
 # This will:
 # - Build Docker image with HED schemas and validator
-# - Start Ollama and HED-BOT containers
-# - Automatically pull gpt-oss:20b model on first start
+# - Start the HED-BOT container
 docker-compose up -d
 
-# Monitor first start (model download takes ~10-20 min)
+# Monitor first start
 docker-compose logs -f
 
 # Check status
@@ -351,9 +350,16 @@ docker-compose ps
 - HED JavaScript validator (built)
 - All self-contained, no external paths needed!
 
-### 3. Model Auto-Pull
+### 3. Configure LLM Credentials
 
-The `gpt-oss:20b` model is automatically pulled on first start. No manual intervention needed!
+Set the Claude Platform on AWS credentials in `.env` (all three are required):
+
+```bash
+LLM_PROVIDER=anthropic
+ANTHROPIC_API_KEY=your-api-key-here
+ANTHROPIC_BASE_URL=https://aws-external-anthropic.us-east-2.api.aws
+ANTHROPIC_WORKSPACE_ID=wrkspc_your_workspace_id
+```
 
 ### 4. Verify Deployment
 
@@ -399,27 +405,17 @@ npm run build
 ```bash
 cp .env.example .env
 # Edit .env:
-# - Set LLM_BASE_URL to your Ollama server
+# - Set ANTHROPIC_API_KEY, ANTHROPIC_BASE_URL, ANTHROPIC_WORKSPACE_ID
 # - Set HED_VALIDATOR_PATH to hed-javascript location
 ```
 
-### 4. Start Ollama (if not running)
-
-```bash
-# On workstation with GPU
-ollama serve
-
-# In another terminal, pull model
-ollama pull gpt-oss:20b
-```
-
-### 5. Start HED-BOT API
+### 4. Start HED-BOT API
 
 ```bash
 uvicorn src.api.main:app --host 0.0.0.0 --port 38427 --workers 4
 ```
 
-### 6. Serve Frontend
+### 5. Serve Frontend
 
 ```bash
 # Simple Python server
@@ -520,20 +516,15 @@ sudo systemctl status hed-bot
 
 ### For 10-15 Concurrent Users
 
-1. **Ollama Configuration**:
-   - Set `OLLAMA_NUM_PARALLEL=15` for concurrent requests
-   - Use `OLLAMA_MAX_LOADED_MODELS=1` to keep model in VRAM
-
-2. **API Workers**:
+1. **API Workers**:
    - Set `--workers 4` (or number of CPU cores)
    - Use `--timeout-keep-alive 300` for long-running requests
 
-3. **GPU Memory**:
-   - Monitor with `nvidia-smi`
-   - Default model: `gpt-oss:20b` (optimized for RTX 4090)
-   - Consider smaller models if memory constrained (e.g., `llama3.2:8b`)
+2. **Model Selection**:
+   - Default model: `claude-haiku-4-5` (fast, used for annotation, evaluation, and vision)
+   - Optional: `claude-sonnet-5` for highest quality (slower, higher cost)
 
-4. **Caching**:
+3. **Caching**:
    - HED schemas are cached in memory
    - Consider Redis for session management
 
@@ -544,9 +535,6 @@ sudo systemctl status hed-bot
 ```bash
 # Check API health
 curl http://localhost:38427/health
-
-# Check Ollama
-curl http://localhost:11435/api/tags
 ```
 
 ### Logs
@@ -557,36 +545,21 @@ docker-compose logs -f
 
 # Systemd logs
 journalctl -u hed-bot -f
-
-# Ollama logs
-docker logs hed-bot-ollama -f
 ```
 
 ### Metrics
 
 Monitor:
-- GPU usage: `nvidia-smi` or `watch -n 1 nvidia-smi`
 - API latency: FastAPI built-in metrics
 - Request queue: Custom monitoring endpoint
 
 ## Troubleshooting
 
-### GPU Not Detected
+### LLM Errors
 
-```bash
-# Check NVIDIA driver
-nvidia-smi
-
-# Check Docker NVIDIA runtime
-docker run --rm --gpus all nvidia/cuda:12.2.0-base nvidia-smi
-```
-
-### Ollama Out of Memory
-
-- Default model is `gpt-oss:20b` (optimized for RTX 4090)
-- Use smaller model if needed: `llama3.2:8b`
-- Reduce `OLLAMA_NUM_PARALLEL`
-- Increase GPU memory limit in Docker
+- Verify `ANTHROPIC_API_KEY`, `ANTHROPIC_BASE_URL`, and `ANTHROPIC_WORKSPACE_ID` are set
+  (the endpoint rejects requests without the workspace header)
+- Check the key in the AWS Console under Claude Platform on AWS -> API keys
 
 ### Validation Timeouts
 
@@ -609,10 +582,6 @@ docker run --rm --gpus all nvidia/cuda:12.2.0-base nvidia-smi
 ### Regular Tasks
 
 ```bash
-# Backup models
-docker run --rm -v ollama_data:/data -v $(pwd):/backup alpine \
-    tar czf /backup/ollama_backup.tar.gz /data
-
 # Update HED schemas
 cd /Users/yahya/Documents/git/HED/hed-schemas
 git pull
@@ -630,6 +599,5 @@ docker-compose up -d
 
 1. **Load Balancer**: Use nginx or HAProxy
 2. **Multiple Workers**: Deploy multiple API instances
-3. **Separate LLM Server**: Dedicated vLLM server with Ray
-4. **Database**: Add Redis for state management
-5. **Queue**: Use Celery for async processing
+3. **Database**: Add Redis for state management
+4. **Queue**: Use Celery for async processing

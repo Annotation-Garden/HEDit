@@ -8,8 +8,12 @@ This document helps you choose the right deployment option for your use case.
 |----------|------------------|---------------|
 | **Production server** (e.g., hedtools.ucsd.edu) | Production Docker | [`deploy/README.md`](deploy/README.md) |
 | **Cloud hosting** (Render, Railway, Fly.io) | Production Docker | [`deploy/README.md`](deploy/README.md) |
-| **Local GPU development** | Docker Compose + Ollama | [`docs/deployment/docker-quickstart.md`](docs/deployment/docker-quickstart.md) |
-| **Local development** (no GPU) | OpenRouter + Local Python | [README.md](README.md#local-development-setup) |
+| **Local development** | Claude Platform on AWS + Local Python | [README.md](README.md#local-development-setup) |
+
+All deployments use Anthropic Claude large language models (LLMs) served via the Claude Platform on Amazon Web Services (AWS),
+an Anthropic-operated Messages API billed through the AWS Marketplace (not Amazon Bedrock).
+See [`docs/deployment/claude-platform-aws.md`](docs/deployment/claude-platform-aws.md) for credential setup.
+Local Ollama-based inference is no longer supported.
 
 ## Deployment Options
 
@@ -19,16 +23,15 @@ This document helps you choose the right deployment option for your use case.
 - Production servers (like hedtools.ucsd.edu)
 - Cloud hosting platforms
 - Public-facing deployments
-- Teams without local GPU
 
 **Features:**
-- ✅ No GPU required (uses OpenRouter API)
-- ✅ Optimized 806MB Docker image
-- ✅ API key authentication & audit logging
-- ✅ CI/CD with GitHub Actions
-- ✅ Auto-deployment with hourly updates
-- ✅ Cloudflare Worker proxy (optional caching)
-- ✅ OWASP Top 10 compliant security
+- No graphics processing unit (GPU) required (uses the Claude Platform on AWS)
+- Optimized 806MB Docker image
+- API key authentication and audit logging
+- CI/CD with GitHub Actions
+- Auto-deployment with hourly updates
+- Cloudflare Worker proxy (optional caching)
+- OWASP Top 10 compliant security
 
 **Setup:**
 ```bash
@@ -44,114 +47,58 @@ python scripts/generate_api_key.py
 - **Main Guide**: [`deploy/README.md`](deploy/README.md) - Complete deployment documentation
 - **Security**: [`deploy/SECURITY.md`](deploy/SECURITY.md) - Audit-ready security guide
 - **Architecture**: [`deploy/DEPLOYMENT_ARCHITECTURE.md`](deploy/DEPLOYMENT_ARCHITECTURE.md) - CORS and reverse proxy setup
+- **LLM Setup**: [`docs/deployment/claude-platform-aws.md`](docs/deployment/claude-platform-aws.md) - Claude Platform on AWS credentials
 
 **Cost:**
 - Server hosting: FREE (use existing server) or $5-25/month (cloud)
-- LLM API (OpenRouter): ~$2-5/month for moderate usage
-- Total: ~$2-30/month depending on hosting choice
+- LLM API (Claude Platform on AWS): usage-based, billed through your AWS account
+- Total: hosting cost plus AWS Marketplace LLM usage
 
 ---
 
-### Option 2: Local GPU Development
-
-**Best for:**
-- Local development and testing
-- Privacy-sensitive work (offline LLM)
-- GPU available (NVIDIA RTX 3090/4090 or better)
-- No ongoing API costs desired
-
-**Features:**
-- ✅ Fully offline operation
-- ✅ No API costs after setup
-- ✅ Complete privacy (no external API calls)
-- ✅ Self-contained Docker setup
-- ✅ Auto-downloads Ollama models
-
-**Requirements:**
-- NVIDIA GPU with 24GB+ VRAM (RTX 3090/4090)
-- NVIDIA Container Toolkit
-- Docker Compose
-
-**Setup:**
-```bash
-# See complete guide:
-cat docs/deployment/docker-quickstart.md
-
-# Quick start:
-docker-compose up -d
-docker-compose logs -f  # Wait for model download (~10-20 min)
-```
-
-**Documentation:**
-- **Quick Start**: [`docs/deployment/docker-quickstart.md`](docs/deployment/docker-quickstart.md) - One-command setup
-- **Architecture**: [`docs/deployment/docker-architecture.md`](docs/deployment/docker-architecture.md) - Technical details
-- **Ollama Config**: [`docker/README.md`](docker/README.md) - Model configuration
-
-**Cost:**
-- One-time: GPU hardware (~$1200-1600 for RTX 4090)
-- Electricity: ~$10-30/month (GPU power consumption)
-- Total: FREE after hardware investment
-
----
-
-### Option 3: Local Development (No GPU)
+### Option 2: Local Development
 
 **Best for:**
 - Quick testing and development
-- Laptop/desktop without GPU
-- OpenRouter API testing
+- Laptop/desktop development (no GPU needed)
+- Testing against the Claude Platform on AWS
 
 **Features:**
-- ✅ No Docker required
-- ✅ Fast iteration (no container rebuilds)
-- ✅ Uses OpenRouter API (cloud LLM)
-- ✅ Conda environment management
+- No Docker required
+- Fast iteration (no container rebuilds)
+- Uses the Claude Platform on AWS (cloud LLM)
 
 **Setup:**
 See main [README.md](README.md#local-development-setup)
+and [`docs/deployment/claude-platform-aws.md`](docs/deployment/claude-platform-aws.md)
+for the required `ANTHROPIC_API_KEY`, `ANTHROPIC_BASE_URL`, and `ANTHROPIC_WORKSPACE_ID` variables.
 
 **Cost:**
-- LLM API (OpenRouter): Pay-per-use (~$0.10-0.50 per session)
+- LLM API (Claude Platform on AWS): pay-per-use through your AWS account
 
 ---
 
 ## Comparison
 
-| Feature | Production Deploy | Local GPU | Local Dev (no GPU) |
-|---------|------------------|-----------|-------------------|
-| **GPU Required** | ❌ No | ✅ Yes (24GB+) | ❌ No |
-| **LLM Provider** | OpenRouter (cloud) | Ollama (local) | OpenRouter (cloud) |
-| **Docker** | ✅ Single container | ✅ Compose (2 containers) | ❌ Optional |
-| **Public Access** | ✅ Yes | ❌ Local only | ❌ Local only |
-| **Security** | ✅ Full (API keys, audit) | ⚠️ Basic | ⚠️ Basic |
-| **Auto-Updates** | ✅ Yes (CI/CD) | ❌ Manual | ❌ Manual |
-| **Setup Time** | 15-30 minutes | 30-45 minutes (+ model download) | 10-15 minutes |
-| **Monthly Cost** | $2-30 | $10-30 (electricity) | $0.10-0.50 per session |
-| **Best For** | Production | Privacy, offline | Quick development |
+| Feature | Production Deploy | Local Dev |
+|---------|------------------|-----------|
+| **GPU Required** | No | No |
+| **LLM Provider** | Claude Platform on AWS | Claude Platform on AWS |
+| **Docker** | Single container | Optional |
+| **Public Access** | Yes | Local only |
+| **Security** | Full (API keys, audit) | Basic |
+| **Auto-Updates** | Yes (CI/CD) | Manual |
+| **Setup Time** | 15-30 minutes | 10-15 minutes |
+| **Best For** | Production | Quick development |
 
 ---
 
 ## Migration Paths
 
-### From Local GPU → Production
+### From Local Dev -> Production
 
 ```bash
-# 1. Set up production deployment
-cd deploy/
-./deploy.sh prod
-
-# 2. Update .env to use OpenRouter instead of Ollama
-LLM_PROVIDER=openrouter
-OPENROUTER_API_KEY=your-key-here
-
-# 3. Stop local GPU setup (optional)
-docker-compose down
-```
-
-### From Local Dev → Production
-
-```bash
-# 1. Already using OpenRouter - just deploy
+# 1. Deploy (credentials carry over from your .env)
 ./deploy/deploy.sh prod
 
 # 2. Add security configuration
@@ -159,16 +106,34 @@ python scripts/generate_api_key.py
 # Add API_KEYS to .env
 ```
 
+### From a Legacy OpenRouter or Ollama Setup
+
+```bash
+# 1. Update .env to use the Claude Platform on AWS
+LLM_PROVIDER=anthropic
+ANTHROPIC_API_KEY=your-key-here
+ANTHROPIC_BASE_URL=https://aws-external-anthropic.us-east-2.api.aws
+ANTHROPIC_WORKSPACE_ID=wrkspc_your_workspace_id
+
+# 2. Remove obsolete variables
+# OPENROUTER_API_KEY, LLM_PROVIDER_PREFERENCE, and the *_PROVIDER
+# variables are no longer read; legacy LLM_PROVIDER values
+# (openrouter, ollama) are coerced to anthropic with a warning.
+
+# 3. Redeploy
+./deploy/deploy.sh prod
+```
+
 ---
 
 ## Need Help?
 
 - **Production Deployment**: See [`deploy/README.md`](deploy/README.md)
-- **Local GPU Setup**: See [`docs/deployment/docker-quickstart.md`](docs/deployment/docker-quickstart.md)
 - **Local Development**: See [README.md](README.md#local-development-setup)
+- **LLM Credentials**: See [`docs/deployment/claude-platform-aws.md`](docs/deployment/claude-platform-aws.md)
 - **Security Questions**: See [`deploy/SECURITY.md`](deploy/SECURITY.md)
-- **Issues**: https://github.com/neuromechanist/hed-bot/issues
+- **Issues**: https://github.com/Annotation-Garden/HEDit/issues
 
 ---
 
-**Last Updated**: December 2, 2025
+**Last Updated**: August 18, 2026

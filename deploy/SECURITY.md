@@ -323,24 +323,27 @@ ssl_session_timeout 10m;
 
 **Never commit secrets to Git!**
 
-✅ **Correct**:
+**Correct**:
 ```bash
 # .env file (gitignored)
-OPENROUTER_API_KEY=sk-or-v1-abc123...
+ANTHROPIC_API_KEY=abc123...
+ANTHROPIC_WORKSPACE_ID=wrkspc_abc123...
 API_KEYS=key1,key2,key3
 ```
 
-❌ **Incorrect**:
+**Incorrect**:
 ```python
 # NEVER hardcode secrets in code
-api_key = "sk-or-v1-abc123..."  # BAD!
+api_key = "abc123..."  # BAD!
 ```
 
 ### Environment File Template
 
 ```bash
 # .env.example (committed to Git, no real values)
-OPENROUTER_API_KEY=your_openrouter_key_here
+ANTHROPIC_API_KEY=your_anthropic_key_here
+ANTHROPIC_BASE_URL=https://aws-external-anthropic.us-east-2.api.aws
+ANTHROPIC_WORKSPACE_ID=your_workspace_id_here
 API_KEYS=your_api_key_1,your_api_key_2
 REQUIRE_API_AUTH=true
 ENABLE_AUDIT_LOG=true
