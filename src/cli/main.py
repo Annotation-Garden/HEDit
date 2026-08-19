@@ -59,8 +59,8 @@ ApiKeyOption = Annotated[
     typer.Option(
         "--api-key",
         "-k",
-        help="OpenRouter API key (or use OPENROUTER_API_KEY env var)",
-        envvar="OPENROUTER_API_KEY",
+        help="Anthropic API key for BYOK mode (sk-ant-..., or use HEDIT_ANTHROPIC_API_KEY env var)",
+        envvar="HEDIT_ANTHROPIC_API_KEY",
     ),
 ]
 
@@ -104,15 +104,7 @@ ModelOption = Annotated[
     typer.Option(
         "--model",
         "-m",
-        help="Model to use (e.g., anthropic/claude-haiku-4.5, qwen/qwen3.5-122b-a10b)",
-    ),
-]
-
-ProviderOption = Annotated[
-    str | None,
-    typer.Option(
-        "--provider",
-        help="Provider preference (e.g., Cerebras for fast inference)",
+        help="Model to use: claude-haiku-4-5 (default) or claude-sonnet-5",
     ),
 ]
 
@@ -120,15 +112,7 @@ EvalModelOption = Annotated[
     str | None,
     typer.Option(
         "--eval-model",
-        help="Model for evaluation agent (default: same as --model). Use a consistent model for benchmarking.",
-    ),
-]
-
-EvalProviderOption = Annotated[
-    str | None,
-    typer.Option(
-        "--eval-provider",
-        help="Provider for evaluation model (e.g., Cerebras for qwen models).",
+        help="Model for evaluation agent (default: claude-haiku-4-5).",
     ),
 ]
 
@@ -161,7 +145,7 @@ UserIdOption = Annotated[
     str | None,
     typer.Option(
         "--user-id",
-        help="Custom user ID for cache optimization (default: auto-generated machine ID)",
+        help="Custom user ID recorded in telemetry (default: auto-generated machine ID)",
         hidden=True,  # Not advertised, but available
     ),
 ]
@@ -185,9 +169,9 @@ def get_executor(
 
     Args:
         config: CLI configuration
-        api_key: OpenRouter API key
+        api_key: BYOK Anthropic API key (None = server/env credentials)
         mode_override: Override mode from --standalone/--api flags
-        user_id: Custom user ID for cache optimization (default: auto-generated)
+        user_id: Custom user ID recorded in telemetry (default: auto-generated)
 
     Returns:
         Configured ExecutionBackend instance
@@ -204,10 +188,7 @@ def get_executor(
             api_key=api_key,
             model=config.models.default,
             eval_model=config.models.evaluation,
-            eval_provider=config.models.eval_provider,
             vision_model=config.models.vision,
-            vision_provider=config.models.vision_provider,
-            provider=config.models.provider,
             temperature=config.models.temperature,
             user_id=user_id,
         )
@@ -228,9 +209,7 @@ def get_executor(
             api_key=api_key,
             model=config.models.default,
             eval_model=config.models.evaluation,
-            eval_provider=config.models.eval_provider,
             vision_model=config.models.vision,
-            provider=config.models.provider,
             temperature=config.models.temperature,
             user_id=user_id,
         )
@@ -262,7 +241,7 @@ def main(
     annotations using AI-powered multi-agent system.
 
     Get started:
-        hedit init --api-key YOUR_OPENROUTER_KEY
+        hedit init
         hedit annotate "A red circle appears on screen"
     """
     pass
@@ -275,8 +254,9 @@ def init(
         typer.Option(
             "--api-key",
             "-k",
-            help="OpenRouter API key (get one at https://openrouter.ai/keys)",
-            prompt="OpenRouter API key",
+            help="Anthropic API key for BYOK mode (sk-ant-..., Enter to skip)",
+            prompt="Anthropic API key (Enter to skip)",
+            prompt_required=False,
             hide_input=True,
         ),
     ] = None,
@@ -286,14 +266,7 @@ def init(
         typer.Option(
             "--model",
             "-m",
-            help="Default model for annotation",
-        ),
-    ] = None,
-    provider: Annotated[
-        str | None,
-        typer.Option(
-            "--provider",
-            help="Provider preference (e.g., Cerebras for fast inference)",
+            help="Default model for annotation (claude-haiku-4-5 or claude-sonnet-5)",
         ),
     ] = None,
     temperature: Annotated[
@@ -312,16 +285,17 @@ def init(
         ),
     ] = False,
 ) -> None:
-    """Initialize HEDit CLI with your API key and preferences.
+    """Initialize HEDit CLI with your preferences (and optional BYOK key).
 
     This saves your configuration to ~/.config/hedit/ so you don't need
-    to provide the API key for every command.
-
-    Get an OpenRouter API key at: https://openrouter.ai/keys
+    to provide options for every command. The API key is only needed for
+    BYOK mode (billing on your own Anthropic account); get one at
+    https://console.anthropic.com/settings/keys
 
     Examples:
-        hedit init --api-key YOUR_KEY           # API mode (default)
-        hedit init --api-key YOUR_KEY --standalone  # Standalone mode
+        hedit init                               # API mode (default)
+        hedit init --api-key sk-ant-...          # BYOK mode
+        hedit init --standalone                  # Standalone mode
     """
     # Show telemetry disclosure on first run
     if is_first_run():
@@ -334,13 +308,11 @@ def init(
 
     # Update with provided values
     if api_key:
-        creds.openrouter_api_key = api_key
+        creds.anthropic_api_key = api_key
     if api_url:
         config.api.url = api_url
     if model:
         config.models.default = model
-    if provider:
-        config.models.provider = provider
     if temperature is not None:
         config.models.temperature = temperature
     if standalone:
@@ -356,11 +328,11 @@ def init(
     output.print_info(f"Execution mode: {config.execution.mode}")
 
     # Test connection based on mode
-    if creds.openrouter_api_key:
+    if creds.api_key or config.execution.mode != "standalone":
         if config.execution.mode == "standalone":
             output.print_progress("Checking standalone mode dependencies")
             try:
-                executor = get_executor(config, creds.openrouter_api_key)
+                executor = get_executor(config, creds.api_key)
                 health = executor.health()
                 if health.get("status") == "healthy":
                     output.print_success("Standalone mode ready!")
@@ -375,7 +347,7 @@ def init(
         else:
             output.print_progress("Testing API connection")
             try:
-                executor = get_executor(config, creds.openrouter_api_key)
+                executor = get_executor(config, creds.api_key)
                 health = executor.health()
                 if health.get("status") == "healthy":
                     output.print_success("API connection successful!")
@@ -401,8 +373,6 @@ def annotate(
     api_url: ApiUrlOption = None,
     model: ModelOption = None,
     eval_model: EvalModelOption = None,
-    eval_provider: EvalProviderOption = None,
-    provider: ProviderOption = None,
     temperature: TemperatureOption = None,
     schema_version: SchemaVersionOption = None,
     output_format: OutputFormatOption = "text",
@@ -439,7 +409,7 @@ def annotate(
         hedit annotate "A red circle appears on the left side of the screen"
         hedit annotate "Participant pressed the spacebar" --schema 8.4.0
         hedit annotate "Audio beep plays" -o json > result.json
-        hedit annotate "..." --model gpt-4o-mini --temperature 0.2
+        hedit annotate "..." --model claude-sonnet-5 --temperature 0.2
         hedit annotate "..." --standalone  # Run locally
         hedit annotate "..." --no-streaming  # Disable live progress
         hedit annotate "..." --standalone --no-extend  # No tag extensions
@@ -461,22 +431,21 @@ def annotate(
         api_url=api_url,
         model=model,
         eval_model=eval_model,
-        eval_provider=eval_provider,
-        provider=provider,
         temperature=temperature,
         schema_version=schema_version,
         output_format=output_format,
         user_id=user_id,
     )
 
-    if not effective_key:
+    mode_name = mode_override or config.execution.mode
+    # API mode needs a BYOK key; standalone mode can also use ANTHROPIC_API_KEY
+    # credentials from the environment (checked by the local executor).
+    if mode_name != "standalone" and not effective_key:
         output.print_error(
             "No API key configured",
-            hint="Run 'hedit init' or provide --api-key",
+            hint="Run 'hedit init' or provide --api-key (sk-ant-...)",
         )
         raise typer.Exit(1)
-
-    mode_name = mode_override or config.execution.mode
     # Determine if streaming should be used
     # Streaming only works in API mode and when not piped
     use_streaming = (
@@ -556,8 +525,6 @@ def annotate_image(
     api_url: ApiUrlOption = None,
     model: ModelOption = None,
     eval_model: EvalModelOption = None,
-    eval_provider: EvalProviderOption = None,
-    provider: ProviderOption = None,
     temperature: TemperatureOption = None,
     schema_version: SchemaVersionOption = None,
     output_format: OutputFormatOption = "text",
@@ -622,22 +589,21 @@ def annotate_image(
         api_url=api_url,
         model=model,
         eval_model=eval_model,
-        eval_provider=eval_provider,
-        provider=provider,
         temperature=temperature,
         schema_version=schema_version,
         output_format=output_format,
         user_id=user_id,
     )
 
-    if not effective_key:
+    mode_name = mode_override or config.execution.mode
+    # API mode needs a BYOK key; standalone mode can also use ANTHROPIC_API_KEY
+    # credentials from the environment (checked by the local executor).
+    if mode_name != "standalone" and not effective_key:
         output.print_error(
             "No API key configured",
-            hint="Run 'hedit init' or provide --api-key",
+            hint="Run 'hedit init' or provide --api-key (sk-ant-...)",
         )
         raise typer.Exit(1)
-
-    mode_name = mode_override or config.execution.mode
     # Determine if streaming should be used
     # Streaming only works in API mode and when not piped
     use_streaming = (
@@ -797,7 +763,7 @@ def config_show(
 
     # Merge for display
     config_dict = config.model_dump()
-    config_dict["credentials"] = {"openrouter_api_key": creds.openrouter_api_key}
+    config_dict["credentials"] = {"anthropic_api_key": creds.anthropic_api_key}
 
     output.print_config(config_dict, show_key)
 
@@ -911,7 +877,6 @@ def config_reset_cmd(
     # Show new defaults
     output.print_info("\nNew default settings:")
     output.print_info(f"  Model: {new_config.models.default}")
-    output.print_info(f"  Provider: {new_config.models.provider}")
     output.print_info(f"  Temperature: {new_config.models.temperature}")
     output.print_info(f"  Schema: {new_config.settings.schema_version}")
     output.print_info(f"  Streaming: {new_config.output.streaming}")

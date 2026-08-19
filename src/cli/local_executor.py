@@ -37,7 +37,7 @@ def _check_standalone_deps() -> bool:
 
     try:
         import langchain  # noqa: F401
-        import langchain_openai  # noqa: F401
+        import langchain_anthropic  # noqa: F401
         import langgraph  # noqa: F401
 
         # hedtools is optional for now (uses GitHub schema fetch)
@@ -59,10 +59,10 @@ class LocalExecutionBackend(ExecutionBackend):
     - No dependency on external HEDit infrastructure
     - Better privacy (all processing local except LLM calls)
     - Faster response times (no extra network hop to backend)
-    - Works offline except for OpenRouter LLM calls
+    - Works offline except for Claude LLM calls
 
     Requirements:
-    - OpenRouter API key
+    - Anthropic credentials (ANTHROPIC_API_KEY env, or a BYOK key)
     - Standalone dependencies installed
     """
 
@@ -71,10 +71,7 @@ class LocalExecutionBackend(ExecutionBackend):
         api_key: str | None = None,
         model: str | None = None,
         eval_model: str | None = None,
-        eval_provider: str | None = None,
         vision_model: str | None = None,
-        vision_provider: str | None = None,
-        provider: str | None = None,
         temperature: float = 0.1,
         schema_dir: Path | str | None = None,
         user_id: str | None = None,
@@ -82,46 +79,30 @@ class LocalExecutionBackend(ExecutionBackend):
         """Initialize local execution backend.
 
         Args:
-            api_key: OpenRouter API key (required for LLM operations, optional for health/validate)
-            model: Model for text annotation (default: anthropic/claude-haiku-4.5)
-            eval_model: Model for evaluation/assessment agents (default: qwen/qwen3.5-122b-a10b)
-            eval_provider: Provider for evaluation model (default: alibaba)
-            vision_model: Model for image annotation (default: qwen/qwen3.5-122b-a10b)
-            vision_provider: Provider for vision model (default: alibaba)
-            provider: Provider preference (cleared if custom model specified)
+            api_key: BYOK Anthropic API key (None = use ANTHROPIC_API_KEY /
+                Claude Platform on AWS credentials from the environment)
+            model: Model for text annotation (default: claude-haiku-4-5)
+            eval_model: Model for evaluation/assessment agents (default: claude-haiku-4-5)
+            vision_model: Model for image annotation (default: claude-haiku-4-5)
             temperature: LLM temperature (0.0-1.0)
             schema_dir: Optional directory with JSON schemas (None = fetch from GitHub)
-            user_id: Custom user ID for cache optimization (default: auto-generated machine ID)
+            user_id: Custom user ID recorded in telemetry (default: auto-generated machine ID)
         """
         # Import defaults from config
         from src.cli.config import (
             DEFAULT_EVAL_MODEL,
-            DEFAULT_EVAL_PROVIDER,
             DEFAULT_MODEL,
-            DEFAULT_PROVIDER,
             DEFAULT_VISION_MODEL,
-            DEFAULT_VISION_PROVIDER,
         )
 
         # API key is optional at init time - only required for LLM operations
         self._api_key = api_key
         self._model = model or DEFAULT_MODEL
         self._eval_model = eval_model or DEFAULT_EVAL_MODEL
-        self._eval_provider = eval_provider or DEFAULT_EVAL_PROVIDER
         self._vision_model = vision_model or DEFAULT_VISION_MODEL
-        self._vision_provider = vision_provider or DEFAULT_VISION_PROVIDER
         self._temperature = temperature
         self._schema_dir = Path(schema_dir) if schema_dir else None
         self._user_id = user_id  # Custom user ID (None = use auto-generated machine ID)
-
-        # Handle provider logic for annotation model:
-        # clear if custom model specified without explicit provider
-        if provider is not None:
-            self._provider = provider if provider else None
-        elif model is not None and model != DEFAULT_MODEL:
-            self._provider = None
-        else:
-            self._provider = DEFAULT_PROVIDER
 
         # Lazy initialization of workflow and vision agent
         self._workflow: HedAnnotationWorkflow | None = None
@@ -155,12 +136,13 @@ class LocalExecutionBackend(ExecutionBackend):
             )
 
     def _ensure_api_key(self) -> None:
-        """Ensure API key is available for LLM operations."""
-        if not self._api_key:
+        """Ensure Anthropic credentials are available for LLM operations."""
+        if not self._api_key and not os.environ.get("ANTHROPIC_API_KEY"):
             raise ExecutionError(
-                "OpenRouter API key required for standalone mode",
+                "Anthropic credentials required for standalone mode",
                 code="missing_api_key",
-                detail="Provide --api-key or run 'hedit init'",
+                detail="Provide --api-key (sk-ant-...), run 'hedit init', "
+                "or set ANTHROPIC_API_KEY in the environment",
             )
 
     def _get_workflow(self) -> HedAnnotationWorkflow:
@@ -170,51 +152,31 @@ class LocalExecutionBackend(ExecutionBackend):
             self._ensure_api_key()
 
             from src.agents.workflow import HedAnnotationWorkflow
-            from src.cli.config import get_machine_id
-            from src.utils.openrouter_llm import create_openrouter_llm
-
-            # Use custom user_id if provided, otherwise auto-generate
-            user_id = self._user_id or get_machine_id()
+            from src.utils.anthropic_llm import create_anthropic_llm
 
             # Annotation LLM keeps reasoning enabled (real HED tag work).
-            annotation_llm = create_openrouter_llm(
+            annotation_llm = create_anthropic_llm(
                 model=self._model,
                 api_key=self._api_key,
                 temperature=self._temperature,
-                provider=self._provider,
-                user_id=user_id,
             )
 
             # Evaluation / assessment / feedback share a model with
             # reasoning disabled -- these are short structured tasks
             # where extended thinking only adds latency. See #150.
-            if self._eval_model:
-                evaluation_llm = create_openrouter_llm(
-                    model=self._eval_model,
-                    api_key=self._api_key,
-                    temperature=self._temperature,
-                    provider=self._eval_provider,
-                    user_id=user_id,
-                    disable_reasoning=True,
-                )
-            else:
-                evaluation_llm = create_openrouter_llm(
-                    model=self._model,
-                    api_key=self._api_key,
-                    temperature=self._temperature,
-                    provider=self._provider,
-                    user_id=user_id,
-                    disable_reasoning=True,
-                )
+            evaluation_llm = create_anthropic_llm(
+                model=self._eval_model or self._model,
+                api_key=self._api_key,
+                temperature=self._temperature,
+                disable_reasoning=True,
+            )
 
             # Lightweight keyword-extraction model (#148): annotation
             # model with reasoning off and a small token cap.
-            keyword_llm = create_openrouter_llm(
+            keyword_llm = create_anthropic_llm(
                 model=self._model,
                 api_key=self._api_key,
                 temperature=self._temperature,
-                provider=self._provider,
-                user_id=user_id,
                 max_tokens=200,
                 disable_reasoning=True,
             )
@@ -274,18 +236,12 @@ class LocalExecutionBackend(ExecutionBackend):
             self._ensure_api_key()
 
             from src.agents.vision_agent import VisionAgent
-            from src.cli.config import get_machine_id
-            from src.utils.openrouter_llm import create_openrouter_llm
+            from src.utils.anthropic_llm import create_anthropic_llm
 
-            # Use custom user_id if provided, otherwise auto-generate
-            user_id = self._user_id or get_machine_id()
-
-            vision_llm = create_openrouter_llm(
+            vision_llm = create_anthropic_llm(
                 model=self._vision_model,
                 api_key=self._api_key,
                 temperature=0.3,  # Slightly higher for vision tasks
-                provider=self._vision_provider,
-                user_id=user_id,
             )
 
             self._vision_agent = VisionAgent(llm=vision_llm)
