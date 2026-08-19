@@ -5,7 +5,6 @@ and validation using the multi-agent workflow.
 """
 
 import asyncio
-import hashlib
 import json
 import logging
 import os
@@ -13,12 +12,11 @@ import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+from anthropic import APITimeoutError, RateLimitError
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from langchain_community.chat_models import ChatOllama
-from openai import APITimeoutError, RateLimitError
 
 from src import __version__
 from src.agents.vision_agent import VisionAgent
@@ -37,7 +35,7 @@ from src.api.models import (
 from src.api.security import api_key_auth, audit_logger
 from src.lsp import HedLspClient
 from src.telemetry import LocalFileStorage, TelemetryCollector, TelemetryEvent
-from src.utils.openrouter_llm import create_openrouter_llm, get_model_name
+from src.utils.anthropic_llm import DEFAULT_MODEL, create_anthropic_llm
 from src.utils.schema_loader import HedSchemaLoader
 from src.validation.hed_validator import HedPythonValidator
 
@@ -61,29 +59,6 @@ telemetry_collector: TelemetryCollector | None = None
 _byok_config: dict = {}
 
 
-def _derive_user_id(token: str) -> str:
-    """Derive a stable user ID from API token for cache optimization.
-
-    Uses PBKDF2 to create a stable, anonymous identifier from the token.
-    Each unique token gets its own cache lane in OpenRouter.
-
-    Note: While PBKDF2 is designed for password hashing, we use it here
-    to satisfy CodeQL requirements. The token is already high-entropy,
-    so the computational cost is primarily for compliance.
-
-    Args:
-        token: OpenRouter API token (already a secret, not user password)
-
-    Returns:
-        16-character hexadecimal cache ID
-    """
-    # PBKDF2 is a computationally expensive KDF that satisfies CodeQL
-    # Using minimal iterations (1000) since input is already high-entropy
-    salt = b"hedit-cache-id-v1"
-    derived = hashlib.pbkdf2_hmac("sha256", token.encode(), salt, iterations=1000, dklen=8)
-    return derived.hex()
-
-
 # Sentinel used by the workflow factories to mean "fall back to the
 # server-wide lsp_client global". Per-request callers can pass an
 # explicit None to opt out, or another HedLspClient instance to override.
@@ -103,110 +78,81 @@ def _resolve_lsp_client(
     return explicit
 
 
-def create_openrouter_workflow(
-    api_key: str,
+def create_anthropic_workflow(
+    api_key: str | None = None,
     annotation_model: str | None = None,
-    annotation_provider: str | None = None,
     eval_model: str | None = None,
-    eval_provider: str | None = None,
     temperature: float | None = None,
-    user_id: str | None = None,
     schema_dir: str | Path | None = None,
     validator_path: str | Path | None = None,
     use_js_validator: bool = True,
     lsp_client: HedLspClient | None = _USE_GLOBAL_LSP,
 ) -> HedAnnotationWorkflow:
-    """Create a workflow with OpenRouter LLMs.
+    """Create a workflow with Anthropic Claude LLMs.
 
     Unified function for both BYOK and server modes. Applies defaults from
     environment variables, then overrides with provided parameters.
 
     Args:
-        api_key: OpenRouter API key
+        api_key: BYOK Anthropic API key (None = server mode, which uses the
+            Claude Platform on AWS credentials from the environment)
         annotation_model: Model for annotation (default: ANNOTATION_MODEL env or Claude Haiku 4.5)
-        annotation_provider: Provider for annotation model (default: ANNOTATION_PROVIDER env or "anthropic")
-        eval_model: Model for eval/assessment/feedback (default: EVALUATION_MODEL env or Qwen3.5-122B)
-        eval_provider: Provider for eval models (default: EVALUATION_PROVIDER env or "alibaba")
+        eval_model: Model for eval/assessment/feedback (default: EVALUATION_MODEL env or Claude Haiku 4.5)
         temperature: LLM temperature (default: 0.1)
-        user_id: User ID for cache optimization (derived from API key if not provided)
         schema_dir: Path to HED schemas (None = fetch from GitHub)
         validator_path: Path to hed-javascript (None = use auto fallback chain)
         use_js_validator: Whether to use JavaScript validator
 
     Returns:
         Configured HedAnnotationWorkflow
+
+    Raises:
+        ValueError: If a requested model is not offered, or no key is available
     """
     # Apply defaults from environment
-    default_annotation_model = os.getenv("ANNOTATION_MODEL", "anthropic/claude-haiku-4.5")
-    default_annotation_provider = os.getenv("ANNOTATION_PROVIDER", "anthropic")
-    default_eval_model = os.getenv("EVALUATION_MODEL", "qwen/qwen3.5-122b-a10b")
-    default_eval_provider = os.getenv("EVALUATION_PROVIDER", "alibaba")
-
-    # Resolve final values: parameter > env var > default
-    actual_annotation_model = get_model_name(annotation_model or default_annotation_model)
-    actual_eval_model = get_model_name(eval_model or default_eval_model)
+    actual_annotation_model = annotation_model or os.getenv("ANNOTATION_MODEL", DEFAULT_MODEL)
+    # The evaluation judge stays on Haiku regardless of the annotation model.
+    actual_eval_model = eval_model or os.getenv("EVALUATION_MODEL", DEFAULT_MODEL)
     actual_temperature = temperature if temperature is not None else 0.1
-    actual_user_id = user_id or _derive_user_id(api_key)
-
-    # Provider logic: if model specified without provider, clear provider
-    # (to avoid using wrong provider for custom models)
-    if annotation_provider is not None:
-        actual_annotation_provider = annotation_provider if annotation_provider else None
-    elif annotation_model is not None:
-        actual_annotation_provider = None  # Custom model, no default provider
-    else:
-        actual_annotation_provider = default_annotation_provider
-
-    actual_eval_provider = eval_provider or default_eval_provider or None
 
     # Create LLMs.
     # The annotation LLM keeps reasoning enabled — that's the model
     # doing the actual HED tag synthesis where extended thinking
     # measurably improves first-attempt quality.
-    annotation_llm = create_openrouter_llm(
+    annotation_llm = create_anthropic_llm(
         model=actual_annotation_model,
         api_key=api_key,
         temperature=actual_temperature,
-        provider=actual_annotation_provider,
-        user_id=actual_user_id,
     )
     # Evaluation / assessment / feedback / keyword extraction are short
     # structured tasks; reasoning adds 5-10 s per call without
     # measurable quality benefit. See #150.
-    evaluation_llm = create_openrouter_llm(
+    evaluation_llm = create_anthropic_llm(
         model=actual_eval_model,
         api_key=api_key,
         temperature=actual_temperature,
-        provider=actual_eval_provider,
-        user_id=actual_user_id,
         disable_reasoning=True,
     )
-    assessment_llm = create_openrouter_llm(
+    assessment_llm = create_anthropic_llm(
         model=actual_eval_model,
         api_key=api_key,
         temperature=actual_temperature,
-        provider=actual_eval_provider,
-        user_id=actual_user_id,
         disable_reasoning=True,
     )
-    feedback_llm = create_openrouter_llm(
+    feedback_llm = create_anthropic_llm(
         model=actual_eval_model,
         api_key=api_key,
         temperature=actual_temperature,
-        provider=actual_eval_provider,
-        user_id=actual_user_id,
         disable_reasoning=True,
     )
     # Keyword extraction (#148): use the fast annotation model with
     # reasoning explicitly disabled and a small token cap. The
     # task is "list 5-10 keywords"; the heavier eval model used here
     # previously cost ~10 s per call.
-    keyword_llm = create_openrouter_llm(
+    keyword_llm = create_anthropic_llm(
         model=actual_annotation_model,
         api_key=api_key,
         temperature=actual_temperature,
-        provider=actual_annotation_provider,
-        user_id=actual_user_id,
         max_tokens=200,
         disable_reasoning=True,
     )
@@ -230,42 +176,34 @@ def create_openrouter_workflow(
 
 
 def create_byok_workflow(
-    openrouter_key: str,
+    byok_key: str,
     model: str | None = None,
-    provider: str | None = None,
     eval_model: str | None = None,
-    eval_provider: str | None = None,
     temperature: float | None = None,
-    user_id_override: str | None = None,
     lsp_client: HedLspClient | None = _USE_GLOBAL_LSP,
 ) -> HedAnnotationWorkflow:
-    """Create a workflow for BYOK mode using the user's OpenRouter key.
+    """Create a workflow for BYOK mode using the user's Anthropic key.
 
-    Thin wrapper around create_openrouter_workflow that uses cached server config
-    for schema/validator paths.
+    Thin wrapper around create_anthropic_workflow that uses cached server
+    config for schema/validator paths. BYOK keys go to the first-party
+    Anthropic API, not the server's AWS workspace.
 
     Args:
-        openrouter_key: User's OpenRouter API key
+        byok_key: User's Anthropic API key
         model: Override annotation model
-        provider: Override annotation provider
         eval_model: Override evaluation model (for all eval/assessment/feedback)
-        eval_provider: Override evaluation provider
         temperature: Override LLM temperature
-        user_id_override: Custom user ID for cache optimization
 
     Returns:
         Configured HedAnnotationWorkflow using the user's key
     """
     global _byok_config
 
-    return create_openrouter_workflow(
-        api_key=openrouter_key,
+    return create_anthropic_workflow(
+        api_key=byok_key,
         annotation_model=model,
-        annotation_provider=provider,
         eval_model=eval_model,
-        eval_provider=eval_provider,
         temperature=temperature if temperature is not None else _byok_config.get("temperature"),
-        user_id=user_id_override,
         schema_dir=_byok_config.get("schema_dir"),
         validator_path=_byok_config.get("validator_path"),
         use_js_validator=_byok_config.get("use_js_validator", True),
@@ -273,52 +211,31 @@ def create_byok_workflow(
     )
 
 
-def create_byok_vision_agent(
-    openrouter_key: str,
+def create_vision_agent(
+    api_key: str | None = None,
     vision_model: str | None = None,
-    provider: str | None = None,
     temperature: float | None = None,
-    user_id_override: str | None = None,
 ) -> VisionAgent:
-    """Create a vision agent instance using the user's OpenRouter key (BYOK mode).
+    """Create a vision agent instance.
 
     Args:
-        openrouter_key: User's OpenRouter API key
+        api_key: BYOK Anthropic API key (None = server mode)
         vision_model: Override vision model (uses server default if None)
-        provider: Override provider preference (uses server default if None)
         temperature: Override temperature (uses 0.3 default if None)
-        user_id_override: Custom user ID for cache optimization (overrides API key derived ID)
 
     Returns:
-        Configured VisionAgent using the user's key and model settings
-    """
-    # Use user-provided settings or fall back to server defaults
-    default_vision_model = os.getenv("VISION_MODEL", "qwen/qwen3.5-122b-a10b")
-    default_vision_provider = os.getenv("VISION_PROVIDER", "alibaba")
+        Configured VisionAgent
 
-    actual_model = vision_model if vision_model else default_vision_model
+    Raises:
+        ValueError: If a requested model is not offered, or no key is available
+    """
+    actual_model = vision_model or os.getenv("VISION_MODEL", DEFAULT_MODEL)
     actual_temperature = temperature if temperature is not None else 0.3
 
-    # Provider logic:
-    # - If user specifies a custom vision model, clear provider
-    # - Unless user also explicitly specifies a provider
-    if provider is not None:
-        actual_provider = provider if provider else None
-    elif vision_model is not None:
-        # Custom vision model → clear provider
-        actual_provider = None
-    else:
-        actual_provider = default_vision_provider
-
-    # Use custom user_id if provided, otherwise derive from API key
-    user_id = user_id_override or _derive_user_id(openrouter_key)
-
-    vision_llm = create_openrouter_llm(
+    vision_llm = create_anthropic_llm(
         model=actual_model,
-        api_key=openrouter_key,
+        api_key=api_key,
         temperature=actual_temperature,
-        provider=actual_provider,
-        user_id=user_id,
     )
 
     return VisionAgent(llm=vision_llm)
@@ -357,8 +274,13 @@ async def lifespan(app: FastAPI):
         # Return None to trigger HED library to fetch from GitHub
         return None
 
-    # Get configuration from environment with smart defaults
-    llm_provider = os.getenv("LLM_PROVIDER", "ollama")  # "ollama" or "openrouter"
+    # Get configuration from environment with smart defaults.
+    # "anthropic" is the only supported provider since the 2026-08-18
+    # migration; "openrouter" and "ollama" are accepted as legacy values.
+    llm_provider = os.getenv("LLM_PROVIDER", "anthropic")
+    if llm_provider != "anthropic":
+        print(f"LLM_PROVIDER '{llm_provider}' is no longer supported; using 'anthropic'")
+        llm_provider = "anthropic"
     llm_temperature = float(os.getenv("LLM_TEMPERATURE", "0.1"))
 
     # Schema directory with environment detection
@@ -433,51 +355,22 @@ async def lifespan(app: FastAPI):
                 )
                 lsp_client = None
 
-    # Initialize workflow based on provider
-    if llm_provider == "openrouter":
-        # OpenRouter configuration - use unified workflow creation
-        openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
-        if not openrouter_api_key:
-            raise ValueError(
-                "OPENROUTER_API_KEY environment variable is required when using OpenRouter"
-            )
+    # Initialize workflow (Claude Platform on AWS - unified workflow creation)
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        raise ValueError("ANTHROPIC_API_KEY environment variable is required")
 
-        # Log configuration (env vars are read by create_openrouter_workflow)
-        print("Using OpenRouter with models:")
-        print(f"  Annotation: {os.getenv('ANNOTATION_MODEL', 'anthropic/claude-haiku-4.5')}")
-        print(f"  Evaluation: {os.getenv('EVALUATION_MODEL', 'qwen/qwen3.5-122b-a10b')}")
-        print(f"  Provider (annotation): {os.getenv('ANNOTATION_PROVIDER', 'anthropic')}")
-        print(f"  Provider (eval): {os.getenv('EVALUATION_PROVIDER', 'alibaba')}")
+    # Log configuration (env vars are read by create_anthropic_workflow)
+    print("Using Anthropic Claude models (Claude Platform on AWS):")
+    print(f"  Annotation: {os.getenv('ANNOTATION_MODEL', DEFAULT_MODEL)}")
+    print(f"  Evaluation: {os.getenv('EVALUATION_MODEL', DEFAULT_MODEL)}")
 
-        workflow = create_openrouter_workflow(
-            api_key=openrouter_api_key,
-            temperature=llm_temperature,
-            schema_dir=schema_dir,
-            validator_path=validator_path if use_js_validator else None,
-            use_js_validator=use_js_validator,
-            lsp_client=lsp_client,
-        )
-    else:
-        # Ollama configuration (default)
-        llm_base_url = os.getenv("LLM_BASE_URL", "http://localhost:11435")
-        llm_model = os.getenv("LLM_MODEL", "gpt-oss:20b")
-
-        llm = ChatOllama(
-            base_url=llm_base_url,
-            model=llm_model,
-            temperature=llm_temperature,
-        )
-
-        print(f"Using Ollama: {llm_model} at {llm_base_url}")
-
-        # Ollama uses same LLM for all agents
-        workflow = HedAnnotationWorkflow(
-            llm=llm,
-            schema_dir=Path(schema_dir) if schema_dir else None,
-            validator_path=Path(validator_path) if use_js_validator and validator_path else None,
-            use_js_validator=use_js_validator,
-            lsp_client=lsp_client,
-        )
+    workflow = create_anthropic_workflow(
+        temperature=llm_temperature,
+        schema_dir=schema_dir,
+        validator_path=validator_path if use_js_validator else None,
+        use_js_validator=use_js_validator,
+        lsp_client=lsp_client,
+    )
 
     # Set global schema_loader from workflow
     schema_loader = workflow.schema_loader
@@ -486,24 +379,11 @@ async def lifespan(app: FastAPI):
     print(f"  LLM Provider: {llm_provider} (temperature={llm_temperature})")
     print(f"  JavaScript validator: {use_js_validator}")
 
-    # Initialize vision agent (only for OpenRouter)
-    if llm_provider == "openrouter":
-        vision_model = os.getenv("VISION_MODEL", "qwen/qwen3.5-122b-a10b")
-        vision_provider = os.getenv("VISION_PROVIDER", "alibaba")
-
-        print(f"Initializing vision model: {vision_model} (provider: {vision_provider})")
-
-        vision_llm = create_openrouter_llm(
-            model=vision_model,
-            api_key=openrouter_api_key,
-            temperature=0.3,  # Slightly higher temperature for more descriptive text
-            provider=vision_provider,
-        )
-
-        vision_agent = VisionAgent(llm=vision_llm)
-        print("Vision agent initialized successfully!")
-    else:
-        print("Vision model not available (only supported with OpenRouter)")
+    # Initialize vision agent (Claude models are natively multimodal)
+    vision_model = os.getenv("VISION_MODEL", DEFAULT_MODEL)
+    print(f"Initializing vision model: {vision_model}")
+    vision_agent = create_vision_agent()
+    print("Vision agent initialized successfully!")
 
     # Initialize telemetry collector
     global telemetry_collector
@@ -582,14 +462,15 @@ app.add_middleware(
         "Authorization",
         "X-Requested-With",
         "X-API-Key",
-        "X-OpenRouter-Key",  # BYOK mode
-        "X-OpenRouter-Model",  # BYOK model override
-        "X-OpenRouter-Vision-Model",  # BYOK vision model override
-        "X-OpenRouter-Vision-Provider",  # BYOK vision provider override
-        "X-OpenRouter-Provider",  # BYOK provider preference
-        "X-OpenRouter-Temperature",  # BYOK temperature override
-        "X-OpenRouter-Eval-Model",  # BYOK eval model override
-        "X-OpenRouter-Eval-Provider",  # BYOK eval provider override
+        "X-Anthropic-Key",  # BYOK mode (Anthropic API key)
+        "X-OpenRouter-Key",  # Legacy BYOK header (still accepted as transport)
+        "X-OpenRouter-Model",  # Model override
+        "X-OpenRouter-Vision-Model",  # Vision model override
+        "X-OpenRouter-Vision-Provider",  # Legacy, ignored
+        "X-OpenRouter-Provider",  # Legacy, ignored
+        "X-OpenRouter-Temperature",  # Temperature override
+        "X-OpenRouter-Eval-Model",  # Eval model override
+        "X-OpenRouter-Eval-Provider",  # Legacy, ignored
         "X-User-Id",  # Custom user ID for cache optimization
     ],
     max_age=3600,  # Cache preflight requests for 1 hour
@@ -658,7 +539,7 @@ async def annotate(
 
     Supports two authentication modes:
     - X-API-Key header: Server-level authentication
-    - X-OpenRouter-Key header: BYOK mode (uses your OpenRouter key for billing)
+    - X-Anthropic-Key header: BYOK mode (uses your Anthropic key for billing)
 
     Args:
         request: Annotation request with description and parameters
@@ -674,9 +555,7 @@ async def annotate(
     # Determine which workflow to use
     # Check for model override headers (from frontend dropdown or CLI)
     model_override = request.model or req.headers.get("x-openrouter-model")
-    provider_override = request.provider or req.headers.get("x-openrouter-provider")
     eval_model_override = req.headers.get("x-openrouter-eval-model")
-    eval_provider_override = req.headers.get("x-openrouter-eval-provider")
     temp_header = req.headers.get("x-openrouter-temperature")
     temperature = request.temperature
     if temperature is None and temp_header:
@@ -684,51 +563,41 @@ async def annotate(
             temperature = float(temp_header)
         except ValueError:
             pass  # Invalid header value, use default
-    user_id_override = req.headers.get("x-user-id")
 
     if api_key == "byok":
-        # BYOK mode: Create workflow with user's key and model settings
-        openrouter_key = req.headers.get("x-openrouter-key")
-        if not openrouter_key:
-            raise HTTPException(status_code=401, detail="Missing X-OpenRouter-Key header")
+        # BYOK mode: Create workflow with user's Anthropic key
+        byok_key = req.headers.get("x-anthropic-key") or req.headers.get("x-openrouter-key")
+        if not byok_key:
+            raise HTTPException(status_code=401, detail="Missing X-Anthropic-Key header")
 
         try:
             active_workflow = create_byok_workflow(
-                openrouter_key,
+                byok_key,
                 model=model_override,
-                provider=provider_override,
                 eval_model=eval_model_override,
-                eval_provider=eval_provider_override,
                 temperature=temperature,
-                user_id_override=user_id_override,
             )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
         except Exception as e:
             raise HTTPException(
                 status_code=500, detail=f"Failed to initialize BYOK workflow: {str(e)}"
             ) from e
-    elif model_override or provider_override:
-        # Server mode with model overrides: Create custom workflow with server's API key
-        # This supports frontend model dropdown without requiring user's own API key
-        server_api_key = os.getenv("OPENROUTER_API_KEY")
-        if not server_api_key:
-            raise HTTPException(
-                status_code=503,
-                detail="Server not configured for model overrides (missing OPENROUTER_API_KEY)",
-            )
-
+    elif model_override or eval_model_override:
+        # Server mode with model overrides: Create custom workflow with server
+        # credentials. Supports the frontend model dropdown without requiring
+        # the user's own API key.
         try:
-            active_workflow = create_openrouter_workflow(
-                api_key=server_api_key,
+            active_workflow = create_anthropic_workflow(
                 annotation_model=model_override,
-                annotation_provider=provider_override,
                 eval_model=eval_model_override,
-                eval_provider=eval_provider_override,
                 temperature=temperature,
-                user_id=user_id_override,
                 schema_dir=_byok_config.get("schema_dir"),
                 validator_path=_byok_config.get("validator_path"),
                 use_js_validator=_byok_config.get("use_js_validator", True),
             )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -766,7 +635,7 @@ async def annotate(
             model_name = (
                 request.model
                 or req.headers.get("x-openrouter-model")
-                or os.getenv("ANNOTATION_MODEL", "anthropic/claude-haiku-4.5")
+                or os.getenv("ANNOTATION_MODEL", DEFAULT_MODEL)
             )
             temperature = request.temperature
             if temperature is None:
@@ -786,7 +655,7 @@ async def annotate(
                 iterations=final_state["validation_attempts"],
                 validation_errors=final_state["validation_errors"],
                 model=model_name,
-                provider=request.provider or req.headers.get("x-openrouter-provider"),
+                provider="anthropic",
                 temperature=temperature,
                 latency_ms=latency_ms,
                 source="api",
@@ -834,7 +703,7 @@ async def annotate_from_image(
 
     Supports two authentication modes:
     - X-API-Key header: Server-level authentication
-    - X-OpenRouter-Key header: BYOK mode (uses your OpenRouter key for billing)
+    - X-Anthropic-Key header: BYOK mode (uses your Anthropic key for billing)
 
     This endpoint uses a vision-language model to generate a description of the image,
     then passes that description through the standard HED annotation workflow.
@@ -854,12 +723,7 @@ async def annotate_from_image(
     # Check for model override headers (from frontend dropdown or CLI)
     model_override = request.model or req.headers.get("x-openrouter-model")
     vision_model_override = request.vision_model or req.headers.get("x-openrouter-vision-model")
-    vision_provider_override = request.vision_provider or req.headers.get(
-        "x-openrouter-vision-provider"
-    )
-    provider_override = request.provider or req.headers.get("x-openrouter-provider")
     eval_model_override = req.headers.get("x-openrouter-eval-model")
-    eval_provider_override = req.headers.get("x-openrouter-eval-provider")
     temp_header = req.headers.get("x-openrouter-temperature")
     temperature = request.temperature
     if temperature is None and temp_header:
@@ -867,74 +731,49 @@ async def annotate_from_image(
             temperature = float(temp_header)
         except ValueError:
             pass  # Invalid header value, use default
-    user_id_override = req.headers.get("x-user-id")
 
     if api_key == "byok":
-        # BYOK mode: Create workflow and vision agent with user's key and model settings
-        openrouter_key = req.headers.get("x-openrouter-key")
-        if not openrouter_key:
-            raise HTTPException(status_code=401, detail="Missing X-OpenRouter-Key header")
+        # BYOK mode: Create workflow and vision agent with user's Anthropic key
+        byok_key = req.headers.get("x-anthropic-key") or req.headers.get("x-openrouter-key")
+        if not byok_key:
+            raise HTTPException(status_code=401, detail="Missing X-Anthropic-Key header")
 
         try:
             active_workflow = create_byok_workflow(
-                openrouter_key,
+                byok_key,
                 model=model_override,
-                provider=provider_override,
                 eval_model=eval_model_override,
-                eval_provider=eval_provider_override,
                 temperature=temperature,
-                user_id_override=user_id_override,
             )
-            # Vision uses its own provider; fall back to annotation provider only if
-            # a custom vision_model was specified without an explicit vision_provider
-            vision_provider = vision_provider_override or (
-                provider_override if vision_model_override else None
-            )
-            active_vision_agent = create_byok_vision_agent(
-                openrouter_key,
+            active_vision_agent = create_vision_agent(
+                api_key=byok_key,
                 vision_model=vision_model_override,
-                provider=vision_provider,
                 temperature=temperature,
-                user_id_override=user_id_override,
             )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
         except Exception as e:
             logging.exception("Failed to initialize BYOK agents")
             raise HTTPException(
                 status_code=500, detail=f"Failed to initialize BYOK agents: {str(e)}"
             ) from e
-    elif model_override or provider_override or vision_model_override:
-        # Server mode with model overrides: Create custom workflow with server's API key
-        server_api_key = os.getenv("OPENROUTER_API_KEY")
-        if not server_api_key:
-            raise HTTPException(
-                status_code=503,
-                detail="Server not configured for model overrides (missing OPENROUTER_API_KEY)",
-            )
-
+    elif model_override or eval_model_override or vision_model_override:
+        # Server mode with model overrides: Create custom workflow with server credentials
         try:
-            active_workflow = create_openrouter_workflow(
-                api_key=server_api_key,
+            active_workflow = create_anthropic_workflow(
                 annotation_model=model_override,
-                annotation_provider=provider_override,
                 eval_model=eval_model_override,
-                eval_provider=eval_provider_override,
                 temperature=temperature,
-                user_id=user_id_override,
                 schema_dir=_byok_config.get("schema_dir"),
                 validator_path=_byok_config.get("validator_path"),
                 use_js_validator=_byok_config.get("use_js_validator", True),
             )
-            # Note: Vision agent uses the vision-specific provider, not the annotation provider
-            vision_provider = vision_provider_override or (
-                provider_override if vision_model_override else None
-            )
-            active_vision_agent = create_byok_vision_agent(
-                server_api_key,
+            active_vision_agent = create_vision_agent(
                 vision_model=vision_model_override,
-                provider=vision_provider,
                 temperature=temperature,
-                user_id_override=user_id_override,
             )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -947,7 +786,7 @@ async def annotate_from_image(
         if vision_agent is None:
             raise HTTPException(
                 status_code=503,
-                detail="Vision model not available. Please use OpenRouter provider.",
+                detail="Vision model not available. Please use the Anthropic provider.",
             )
         active_workflow = workflow
         active_vision_agent = vision_agent
@@ -987,7 +826,7 @@ async def annotate_from_image(
             model_name = (
                 request.model
                 or req.headers.get("x-openrouter-model")
-                or os.getenv("ANNOTATION_MODEL", "anthropic/claude-haiku-4.5")
+                or os.getenv("ANNOTATION_MODEL", DEFAULT_MODEL)
             )
             temperature = request.temperature
             if temperature is None:
@@ -1007,7 +846,7 @@ async def annotate_from_image(
                 iterations=final_state["validation_attempts"],
                 validation_errors=final_state["validation_errors"],
                 model=model_name,
-                provider=request.provider or req.headers.get("x-openrouter-provider"),
+                provider="anthropic",
                 temperature=temperature,
                 latency_ms=latency_ms,
                 source="api-image",  # Distinguish from text-based annotation
@@ -1077,7 +916,7 @@ async def _collect_stream_telemetry(
     model_name = (
         request.model
         or req.headers.get("x-openrouter-model")
-        or os.getenv("ANNOTATION_MODEL", "anthropic/claude-haiku-4.5")
+        or os.getenv("ANNOTATION_MODEL", DEFAULT_MODEL)
     )
     temperature = request.temperature
     if temperature is None:
@@ -1097,7 +936,7 @@ async def _collect_stream_telemetry(
         iterations=current_state.get("validation_attempts", 0),
         validation_errors=current_state.get("validation_errors", []),
         model=model_name,
-        provider=request.provider or req.headers.get("x-openrouter-provider"),
+        provider="anthropic",
         temperature=temperature,
         latency_ms=latency_ms,
         source=source,
@@ -1134,9 +973,7 @@ async def annotate_stream(
 
     # Determine which workflow to use (same logic as /annotate)
     model_override = request.model or req.headers.get("x-openrouter-model")
-    provider_override = request.provider or req.headers.get("x-openrouter-provider")
     eval_model_override = req.headers.get("x-openrouter-eval-model")
-    eval_provider_override = req.headers.get("x-openrouter-eval-provider")
     temp_header = req.headers.get("x-openrouter-temperature")
     temperature = request.temperature
     if temperature is None and temp_header:
@@ -1144,46 +981,36 @@ async def annotate_stream(
             temperature = float(temp_header)
         except ValueError:
             pass  # Invalid header value, use default temperature
-    user_id_override = req.headers.get("x-user-id")
 
     if api_key == "byok":
-        openrouter_key = req.headers.get("x-openrouter-key")
-        if not openrouter_key:
-            raise HTTPException(status_code=401, detail="Missing X-OpenRouter-Key header")
+        byok_key = req.headers.get("x-anthropic-key") or req.headers.get("x-openrouter-key")
+        if not byok_key:
+            raise HTTPException(status_code=401, detail="Missing X-Anthropic-Key header")
         try:
             active_workflow = create_byok_workflow(
-                openrouter_key,
+                byok_key,
                 model=model_override,
-                provider=provider_override,
                 eval_model=eval_model_override,
-                eval_provider=eval_provider_override,
                 temperature=temperature,
-                user_id_override=user_id_override,
             )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
         except Exception as e:
             raise HTTPException(
                 status_code=500, detail=f"Failed to initialize BYOK workflow: {str(e)}"
             ) from e
-    elif model_override or provider_override:
-        server_api_key = os.getenv("OPENROUTER_API_KEY")
-        if not server_api_key:
-            raise HTTPException(
-                status_code=503,
-                detail="Server not configured for model overrides (missing OPENROUTER_API_KEY)",
-            )
+    elif model_override or eval_model_override:
         try:
-            active_workflow = create_openrouter_workflow(
-                api_key=server_api_key,
+            active_workflow = create_anthropic_workflow(
                 annotation_model=model_override,
-                annotation_provider=provider_override,
                 eval_model=eval_model_override,
-                eval_provider=eval_provider_override,
                 temperature=temperature,
-                user_id=user_id_override,
                 schema_dir=_byok_config.get("schema_dir"),
                 validator_path=_byok_config.get("validator_path"),
                 use_js_validator=_byok_config.get("use_js_validator", True),
             )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
         except Exception as e:
             raise HTTPException(
                 status_code=500, detail=f"Failed to initialize workflow: {str(e)}"
@@ -1439,12 +1266,7 @@ async def annotate_from_image_stream(
     # Determine which workflow and vision agent to use (same logic as /annotate-from-image)
     model_override = request.model or req.headers.get("x-openrouter-model")
     vision_model_override = request.vision_model or req.headers.get("x-openrouter-vision-model")
-    vision_provider_override = request.vision_provider or req.headers.get(
-        "x-openrouter-vision-provider"
-    )
-    provider_override = request.provider or req.headers.get("x-openrouter-provider")
     eval_model_override = req.headers.get("x-openrouter-eval-model")
-    eval_provider_override = req.headers.get("x-openrouter-eval-provider")
     temp_header = req.headers.get("x-openrouter-temperature")
     temperature = request.temperature
     if temperature is None and temp_header:
@@ -1452,70 +1274,46 @@ async def annotate_from_image_stream(
             temperature = float(temp_header)
         except ValueError:
             pass
-    user_id_override = req.headers.get("x-user-id")
 
     if api_key == "byok":
-        openrouter_key = req.headers.get("x-openrouter-key")
-        if not openrouter_key:
-            raise HTTPException(status_code=401, detail="Missing X-OpenRouter-Key header")
+        byok_key = req.headers.get("x-anthropic-key") or req.headers.get("x-openrouter-key")
+        if not byok_key:
+            raise HTTPException(status_code=401, detail="Missing X-Anthropic-Key header")
         try:
             active_workflow = create_byok_workflow(
-                openrouter_key,
+                byok_key,
                 model=model_override,
-                provider=provider_override,
                 eval_model=eval_model_override,
-                eval_provider=eval_provider_override,
                 temperature=temperature,
-                user_id_override=user_id_override,
             )
-            # Vision uses its own provider; fall back to annotation provider only if
-            # a custom vision_model was specified without an explicit vision_provider
-            vision_provider = vision_provider_override or (
-                provider_override if vision_model_override else None
-            )
-            active_vision_agent = create_byok_vision_agent(
-                openrouter_key,
+            active_vision_agent = create_vision_agent(
+                api_key=byok_key,
                 vision_model=vision_model_override,
-                provider=vision_provider,
                 temperature=temperature,
-                user_id_override=user_id_override,
             )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
         except Exception as e:
             logging.exception("Failed to initialize BYOK agents")
             raise HTTPException(
                 status_code=500, detail=f"Failed to initialize BYOK agents: {str(e)}"
             ) from e
-    elif model_override or provider_override or vision_model_override:
-        server_api_key = os.getenv("OPENROUTER_API_KEY")
-        if not server_api_key:
-            raise HTTPException(
-                status_code=503,
-                detail="Server not configured for model overrides (missing OPENROUTER_API_KEY)",
-            )
+    elif model_override or eval_model_override or vision_model_override:
         try:
-            active_workflow = create_openrouter_workflow(
-                api_key=server_api_key,
+            active_workflow = create_anthropic_workflow(
                 annotation_model=model_override,
-                annotation_provider=provider_override,
                 eval_model=eval_model_override,
-                eval_provider=eval_provider_override,
                 temperature=temperature,
-                user_id=user_id_override,
                 schema_dir=_byok_config.get("schema_dir"),
                 validator_path=_byok_config.get("validator_path"),
                 use_js_validator=_byok_config.get("use_js_validator", True),
             )
-            # Note: Vision agent uses the vision-specific provider, not the annotation provider
-            vision_provider = vision_provider_override or (
-                provider_override if vision_model_override else None
-            )
-            active_vision_agent = create_byok_vision_agent(
-                server_api_key,
+            active_vision_agent = create_vision_agent(
                 vision_model=vision_model_override,
-                provider=vision_provider,
                 temperature=temperature,
-                user_id_override=user_id_override,
             )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
         except Exception as e:
             raise HTTPException(
                 status_code=500, detail=f"Failed to initialize workflow: {str(e)}"
@@ -1526,7 +1324,7 @@ async def annotate_from_image_stream(
         if vision_agent is None:
             raise HTTPException(
                 status_code=503,
-                detail="Vision model not available. Please use OpenRouter provider.",
+                detail="Vision model not available. Please use the Anthropic provider.",
             )
         active_workflow = workflow
         active_vision_agent = vision_agent
@@ -1875,15 +1673,12 @@ async def submit_feedback(request: FeedbackRequest) -> FeedbackResponse:
             data={"feedback_id": feedback_id, "type": request.type},
         )
 
-        # Try to process immediately if GitHub token and OpenRouter key are available
-        # Use OPENROUTER_API_KEY_FOR_TESTING to track feedback processing costs separately
+        # Try to process immediately if GitHub token and Anthropic key are available
         processing_result = None
         github_token = os.getenv("GITHUB_TOKEN")
-        openrouter_key = os.getenv("OPENROUTER_API_KEY_FOR_TESTING") or os.getenv(
-            "OPENROUTER_API_KEY"
-        )
+        anthropic_key = os.getenv("ANTHROPIC_API_KEY")
 
-        if github_token and openrouter_key:
+        if github_token and anthropic_key:
             try:
                 from src.agents.feedback_triage_agent import (
                     FeedbackRecord as FeedbackRecordModel,
@@ -1904,15 +1699,12 @@ async def submit_feedback(request: FeedbackRequest) -> FeedbackResponse:
                     repo=os.getenv("GITHUB_REPOSITORY", "hedit").split("/")[-1],
                 )
 
-                # Create LLM for triage
-                model = os.getenv("ANNOTATION_MODEL", "anthropic/claude-haiku-4.5")
-                provider = os.getenv("LLM_PROVIDER_PREFERENCE", "")
-                llm = create_openrouter_llm(
+                # Create LLM for triage (server credentials from the environment)
+                model = os.getenv("ANNOTATION_MODEL", DEFAULT_MODEL)
+                llm = create_anthropic_llm(
                     model=model,
-                    api_key=openrouter_key,
                     temperature=0.1,
                     max_tokens=1000,
-                    provider=provider if provider else None,
                 )
 
                 # Create and run triage agent
