@@ -334,12 +334,11 @@ def reset_config(preserve_credentials: bool = True) -> CLIConfig:
 
 
 def get_machine_id() -> str:
-    """Get or generate a stable machine ID for cache optimization.
+    """Get or generate a stable machine ID.
 
-    This ID is used by OpenRouter for sticky cache routing to reduce costs.
-    It is NOT used for telemetry and is never transmitted except to OpenRouter.
-
-    The ID is generated once and persists across pip updates.
+    Historically used for provider cache routing; kept as a stable local
+    identifier (e.g., as a default X-User-Id). It is generated once and
+    persists across pip updates.
 
     Returns:
         16-character hexadecimal machine ID
