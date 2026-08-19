@@ -1078,9 +1078,8 @@ Example: A red circle appears on the left side of the screen and the participant
             <div>
                 <label for="annotationModel">Annotation Model</label>
                 <select id="annotationModel">
-                    <option value="anthropic/claude-haiku-4.5" data-provider="anthropic" selected>Claude Haiku 4.5 (best)</option>
-                    <option value="mistralai/mistral-small-3.2-24b-instruct" data-provider="mistral">Mistral Small 3.2 (balanced, cheap)</option>
-                    <option value="openai/gpt-oss-120b" data-provider="Cerebras">GPT-OSS 120B (fast, cheap)</option>
+                    <option value="claude-haiku-4-5" selected>Claude Haiku 4.5 (fast, default)</option>
+                    <option value="claude-sonnet-5">Claude Sonnet 5 (highest quality)</option>
                 </select>
             </div>
             <div>
@@ -1145,9 +1144,8 @@ Example: A red circle appears on the left side of the screen and the participant
                 <div>
                     <label for="annotationModel-image">Annotation Model</label>
                     <select id="annotationModel-image">
-                        <option value="anthropic/claude-haiku-4.5" data-provider="anthropic" selected>Claude Haiku 4.5 (best)</option>
-                        <option value="mistralai/mistral-small-3.2-24b-instruct" data-provider="mistral">Mistral Small 3.2 (balanced, cheap)</option>
-                        <option value="openai/gpt-oss-120b" data-provider="Cerebras">GPT-OSS 120B (fast, cheap)</option>
+                        <option value="claude-haiku-4-5" selected>Claude Haiku 4.5 (fast, default)</option>
+                        <option value="claude-sonnet-5">Claude Sonnet 5 (highest quality)</option>
                     </select>
                 </div>
                 <div>
@@ -1235,7 +1233,7 @@ Example: A red circle appears on the left side of the screen and the participant
         <a href="https://docs.annotation.garden/projects/hedit/telemetry" target="_blank" rel="noopener noreferrer" title="Learn more about telemetry">Learn more</a>
     </div>
     <div class="model-info">
-        <span>Models: <a href="https://openrouter.ai/anthropic/claude-haiku-4.5" target="_blank" rel="noopener noreferrer">Claude Haiku 4.5</a> (annotation) · <a href="https://openrouter.ai/qwen/qwen3.5-122b-a10b" target="_blank" rel="noopener noreferrer">Qwen3.5-122B</a> (vision) · <a href="https://openrouter.ai/qwen/qwen3.5-122b-a10b" target="_blank" rel="noopener noreferrer">Qwen3.5-122B</a> (evaluation) · To change models or use programmatically, install <a href="https://pypi.org/project/hedit/" target="_blank" rel="noopener noreferrer">HEDit CLI</a></span>
+        <span>Models: <a href="https://www.anthropic.com/claude/haiku" target="_blank" rel="noopener noreferrer">Claude Haiku 4.5</a> (annotation, vision, evaluation) · <a href="https://www.anthropic.com/claude/sonnet" target="_blank" rel="noopener noreferrer">Claude Sonnet 5</a> (optional, highest quality) · To change models or use programmatically, install <a href="https://pypi.org/project/hedit/" target="_blank" rel="noopener noreferrer">HEDit CLI</a></span>
     </div>
 
     <script src="config.js"></script>
@@ -1530,7 +1528,6 @@ Example: A red circle appears on the left side of the screen and the participant
             // Get selected model and provider
             const modelSelect = document.getElementById('annotationModel-image');
             const selectedModel = modelSelect.value;
-            const selectedProvider = modelSelect.options[modelSelect.selectedIndex].dataset.provider;
 
             // Store for feedback
             lastInputDescription = null; // No text description for image mode
@@ -1545,12 +1542,12 @@ Example: A red circle appears on the left side of the screen and the participant
 
             try {
                 // Try streaming first, fall back to non-streaming
-                await generateFromImageStreaming(visionPrompt, schema, maxAttempts, runAssessment, selectedModel, selectedProvider);
+                await generateFromImageStreaming(visionPrompt, schema, maxAttempts, runAssessment, selectedModel);
             } catch (error) {
                 // If streaming fails, try non-streaming fallback
                 console.warn('Streaming failed, trying fallback:', error);
                 try {
-                    await generateFromImageFallback(visionPrompt, schema, maxAttempts, runAssessment, selectedModel, selectedProvider);
+                    await generateFromImageFallback(visionPrompt, schema, maxAttempts, runAssessment, selectedModel);
                 } catch (fallbackError) {
                     displayError(fallbackError.message);
                     document.getElementById('progressStatus').classList.remove('active');
@@ -1559,7 +1556,7 @@ Example: A red circle appears on the left side of the screen and the participant
             }
         }
 
-        async function generateFromImageStreaming(visionPrompt, schema, maxAttempts, runAssessment, selectedModel, selectedProvider) {
+        async function generateFromImageStreaming(visionPrompt, schema, maxAttempts, runAssessment, selectedModel) {
             // Get Turnstile token for bot protection
             const turnstileToken = await getTurnstileToken();
 
@@ -1585,7 +1582,6 @@ Example: A red circle appears on the left side of the screen and the participant
                     'Content-Type': 'application/json',
                     'X-User-Id': `frontend-${FRONTEND_VERSION}`,
                     'X-OpenRouter-Model': selectedModel,
-                    'X-OpenRouter-Provider': selectedProvider,
                 },
                 body: JSON.stringify(payload)
             });
@@ -1699,7 +1695,7 @@ Example: A red circle appears on the left side of the screen and the participant
             }
         }
 
-        async function generateFromImageFallback(visionPrompt, schema, maxAttempts, runAssessment, selectedModel, selectedProvider) {
+        async function generateFromImageFallback(visionPrompt, schema, maxAttempts, runAssessment, selectedModel) {
             updateProgress('Analyzing image...', getProgressSteps('starting'));
 
             // Get Turnstile token for bot protection
@@ -1727,7 +1723,6 @@ Example: A red circle appears on the left side of the screen and the participant
                     'Content-Type': 'application/json',
                     'X-User-Id': `frontend-${FRONTEND_VERSION}`,
                     'X-OpenRouter-Model': selectedModel,
-                    'X-OpenRouter-Provider': selectedProvider,
                 },
                 body: JSON.stringify(payload)
             });
@@ -1827,7 +1822,6 @@ Example: A red circle appears on the left side of the screen and the participant
             // Get selected model and provider
             const modelSelect = document.getElementById('annotationModel');
             const selectedModel = modelSelect.value;
-            const selectedProvider = modelSelect.options[modelSelect.selectedIndex].dataset.provider;
 
             const payload = {
                 description: description,
@@ -1847,7 +1841,6 @@ Example: A red circle appears on the left side of the screen and the participant
                     'Content-Type': 'application/json',
                     'X-User-Id': `frontend-${FRONTEND_VERSION}`,
                     'X-OpenRouter-Model': selectedModel,
-                    'X-OpenRouter-Provider': selectedProvider,
                 },
                 body: JSON.stringify(payload)
             });
@@ -1959,7 +1952,6 @@ Example: A red circle appears on the left side of the screen and the participant
                 // Get selected model and provider
                 const modelSelect = document.getElementById('annotationModel');
                 const selectedModel = modelSelect.value;
-                const selectedProvider = modelSelect.options[modelSelect.selectedIndex].dataset.provider;
 
                 const payload = {
                     description: description,
@@ -1980,7 +1972,6 @@ Example: A red circle appears on the left side of the screen and the participant
                         'Content-Type': 'application/json',
                         'X-User-Id': `frontend-${FRONTEND_VERSION}`,
                         'X-OpenRouter-Model': selectedModel,
-                        'X-OpenRouter-Provider': selectedProvider,
                     },
                     body: JSON.stringify(payload)
                 });

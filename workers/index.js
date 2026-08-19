@@ -83,11 +83,11 @@ export default {
                            origin?.startsWith('http://localhost:'); // Allow localhost for dev
 
     // CORS headers
-    // Include BYOK headers (X-OpenRouter-*) for CLI and programmatic access
+    // Include BYOK headers (X-Anthropic-Key / legacy X-OpenRouter-*) for CLI and programmatic access
     const corsHeaders = {
       'Access-Control-Allow-Origin': isAllowedOrigin ? origin : CONFIG.ALLOWED_ORIGIN,
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, X-OpenRouter-Key, X-OpenRouter-Model, X-OpenRouter-Provider, X-OpenRouter-Temperature, X-OpenRouter-Eval-Model, X-OpenRouter-Eval-Provider, X-User-Id',
+      'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, X-Anthropic-Key, X-OpenRouter-Key, X-OpenRouter-Model, X-OpenRouter-Provider, X-OpenRouter-Temperature, X-OpenRouter-Eval-Model, X-OpenRouter-Eval-Provider, X-User-Id',
       'Access-Control-Allow-Credentials': 'true',
     };
 
@@ -288,7 +288,7 @@ async function handleAnnotate(request, env, ctx, corsHeaders, CONFIG) {
   // BYOK users skip Turnstile verification since:
   // 1. They can't complete Turnstile challenges (CLI/programmatic access)
   // 2. They're using their own API key, so any abuse is on their own account
-  const isBYOK = request.headers.get('X-OpenRouter-Key') !== null;
+  const isBYOK = request.headers.get('X-Anthropic-Key') !== null || request.headers.get('X-OpenRouter-Key') !== null;
 
   // Verify Turnstile token (required for non-BYOK requests in production)
   if (!isBYOK) {
@@ -340,7 +340,7 @@ async function handleAnnotate(request, env, ctx, corsHeaders, CONFIG) {
     }
 
     // Forward BYOK and user ID headers to backend
-    const byokHeaders = ['X-OpenRouter-Key', 'X-OpenRouter-Model', 'X-OpenRouter-Provider', 'X-OpenRouter-Temperature', 'X-OpenRouter-Eval-Model', 'X-OpenRouter-Eval-Provider', 'X-User-Id'];
+    const byokHeaders = ['X-Anthropic-Key', 'X-OpenRouter-Key', 'X-OpenRouter-Model', 'X-OpenRouter-Provider', 'X-OpenRouter-Temperature', 'X-OpenRouter-Eval-Model', 'X-OpenRouter-Eval-Provider', 'X-User-Id'];
     for (const header of byokHeaders) {
       const value = request.headers.get(header);
       if (value) {
@@ -422,7 +422,7 @@ async function handleAnnotateStream(request, env, corsHeaders, CONFIG) {
   }
 
   // Check for BYOK mode
-  const isBYOK = request.headers.get('X-OpenRouter-Key') !== null;
+  const isBYOK = request.headers.get('X-Anthropic-Key') !== null || request.headers.get('X-OpenRouter-Key') !== null;
 
   // Verify Turnstile token (required for non-BYOK requests)
   if (!isBYOK) {
@@ -464,7 +464,7 @@ async function handleAnnotateStream(request, env, corsHeaders, CONFIG) {
     }
 
     // Forward BYOK and user ID headers to backend
-    const byokHeaders = ['X-OpenRouter-Key', 'X-OpenRouter-Model', 'X-OpenRouter-Provider', 'X-OpenRouter-Temperature', 'X-OpenRouter-Eval-Model', 'X-OpenRouter-Eval-Provider', 'X-User-Id'];
+    const byokHeaders = ['X-Anthropic-Key', 'X-OpenRouter-Key', 'X-OpenRouter-Model', 'X-OpenRouter-Provider', 'X-OpenRouter-Temperature', 'X-OpenRouter-Eval-Model', 'X-OpenRouter-Eval-Provider', 'X-User-Id'];
     for (const header of byokHeaders) {
       const value = request.headers.get(header);
       if (value) {
@@ -543,7 +543,7 @@ async function handleAnnotateFromImage(request, env, corsHeaders, CONFIG) {
     }
 
     // Check for BYOK (Bring Your Own Key) mode - CLI/programmatic access with user's own API key
-    const isBYOK = request.headers.get('X-OpenRouter-Key') !== null;
+    const isBYOK = request.headers.get('X-Anthropic-Key') !== null || request.headers.get('X-OpenRouter-Key') !== null;
 
     // Verify Turnstile token (required for non-BYOK requests in production)
     if (!isBYOK) {
@@ -576,7 +576,7 @@ async function handleAnnotateFromImage(request, env, corsHeaders, CONFIG) {
     }
 
     // Forward BYOK and user ID headers to backend
-    const byokHeaders = ['X-OpenRouter-Key', 'X-OpenRouter-Model', 'X-OpenRouter-Provider', 'X-OpenRouter-Temperature', 'X-OpenRouter-Eval-Model', 'X-OpenRouter-Eval-Provider', 'X-User-Id'];
+    const byokHeaders = ['X-Anthropic-Key', 'X-OpenRouter-Key', 'X-OpenRouter-Model', 'X-OpenRouter-Provider', 'X-OpenRouter-Temperature', 'X-OpenRouter-Eval-Model', 'X-OpenRouter-Eval-Provider', 'X-User-Id'];
     for (const header of byokHeaders) {
       const value = request.headers.get(header);
       if (value) {
@@ -652,7 +652,7 @@ async function handleAnnotateFromImageStream(request, env, corsHeaders, CONFIG) 
     }
 
     // Check for BYOK mode
-    const isBYOK = request.headers.get('X-OpenRouter-Key') !== null;
+    const isBYOK = request.headers.get('X-Anthropic-Key') !== null || request.headers.get('X-OpenRouter-Key') !== null;
 
     // Verify Turnstile token (required for non-BYOK requests)
     if (!isBYOK) {
@@ -685,7 +685,7 @@ async function handleAnnotateFromImageStream(request, env, corsHeaders, CONFIG) 
     }
 
     // Forward BYOK and user ID headers to backend
-    const byokHeaders = ['X-OpenRouter-Key', 'X-OpenRouter-Model', 'X-OpenRouter-Provider', 'X-OpenRouter-Temperature', 'X-OpenRouter-Eval-Model', 'X-OpenRouter-Eval-Provider', 'X-User-Id'];
+    const byokHeaders = ['X-Anthropic-Key', 'X-OpenRouter-Key', 'X-OpenRouter-Model', 'X-OpenRouter-Provider', 'X-OpenRouter-Temperature', 'X-OpenRouter-Eval-Model', 'X-OpenRouter-Eval-Provider', 'X-User-Id'];
     for (const header of byokHeaders) {
       const value = request.headers.get(header);
       if (value) {
