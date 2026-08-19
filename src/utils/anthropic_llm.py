@@ -121,8 +121,12 @@ def create_anthropic_llm(
 
     kwargs: dict[str, Any] = {}
     if api_key:
-        # BYOK: first-party endpoint, no workspace header
+        # BYOK: first-party endpoint, no workspace header. The base URL must
+        # be passed explicitly: ChatAnthropic otherwise falls back to the
+        # process-wide ANTHROPIC_BASE_URL env var, which in server mode points
+        # at the AWS endpoint that rejects keys without the workspace header.
         kwargs["api_key"] = api_key
+        kwargs["base_url"] = "https://api.anthropic.com"
     else:
         server_key = os.getenv("ANTHROPIC_API_KEY")
         if not server_key:
@@ -163,6 +167,10 @@ class CachingLLMWrapper(BaseChatModel):
 
     Minimum cacheable prompt: 1024 tokens for Sonnet, 4096 for Haiku 4.5.
     Cache TTL: 5 minutes (refreshed on each hit).
+
+    Only plain-text System/Human/AI turns are supported; other message
+    types (tool calls, tool results) raise TypeError rather than being
+    silently relabeled, since the transformation would corrupt them.
     """
 
     llm: BaseChatModel
@@ -199,9 +207,17 @@ class CachingLLMWrapper(BaseChatModel):
             elif isinstance(msg, HumanMessage):
                 result.append({"role": "user", "content": msg.content})
             elif isinstance(msg, AIMessage):
+                if msg.tool_calls:
+                    raise TypeError(
+                        "CachingLLMWrapper does not support AI messages with "
+                        "tool calls; disable caching for tool-calling agents"
+                    )
                 result.append({"role": "assistant", "content": msg.content})
             else:
-                result.append({"role": "user", "content": str(msg.content)})
+                raise TypeError(
+                    f"CachingLLMWrapper does not support {type(msg).__name__}; "
+                    "only plain System/Human/AI messages are cacheable"
+                )
 
         return result
 

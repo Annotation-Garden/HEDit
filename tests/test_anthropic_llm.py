@@ -65,13 +65,18 @@ class TestCreateAnthropicLLM:
         with pytest.raises(RuntimeError, match="ANTHROPIC_API_KEY"):
             create_anthropic_llm()
 
-    def test_byok_mode_skips_workspace_header(self, monkeypatch):
+    def test_byok_mode_uses_first_party_endpoint(self, monkeypatch):
+        # Server env fully configured, as in production
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "server-key")
         monkeypatch.setenv("ANTHROPIC_BASE_URL", "https://aws-external-anthropic.us-east-2.api.aws")
         monkeypatch.setenv("ANTHROPIC_WORKSPACE_ID", "wrkspc_test")
 
         llm = create_anthropic_llm(api_key="sk-ant-user-key", enable_caching=False)
         assert llm.anthropic_api_key.get_secret_value() == "sk-ant-user-key"
-        # BYOK keys go to the first-party API, not the AWS workspace
+        # BYOK keys go to the first-party API, not the AWS workspace.
+        # The URL must be pinned explicitly: ChatAnthropic otherwise inherits
+        # the server's ANTHROPIC_BASE_URL from the process environment.
+        assert llm.anthropic_api_url == "https://api.anthropic.com"
         assert llm.default_headers is None
 
     def test_temperature_only_sent_to_sampling_models(self, monkeypatch):
@@ -149,3 +154,17 @@ class TestCachingLLMWrapper:
         ]
         result = wrapper._add_cache_control(messages)
         assert result[1] == {"role": "assistant", "content": "Hi there"}
+
+    def test_rejects_unsupported_message_types(self, wrapper):
+        from langchain_core.messages import ToolMessage
+
+        with pytest.raises(TypeError, match="ToolMessage"):
+            wrapper._add_cache_control([ToolMessage(content="result", tool_call_id="t1")])
+
+    def test_rejects_ai_message_with_tool_calls(self, wrapper):
+        msg = AIMessage(
+            content="",
+            tool_calls=[{"name": "f", "args": {}, "id": "t1", "type": "tool_call"}],
+        )
+        with pytest.raises(TypeError, match="tool calls"):
+            wrapper._add_cache_control([HumanMessage(content="hi"), msg])

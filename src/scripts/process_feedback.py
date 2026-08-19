@@ -114,7 +114,7 @@ async def process_feedback_file(
                 save_processed_feedback(record, result, output_dir)
 
         except Exception as e:
-            logger.error(f"Failed to process record {i + 1}: {e}")
+            logger.exception(f"Failed to process record {i + 1}: {e}")
             results.append({"error": str(e)})
 
     return results

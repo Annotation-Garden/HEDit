@@ -54,7 +54,7 @@ class HEDitClient:
             eval_model: Model for evaluation/assessment agents (for fair benchmarking)
             temperature: LLM temperature (0.0-1.0)
             timeout: Request timeout settings
-            user_id: Custom user ID recorded in telemetry
+            user_id: Optional ID sent as X-User-Id (server ignores it)
         """
         self.api_url = api_url.rstrip("/")
         self.api_key = api_key
@@ -81,7 +81,7 @@ class HEDitClient:
             headers["X-OpenRouter-Eval-Model"] = self.eval_model
         if self.temperature is not None:
             headers["X-OpenRouter-Temperature"] = str(self.temperature)
-        # Custom user ID for telemetry
+        # Optional user ID header (currently unused server-side)
         if self.user_id:
             headers["X-User-Id"] = self.user_id
         return headers
@@ -113,6 +113,18 @@ class HEDitClient:
                 "Authentication required",
                 status_code=401,
                 detail="Please provide an Anthropic API key with --api-key or run 'hedit init'",
+            )
+        elif response.status_code == 400:
+            raise APIError(
+                "Invalid request",
+                status_code=400,
+                detail=detail,
+            )
+        elif response.status_code == 429:
+            raise APIError(
+                "Rate limited",
+                status_code=429,
+                detail=detail or "LLM rate limit exceeded. Please wait and try again.",
             )
         elif response.status_code == 422:
             raise APIError(

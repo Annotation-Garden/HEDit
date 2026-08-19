@@ -1525,7 +1525,7 @@ Example: A red circle appears on the left side of the screen and the participant
             const maxAttempts = parseInt(document.getElementById('maxAttempts-image').value);
             const runAssessment = document.getElementById('runAssessment-image').checked;
 
-            // Get selected model and provider
+            // Get selected model
             const modelSelect = document.getElementById('annotationModel-image');
             const selectedModel = modelSelect.value;
 
@@ -1587,7 +1587,8 @@ Example: A red circle appears on the left side of the screen and the participant
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
             }
 
             // Read the streaming response
@@ -1819,7 +1820,7 @@ Example: A red circle appears on the left side of the screen and the participant
             // Get Turnstile token for bot protection
             const turnstileToken = await getTurnstileToken();
 
-            // Get selected model and provider
+            // Get selected model
             const modelSelect = document.getElementById('annotationModel');
             const selectedModel = modelSelect.value;
 
@@ -1846,7 +1847,8 @@ Example: A red circle appears on the left side of the screen and the participant
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
             }
 
             // Read the streaming response
@@ -1949,7 +1951,7 @@ Example: A red circle appears on the left side of the screen and the participant
                 // Get Turnstile token for bot protection
                 const turnstileToken = await getTurnstileToken();
 
-                // Get selected model and provider
+                // Get selected model
                 const modelSelect = document.getElementById('annotationModel');
                 const selectedModel = modelSelect.value;
 
@@ -1977,7 +1979,8 @@ Example: A red circle appears on the left side of the screen and the participant
                 });
 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
                 }
 
                 const data = await response.json();

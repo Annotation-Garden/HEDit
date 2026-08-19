@@ -145,7 +145,7 @@ UserIdOption = Annotated[
     str | None,
     typer.Option(
         "--user-id",
-        help="Custom user ID recorded in telemetry (default: auto-generated machine ID)",
+        help="Optional user ID sent as the X-User-Id header (currently unused server-side)",
         hidden=True,  # Not advertised, but available
     ),
 ]
@@ -171,7 +171,7 @@ def get_executor(
         config: CLI configuration
         api_key: BYOK Anthropic API key (None = server/env credentials)
         mode_override: Override mode from --standalone/--api flags
-        user_id: Custom user ID recorded in telemetry (default: auto-generated)
+        user_id: Optional ID sent as X-User-Id in API mode (server ignores it)
 
     Returns:
         Configured ExecutionBackend instance
@@ -190,7 +190,6 @@ def get_executor(
             eval_model=config.models.evaluation,
             vision_model=config.models.vision,
             temperature=config.models.temperature,
-            user_id=user_id,
         )
 
         if not executor.is_available():

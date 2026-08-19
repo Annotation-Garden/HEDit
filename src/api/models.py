@@ -12,8 +12,8 @@ class AnnotationRequest(BaseModel):
         max_validation_attempts: Maximum validation retry attempts
         run_assessment: Whether to run final assessment (adds extra time)
         model: Override model for annotation
-        provider: Override provider preference (BYOK mode only)
-        temperature: Override LLM temperature (BYOK mode only)
+        provider: Deprecated; ignored (all models are served by Anthropic)
+        temperature: Override LLM temperature
     """
 
     description: str = Field(
@@ -50,7 +50,7 @@ class AnnotationRequest(BaseModel):
     )
     temperature: float | None = Field(
         default=None,
-        description="Override LLM temperature (BYOK mode only, 0.0-1.0)",
+        description="Override LLM temperature (0.0-1.0)",
         ge=0.0,
         le=1.0,
         examples=[0.1, 0.3, 0.7],
@@ -139,8 +139,8 @@ class ImageAnnotationRequest(BaseModel):
         run_assessment: Whether to run final assessment (adds extra time)
         model: Override model for annotation
         vision_model: Override vision model for image description
-        provider: Override provider preference (BYOK mode only)
-        temperature: Override LLM temperature (BYOK mode only)
+        provider: Deprecated; ignored (all models are served by Anthropic)
+        temperature: Override LLM temperature
     """
 
     image: str = Field(
@@ -191,7 +191,7 @@ class ImageAnnotationRequest(BaseModel):
     )
     temperature: float | None = Field(
         default=None,
-        description="Override LLM temperature (BYOK mode only, 0.0-1.0)",
+        description="Override LLM temperature (0.0-1.0)",
         ge=0.0,
         le=1.0,
         examples=[0.1, 0.3, 0.7],

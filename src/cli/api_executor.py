@@ -41,7 +41,7 @@ class APIExecutionBackend(ExecutionBackend):
             eval_model: Model for evaluation/assessment agents (for fair benchmarking)
             vision_model: Model for image annotation
             temperature: LLM temperature (0.0-1.0)
-            user_id: Custom user ID recorded in telemetry
+            user_id: Optional ID sent as X-User-Id (server ignores it)
         """
         self._api_url = api_url
         self._api_key = api_key

@@ -3,7 +3,7 @@
 Runs the LangGraph workflow locally without requiring the HEDit backend.
 This mode requires additional dependencies: pip install hedit[standalone]
 
-Dependencies: langgraph, langchain, langchain-openai, hedtools, etc.
+Dependencies: langgraph, langchain, langchain-anthropic, hedtools, etc.
 """
 
 from __future__ import annotations
@@ -74,7 +74,6 @@ class LocalExecutionBackend(ExecutionBackend):
         vision_model: str | None = None,
         temperature: float = 0.1,
         schema_dir: Path | str | None = None,
-        user_id: str | None = None,
     ):
         """Initialize local execution backend.
 
@@ -86,7 +85,6 @@ class LocalExecutionBackend(ExecutionBackend):
             vision_model: Model for image annotation (default: claude-haiku-4-5)
             temperature: LLM temperature (0.0-1.0)
             schema_dir: Optional directory with JSON schemas (None = fetch from GitHub)
-            user_id: Custom user ID recorded in telemetry (default: auto-generated machine ID)
         """
         # Import defaults from config
         from src.cli.config import (
@@ -102,7 +100,6 @@ class LocalExecutionBackend(ExecutionBackend):
         self._vision_model = vision_model or DEFAULT_VISION_MODEL
         self._temperature = temperature
         self._schema_dir = Path(schema_dir) if schema_dir else None
-        self._user_id = user_id  # Custom user ID (None = use auto-generated machine ID)
 
         # Lazy initialization of workflow and vision agent
         self._workflow: HedAnnotationWorkflow | None = None

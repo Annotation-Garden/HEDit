@@ -12,11 +12,13 @@ import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import anthropic
 from anthropic import APITimeoutError, RateLimitError
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from langchain_anthropic.chat_models import AnthropicContextOverflowError
 
 from src import __version__
 from src.agents.vision_agent import VisionAgent
@@ -57,6 +59,39 @@ telemetry_collector: TelemetryCollector | None = None
 
 # Cache for BYOK configuration
 _byok_config: dict = {}
+
+# Set during lifespan: False when the server credentials failed the cheap
+# startup validation call (server stays up, /health reports degraded).
+_llm_credentials_ok: bool = True
+
+
+def _describe_llm_error(exc: Exception) -> tuple[int, str, str]:
+    """Map an LLM exception to (http_status, error_type, user-facing message).
+
+    Keeps the four annotate endpoints consistent: a BYOK user with a revoked
+    key gets a 401 pointing at their key, not a generic 500. Order matters --
+    AnthropicContextOverflowError subclasses BadRequestError, and the timeout
+    and rate-limit types must be checked before their parent classes.
+    """
+    if isinstance(exc, APITimeoutError):
+        return 504, "timeout", "LLM request timed out. Try again or use a faster model."
+    if isinstance(exc, RateLimitError):
+        return 429, "rate_limit", "LLM rate limit exceeded. Please wait and try again."
+    if isinstance(exc, anthropic.AuthenticationError):
+        return 401, "auth", "Invalid or expired Anthropic API key."
+    if isinstance(exc, anthropic.PermissionDeniedError):
+        return (
+            403,
+            "permission",
+            "The Anthropic API key is not authorized for this workspace or model.",
+        )
+    if isinstance(exc, AnthropicContextOverflowError):
+        return 413, "context_overflow", "The input is too long for this model. Try shortening it."
+    if isinstance(exc, anthropic.BadRequestError):
+        return 400, "bad_request", f"The LLM rejected the request: {str(exc)[:200]}"
+    if isinstance(exc, anthropic.APIConnectionError):
+        return 502, "upstream_unreachable", "Could not reach the LLM service. Please try again."
+    return 500, "internal", "An error occurred during annotation processing."
 
 
 # Sentinel used by the workflow factories to mean "fall back to the
@@ -102,12 +137,15 @@ def create_anthropic_workflow(
         schema_dir: Path to HED schemas (None = fetch from GitHub)
         validator_path: Path to hed-javascript (None = use auto fallback chain)
         use_js_validator: Whether to use JavaScript validator
+        lsp_client: Explicit LSP client, None to opt out, or the default
+            sentinel to reuse the lifespan-managed global client
 
     Returns:
         Configured HedAnnotationWorkflow
 
     Raises:
-        ValueError: If a requested model is not offered, or no key is available
+        ValueError: If a requested model is not offered
+        RuntimeError: If server mode is used without ANTHROPIC_API_KEY set
     """
     # Apply defaults from environment
     actual_annotation_model = annotation_model or os.getenv("ANNOTATION_MODEL", DEFAULT_MODEL)
@@ -193,6 +231,8 @@ def create_byok_workflow(
         model: Override annotation model
         eval_model: Override evaluation model (for all eval/assessment/feedback)
         temperature: Override LLM temperature
+        lsp_client: Explicit LSP client, None to opt out, or the default
+            sentinel to reuse the lifespan-managed global client
 
     Returns:
         Configured HedAnnotationWorkflow using the user's key
@@ -227,7 +267,8 @@ def create_vision_agent(
         Configured VisionAgent
 
     Raises:
-        ValueError: If a requested model is not offered, or no key is available
+        ValueError: If a requested model is not offered
+        RuntimeError: If server mode is used without ANTHROPIC_API_KEY set
     """
     actual_model = vision_model or os.getenv("VISION_MODEL", DEFAULT_MODEL)
     actual_temperature = temperature if temperature is not None else 0.3
@@ -276,10 +317,13 @@ async def lifespan(app: FastAPI):
 
     # Get configuration from environment with smart defaults.
     # "anthropic" is the only supported provider since the 2026-08-18
-    # migration; "openrouter" and "ollama" are accepted as legacy values.
+    # migration; any other value (including legacy "openrouter"/"ollama")
+    # is overridden to "anthropic" with a warning.
     llm_provider = os.getenv("LLM_PROVIDER", "anthropic")
     if llm_provider != "anthropic":
-        print(f"LLM_PROVIDER '{llm_provider}' is no longer supported; using 'anthropic'")
+        logging.getLogger("hedit.config").warning(
+            "LLM_PROVIDER '%s' is no longer supported; using 'anthropic'", llm_provider
+        )
         llm_provider = "anthropic"
     llm_temperature = float(os.getenv("LLM_TEMPERATURE", "0.1"))
 
@@ -307,7 +351,6 @@ async def lifespan(app: FastAPI):
     global _byok_config
     _byok_config = {
         "temperature": llm_temperature,
-        "provider_preference": os.getenv("LLM_PROVIDER_PREFERENCE"),
         "schema_dir": schema_dir,
         "validator_path": validator_path,
         "use_js_validator": use_js_validator,
@@ -372,6 +415,38 @@ async def lifespan(app: FastAPI):
         lsp_client=lsp_client,
     )
 
+    # Validate the credentials with a cheap live call (count_tokens is free).
+    # LLM construction never touches the network, so a present-but-wrong key
+    # would otherwise boot a server that reports healthy and 500s on every
+    # request. Failure keeps the server up but marks /health degraded.
+    global _llm_credentials_ok
+    try:
+        _validation_client = anthropic.Anthropic(
+            api_key=os.environ["ANTHROPIC_API_KEY"],
+            base_url=os.getenv("ANTHROPIC_BASE_URL") or None,
+            default_headers=(
+                {"anthropic-workspace-id": workspace_id}
+                if (workspace_id := os.getenv("ANTHROPIC_WORKSPACE_ID"))
+                else None
+            ),
+            timeout=10.0,
+            max_retries=1,
+        )
+        _validation_client.messages.count_tokens(
+            model=os.getenv("ANNOTATION_MODEL", DEFAULT_MODEL),
+            messages=[{"role": "user", "content": "ping"}],
+        )
+        _llm_credentials_ok = True
+        print("Anthropic credentials validated")
+    except Exception:
+        _llm_credentials_ok = False
+        logging.getLogger("hedit.config").error(
+            "Anthropic credential validation failed; the server will start "
+            "but LLM requests will fail. Check ANTHROPIC_API_KEY, "
+            "ANTHROPIC_BASE_URL, and ANTHROPIC_WORKSPACE_ID.",
+            exc_info=True,
+        )
+
     # Set global schema_loader from workflow
     schema_loader = workflow.schema_loader
 
@@ -379,11 +454,22 @@ async def lifespan(app: FastAPI):
     print(f"  LLM Provider: {llm_provider} (temperature={llm_temperature})")
     print(f"  JavaScript validator: {use_js_validator}")
 
-    # Initialize vision agent (Claude models are natively multimodal)
+    # Initialize vision agent (Claude models are natively multimodal).
+    # A bad VISION_MODEL must not take down text annotation: on failure the
+    # image endpoints return 503 while the rest of the server stays up.
     vision_model = os.getenv("VISION_MODEL", DEFAULT_MODEL)
     print(f"Initializing vision model: {vision_model}")
-    vision_agent = create_vision_agent()
-    print("Vision agent initialized successfully!")
+    try:
+        vision_agent = create_vision_agent()
+        print("Vision agent initialized successfully!")
+    except Exception:
+        vision_agent = None
+        logging.getLogger("hedit.config").error(
+            "Vision agent initialization failed (VISION_MODEL=%s); image "
+            "annotation endpoints will return 503.",
+            vision_model,
+            exc_info=True,
+        )
 
     # Initialize telemetry collector
     global telemetry_collector
@@ -471,7 +557,7 @@ app.add_middleware(
         "X-OpenRouter-Temperature",  # Temperature override
         "X-OpenRouter-Eval-Model",  # Eval model override
         "X-OpenRouter-Eval-Provider",  # Legacy, ignored
-        "X-User-Id",  # Custom user ID for cache optimization
+        "X-User-Id",  # Legacy, ignored
     ],
     max_age=3600,  # Cache preflight requests for 1 hour
 )
@@ -516,7 +602,7 @@ async def health_check() -> HealthResponse:
     Returns:
         Health status and service availability
     """
-    llm_available = workflow is not None
+    llm_available = workflow is not None and _llm_credentials_ok
     validator_available = schema_loader is not None
 
     status = "healthy" if (llm_available and validator_available) else "degraded"
@@ -677,22 +763,10 @@ async def annotate(
             status=status,
         )
 
-    except APITimeoutError as e:
-        raise HTTPException(
-            status_code=504,
-            detail="LLM request timed out. Try again or use a faster model/provider.",
-        ) from e
-    except RateLimitError as e:
-        raise HTTPException(
-            status_code=429,
-            detail="LLM rate limit exceeded. Please wait and try again.",
-        ) from e
     except Exception as e:
+        status_code, _error_type, message = _describe_llm_error(e)
         logging.exception("Annotation workflow failed")
-        raise HTTPException(
-            status_code=500,
-            detail="An error occurred during annotation processing.",
-        ) from e
+        raise HTTPException(status_code=status_code, detail=message) from e
 
 
 @app.post("/annotate-from-image", response_model=ImageAnnotationResponse)
@@ -872,22 +946,10 @@ async def annotate_from_image(
             image_metadata=image_metadata,
         )
 
-    except APITimeoutError as e:
-        raise HTTPException(
-            status_code=504,
-            detail="LLM request timed out. Try again or use a faster model/provider.",
-        ) from e
-    except RateLimitError as e:
-        raise HTTPException(
-            status_code=429,
-            detail="LLM rate limit exceeded. Please wait and try again.",
-        ) from e
     except Exception as e:
+        status_code, _error_type, message = _describe_llm_error(e)
         logging.exception("Image annotation workflow failed")
-        raise HTTPException(
-            status_code=500,
-            detail="An error occurred during image annotation processing.",
-        ) from e
+        raise HTTPException(status_code=status_code, detail=message) from e
 
 
 async def _collect_stream_telemetry(
@@ -1163,59 +1225,10 @@ async def annotate_stream(
 
         except asyncio.CancelledError:
             raise
-        except APITimeoutError:
-            logging.exception("Streaming workflow timeout")
-            yield send_event(
-                "error",
-                {
-                    "message": "LLM request timed out. Try again or use a faster model/provider.",
-                    "error_type": "timeout",
-                },
-            )
-            # Collect telemetry on error
-            try:
-                await _collect_stream_telemetry(
-                    request=request,
-                    req=req,
-                    current_state=current_state,
-                    start_time=start_time,
-                    source="api-stream",
-                    description=request.description,
-                )
-            except Exception:
-                logging.warning("Telemetry collection failed on timeout", exc_info=True)
-            yield send_event("done", {"message": "Workflow ended with error"})
-        except RateLimitError:
-            logging.exception("Streaming workflow rate limit")
-            yield send_event(
-                "error",
-                {
-                    "message": "LLM rate limit exceeded. Please wait and try again.",
-                    "error_type": "rate_limit",
-                },
-            )
-            # Collect telemetry on error
-            try:
-                await _collect_stream_telemetry(
-                    request=request,
-                    req=req,
-                    current_state=current_state,
-                    start_time=start_time,
-                    source="api-stream",
-                    description=request.description,
-                )
-            except Exception:
-                logging.warning("Telemetry collection failed on rate limit", exc_info=True)
-            yield send_event("done", {"message": "Workflow ended with error"})
-        except Exception:
-            logging.exception("Streaming workflow error")
-            yield send_event(
-                "error",
-                {
-                    "message": "An error occurred during annotation processing.",
-                    "error_type": "internal",
-                },
-            )
+        except Exception as e:
+            _status, error_type, message = _describe_llm_error(e)
+            logging.exception("Streaming workflow error (%s)", error_type)
+            yield send_event("error", {"message": message, "error_type": error_type})
             # Collect telemetry on error
             try:
                 await _collect_stream_telemetry(
@@ -1499,59 +1512,10 @@ async def annotate_from_image_stream(
 
         except asyncio.CancelledError:
             raise
-        except APITimeoutError:
-            logging.exception("Streaming image workflow timeout")
-            yield send_event(
-                "error",
-                {
-                    "message": "LLM request timed out. Try again or use a faster model/provider.",
-                    "error_type": "timeout",
-                },
-            )
-            # Collect telemetry on error
-            try:
-                await _collect_stream_telemetry(
-                    request=request,
-                    req=req,
-                    current_state=current_state,
-                    start_time=start_time,
-                    source="api-image-stream",
-                    description=image_description or "image-annotation-failed",
-                )
-            except Exception:
-                logging.warning("Telemetry collection failed on image timeout", exc_info=True)
-            yield send_event("done", {"message": "Workflow ended with error"})
-        except RateLimitError:
-            logging.exception("Streaming image workflow rate limit")
-            yield send_event(
-                "error",
-                {
-                    "message": "LLM rate limit exceeded. Please wait and try again.",
-                    "error_type": "rate_limit",
-                },
-            )
-            # Collect telemetry on error
-            try:
-                await _collect_stream_telemetry(
-                    request=request,
-                    req=req,
-                    current_state=current_state,
-                    start_time=start_time,
-                    source="api-image-stream",
-                    description=image_description or "image-annotation-failed",
-                )
-            except Exception:
-                logging.warning("Telemetry collection failed on image rate limit", exc_info=True)
-            yield send_event("done", {"message": "Workflow ended with error"})
-        except Exception:
-            logging.exception("Streaming image annotation workflow error")
-            yield send_event(
-                "error",
-                {
-                    "message": "An error occurred during image annotation processing.",
-                    "error_type": "internal",
-                },
-            )
+        except Exception as e:
+            _status, error_type, message = _describe_llm_error(e)
+            logging.exception("Streaming image workflow error (%s)", error_type)
+            yield send_event("error", {"message": message, "error_type": error_type})
             # Collect telemetry on error
             try:
                 await _collect_stream_telemetry(
@@ -1736,6 +1700,7 @@ async def submit_feedback(request: FeedbackRequest) -> FeedbackResponse:
 
             except Exception as e:
                 # Log error but don't fail the request - feedback is still saved
+                logging.exception("Feedback triage processing failed")
                 audit_logger.log(
                     event="feedback_processing_error",
                     data={"feedback_id": feedback_id, "error": str(e)},

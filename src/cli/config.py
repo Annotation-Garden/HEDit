@@ -92,7 +92,7 @@ class SettingsConfig(BaseModel):
     run_assessment: bool = Field(default=False, description="Run assessment by default")
     user_id: str | None = Field(
         default=None,
-        description="Custom user ID for cache optimization (default: auto-generated machine ID)",
+        description="Optional user ID sent as the X-User-Id header (currently unused server-side)",
     )
 
 
@@ -152,6 +152,18 @@ def load_credentials() -> CredentialsConfig:
                 creds = CredentialsConfig(**data)
         except (yaml.YAMLError, ValueError):
             pass  # Use defaults if file is corrupted
+
+    # A legacy OpenRouter key on file no longer works; say so once instead
+    # of letting a previously-working setup fail with a generic auth error.
+    if creds.openrouter_api_key and not creds.anthropic_api_key:
+        import sys
+
+        print(
+            "hedit: found a legacy OpenRouter key in the credentials file; "
+            "it is no longer used. Run 'hedit init --api-key sk-ant-...' "
+            "for BYOK mode, or no key for the hosted API.",
+            file=sys.stderr,
+        )
 
     # Environment variables override file. HEDIT_ANTHROPIC_API_KEY is the
     # BYOK override; the plain ANTHROPIC_API_KEY env var is deliberately NOT
@@ -238,7 +250,7 @@ def get_effective_config(
         schema_version: Override schema version
         output_format: Override output format
         mode: Override execution mode ("api" or "standalone")
-        user_id: Override user ID recorded in telemetry
+        user_id: Optional ID sent as X-User-Id in API mode (server ignores it)
 
     Returns:
         Tuple of (effective config, effective API key)

@@ -85,7 +85,7 @@ fi
 
 echo ""
 echo -e "${GREEN}Configuration:${NC}"
-echo "  LLM Provider: ${LLM_PROVIDER:-ollama}"
+echo "  LLM Provider: ${LLM_PROVIDER:-anthropic}"
 echo "  Schema Dir: $HED_SCHEMA_DIR"
 echo "  Validator: $HED_VALIDATOR_PATH"
 echo "  Auth Required: ${REQUIRE_API_AUTH:-true}"

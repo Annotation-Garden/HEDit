@@ -636,8 +636,9 @@ class TestModelOverrideWithEnv:
             "X-OpenRouter-Provider": "anthropic",
         }
         response = client_with_env.post("/annotate", json=request_data, headers=headers)
-        # Will fail to create workflow with fake key, but tests the code path
-        assert response.status_code in [200, 500, 503]
+        # The fake key passes workflow creation but fails at the LLM call,
+        # which now surfaces as 401 (auth) rather than a generic 500
+        assert response.status_code in [200, 401, 503]
 
     def test_stream_with_model_override(self, client_with_env):
         """Test streaming endpoint with model override headers."""

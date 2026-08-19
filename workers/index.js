@@ -87,7 +87,7 @@ export default {
     const corsHeaders = {
       'Access-Control-Allow-Origin': isAllowedOrigin ? origin : CONFIG.ALLOWED_ORIGIN,
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, X-Anthropic-Key, X-OpenRouter-Key, X-OpenRouter-Model, X-OpenRouter-Provider, X-OpenRouter-Temperature, X-OpenRouter-Eval-Model, X-OpenRouter-Eval-Provider, X-User-Id',
+      'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, X-Anthropic-Key, X-OpenRouter-Key, X-OpenRouter-Model, X-OpenRouter-Vision-Model, X-OpenRouter-Provider, X-OpenRouter-Temperature, X-OpenRouter-Eval-Model, X-OpenRouter-Eval-Provider, X-User-Id',
       'Access-Control-Allow-Credentials': 'true',
     };
 
@@ -340,7 +340,7 @@ async function handleAnnotate(request, env, ctx, corsHeaders, CONFIG) {
     }
 
     // Forward BYOK and user ID headers to backend
-    const byokHeaders = ['X-Anthropic-Key', 'X-OpenRouter-Key', 'X-OpenRouter-Model', 'X-OpenRouter-Provider', 'X-OpenRouter-Temperature', 'X-OpenRouter-Eval-Model', 'X-OpenRouter-Eval-Provider', 'X-User-Id'];
+    const byokHeaders = ['X-Anthropic-Key', 'X-OpenRouter-Key', 'X-OpenRouter-Model', 'X-OpenRouter-Vision-Model', 'X-OpenRouter-Provider', 'X-OpenRouter-Temperature', 'X-OpenRouter-Eval-Model', 'X-OpenRouter-Eval-Provider', 'X-User-Id'];
     for (const header of byokHeaders) {
       const value = request.headers.get(header);
       if (value) {
@@ -464,7 +464,7 @@ async function handleAnnotateStream(request, env, corsHeaders, CONFIG) {
     }
 
     // Forward BYOK and user ID headers to backend
-    const byokHeaders = ['X-Anthropic-Key', 'X-OpenRouter-Key', 'X-OpenRouter-Model', 'X-OpenRouter-Provider', 'X-OpenRouter-Temperature', 'X-OpenRouter-Eval-Model', 'X-OpenRouter-Eval-Provider', 'X-User-Id'];
+    const byokHeaders = ['X-Anthropic-Key', 'X-OpenRouter-Key', 'X-OpenRouter-Model', 'X-OpenRouter-Vision-Model', 'X-OpenRouter-Provider', 'X-OpenRouter-Temperature', 'X-OpenRouter-Eval-Model', 'X-OpenRouter-Eval-Provider', 'X-User-Id'];
     for (const header of byokHeaders) {
       const value = request.headers.get(header);
       if (value) {
@@ -576,7 +576,7 @@ async function handleAnnotateFromImage(request, env, corsHeaders, CONFIG) {
     }
 
     // Forward BYOK and user ID headers to backend
-    const byokHeaders = ['X-Anthropic-Key', 'X-OpenRouter-Key', 'X-OpenRouter-Model', 'X-OpenRouter-Provider', 'X-OpenRouter-Temperature', 'X-OpenRouter-Eval-Model', 'X-OpenRouter-Eval-Provider', 'X-User-Id'];
+    const byokHeaders = ['X-Anthropic-Key', 'X-OpenRouter-Key', 'X-OpenRouter-Model', 'X-OpenRouter-Vision-Model', 'X-OpenRouter-Provider', 'X-OpenRouter-Temperature', 'X-OpenRouter-Eval-Model', 'X-OpenRouter-Eval-Provider', 'X-User-Id'];
     for (const header of byokHeaders) {
       const value = request.headers.get(header);
       if (value) {
@@ -685,7 +685,7 @@ async function handleAnnotateFromImageStream(request, env, corsHeaders, CONFIG) 
     }
 
     // Forward BYOK and user ID headers to backend
-    const byokHeaders = ['X-Anthropic-Key', 'X-OpenRouter-Key', 'X-OpenRouter-Model', 'X-OpenRouter-Provider', 'X-OpenRouter-Temperature', 'X-OpenRouter-Eval-Model', 'X-OpenRouter-Eval-Provider', 'X-User-Id'];
+    const byokHeaders = ['X-Anthropic-Key', 'X-OpenRouter-Key', 'X-OpenRouter-Model', 'X-OpenRouter-Vision-Model', 'X-OpenRouter-Provider', 'X-OpenRouter-Temperature', 'X-OpenRouter-Eval-Model', 'X-OpenRouter-Eval-Provider', 'X-User-Id'];
     for (const header of byokHeaders) {
       const value = request.headers.get(header);
       if (value) {
