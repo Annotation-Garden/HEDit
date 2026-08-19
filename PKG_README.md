@@ -20,8 +20,8 @@ pip install hedit[standalone]
 ## Quick Start
 
 ```bash
-# Configure your OpenRouter API key (https://openrouter.ai)
-hedit init --api-key sk-or-v1-xxx
+# Initialize the CLI (API mode needs no key; add an Anthropic key for BYOK)
+hedit init
 
 # Generate HED annotation from text
 hedit annotate "participant pressed the left button"
@@ -68,7 +68,6 @@ Annotations are automatically refined until validation passes.
 - [Documentation](https://docs.annotation.garden/hedit)
 - [GitHub Repository](https://github.com/Annotation-Garden/HEDit)
 - [HED Standard](https://hedtags.org)
-- [OpenRouter](https://openrouter.ai) - Get an API key
 
 ## License
 

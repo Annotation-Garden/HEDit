@@ -61,10 +61,10 @@ if [ "$NO_AUTH" = true ]; then
 fi
 
 # Check for required environment variables
-if [ -z "$OPENROUTER_API_KEY" ] && [ "$LLM_PROVIDER" = "openrouter" ]; then
-    echo -e "${RED}Error: OPENROUTER_API_KEY not set${NC}"
+if [ -z "$ANTHROPIC_API_KEY" ]; then
+    echo -e "${RED}Error: ANTHROPIC_API_KEY not set${NC}"
     echo "Set it in .env or export it:"
-    echo "  export OPENROUTER_API_KEY=your-key"
+    echo "  export ANTHROPIC_API_KEY=your-key"
     exit 1
 fi
 

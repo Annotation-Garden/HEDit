@@ -4,7 +4,7 @@
 #
 # Options:
 #   (no args)     Run unit tests only (fast, no API key needed)
-#   --standalone  Run unit + standalone tests (needs OPENROUTER_API_KEY_FOR_TESTING)
+#   --standalone  Run unit + standalone tests (needs ANTHROPIC_API_KEY)
 #   --all         Run all tests including integration (needs API key)
 
 set -e
@@ -54,28 +54,24 @@ pytest tests/ -v -m "not integration and not standalone" \
 
 # Step 2: Run standalone tests if requested
 if [ "$RUN_STANDALONE" = true ]; then
-    if [ -n "$OPENROUTER_API_KEY_FOR_TESTING" ] || [ -n "$OPENROUTER_API_KEY" ]; then
-        # Use OPENROUTER_API_KEY as fallback
-        if [ -z "$OPENROUTER_API_KEY_FOR_TESTING" ]; then
-            export OPENROUTER_API_KEY_FOR_TESTING="$OPENROUTER_API_KEY"
-        fi
+    if [ -n "$ANTHROPIC_API_KEY" ]; then
 
         echo -e "\n${GREEN}=== Running standalone tests (real LLM calls) ===${NC}"
         pytest tests/ -v -m standalone --timeout=180 \
             --cov=src --cov-append --cov-report= || true
     else
-        echo -e "\n${YELLOW}Skipping standalone tests: OPENROUTER_API_KEY_FOR_TESTING not set${NC}"
+        echo -e "\n${YELLOW}Skipping standalone tests: ANTHROPIC_API_KEY not set${NC}"
     fi
 fi
 
 # Step 3: Run integration tests if requested
 if [ "$RUN_ALL" = true ]; then
-    if [ -n "$OPENROUTER_API_KEY_FOR_TESTING" ]; then
+    if [ -n "$ANTHROPIC_API_KEY" ]; then
         echo -e "\n${GREEN}=== Running integration tests (real LLM calls) ===${NC}"
         pytest tests/ -v -m integration --timeout=180 \
             --cov=src --cov-append --cov-report= || true
     else
-        echo -e "\n${YELLOW}Skipping integration tests: OPENROUTER_API_KEY_FOR_TESTING not set${NC}"
+        echo -e "\n${YELLOW}Skipping integration tests: ANTHROPIC_API_KEY not set${NC}"
     fi
 fi
 
