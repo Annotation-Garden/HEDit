@@ -56,6 +56,8 @@ jobs:
           body: |
             ## HEDit ${{ steps.get_version.outputs.VERSION }}
 
+            Release notes in prose: [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
+
             ${{ steps.changelog.outputs.CHANGELOG }}
 
             ---
