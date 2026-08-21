@@ -320,6 +320,61 @@ class TestSystemPromptCaching:
         assert "Lower confidence" not in guide
 
 
+class TestCachedPrefixStability:
+    """Tests that the annotation prefix stays byte-stable across requests.
+
+    The annotation system prompt is the only prefix in HEDit large enough to
+    cache (measured at ~21.8k tokens against Haiku 4.5's 4096-token minimum),
+    and prompt caching is a prefix match: one changed byte invalidates the
+    entry and every later request pays full input price. These tests lock in
+    that per-request data stays in the user message.
+    """
+
+    VOCABULARY = ["Sensory-event", "Visual-presentation", "Red", "Circle", "Agent-action"]
+    EXTENDABLE = ["Animal", "Object"]
+
+    def _make_agent(self):
+        """An agent without an LLM; only prompt building is exercised."""
+        return object.__new__(AnnotationAgent)
+
+    def test_prompt_is_byte_identical_across_builds(self):
+        agent = self._make_agent()
+
+        first = agent._build_system_prompt(self.VOCABULARY, self.EXTENDABLE, False)
+        second = agent._build_system_prompt(list(self.VOCABULARY), list(self.EXTENDABLE), False)
+
+        assert first == second
+
+    def test_request_content_is_not_in_the_prefix(self):
+        """Descriptions, feedback, and hints belong to the user message."""
+        agent = self._make_agent()
+        system = agent._build_system_prompt(self.VOCABULARY, self.EXTENDABLE, False)
+
+        user = agent._build_user_prompt(
+            "participant pressed the spacebar",
+            ["Validation error: Unknown tag Foo"],
+            {"Foo": ["Face"]},
+            "Sensory-event",
+            [{"tag": "Press", "confidence": 0.9}],
+        )
+
+        assert "participant pressed the spacebar" in user
+        assert "participant pressed the spacebar" not in system
+        assert "Unknown tag Foo" not in system
+        assert "Foo" not in system
+
+    def test_no_extend_forks_the_prefix(self):
+        """The no-extension mode is a second cache lane, not a mutation."""
+        agent = self._make_agent()
+
+        default = agent._build_system_prompt(self.VOCABULARY, self.EXTENDABLE, False)
+        no_extend = agent._build_system_prompt(self.VOCABULARY, self.EXTENDABLE, True)
+
+        assert default != no_extend
+        # Each mode is itself stable, so both lanes stay cacheable.
+        assert no_extend == agent._build_system_prompt(self.VOCABULARY, self.EXTENDABLE, True)
+
+
 class TestPromptSections:
     """Tests for prompt structure and sections."""
 

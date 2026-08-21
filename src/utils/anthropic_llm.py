@@ -65,6 +65,15 @@ _ADAPTIVE_THINKING_MODELS = {"claude-sonnet-5"}
 # `temperature` with a 400 (sampling params are removed on Claude 5 models).
 _SAMPLING_MODELS = {"claude-haiku-4-5"}
 
+# Prompt-cache lifetimes. A 5-minute entry costs 1.25x the input price to
+# write, a 1-hour entry 2x; both read back at 0.1x. Which is cheaper depends
+# on the traffic: back-to-back requests break even on the 5-minute entry
+# after two calls, while requests spaced further apart never read a
+# 5-minute entry back and pay the write premium every time. Interactive CLI
+# use is the case that benefits from "1h"; a busy server does not.
+CACHE_TTLS = ("5m", "1h")
+DEFAULT_CACHE_TTL = "5m"
+
 
 def normalize_model(model: str | None) -> str:
     """Normalize a requested model id to an offered Anthropic model.
@@ -97,6 +106,7 @@ def create_anthropic_llm(
     disable_reasoning: bool = False,
     timeout: float = 60.0,
     role: str = "unspecified",
+    cache_ttl: str | None = None,
 ) -> BaseChatModel:
     """Create a Claude LLM instance with prompt caching.
 
@@ -119,17 +129,24 @@ def create_anthropic_llm(
         role: Agent role this LLM serves ("annotation", "evaluation",
             "assessment", "feedback", "keyword", "vision"). Used to label
             token and cache usage; has no effect on the request itself.
+        cache_ttl: Prompt-cache lifetime, "5m" (default) or "1h". Falls back
+            to the HEDIT_PROMPT_CACHE_TTL environment variable when None.
 
     Returns:
         LLM instance configured for the Claude Messages API
 
     Raises:
-        ValueError: If the model is not offered
+        ValueError: If the model is not offered or the TTL is not supported
         RuntimeError: If server mode is used without ANTHROPIC_API_KEY set
     """
     from langchain_anthropic import ChatAnthropic
 
     resolved_model = normalize_model(model)
+    resolved_ttl = cache_ttl or os.getenv("HEDIT_PROMPT_CACHE_TTL") or DEFAULT_CACHE_TTL
+    if resolved_ttl not in CACHE_TTLS:
+        raise ValueError(
+            f"Unsupported prompt cache TTL '{resolved_ttl}'. Supported: {', '.join(CACHE_TTLS)}"
+        )
 
     kwargs: dict[str, Any] = {}
     if api_key:
@@ -165,7 +182,7 @@ def create_anthropic_llm(
     )
 
     if enable_caching:
-        return CachingLLMWrapper(llm=llm, role=role)
+        return CachingLLMWrapper(llm=llm, role=role, cache_ttl=resolved_ttl)
 
     return llm
 
@@ -177,8 +194,14 @@ class CachingLLMWrapper(BaseChatModel):
     to the multipart format with cache_control markers. Cache hits cost
     ~10% of the normal input price (after a 25% cache-write premium).
 
-    Minimum cacheable prompt: 1024 tokens for Sonnet, 4096 for Haiku 4.5.
-    Cache TTL: 5 minutes (refreshed on each hit).
+    Minimum cacheable prompt: 1024 tokens for Sonnet 5, 4096 for Haiku 4.5.
+    A shorter prefix keeps the marker but never creates an entry, so no
+    write premium is charged either. Only the annotation prompt (~21.8k
+    tokens) clears the Haiku minimum; the evaluation, assessment, feedback,
+    keyword, and vision prompts (186-623 tokens) do not.
+
+    Cache TTL: 5 minutes by default, refreshed on each hit; "1h" is
+    available for traffic spaced further apart (see CACHE_TTLS).
 
     Only plain-text System/Human/AI turns are supported; other message
     types (tool calls, tool results) raise TypeError rather than being
@@ -191,10 +214,19 @@ class CachingLLMWrapper(BaseChatModel):
     role: str = "unspecified"
     """Agent role used to label token and cache usage."""
 
+    cache_ttl: str = DEFAULT_CACHE_TTL
+    """Prompt-cache lifetime for the system prefix ("5m" or "1h")."""
+
     model_config = {"arbitrary_types_allowed": True}
 
-    def __init__(self, llm: BaseChatModel, role: str = "unspecified", **kwargs) -> None:
-        super().__init__(llm=llm, role=role, **kwargs)  # type: ignore[call-arg]
+    def __init__(
+        self,
+        llm: BaseChatModel,
+        role: str = "unspecified",
+        cache_ttl: str = DEFAULT_CACHE_TTL,
+        **kwargs,
+    ) -> None:
+        super().__init__(llm=llm, role=role, cache_ttl=cache_ttl, **kwargs)  # type: ignore[call-arg]
 
     @property
     def _llm_type(self) -> str:
@@ -203,6 +235,10 @@ class CachingLLMWrapper(BaseChatModel):
     def _add_cache_control(self, messages: list[BaseMessage]) -> list[dict]:
         """Transform messages to add cache_control to system messages."""
         from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+
+        cache_control: dict[str, str] = {"type": "ephemeral"}
+        if self.cache_ttl != DEFAULT_CACHE_TTL:
+            cache_control["ttl"] = self.cache_ttl
 
         result = []
         for msg in messages:
@@ -214,7 +250,7 @@ class CachingLLMWrapper(BaseChatModel):
                             {
                                 "type": "text",
                                 "text": msg.content,
-                                "cache_control": {"type": "ephemeral"},
+                                "cache_control": cache_control,
                             }
                         ],
                     }

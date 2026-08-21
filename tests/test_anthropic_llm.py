@@ -247,3 +247,45 @@ class TestUsageAccounting:
         llm = create_anthropic_llm(enable_caching=False, role="annotation")
         assert not isinstance(llm, CachingLLMWrapper)
         assert not hasattr(llm, "_record_usage")
+
+
+class TestCacheTtl:
+    """Tests for the prompt-cache lifetime knob."""
+
+    @pytest.fixture(autouse=True)
+    def server_key(self, monkeypatch):
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "server-key")
+        monkeypatch.delenv("HEDIT_PROMPT_CACHE_TTL", raising=False)
+
+    def test_default_ttl_sends_a_bare_marker(self):
+        """The 5-minute default is implicit, so no ttl key is sent."""
+        wrapper = create_anthropic_llm()
+        transformed = wrapper._add_cache_control([SystemMessage(content="guide")])
+
+        assert transformed[0]["content"][0]["cache_control"] == {"type": "ephemeral"}
+
+    def test_one_hour_ttl_is_sent_explicitly(self):
+        wrapper = create_anthropic_llm(cache_ttl="1h")
+        transformed = wrapper._add_cache_control([SystemMessage(content="guide")])
+
+        assert transformed[0]["content"][0]["cache_control"] == {
+            "type": "ephemeral",
+            "ttl": "1h",
+        }
+
+    def test_env_var_sets_the_default(self, monkeypatch):
+        monkeypatch.setenv("HEDIT_PROMPT_CACHE_TTL", "1h")
+        assert create_anthropic_llm().cache_ttl == "1h"
+
+    def test_argument_wins_over_env_var(self, monkeypatch):
+        monkeypatch.setenv("HEDIT_PROMPT_CACHE_TTL", "1h")
+        assert create_anthropic_llm(cache_ttl="5m").cache_ttl == "5m"
+
+    def test_unsupported_ttl_is_rejected(self):
+        with pytest.raises(ValueError, match="Unsupported prompt cache TTL"):
+            create_anthropic_llm(cache_ttl="7d")
+
+    def test_unsupported_env_ttl_is_rejected(self, monkeypatch):
+        monkeypatch.setenv("HEDIT_PROMPT_CACHE_TTL", "forever")
+        with pytest.raises(ValueError, match="Unsupported prompt cache TTL"):
+            create_anthropic_llm()
