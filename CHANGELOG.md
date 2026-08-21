@@ -76,6 +76,10 @@ thinking on the annotation agent.
 - An invalid model is now rejected with 400 before credentials are checked, so a bad model
   name no longer surfaces as a credential error. Missing server credentials are 503,
   distinct from 400. (#162)
+- API error responses no longer quote the provider's error text. A rejected request used to
+  forward the first 200 characters of the provider exception, which a provider can populate
+  with request details and which the web app renders as HTML. Every failure class now
+  returns a fixed message; the provider's wording stays in the server log. (#167)
 
 ### Removed
 
