@@ -82,6 +82,11 @@ def _describe_llm_error(exc: Exception) -> tuple[int, str, str]:
     key gets a 401 pointing at their key, not a generic 500. Order matters --
     AnthropicContextOverflowError subclasses BadRequestError, and the timeout
     and rate-limit types must be checked before their parent classes.
+
+    Every message here is a fixed string. Exception text never reaches the
+    client, because a provider error can carry request details and the web app
+    renders the message as HTML. Callers log the exception, so the provider's
+    own wording stays available in the server log for whoever debugs it.
     """
     if isinstance(exc, APITimeoutError):
         return 504, "timeout", "LLM request timed out. Try again or use a faster model."
@@ -98,7 +103,11 @@ def _describe_llm_error(exc: Exception) -> tuple[int, str, str]:
     if isinstance(exc, AnthropicContextOverflowError):
         return 413, "context_overflow", "The input is too long for this model. Try shortening it."
     if isinstance(exc, anthropic.BadRequestError):
-        return 400, "bad_request", f"The LLM rejected the request: {str(exc)[:200]}"
+        return (
+            400,
+            "bad_request",
+            "The LLM rejected the request. Check the model and request parameters, then try again.",
+        )
     if isinstance(exc, anthropic.APIConnectionError):
         return 502, "upstream_unreachable", "Could not reach the LLM service. Please try again."
     return 500, "internal", "An error occurred during annotation processing."
