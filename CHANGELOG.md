@@ -8,6 +8,16 @@ This file starts at 0.7.11.
 Earlier releases are described in the [GitHub releases](https://github.com/Annotation-Garden/HEDit/releases),
 which are generated from the commit log.
 
+## [Unreleased]
+
+### Changed
+
+- CI actions moved to their current majors: `actions/checkout` v7, `codecov/codecov-action`
+  v7, `actions/dependency-review-action` v5, `docker/login-action` v4,
+  `docker/metadata-action` v6. The fork-PR review lane stays on `checkout` v6, the last
+  version that permits checking out a fork PR head under `pull_request_target`. Dependabot
+  now opens its PRs against develop rather than main. (#131, #133, #143, #152, #153)
+
 ## [0.7.11] - 2026-08-20
 
 The LLM provider migration, plus token and cache accounting on every surface, and extended

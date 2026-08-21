@@ -6,6 +6,8 @@ updates:
   # Python dependencies
   - package-ecosystem: "pip"
     directory: "/"
+    # PRs go to develop, per the branching strategy in CLAUDE.md
+    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -36,6 +38,8 @@ updates:
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
+    # PRs go to develop, per the branching strategy in CLAUDE.md
+    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -53,6 +57,8 @@ updates:
   # Docker
   - package-ecosystem: "docker"
     directory: "/deploy"
+    # PRs go to develop, per the branching strategy in CLAUDE.md
+    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -70,6 +76,8 @@ updates:
   # Cloudflare Workers (npm)
   - package-ecosystem: "npm"
     directory: "/workers"
+    # PRs go to develop, per the branching strategy in CLAUDE.md
+    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "monday"
