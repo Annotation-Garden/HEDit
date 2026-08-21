@@ -106,7 +106,7 @@ Final HED Annotation + Feedback
 - **Claude Platform on AWS**: Anthropic-operated Messages API billed through the AWS Marketplace
 - **No GPU Needed**: Inference runs remotely, no local model hosting
 - **Concurrent Users**: Optimized for 10-15 simultaneous users
-- **Two Models**: `claude-haiku-4-5` (default) and `claude-sonnet-5` (highest quality)
+- **Two Models**: `claude-haiku-4-5` (default, recommended) and `claude-sonnet-5` (larger, 2.3x the cost)
 
 ### 7. Containerized Deployment
 - **Docker**: Single-command deployment with all dependencies

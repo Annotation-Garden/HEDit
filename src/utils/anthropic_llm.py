@@ -41,8 +41,8 @@ DEFAULT_MODEL = "claude-haiku-4-5"
 # Models offered to users (web UI dropdown / CLI). Opus is deliberately
 # not offered.
 ALLOWED_MODELS = {
-    "claude-haiku-4-5": "Claude Haiku 4.5 (fast, default)",
-    "claude-sonnet-5": "Claude Sonnet 5 (highest quality)",
+    "claude-haiku-4-5": "Claude Haiku 4.5 (default, recommended)",
+    "claude-sonnet-5": "Claude Sonnet 5 (larger, 2.3x the cost)",
 }
 
 # Legacy identifiers from older clients, saved CLI configs, and cached

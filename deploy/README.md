@@ -277,8 +277,8 @@ ANTHROPIC_BASE_URL=https://aws-external-anthropic.us-east-2.api.aws
 ANTHROPIC_WORKSPACE_ID=wrkspc_your_workspace_id
 LLM_TEMPERATURE=0.1
 
-# Model configuration (claude-haiku-4-5 is the default;
-# claude-sonnet-5 is optional for highest quality)
+# Model configuration (claude-haiku-4-5 is the default and recommended;
+# claude-sonnet-5 is optional, larger, and 2.3x the cost)
 ANNOTATION_MODEL=claude-haiku-4-5
 EVALUATION_MODEL=claude-haiku-4-5
 VISION_MODEL=claude-haiku-4-5

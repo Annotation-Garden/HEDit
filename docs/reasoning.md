@@ -66,6 +66,15 @@ never fired, so every arm would have scored a perfect first-attempt rate.
 Non-Anthropic models, should HEDit gain them (#163), default to thinking off: that is
 where thinking was slow enough to cost more than it saved.
 
+### Model choice
+
+Haiku 4.5 with thinking is the default everywhere, and Sonnet 5 stays selectable in the
+web app, the API (`X-Anthropic-Model`), and the CLI (`--model`). Keeping it visible is
+deliberate: the measurement above says it is not the better choice here, and the way to
+make that credible is to let people run both rather than to remove the option. The web
+app labels it as the larger, 2.3x-cost model instead of the higher-quality one, and links
+to this page.
+
 To change or disable it:
 
 ```bash

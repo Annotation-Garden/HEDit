@@ -522,7 +522,8 @@ sudo systemctl status hed-bot
 
 2. **Model Selection**:
    - Default model: `claude-haiku-4-5` (fast, used for annotation, evaluation, and vision)
-   - Optional: `claude-sonnet-5` for highest quality (slower, higher cost)
+   - Optional: `claude-sonnet-5`, larger and 2.3x the cost, with no measured quality gain
+     (see `docs/reasoning.md`)
 
 3. **Caching**:
    - HED schemas are cached in memory

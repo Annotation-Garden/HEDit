@@ -9,7 +9,8 @@ This document describes how to manually test the bring your own key (BYOK) model
 2. Have the HEDit CLI installed: `pip install hedit` or `pip install -e .`
 3. Know the API endpoint (e.g., `https://api.annotation.garden/hedit` or local `http://localhost:38427`)
 
-Only two models are offered: `claude-haiku-4-5` (default) and `claude-sonnet-5` (highest quality).
+Only two models are offered: `claude-haiku-4-5` (default, recommended) and `claude-sonnet-5`
+(larger, 2.3x the cost, no better on the benchmark in `docs/reasoning.md`).
 Legacy OpenRouter-style identifiers such as `anthropic/claude-haiku-4.5` are accepted as aliases.
 
 ## Test 1: Request Body Model Selection (API)
