@@ -150,13 +150,16 @@ class LocalExecutionBackend(ExecutionBackend):
             self._ensure_api_key()
 
             from src.agents.workflow import HedAnnotationWorkflow
-            from src.utils.anthropic_llm import create_anthropic_llm
+            from src.utils.anthropic_llm import annotation_thinking, create_anthropic_llm
 
-            # Annotation LLM keeps reasoning enabled (real HED tag work).
+            # Annotation thinks; see annotation_thinking() for the measurement
+            # behind the budget and HEDIT_ANNOTATION_THINKING_BUDGET to change
+            # or disable it.
             annotation_llm = create_anthropic_llm(
                 model=self._model,
                 api_key=self._api_key,
                 temperature=self._temperature,
+                thinking=annotation_thinking(self._model),
                 role="annotation",
             )
 

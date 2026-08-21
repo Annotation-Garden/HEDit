@@ -19,7 +19,7 @@ and are authenticated with an Anthropic API key plus a workspace identifier.
 | Model | Role |
 |-------|------|
 | `claude-haiku-4-5` | Default for annotation, evaluation (judge), and vision |
-| `claude-sonnet-5` | Optional, highest quality |
+| `claude-sonnet-5` | Optional, larger, 2.3x the cost (no measured quality gain, see `docs/reasoning.md`) |
 
 No other models are offered (Opus is not available).
 Legacy OpenRouter-style identifiers such as `anthropic/claude-haiku-4.5` are accepted as aliases,

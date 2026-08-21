@@ -750,6 +750,13 @@
             font-weight: 400;
         }
 
+        .field-help {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            font-weight: 400;
+        }
+
         .progress-status {
             display: none;
             padding: 16px;
@@ -1078,9 +1085,14 @@ Example: A red circle appears on the left side of the screen and the participant
             <div>
                 <label for="annotationModel">Annotation Model</label>
                 <select id="annotationModel">
-                    <option value="claude-haiku-4-5" selected>Claude Haiku 4.5 (fast, default)</option>
-                    <option value="claude-sonnet-5">Claude Sonnet 5 (highest quality)</option>
+                    <option value="claude-haiku-4-5" selected>Claude Haiku 4.5 (default, recommended)</option>
+                    <option value="claude-sonnet-5">Claude Sonnet 5 (larger, 2.3x the cost)</option>
                 </select>
+                <div class="field-help">
+                    Haiku 4.5 runs with extended thinking and matched Sonnet 5 on our
+                    <a href="https://github.com/Annotation-Garden/HEDit/blob/develop/docs/reasoning.md" target="_blank" rel="noopener noreferrer">15-case benchmark</a>
+                    for less than half the cost. Sonnet 5 is here if you want to compare.
+                </div>
             </div>
             <div>
                 <label for="maxAttempts">Max Validation Attempts</label>
@@ -1144,9 +1156,14 @@ Example: A red circle appears on the left side of the screen and the participant
                 <div>
                     <label for="annotationModel-image">Annotation Model</label>
                     <select id="annotationModel-image">
-                        <option value="claude-haiku-4-5" selected>Claude Haiku 4.5 (fast, default)</option>
-                        <option value="claude-sonnet-5">Claude Sonnet 5 (highest quality)</option>
+                        <option value="claude-haiku-4-5" selected>Claude Haiku 4.5 (default, recommended)</option>
+                        <option value="claude-sonnet-5">Claude Sonnet 5 (larger, 2.3x the cost)</option>
                     </select>
+                    <div class="field-help">
+                        Haiku 4.5 runs with extended thinking and matched Sonnet 5 on our
+                        <a href="https://github.com/Annotation-Garden/HEDit/blob/develop/docs/reasoning.md" target="_blank" rel="noopener noreferrer">15-case benchmark</a>
+                        for less than half the cost. Sonnet 5 is here if you want to compare.
+                    </div>
                 </div>
                 <div>
                     <label for="maxAttempts-image">Max Validation Attempts</label>
@@ -1234,7 +1251,7 @@ Example: A red circle appears on the left side of the screen and the participant
         <a href="https://docs.annotation.garden/projects/hedit/telemetry" target="_blank" rel="noopener noreferrer" title="Learn more about telemetry">Learn more</a>
     </div>
     <div class="model-info">
-        <span>Models: <a href="https://www.anthropic.com/claude/haiku" target="_blank" rel="noopener noreferrer">Claude Haiku 4.5</a> (annotation, vision, evaluation) · <a href="https://www.anthropic.com/claude/sonnet" target="_blank" rel="noopener noreferrer">Claude Sonnet 5</a> (optional, highest quality) · To change models or use programmatically, install <a href="https://pypi.org/project/hedit/" target="_blank" rel="noopener noreferrer">HEDit CLI</a></span>
+        <span>Models: <a href="https://www.anthropic.com/claude/haiku" target="_blank" rel="noopener noreferrer">Claude Haiku 4.5</a> (annotation, vision, evaluation) · <a href="https://www.anthropic.com/claude/sonnet" target="_blank" rel="noopener noreferrer">Claude Sonnet 5</a> (optional, larger) · To change models or use programmatically, install <a href="https://pypi.org/project/hedit/" target="_blank" rel="noopener noreferrer">HEDit CLI</a></span>
     </div>
 
     <script src="config.js"></script>

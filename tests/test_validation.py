@@ -118,6 +118,57 @@ class TestHedPythonValidator:
         assert isinstance(result.errors, list)
 
 
+class TestSeverityMapping:
+    """Tests that hedtools severities map to the right bucket.
+
+    hedtools reports severity as an ErrorSeverity enum (ERROR=1,
+    WARNING=10). Comparing it to the string "error" is always False, which
+    filed every error as a warning and left is_valid True for any input --
+    "NotARealTag/Foo" validated clean and the workflow's refinement loop
+    could never fire (#161).
+    """
+
+    def test_unknown_tag_is_an_error(self, validator):
+        result = validator.validate("Sensory-event, NotARealTag/Foo")
+
+        assert result.is_valid is False
+        assert [issue.code for issue in result.errors] == ["TAG_INVALID"]
+        assert result.warnings == []
+
+    def test_non_base_tag_is_an_error(self, validator):
+        """A plausible-looking tag that is not in the schema still fails."""
+        result = validator.validate("Agent-action, (Press, Button)")
+
+        assert result.is_valid is False
+        assert any(issue.code == "TAG_INVALID" for issue in result.errors)
+
+    def test_repeated_tag_is_an_error(self, validator):
+        result = validator.validate("Sensory-event, Sensory-event")
+
+        assert result.is_valid is False
+        assert any(issue.code == "TAG_EXPRESSION_REPEATED" for issue in result.errors)
+
+    def test_tag_extension_is_a_warning(self, validator):
+        """Extensions are allowed, so they must not invalidate the string."""
+        result = validator.validate("Sensory-event, Animal/Dog")
+
+        assert result.is_valid is True
+        assert result.errors == []
+        assert [issue.code for issue in result.warnings] == ["TAG_EXTENDED"]
+
+    def test_clean_string_has_no_issues(self, validator):
+        result = validator.validate("Sensory-event, Visual-presentation")
+
+        assert result.is_valid is True
+        assert result.errors == []
+        assert result.warnings == []
+
+    def test_errors_carry_their_level(self, validator):
+        result = validator.validate("Sensory-event, NotARealTag/Foo")
+
+        assert all(issue.level == "error" for issue in result.errors)
+
+
 class TestHedJavaScriptValidator:
     """Tests for HedJavaScriptValidator class."""
 
@@ -189,14 +240,12 @@ def test_validate_valid_string(validator):
 
 
 def test_validate_invalid_tag(validator):
-    """Test validation of invalid tag.
-
-    Note: HED 8.3.0+ reports invalid tags as warnings, not errors.
-    """
+    """An unknown tag is an error, so the string is invalid."""
     result = validator.validate("Invalid-nonexistent-tag")
 
-    # Invalid tags may be reported as warnings in newer HED versions
-    assert result.is_valid is False or len(result.warnings) > 0
+    assert result.is_valid is False
+    assert len(result.errors) >= 1
+    assert result.errors[0].code == "TAG_INVALID"
 
 
 def test_validate_with_grouping(validator):

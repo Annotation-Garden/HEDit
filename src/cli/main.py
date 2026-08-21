@@ -104,7 +104,7 @@ ModelOption = Annotated[
     typer.Option(
         "--model",
         "-m",
-        help="Model to use: claude-haiku-4-5 (default) or claude-sonnet-5",
+        help="Model to use: claude-haiku-4-5 (default, recommended) or claude-sonnet-5",
     ),
 ]
 

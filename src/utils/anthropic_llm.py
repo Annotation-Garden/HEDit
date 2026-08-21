@@ -41,8 +41,8 @@ DEFAULT_MODEL = "claude-haiku-4-5"
 # Models offered to users (web UI dropdown / CLI). Opus is deliberately
 # not offered.
 ALLOWED_MODELS = {
-    "claude-haiku-4-5": "Claude Haiku 4.5 (fast, default)",
-    "claude-sonnet-5": "Claude Sonnet 5 (highest quality)",
+    "claude-haiku-4-5": "Claude Haiku 4.5 (default, recommended)",
+    "claude-sonnet-5": "Claude Sonnet 5 (larger, 2.3x the cost)",
 }
 
 # Legacy identifiers from older clients, saved CLI configs, and cached
@@ -77,6 +77,20 @@ _ADAPTIVE_THINKING_MODELS = {"claude-sonnet-5"}
 # reasoning depth.
 _ALWAYS_THINKING_MODELS: set[str] = set()
 LOWEST_REASONING_EFFORT = "low"
+
+# Smallest thinking budget the API accepts on budget-style models.
+MIN_THINKING_BUDGET_TOKENS = 1024
+
+# Thinking budget for the annotation role on budget-style models. Measured
+# over the 15 benchmark descriptions (2026-08-20, Haiku 4.5): first-attempt
+# validity went 5/15 without thinking to 11/15 at 1024 tokens and 13/15 at
+# 2048, average attempts 1.87 -> 1.13, and total LLM calls 71 -> 49. Cost per
+# request rose 24% ($0.0092 -> $0.0114) while 2048 came out cheaper than 1024
+# ($0.0129), because the larger budget removed more refinement rounds than it
+# added in thinking tokens. Latency roughly doubled (10.3s -> 20.9s), which is
+# the real price; HEDIT_ANNOTATION_THINKING_BUDGET=0 turns it off for
+# latency-sensitive deployments.
+DEFAULT_ANNOTATION_THINKING_BUDGET = 2048
 
 # Models that still accept sampling parameters. Sonnet 5 rejects
 # `temperature` with a 400 (sampling params are removed on Claude 5 models).
@@ -114,6 +128,101 @@ def normalize_model(model: str | None) -> str:
     return resolved
 
 
+def _validate_thinking(thinking: dict[str, Any], model: str, max_tokens: int) -> None:
+    """Check a thinking configuration against what the model accepts.
+
+    The API enforces different shapes per generation, and a mismatch is a
+    400 at request time: Sonnet 5 rejects thinking.type "enabled" ("Use
+    thinking.type adaptive"), while Haiku 4.5 has no adaptive mode and needs
+    an explicit token budget.
+
+    Args:
+        thinking: Thinking configuration to check
+        model: Resolved first-party model id
+        max_tokens: Maximum tokens for the request
+
+    Raises:
+        ValueError: If the configuration is not valid for this model
+    """
+    kind = thinking.get("type")
+
+    if model in _ADAPTIVE_THINKING_MODELS:
+        if kind not in ("adaptive", "disabled"):
+            raise ValueError(
+                f"{model} accepts thinking type 'adaptive' or 'disabled', not {kind!r}; "
+                "budget_tokens was removed on this model generation"
+            )
+        return
+
+    if kind == "disabled":
+        # Accepted (verified against the endpoint) and redundant on these
+        # models, but it lets a caller express "off" the same way for every
+        # model instead of special-casing.
+        return
+
+    if kind != "enabled":
+        raise ValueError(
+            f"{model} has no adaptive thinking mode; enable it with "
+            '{"type": "enabled", "budget_tokens": N}, disable it with '
+            '{"type": "disabled"}, or leave thinking unset'
+        )
+
+    budget = thinking.get("budget_tokens")
+    if not isinstance(budget, int) or budget < MIN_THINKING_BUDGET_TOKENS:
+        raise ValueError(
+            f"budget_tokens must be an integer of at least "
+            f"{MIN_THINKING_BUDGET_TOKENS}, got {budget!r}"
+        )
+    if budget >= max_tokens:
+        raise ValueError(
+            f"budget_tokens ({budget}) must be below max_tokens ({max_tokens}); "
+            "thinking tokens are drawn from the same budget as the response"
+        )
+
+
+def annotation_thinking(model: str | None = None) -> dict[str, Any] | None:
+    """Thinking configuration for the annotation role.
+
+    Reasoning measurably improves first-attempt validity on the annotation
+    agent, which is worth paying for because every failed attempt costs
+    another full annotate/validate/evaluate round. The support roles are
+    unaffected: reasoning there added latency without quality (#150).
+
+    Set HEDIT_ANNOTATION_THINKING_BUDGET to a token count to change the
+    budget, or to 0 (or "off") to disable thinking entirely.
+
+    Args:
+        model: Model the annotation LLM will use (default model if None)
+
+    Returns:
+        A thinking configuration for the model, or None when disabled
+
+    Raises:
+        ValueError: If the environment override is not an integer or "off"
+    """
+    resolved_model = normalize_model(model)
+
+    raw = os.getenv("HEDIT_ANNOTATION_THINKING_BUDGET")
+    if raw is not None and raw.strip().lower() in ("0", "off", "false", "none"):
+        return None
+
+    if resolved_model in _ADAPTIVE_THINKING_MODELS:
+        # Adaptive is the only on-mode on this generation; the model decides
+        # how much to think, so the budget value does not apply.
+        return {"type": "adaptive"}
+
+    budget = DEFAULT_ANNOTATION_THINKING_BUDGET
+    if raw is not None:
+        try:
+            budget = int(raw)
+        except ValueError as exc:
+            raise ValueError(
+                f"HEDIT_ANNOTATION_THINKING_BUDGET must be an integer or 'off', got {raw!r}"
+            ) from exc
+
+    return {"type": "enabled", "budget_tokens": budget}
+
+
 def create_anthropic_llm(
     model: str | None = None,
     api_key: str | None = None,
@@ -124,6 +233,7 @@ def create_anthropic_llm(
     timeout: float = 60.0,
     role: str = "unspecified",
     cache_ttl: str | None = None,
+    thinking: dict[str, Any] | None = None,
 ) -> BaseChatModel:
     """Create a Claude LLM instance with prompt caching.
 
@@ -151,12 +261,21 @@ def create_anthropic_llm(
             token and cache usage; has no effect on the request itself.
         cache_ttl: Prompt-cache lifetime, "5m" (default) or "1h". Falls back
             to the HEDIT_PROMPT_CACHE_TTL environment variable when None.
+        thinking: Explicit extended-thinking configuration, overriding
+            disable_reasoning. The accepted shape depends on the model, and
+            the API is strict about it: Sonnet 5 takes
+            {"type": "adaptive"} or {"type": "disabled"} and rejects
+            "enabled"; Haiku 4.5 takes
+            {"type": "enabled", "budget_tokens": N} with N at least 1024 and
+            below max_tokens. Enabling thinking also drops `temperature`,
+            since the API only allows temperature 1 alongside thinking.
 
     Returns:
         LLM instance configured for the Claude Messages API
 
     Raises:
-        ValueError: If the model is not offered or the TTL is not supported
+        ValueError: If the model is not offered, the TTL is not supported, or
+            the thinking configuration is not valid for the model
         RuntimeError: If server mode is used without ANTHROPIC_API_KEY set
     """
     from langchain_anthropic import ChatAnthropic
@@ -188,10 +307,20 @@ def create_anthropic_llm(
         if workspace_id:
             kwargs["default_headers"] = {"anthropic-workspace-id": workspace_id}
 
-    if resolved_model in _SAMPLING_MODELS:
+    resolved_max_tokens = max_tokens or 8000
+
+    if thinking is not None:
+        _validate_thinking(thinking, resolved_model, resolved_max_tokens)
+        kwargs["thinking"] = thinking
+
+    thinking_on = thinking is not None and thinking.get("type") != "disabled"
+
+    # The API rejects any temperature but 1 when thinking is enabled, so the
+    # sampling setting is dropped rather than silently causing a 400.
+    if resolved_model in _SAMPLING_MODELS and not thinking_on:
         kwargs["temperature"] = temperature
 
-    if disable_reasoning:
+    if disable_reasoning and thinking is None:
         if resolved_model in _ADAPTIVE_THINKING_MODELS:
             kwargs["thinking"] = {"type": "disabled"}
         elif resolved_model in _ALWAYS_THINKING_MODELS:
@@ -199,7 +328,7 @@ def create_anthropic_llm(
 
     llm = ChatAnthropic(
         model=resolved_model,
-        max_tokens=max_tokens or 8000,
+        max_tokens=resolved_max_tokens,
         timeout=timeout,
         **kwargs,
     )

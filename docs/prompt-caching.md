@@ -139,34 +139,14 @@ keyword      calls=2  input=    396  cache_read=      0  hit_rate=  0%  cost=$0.
 `output_tokens`, `cache_read_tokens`, `cache_write_tokens`, `cache_hit_rate`,
 `cost_usd`, and `uncached_cost_usd`.
 
-## Extended thinking, and where it stands
+## Extended thinking
 
-Thinking tokens bill as output, so this interacts with cost directly. Current
-behavior, by role:
-
-- **Evaluation, assessment, feedback, keyword extraction**: thinking disabled. These
-  are short structured tasks; reasoning added 5-10 s per call with no measurable
-  quality gain (#150).
-- **Annotation and vision**: no `disable_reasoning` flag, so whatever the model does
-  by default applies. On Haiku 4.5 (the default) that means no thinking at all, since
-  Haiku only thinks when given an explicit `budget_tokens`. On Sonnet 5 it means
-  adaptive thinking runs.
-
-Whether annotation should think is genuinely open. Extended thinking has been observed
-to get past the validator in a single iteration, which is worth a lot given that each
-refinement iteration costs another annotation call plus validation and evaluation. It
-has also been observed to make agents verbose and prone to circling in the refine
-loop, and on non-Anthropic models it was slow enough to erase the caching savings
-entirely. The intended policy is therefore per provider: thinking on for Anthropic
-models, off for others.
-
-Where a model refuses `thinking: {"type": "disabled"}`, the factory requests the
-lowest reasoning effort instead (`_ALWAYS_THINKING_MODELS` in
-`src/utils/anthropic_llm.py`).
-
-The remaining question -- what thinking budget annotation should get on Haiku, and
-whether it earns its cost -- is a measurement, not a recollection: first-attempt
-validity, iteration count, latency, and cost across both arms.
+Thinking tokens bill as output, so reasoning interacts with these figures directly.
+Annotation runs with a 2048-token thinking budget, which raised first-attempt validity
+from 5/15 to 13/15 for 24% more cost per request and about twice the latency; the
+support roles run with thinking off. Measurements, per-role policy, and the
+`HEDIT_ANNOTATION_THINKING_BUDGET` knob are in
+[reasoning.md](reasoning.md).
 
 ## Cost figures
 

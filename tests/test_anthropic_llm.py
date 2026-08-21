@@ -7,8 +7,10 @@ from langchain_core.outputs import ChatGeneration, ChatResult
 from src.utils import anthropic_llm
 from src.utils.anthropic_llm import (
     ALLOWED_MODELS,
+    DEFAULT_ANNOTATION_THINKING_BUDGET,
     DEFAULT_MODEL,
     CachingLLMWrapper,
+    annotation_thinking,
     create_anthropic_llm,
     normalize_model,
 )
@@ -305,3 +307,145 @@ class TestCacheTtl:
         monkeypatch.setenv("HEDIT_PROMPT_CACHE_TTL", "forever")
         with pytest.raises(ValueError, match="Unsupported prompt cache TTL"):
             create_anthropic_llm()
+
+
+class TestThinkingConfiguration:
+    """Tests for the explicit thinking knob.
+
+    The shapes asserted here are the ones the API actually enforces, checked
+    against the live endpoint: Haiku 4.5 needs an explicit budget and refuses
+    any temperature but 1 alongside thinking; Sonnet 5 rejects
+    thinking.type "enabled" and wants "adaptive".
+    """
+
+    @pytest.fixture(autouse=True)
+    def server_key(self, monkeypatch):
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "server-key")
+
+    def test_haiku_takes_a_budget(self):
+        llm = create_anthropic_llm(
+            model="claude-haiku-4-5",
+            thinking={"type": "enabled", "budget_tokens": 1024},
+            enable_caching=False,
+        )
+        assert llm.thinking == {"type": "enabled", "budget_tokens": 1024}
+
+    def test_temperature_is_dropped_when_thinking_is_on(self):
+        """The API allows only temperature 1 with thinking, so it is omitted."""
+        llm = create_anthropic_llm(
+            model="claude-haiku-4-5",
+            temperature=0.1,
+            thinking={"type": "enabled", "budget_tokens": 1024},
+            enable_caching=False,
+        )
+        assert llm.temperature is None
+
+    def test_temperature_survives_thinking_disabled(self):
+        llm = create_anthropic_llm(
+            model="claude-haiku-4-5",
+            temperature=0.1,
+            thinking={"type": "disabled"},
+            enable_caching=False,
+        )
+        assert llm.temperature == 0.1
+
+    def test_sonnet_takes_adaptive(self):
+        llm = create_anthropic_llm(
+            model="claude-sonnet-5", thinking={"type": "adaptive"}, enable_caching=False
+        )
+        assert llm.thinking == {"type": "adaptive"}
+
+    def test_sonnet_rejects_budget_style_thinking(self):
+        with pytest.raises(ValueError, match="adaptive"):
+            create_anthropic_llm(
+                model="claude-sonnet-5",
+                thinking={"type": "enabled", "budget_tokens": 1024},
+                enable_caching=False,
+            )
+
+    def test_haiku_rejects_adaptive(self):
+        with pytest.raises(ValueError, match="no adaptive thinking mode"):
+            create_anthropic_llm(
+                model="claude-haiku-4-5", thinking={"type": "adaptive"}, enable_caching=False
+            )
+
+    def test_budget_below_minimum_rejected(self):
+        with pytest.raises(ValueError, match="at least 1024"):
+            create_anthropic_llm(
+                model="claude-haiku-4-5",
+                thinking={"type": "enabled", "budget_tokens": 512},
+                enable_caching=False,
+            )
+
+    def test_budget_must_fit_under_max_tokens(self):
+        with pytest.raises(ValueError, match="must be below max_tokens"):
+            create_anthropic_llm(
+                model="claude-haiku-4-5",
+                max_tokens=2000,
+                thinking={"type": "enabled", "budget_tokens": 2000},
+                enable_caching=False,
+            )
+
+    def test_explicit_thinking_overrides_disable_reasoning(self):
+        llm = create_anthropic_llm(
+            model="claude-sonnet-5",
+            disable_reasoning=True,
+            thinking={"type": "adaptive"},
+            enable_caching=False,
+        )
+        assert llm.thinking == {"type": "adaptive"}
+
+
+class TestAnnotationThinking:
+    """Tests for the annotation role's thinking policy."""
+
+    @pytest.fixture(autouse=True)
+    def clean_env(self, monkeypatch):
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "server-key")
+        monkeypatch.delenv("HEDIT_ANNOTATION_THINKING_BUDGET", raising=False)
+
+    def test_default_budget_on_haiku(self):
+        assert annotation_thinking("claude-haiku-4-5") == {
+            "type": "enabled",
+            "budget_tokens": DEFAULT_ANNOTATION_THINKING_BUDGET,
+        }
+
+    def test_default_model_gets_a_budget(self):
+        assert annotation_thinking()["type"] == "enabled"
+
+    def test_adaptive_model_ignores_the_budget(self):
+        """Sonnet 5 decides its own depth; budget_tokens is rejected there."""
+        assert annotation_thinking("claude-sonnet-5") == {"type": "adaptive"}
+
+    def test_env_override_sets_the_budget(self, monkeypatch):
+        monkeypatch.setenv("HEDIT_ANNOTATION_THINKING_BUDGET", "4096")
+        assert annotation_thinking("claude-haiku-4-5")["budget_tokens"] == 4096
+
+    def test_env_can_disable_thinking(self, monkeypatch):
+        for value in ("0", "off", "false", "none", "OFF"):
+            monkeypatch.setenv("HEDIT_ANNOTATION_THINKING_BUDGET", value)
+            assert annotation_thinking("claude-haiku-4-5") is None
+            assert annotation_thinking("claude-sonnet-5") is None
+
+    def test_bad_env_value_is_rejected(self, monkeypatch):
+        monkeypatch.setenv("HEDIT_ANNOTATION_THINKING_BUDGET", "lots")
+        with pytest.raises(ValueError, match="must be an integer or 'off'"):
+            annotation_thinking("claude-haiku-4-5")
+
+    def test_legacy_model_id_is_normalized(self):
+        assert annotation_thinking("anthropic/claude-haiku-4.5")["type"] == "enabled"
+
+    def test_policy_produces_a_usable_llm(self):
+        """The default policy must satisfy the factory's own validation."""
+        llm = create_anthropic_llm(
+            model="claude-haiku-4-5",
+            thinking=annotation_thinking("claude-haiku-4-5"),
+            enable_caching=False,
+        )
+        assert llm.thinking["budget_tokens"] == DEFAULT_ANNOTATION_THINKING_BUDGET
+        # Thinking forces temperature off, which the API requires.
+        assert llm.temperature is None
+
+    def test_budget_fits_under_the_default_max_tokens(self):
+        """A budget above max_tokens would 400 at request time."""
+        assert DEFAULT_ANNOTATION_THINKING_BUDGET < 8000

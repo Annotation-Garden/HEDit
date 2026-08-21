@@ -40,7 +40,12 @@ from src.api.models import (
 from src.api.security import api_key_auth, audit_logger
 from src.lsp import HedLspClient
 from src.telemetry import LocalFileStorage, TelemetryCollector, TelemetryEvent
-from src.utils.anthropic_llm import DEFAULT_MODEL, create_anthropic_llm, normalize_model
+from src.utils.anthropic_llm import (
+    DEFAULT_MODEL,
+    annotation_thinking,
+    create_anthropic_llm,
+    normalize_model,
+)
 from src.utils.llm_usage import UsageLedger, process_ledger, usage_scope
 from src.utils.schema_loader import HedSchemaLoader
 from src.validation.hed_validator import HedPythonValidator
@@ -200,13 +205,15 @@ def create_anthropic_workflow(
     normalize_model(actual_eval_model)
 
     # Create LLMs.
-    # The annotation LLM keeps reasoning enabled — that's the model
-    # doing the actual HED tag synthesis where extended thinking
-    # measurably improves first-attempt quality.
+    # Annotation thinks: measured over the benchmark descriptions, a 2048-token
+    # budget took first-attempt validity from 5/15 to 13/15 and cut total LLM
+    # calls by a third, for 24% more cost and about twice the latency. See
+    # annotation_thinking() and docs/prompt-caching.md.
     annotation_llm = create_anthropic_llm(
         model=actual_annotation_model,
         api_key=api_key,
         temperature=actual_temperature,
+        thinking=annotation_thinking(actual_annotation_model),
         role="annotation",
     )
     # Evaluation / assessment / feedback / keyword extraction are short

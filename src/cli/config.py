@@ -34,8 +34,9 @@ DEFAULT_API_URL = "https://api.annotation.garden/hedit"
 DEFAULT_DEV_API_URL = "https://api.annotation.garden/hedit-dev"
 
 # Default models (Anthropic Claude only since the 2026-08-18 migration).
-# Annotation model: Claude Haiku 4.5 (fast, near-frontier quality).
-# Claude Sonnet 5 ("claude-sonnet-5") is offered for highest quality.
+# Annotation model: Claude Haiku 4.5, which runs with extended thinking and
+# matched Sonnet 5's first-attempt validity for 2.3x less cost (docs/reasoning.md).
+# Claude Sonnet 5 ("claude-sonnet-5") stays selectable for comparison.
 DEFAULT_MODEL = "claude-haiku-4-5"
 
 # Evaluation judge stays on Haiku regardless of the annotation model.
