@@ -139,18 +139,34 @@ keyword      calls=2  input=    396  cache_read=      0  hit_rate=  0%  cost=$0.
 `output_tokens`, `cache_read_tokens`, `cache_write_tokens`, `cache_hit_rate`,
 `cost_usd`, and `uncached_cost_usd`.
 
-## Extended thinking is off on purpose
+## Extended thinking, and where it stands
 
-Related to cost, and easy to mistake for an oversight: HEDit disables extended
-thinking on every role that allows it. With thinking on, the agents emit much more
-text and tend to circle in reasoning loops instead of converging on an annotation,
-which costs latency and tokens without improving the result. On a model where
-reasoning cannot be turned off, the factory requests the lowest reasoning effort
-instead (`_ALWAYS_THINKING_MODELS` in `src/utils/anthropic_llm.py`).
+Thinking tokens bill as output, so this interacts with cost directly. Current
+behavior, by role:
 
-Haiku 4.5, the default, does not think unless given a token budget, so nothing needs
-to be switched off there. Sonnet 5 has adaptive thinking on by default and accepts
-`thinking: {"type": "disabled"}`.
+- **Evaluation, assessment, feedback, keyword extraction**: thinking disabled. These
+  are short structured tasks; reasoning added 5-10 s per call with no measurable
+  quality gain (#150).
+- **Annotation and vision**: no `disable_reasoning` flag, so whatever the model does
+  by default applies. On Haiku 4.5 (the default) that means no thinking at all, since
+  Haiku only thinks when given an explicit `budget_tokens`. On Sonnet 5 it means
+  adaptive thinking runs.
+
+Whether annotation should think is genuinely open. Extended thinking has been observed
+to get past the validator in a single iteration, which is worth a lot given that each
+refinement iteration costs another annotation call plus validation and evaluation. It
+has also been observed to make agents verbose and prone to circling in the refine
+loop, and on non-Anthropic models it was slow enough to erase the caching savings
+entirely. The intended policy is therefore per provider: thinking on for Anthropic
+models, off for others.
+
+Where a model refuses `thinking: {"type": "disabled"}`, the factory requests the
+lowest reasoning effort instead (`_ALWAYS_THINKING_MODELS` in
+`src/utils/anthropic_llm.py`).
+
+The remaining question -- what thinking budget annotation should get on Haiku, and
+whether it earns its cost -- is a measurement, not a recollection: first-attempt
+validity, iteration count, latency, and cost across both arms.
 
 ## Cost figures
 

@@ -56,11 +56,14 @@ MODEL_ALIASES = {
     "anthropic/claude-sonnet-4-5": "claude-sonnet-5",
 }
 
-# Extended thinking is kept OFF wherever the model allows it. With thinking
-# on, the agents emit far more text and tend to circle in reasoning loops
-# instead of converging on an annotation, which costs latency and tokens
-# without improving the result. Where a model cannot turn thinking off, the
-# closest equivalent is the lowest reasoning effort.
+# Thinking policy: the short structured roles (evaluation, assessment,
+# feedback, keyword extraction) pass disable_reasoning=True, since reasoning
+# there added latency without quality gain (#150). Annotation and vision take
+# the model default. The intent is per provider -- thinking on for Anthropic
+# models, off for others, where it has been slow enough to erase the caching
+# savings -- with the annotation budget still to be measured. Where a model
+# cannot turn thinking off, the closest equivalent is the lowest reasoning
+# effort.
 #
 # Models where thinking runs by default (adaptive) and can be disabled
 # explicitly. Haiku 4.5 does not think unless given a budget, so it needs no
