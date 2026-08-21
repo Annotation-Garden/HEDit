@@ -75,6 +75,8 @@ Notes:
   (`ANNOTATION_PROVIDER`, `EVALUATION_PROVIDER`, `VISION_PROVIDER`, `LLM_PROVIDER_PREFERENCE`)
   were removed; models are selected by bare model identifier only.
 - Set `ANNOTATION_MODEL=claude-sonnet-5` for the highest annotation quality.
+- `HEDIT_PROMPT_CACHE_TTL` sets the prompt-cache lifetime, `5m` (default) or `1h`.
+  Keep `5m` for a server; see [prompt-caching.md](../prompt-caching.md) for when `1h` is cheaper.
 
 ## API Usage
 
@@ -95,8 +97,11 @@ curl -X POST http://localhost:38427/annotate \
 Users can supply their own first-party Anthropic API key (`sk-ant-...`)
 via the `X-Anthropic-Key` request header.
 BYOK requests go to `api.anthropic.com`, not the AWS workspace endpoint.
-Model, evaluation-model, and temperature overrides keep their legacy header names:
-`X-OpenRouter-Model`, `X-OpenRouter-Eval-Model`, `X-OpenRouter-Temperature`.
+Model, evaluation-model, vision-model, and temperature overrides travel as
+`X-Anthropic-Model`, `X-Anthropic-Eval-Model`, `X-Anthropic-Vision-Model`, and
+`X-Anthropic-Temperature`.
+The legacy `X-OpenRouter-*` spellings of those names remain accepted indefinitely,
+so existing clients keep working.
 
 ## Troubleshooting
 
@@ -109,6 +114,15 @@ Model, evaluation-model, and temperature overrides keep their legacy header name
 
 **HTTP 400 on model selection**
 - Only `claude-haiku-4-5` and `claude-sonnet-5` are offered; other model identifiers are rejected
+
+## Cost and Cache Reporting
+
+Every annotation reports its token use, cost, and prompt-cache savings:
+in the CLI output, in the `usage` field of API responses, and server-wide via
+`GET /metrics` (server API key required).
+The annotation prefix is ~21.8k tokens, so a cache hit removes roughly 80% of a
+request's cost. See [prompt-caching.md](../prompt-caching.md) for measured figures
+and the break-even math.
 
 ## Support
 

@@ -22,6 +22,7 @@ Welcome to the HED-BOT documentation! This directory contains comprehensive guid
 - **[Docker Updates](deployment/docker-updates.md)** - Updating Docker deployments
 - **[Docker Architecture](deployment/docker-architecture.md)** - Docker architecture details
 - **[Claude Platform on AWS](deployment/claude-platform-aws.md)** - Configuring the Anthropic Claude API via AWS Marketplace
+- **[Prompt Caching and Usage Reporting](prompt-caching.md)** - What caches, what it saves, and how to verify it
 
 ### 🛠️ Development
 - **[Contributing](development/contributing.md)** - How to contribute, issue labeling system
