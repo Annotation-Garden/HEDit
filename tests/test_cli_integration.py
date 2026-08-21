@@ -374,17 +374,17 @@ class TestCLIImageAnnotateIntegration:
             f"Unexpected exit code: {result.exit_code}\n{result.output}"
         )
 
-        # Handle case where vision model is not available on OpenRouter
+        # Handle case where the vision model is unavailable for this account
         if "No allowed providers" in result.output or "model" in result.output.lower():
             if result.exit_code == 1:
-                pytest.skip("Vision model not available on OpenRouter")
+                pytest.skip("Vision model not available")
 
         # Use helper to extract JSON from potentially mixed output
         data = extract_json_from_output(result.output)
         if data is None:
             # If JSON parsing fails, check for expected error messages
             if "No allowed providers" in result.output:
-                pytest.skip("Vision model not available on OpenRouter")
+                pytest.skip("Vision model not available")
             pytest.fail(f"Could not extract JSON from output: {result.output}")
 
         # Simple check that response has expected structure

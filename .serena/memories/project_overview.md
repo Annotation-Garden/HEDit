@@ -7,7 +7,7 @@ HEDit is a multi-agent system for converting natural language event descriptions
 - **Language**: Python 3.12+
 - **Package Manager**: uv
 - **Agent Framework**: LangGraph
-- **LLM Provider**: OpenRouter API (production), Ollama (fallback)
+- **LLM Provider**: Anthropic Claude via the Claude Platform on AWS (claude-haiku-4-5 default, claude-sonnet-5 optional)
 - **Validation**: HED JavaScript validator + HED Python tools (hedtools)
 - **Backend**: FastAPI
 - **CLI**: Typer + Rich

@@ -11,17 +11,23 @@
 - `POST /feedback`: User feedback submission
 - `GET /health`: Service health check
 - `GET /version`: Version information
+- `GET /metrics`: Token use, cost, and prompt-cache savings since startup
+  (server API key required; BYOK callers get 403)
 
 ### Authentication Modes
-1. **Server mode**: `X-API-Key` header (server's OpenRouter key)
-2. **BYOK mode**: `X-OpenRouter-Key` header (user's own API key)
+1. **Server mode**: `X-API-Key` header (server's Anthropic credentials are used)
+2. **BYOK mode**: `X-Anthropic-Key` header (user's own Anthropic key, `sk-ant-...`,
+   routed to api.anthropic.com)
 3. **Public endpoints**: `/feedback`, `/health`, `/version`
 
 ### Model Override Headers
-- `X-OpenRouter-Model`: Override annotation model
-- `X-OpenRouter-Vision-Model`: Override vision model
-- `X-OpenRouter-Provider`: Override provider routing
-- `X-OpenRouter-Temperature`: Override temperature
+- `X-Anthropic-Model`: Override annotation model
+- `X-Anthropic-Eval-Model`: Override evaluation model
+- `X-Anthropic-Vision-Model`: Override vision model
+- `X-Anthropic-Temperature`: Override temperature
+
+The legacy `X-OpenRouter-*` spellings of these names (plus `X-OpenRouter-Key`) are
+still accepted as transport; provider-routing headers are ignored.
 
 ### CORS
 - Production: `hedit.pages.dev`, `annotation.garden`

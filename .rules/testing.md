@@ -14,7 +14,8 @@ Never use mocks, stubs, or fake datasets. If real testing is not possible, don't
 
 ## When to Write Tests
 - **DO:** Test with real data and actual dependencies
-- **DO:** Use test API keys (`OPENROUTER_API_KEY_FOR_TESTING`)
+- **DO:** Use the Anthropic test credentials (`ANTHROPIC_API_KEY`, with
+  `ANTHROPIC_BASE_URL` and `ANTHROPIC_WORKSPACE_ID` for the Claude Platform on AWS)
 - **DO:** Test against actual file systems and real HED schemas
 - **DON'T:** Write tests if only mocks would work
 - **DON'T:** Create artificial test scenarios

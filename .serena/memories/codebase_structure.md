@@ -22,7 +22,8 @@ hedit/
 │   │   ├── json_schema_loader.py  # JSON schema + vocabulary extraction
 │   │   ├── schema_loader.py       # Legacy Python schema loader
 │   │   ├── error_remediation.py   # Error augmentation for LLM feedback
-│   │   ├── openrouter_llm.py      # OpenRouter API integration
+│   │   ├── anthropic_llm.py       # Anthropic Claude integration (prompt caching)
+│   │   ├── llm_usage.py           # Token, cost, and cache accounting
 │   │   ├── litellm_llm.py         # Alternative LLM providers
 │   │   ├── image_processing.py    # Base64 image encoding
 │   │   └── github_client.py       # GitHub API for feedback issues

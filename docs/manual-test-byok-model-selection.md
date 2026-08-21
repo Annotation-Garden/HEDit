@@ -43,8 +43,8 @@ The override headers keep their legacy names.
 curl -X POST https://api.annotation.garden/hedit/annotate \
   -H "Content-Type: application/json" \
   -H "X-Anthropic-Key: $ANTHROPIC_KEY" \
-  -H "X-OpenRouter-Model: claude-sonnet-5" \
-  -H "X-OpenRouter-Temperature: 0.1" \
+  -H "X-Anthropic-Model: claude-sonnet-5" \
+  -H "X-Anthropic-Temperature: 0.1" \
   -d '{
     "description": "A blue square fades in at the center"
   }'
@@ -60,7 +60,7 @@ Test that request body has higher priority than headers.
 curl -X POST https://api.annotation.garden/hedit/annotate \
   -H "Content-Type: application/json" \
   -H "X-Anthropic-Key: $ANTHROPIC_KEY" \
-  -H "X-OpenRouter-Model: claude-sonnet-5" \
+  -H "X-Anthropic-Model: claude-sonnet-5" \
   -d '{
     "description": "A green triangle rotates",
     "model": "claude-haiku-4-5"
@@ -184,6 +184,6 @@ For all tests, verify:
 ## Notes
 
 - The model parameter overrides ALL agents (annotation, evaluation, assessment);
-  the evaluation model can be set separately via the `X-OpenRouter-Eval-Model` header
+  the evaluation model can be set separately via the `X-Anthropic-Eval-Model` header
 - BYOK requests are billed to your own Anthropic account, not the server's AWS workspace
 - Model identifiers other than the two offered Claude models result in HTTP 400
