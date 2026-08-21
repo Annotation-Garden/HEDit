@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hedit"
-version = "0.7.11.dev7"
+version = "0.7.11a1"
 description = "Multi-agent system for HED annotation generation and validation"
 readme = "PKG_README.md"
 requires-python = ">=3.12"
