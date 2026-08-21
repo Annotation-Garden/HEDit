@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Literal
 
 from hed import HedString
-from hed.errors import get_printable_issue_string
+from hed.errors import ErrorSeverity, get_printable_issue_string
 from hed.schema import HedSchema, load_schema_version
 from hed.validator import HedValidator
 
@@ -167,8 +167,15 @@ class HedPythonValidator:
             # Process issues
             for issue in issues:
                 issue_str = get_printable_issue_string([issue])
+                # hedtools reports severity as an ErrorSeverity enum
+                # (ERROR=1, WARNING=10), never the string "error". Comparing
+                # it to "error" was always False, so every error was filed as
+                # a warning and is_valid was always True: "NotARealTag/Foo"
+                # validated clean and the workflow's refinement loop could
+                # never fire (#161). Anything not explicitly a warning counts
+                # as an error, so an unrecognized severity fails closed.
                 severity: Literal["error", "warning"] = (
-                    "error" if issue["severity"] == "error" else "warning"
+                    "warning" if issue.get("severity") == ErrorSeverity.WARNING else "error"
                 )
 
                 validation_issue = ValidationIssue(
