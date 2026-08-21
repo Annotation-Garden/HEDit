@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from src.cli.executor import ExecutionBackend, ExecutionError
+from src.utils.llm_usage import summarize, usage_scope
 from src.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -156,6 +157,7 @@ class LocalExecutionBackend(ExecutionBackend):
                 model=self._model,
                 api_key=self._api_key,
                 temperature=self._temperature,
+                role="annotation",
             )
 
             # Evaluation / assessment / feedback share a model with
@@ -166,6 +168,7 @@ class LocalExecutionBackend(ExecutionBackend):
                 api_key=self._api_key,
                 temperature=self._temperature,
                 disable_reasoning=True,
+                role="evaluation",
             )
 
             # Lightweight keyword-extraction model (#148): annotation
@@ -176,6 +179,7 @@ class LocalExecutionBackend(ExecutionBackend):
                 temperature=self._temperature,
                 max_tokens=200,
                 disable_reasoning=True,
+                role="keyword",
             )
 
             self._workflow = HedAnnotationWorkflow(
@@ -239,6 +243,7 @@ class LocalExecutionBackend(ExecutionBackend):
                 model=self._vision_model,
                 api_key=self._api_key,
                 temperature=0.3,  # Slightly higher for vision tasks
+                role="vision",
             )
 
             self._vision_agent = VisionAgent(llm=vision_llm)
@@ -260,6 +265,62 @@ class LocalExecutionBackend(ExecutionBackend):
             return asyncio.get_event_loop().run_until_complete(coro)
         else:
             return asyncio.run(coro)
+
+    @staticmethod
+    def _shape_result(
+        final_state: dict[str, Any],
+        schema_version: str,
+        usage: dict[str, Any] | None,
+        extra_metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Shape a workflow state into a CLI result dictionary.
+
+        The annotation is returned under both names: ``hed_string`` for the
+        ExecutionBackend contract, and the API response's field names
+        (``annotation``, ``validation_errors``, ``is_faithful``, ...) because
+        the text renderer is shared with API mode and reads those.
+
+        Args:
+            final_state: Terminal workflow state
+            schema_version: HED schema version used
+            usage: Token and cache figures for the run, if any were recorded
+            extra_metadata: Additional metadata entries to merge
+
+        Returns:
+            Result dictionary for the CLI renderers
+        """
+        annotation = final_state.get("current_annotation", "")
+        validation_errors = final_state.get("validation_errors", [])
+
+        metadata = {
+            "schema_version": schema_version,
+            "validation_attempts": final_state.get("validation_attempts", 0),
+            "total_iterations": final_state.get("total_iterations", 0),
+            "is_faithful": final_state.get("is_faithful"),
+            "is_complete": final_state.get("is_complete"),
+            "evaluation_feedback": final_state.get("evaluation_feedback"),
+            "assessment_feedback": final_state.get("assessment_feedback"),
+            "mode": "standalone",
+        }
+        if extra_metadata:
+            metadata.update(extra_metadata)
+
+        return {
+            "status": "success" if final_state.get("is_valid") else "error",
+            "hed_string": annotation,
+            "annotation": annotation,
+            "is_valid": final_state.get("is_valid", False),
+            "is_faithful": final_state.get("is_faithful", False),
+            "is_complete": final_state.get("is_complete", False),
+            "validation_attempts": final_state.get("validation_attempts", 0),
+            "validation_messages": validation_errors,
+            "validation_errors": validation_errors,
+            "validation_warnings": final_state.get("validation_warnings", []),
+            "evaluation_feedback": final_state.get("evaluation_feedback", "") or "",
+            "assessment_feedback": final_state.get("assessment_feedback", "") or "",
+            "usage": usage,
+            "metadata": metadata,
+        }
 
     def annotate(
         self,
@@ -285,7 +346,8 @@ class LocalExecutionBackend(ExecutionBackend):
             )
 
         try:
-            final_state = self._run_async(_run())
+            with usage_scope() as ledger:
+                final_state = self._run_async(_run())
         except Exception as e:
             raise ExecutionError(
                 f"Annotation failed: {e}",
@@ -293,23 +355,7 @@ class LocalExecutionBackend(ExecutionBackend):
                 detail=str(e),
             ) from e
 
-        # Convert state to response format
-        return {
-            "status": "success" if final_state.get("is_valid") else "error",
-            "hed_string": final_state.get("current_annotation", ""),
-            "is_valid": final_state.get("is_valid", False),
-            "validation_messages": final_state.get("validation_errors", []),
-            "metadata": {
-                "schema_version": schema_version,
-                "validation_attempts": final_state.get("validation_attempts", 0),
-                "total_iterations": final_state.get("total_iterations", 0),
-                "is_faithful": final_state.get("is_faithful"),
-                "is_complete": final_state.get("is_complete"),
-                "evaluation_feedback": final_state.get("evaluation_feedback"),
-                "assessment_feedback": final_state.get("assessment_feedback"),
-                "mode": "standalone",
-            },
-        }
+        return self._shape_result(final_state, schema_version, summarize(ledger))
 
     def annotate_image(
         self,
@@ -370,7 +416,10 @@ class LocalExecutionBackend(ExecutionBackend):
             return description, vision_result, final_state
 
         try:
-            description, vision_result, final_state = self._run_async(_run())
+            # The vision call and the annotation workflow share one scope, so
+            # the reported figures cover the whole image request.
+            with usage_scope() as ledger:
+                description, vision_result, final_state = self._run_async(_run())
         except Exception as e:
             raise ExecutionError(
                 f"Image annotation failed: {e}",
@@ -378,23 +427,19 @@ class LocalExecutionBackend(ExecutionBackend):
                 detail=str(e),
             ) from e
 
-        return {
-            "status": "success" if final_state.get("is_valid") else "error",
-            "description": description,
-            "hed_string": final_state.get("current_annotation", ""),
-            "is_valid": final_state.get("is_valid", False),
-            "validation_messages": final_state.get("validation_errors", []),
-            "metadata": {
-                "schema_version": schema_version,
+        result = self._shape_result(
+            final_state,
+            schema_version,
+            summarize(ledger),
+            extra_metadata={
                 "vision_prompt": vision_result.get("prompt_used"),
                 "image_metadata": vision_result.get("metadata"),
-                "validation_attempts": final_state.get("validation_attempts", 0),
-                "total_iterations": final_state.get("total_iterations", 0),
-                "is_faithful": final_state.get("is_faithful"),
-                "is_complete": final_state.get("is_complete"),
-                "mode": "standalone",
             },
-        }
+        )
+        result["description"] = description
+        result["image_description"] = description
+        result["image_metadata"] = vision_result.get("metadata", {})
+        return result
 
     def validate(
         self,

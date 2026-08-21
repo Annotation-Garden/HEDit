@@ -485,3 +485,105 @@ class TestAPIEndpointIntegration:
         assert "annotation" in data
         assert "is_valid" in data
         assert "status" in data
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(not ANTHROPIC_TEST_KEY, reason=SKIP_REASON)
+class TestPromptCachingIntegration:
+    """Verify prompt caching and usage accounting against the live endpoint.
+
+    The claim these tests protect: the annotation system prompt is large
+    enough to cache, a repeated call reads it back from the cache, and the
+    ledger sees both events. If caching silently stops working (a changed
+    prefix, a marker that no longer lands), cache_read stays at zero here.
+    """
+
+    @staticmethod
+    def large_system_prompt() -> str:
+        """The real annotation prefix, well above Haiku's 4096-token minimum."""
+        from src.utils.hed_comprehensive_guide import get_comprehensive_hed_guide
+
+        return get_comprehensive_hed_guide(
+            vocabulary_sample=["Sensory-event", "Visual-presentation", "Red", "Circle"],
+            extendable_tags=["Animal"],
+        )
+
+    @pytest.mark.asyncio
+    async def test_cache_write_then_read_is_recorded(self) -> None:
+        """A repeated identical prefix is written once and then read back."""
+        from langchain_core.messages import HumanMessage, SystemMessage
+
+        from src.utils.anthropic_llm import create_anthropic_llm
+        from src.utils.llm_usage import MIN_CACHEABLE_PREFIX_TOKENS, usage_scope
+
+        llm = create_anthropic_llm(
+            model="claude-haiku-4-5",
+            temperature=0.1,
+            max_tokens=32,
+            role="annotation",
+        )
+        system = self.large_system_prompt()
+
+        with usage_scope() as first:
+            await llm.ainvoke(
+                [
+                    SystemMessage(content=system),
+                    HumanMessage(content="Reply with the single word: ready"),
+                ]
+            )
+
+        with usage_scope() as second:
+            await llm.ainvoke(
+                [
+                    SystemMessage(content=system),
+                    HumanMessage(content="Reply with the single word: again"),
+                ]
+            )
+
+        first_totals = first.total()
+        second_totals = second.total()
+
+        # The prefix clears the model minimum, so the first call creates an
+        # entry (or reads one left by a recent run) and the second reads it.
+        assert first_totals.input_tokens >= MIN_CACHEABLE_PREFIX_TOKENS["claude-haiku-4-5"]
+        assert first_totals.cache_write_tokens > 0 or first_totals.cache_read_tokens > 0
+        assert second_totals.cache_read_tokens > 0
+        assert second_totals.savings_usd > 0
+        assert second_totals.cost_usd < second_totals.uncached_cost_usd
+
+    @pytest.mark.asyncio
+    async def test_short_prefix_does_not_cache(self) -> None:
+        """Below the model minimum, the marker is accepted but nothing caches.
+
+        This is why the evaluation, assessment, feedback, keyword, and vision
+        prompts (186-623 tokens measured) report no cache activity.
+        """
+        from langchain_core.messages import HumanMessage, SystemMessage
+
+        from src.utils.anthropic_llm import create_anthropic_llm
+        from src.utils.llm_usage import usage_scope
+
+        llm = create_anthropic_llm(
+            model="claude-haiku-4-5",
+            temperature=0.1,
+            max_tokens=16,
+            role="evaluation",
+        )
+        short_system = "You are a terse assistant. Answer in one word."
+
+        for _ in range(2):
+            with usage_scope() as ledger:
+                await llm.ainvoke(
+                    [
+                        SystemMessage(content=short_system),
+                        HumanMessage(content="Reply with the single word: ok"),
+                    ]
+                )
+
+        totals = ledger.total()
+        assert totals.calls == 1
+        assert totals.cache_read_tokens == 0
+        assert totals.cache_write_tokens == 0
+        # No caching means no savings to claim.
+        assert totals.savings_usd == 0.0
+        assert totals.cost_usd == pytest.approx(totals.uncached_cost_usd)

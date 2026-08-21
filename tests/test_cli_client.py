@@ -74,8 +74,20 @@ class TestHEDitClient:
             temperature=0.3,
         )
         headers = client._get_headers()
-        assert headers["X-OpenRouter-Model"] == "claude-sonnet-5"
-        assert headers["X-OpenRouter-Temperature"] == "0.3"
+        assert headers["X-Anthropic-Model"] == "claude-sonnet-5"
+        assert headers["X-Anthropic-Temperature"] == "0.3"
+        # The legacy spelling is no longer sent, only still accepted server-side.
+        assert "X-OpenRouter-Model" not in headers
+
+    def test_headers_include_eval_model_override(self):
+        """Eval model overrides travel under the Anthropic header name."""
+        client = HEDitClient(
+            api_url="https://api.example.com",
+            api_key="sk-ant-test-key",
+            eval_model="claude-haiku-4-5",
+        )
+        headers = client._get_headers()
+        assert headers["X-Anthropic-Eval-Model"] == "claude-haiku-4-5"
 
     def test_headers_without_api_key(self):
         """Test headers without API key."""

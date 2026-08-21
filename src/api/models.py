@@ -3,6 +3,65 @@
 from pydantic import BaseModel, Field
 
 
+class UsageSummary(BaseModel):
+    """Token, cost, and prompt-cache figures for the LLM calls of one request.
+
+    Every HEDit annotation re-sends a large static HED vocabulary guide, which
+    prompt caching serves at a tenth of the input price after the first call.
+    ``uncached_cost_usd`` is what the same calls would have cost without any
+    caching, so ``savings_usd`` reports the difference rather than an estimate.
+
+    Costs use Anthropic list prices and cover LLM calls only.
+
+    Attributes:
+        calls: Number of LLM calls made
+        input_tokens: Total input tokens, including tokens served from cache
+        uncached_input_tokens: Input tokens billed at full price
+        cache_read_tokens: Input tokens served from the prompt cache
+        cache_write_tokens: Input tokens written to the prompt cache
+        output_tokens: Generated tokens
+        total_tokens: Input plus output tokens
+        cache_hit_rate: Share of input tokens served from cache (0.0-1.0)
+        cost_usd: Cost with caching applied
+        uncached_cost_usd: Cost the same calls would have had without caching
+        savings_usd: Dollars not spent because of prompt caching
+        savings_pct: Savings as a share of the uncached cost (0.0-1.0)
+        models: Models that served the calls
+        unpriced_calls: Calls on models with no published price in this build
+    """
+
+    calls: int = Field(..., description="Number of LLM calls")
+    input_tokens: int = Field(..., description="Total input tokens (cached included)")
+    uncached_input_tokens: int = Field(..., description="Input tokens billed at full price")
+    cache_read_tokens: int = Field(..., description="Input tokens served from cache")
+    cache_write_tokens: int = Field(..., description="Input tokens written to cache")
+    output_tokens: int = Field(..., description="Generated tokens")
+    total_tokens: int = Field(..., description="Input plus output tokens")
+    cache_hit_rate: float = Field(..., description="Cached share of input tokens (0.0-1.0)")
+    cost_usd: float = Field(..., description="Cost with caching applied")
+    uncached_cost_usd: float = Field(..., description="Cost without any caching")
+    savings_usd: float = Field(..., description="Dollars saved by prompt caching")
+    savings_pct: float = Field(..., description="Share of cost saved (0.0-1.0)")
+    models: list[str] = Field(default_factory=list, description="Models that served the calls")
+    unpriced_calls: int = Field(default=0, description="Calls on models with no published price")
+
+
+class MetricsResponse(BaseModel):
+    """Server-wide LLM usage since startup.
+
+    Attributes:
+        since: Server startup time (ISO 8601)
+        total: Combined totals across every agent role
+        by_role: Totals per agent role (annotation, evaluation, vision, ...)
+        by_model: Totals per model
+    """
+
+    since: str = Field(..., description="Server startup time (ISO 8601)")
+    total: UsageSummary = Field(..., description="Combined totals")
+    by_role: dict[str, UsageSummary] = Field(default_factory=dict, description="Totals per role")
+    by_model: dict[str, UsageSummary] = Field(default_factory=dict, description="Totals per model")
+
+
 class AnnotationRequest(BaseModel):
     """Request model for HED annotation generation.
 
@@ -79,6 +138,7 @@ class AnnotationResponse(BaseModel):
         evaluation_feedback: Evaluation agent feedback
         assessment_feedback: Assessment agent feedback
         status: Overall workflow status
+        usage: Token, cost, and prompt-cache figures for this request
     """
 
     annotation: str = Field(..., description="Generated HED annotation string")
@@ -91,6 +151,9 @@ class AnnotationResponse(BaseModel):
     evaluation_feedback: str = Field(default="")
     assessment_feedback: str = Field(default="")
     status: str = Field(..., description="Workflow status", examples=["success", "failed"])
+    usage: UsageSummary | None = Field(
+        default=None, description="Token, cost, and prompt-cache figures for this request"
+    )
 
 
 class ValidationRequest(BaseModel):
@@ -222,6 +285,7 @@ class ImageAnnotationResponse(BaseModel):
         assessment_feedback: Assessment agent feedback
         status: Overall workflow status
         image_metadata: Metadata about the processed image
+        usage: Token, cost, and prompt-cache figures for this request
     """
 
     image_description: str = Field(..., description="Generated image description")
@@ -236,6 +300,9 @@ class ImageAnnotationResponse(BaseModel):
     assessment_feedback: str = Field(default="")
     status: str = Field(..., description="Workflow status", examples=["success", "failed"])
     image_metadata: dict = Field(default_factory=dict, description="Image metadata")
+    usage: UsageSummary | None = Field(
+        default=None, description="Token, cost, and prompt-cache figures for this request"
+    )
 
 
 class HealthResponse(BaseModel):

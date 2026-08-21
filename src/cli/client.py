@@ -73,14 +73,14 @@ class HEDitClient:
         if self.api_key:
             # Use X-Anthropic-Key header for BYOK mode
             headers["X-Anthropic-Key"] = self.api_key
-        # Include model configuration in headers (the header names keep the
-        # legacy X-OpenRouter-* wire spelling for compatibility)
+        # Model configuration overrides. The API also accepts the legacy
+        # X-OpenRouter-* spelling of these names.
         if self.model:
-            headers["X-OpenRouter-Model"] = self.model
+            headers["X-Anthropic-Model"] = self.model
         if self.eval_model:
-            headers["X-OpenRouter-Eval-Model"] = self.eval_model
+            headers["X-Anthropic-Eval-Model"] = self.eval_model
         if self.temperature is not None:
-            headers["X-OpenRouter-Temperature"] = str(self.temperature)
+            headers["X-Anthropic-Temperature"] = str(self.temperature)
         # Optional user ID header (currently unused server-side)
         if self.user_id:
             headers["X-User-Id"] = self.user_id

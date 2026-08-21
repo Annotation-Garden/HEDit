@@ -2,7 +2,9 @@
 
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.outputs import ChatGeneration, ChatResult
 
+from src.utils import anthropic_llm
 from src.utils.anthropic_llm import (
     ALLOWED_MODELS,
     DEFAULT_MODEL,
@@ -10,6 +12,7 @@ from src.utils.anthropic_llm import (
     create_anthropic_llm,
     normalize_model,
 )
+from src.utils.llm_usage import process_ledger
 
 
 class TestNormalizeModel:
@@ -93,6 +96,21 @@ class TestCreateAnthropicLLM:
         )
         assert sonnet.temperature is None
 
+    def test_always_thinking_model_falls_back_to_lowest_effort(self, monkeypatch):
+        """Where thinking cannot be disabled, the lowest effort is requested."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "server-key")
+        monkeypatch.setattr(
+            anthropic_llm, "_ALWAYS_THINKING_MODELS", {"claude-sonnet-5"}, raising=True
+        )
+        monkeypatch.setattr(anthropic_llm, "_ADAPTIVE_THINKING_MODELS", set(), raising=True)
+
+        llm = create_anthropic_llm(
+            model="claude-sonnet-5", disable_reasoning=True, enable_caching=False
+        )
+
+        assert llm.thinking is None
+        assert llm.output_config == {"effort": anthropic_llm.LOWEST_REASONING_EFFORT}
+
     def test_disable_reasoning_on_sonnet(self, monkeypatch):
         monkeypatch.setenv("ANTHROPIC_API_KEY", "server-key")
 
@@ -168,3 +186,122 @@ class TestCachingLLMWrapper:
         )
         with pytest.raises(TypeError, match="tool calls"):
             wrapper._add_cache_control([HumanMessage(content="hi"), msg])
+
+
+class TestUsageAccounting:
+    """Tests for the usage the wrapper reports to the ledger.
+
+    These exercise the extraction path with real LangChain response objects;
+    the live cache-hit behavior is covered by the key-gated integration test
+    in tests/test_integration_anthropic.py.
+    """
+
+    @pytest.fixture
+    def wrapper(self, monkeypatch):
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "server-key")
+        process_ledger().reset()
+        return create_anthropic_llm(role="annotation")
+
+    def test_factory_labels_the_wrapper(self, wrapper):
+        assert isinstance(wrapper, CachingLLMWrapper)
+        assert wrapper.role == "annotation"
+
+    def test_default_role_is_unspecified(self, monkeypatch):
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "server-key")
+        assert create_anthropic_llm().role == "unspecified"
+
+    def test_records_usage_from_a_message(self, wrapper):
+        message = AIMessage(
+            content="Sensory-event, Visual-presentation",
+            usage_metadata={
+                "input_tokens": 9000,
+                "output_tokens": 120,
+                "total_tokens": 9120,
+                "input_token_details": {"cache_read": 8500, "cache_creation": 0},
+            },
+        )
+
+        wrapper._record_usage(message)
+
+        totals = process_ledger().by_role()["annotation"]
+        assert totals.calls == 1
+        assert totals.cache_read_tokens == 8500
+        assert totals.uncached_input_tokens == 500
+        assert totals.output_tokens == 120
+        # The model that served the call is attributed, not the wrapper.
+        assert process_ledger().by_model()[DEFAULT_MODEL].calls == 1
+
+    def test_records_usage_from_a_chat_result(self, wrapper):
+        message = AIMessage(
+            content="Agent-action",
+            usage_metadata={
+                "input_tokens": 4200,
+                "output_tokens": 30,
+                "total_tokens": 4230,
+                "input_token_details": {"cache_creation": 4096},
+            },
+        )
+        result = ChatResult(generations=[ChatGeneration(message=message)])
+
+        wrapper._record_usage(result)
+
+        totals = process_ledger().by_role()["annotation"]
+        assert totals.cache_write_tokens == 4096
+        assert totals.calls == 1
+
+    def test_response_without_usage_is_not_counted(self, wrapper):
+        wrapper._record_usage(AIMessage(content="no usage metadata"))
+        assert process_ledger().is_empty()
+
+    def test_empty_chat_result_is_not_counted(self, wrapper):
+        wrapper._record_usage(ChatResult(generations=[]))
+        assert process_ledger().is_empty()
+
+    def test_uncached_llm_has_no_accounting(self, monkeypatch):
+        """enable_caching=False returns the bare model, so nothing is recorded."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "server-key")
+        llm = create_anthropic_llm(enable_caching=False, role="annotation")
+        assert not isinstance(llm, CachingLLMWrapper)
+        assert not hasattr(llm, "_record_usage")
+
+
+class TestCacheTtl:
+    """Tests for the prompt-cache lifetime knob."""
+
+    @pytest.fixture(autouse=True)
+    def server_key(self, monkeypatch):
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "server-key")
+        monkeypatch.delenv("HEDIT_PROMPT_CACHE_TTL", raising=False)
+
+    def test_default_ttl_sends_a_bare_marker(self):
+        """The 5-minute default is implicit, so no ttl key is sent."""
+        wrapper = create_anthropic_llm()
+        transformed = wrapper._add_cache_control([SystemMessage(content="guide")])
+
+        assert transformed[0]["content"][0]["cache_control"] == {"type": "ephemeral"}
+
+    def test_one_hour_ttl_is_sent_explicitly(self):
+        wrapper = create_anthropic_llm(cache_ttl="1h")
+        transformed = wrapper._add_cache_control([SystemMessage(content="guide")])
+
+        assert transformed[0]["content"][0]["cache_control"] == {
+            "type": "ephemeral",
+            "ttl": "1h",
+        }
+
+    def test_env_var_sets_the_default(self, monkeypatch):
+        monkeypatch.setenv("HEDIT_PROMPT_CACHE_TTL", "1h")
+        assert create_anthropic_llm().cache_ttl == "1h"
+
+    def test_argument_wins_over_env_var(self, monkeypatch):
+        monkeypatch.setenv("HEDIT_PROMPT_CACHE_TTL", "1h")
+        assert create_anthropic_llm(cache_ttl="5m").cache_ttl == "5m"
+
+    def test_unsupported_ttl_is_rejected(self):
+        with pytest.raises(ValueError, match="Unsupported prompt cache TTL"):
+            create_anthropic_llm(cache_ttl="7d")
+
+    def test_unsupported_env_ttl_is_rejected(self, monkeypatch):
+        monkeypatch.setenv("HEDIT_PROMPT_CACHE_TTL", "forever")
+        with pytest.raises(ValueError, match="Unsupported prompt cache TTL"):
+            create_anthropic_llm()

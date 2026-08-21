@@ -18,6 +18,8 @@ from src.telemetry import (
     TelemetryCollector,
     TelemetryEvent,
 )
+from src.telemetry.schema import TelemetryPerformance
+from src.utils.llm_usage import UsageLedger
 
 
 class TestTelemetryEvent:
@@ -855,3 +857,100 @@ class TestTelemetryFullIntegration:
 
         assert data["source"] == "api"
         assert data["model"]["provider"] == "Cerebras"
+
+
+class TestUsageInTelemetry:
+    """Tests for token, cache, and cost figures recorded on events."""
+
+    @staticmethod
+    def ledger_with_a_cached_annotation() -> UsageLedger:
+        """A ledger holding one cache-heavy annotation call and one eval call."""
+        ledger = UsageLedger()
+        ledger.record(
+            "annotation",
+            "claude-haiku-4-5",
+            {
+                "input_tokens": 9000,
+                "output_tokens": 200,
+                "input_token_details": {"cache_read": 8000},
+            },
+        )
+        ledger.record(
+            "evaluation",
+            "claude-haiku-4-5",
+            {"input_tokens": 900, "output_tokens": 150},
+        )
+        return ledger
+
+    def test_performance_from_usage(self):
+        totals = self.ledger_with_a_cached_annotation().total()
+        performance = TelemetryPerformance.from_usage(latency_ms=4200, usage=totals)
+
+        assert performance.latency_ms == 4200
+        assert performance.llm_calls == 2
+        assert performance.input_tokens == 9900
+        assert performance.output_tokens == 350
+        assert performance.cache_read_tokens == 8000
+        assert performance.cache_write_tokens == 0
+        assert performance.cache_hit_rate == pytest.approx(8000 / 9900, abs=1e-4)
+        assert performance.uncached_cost_usd > performance.cost_usd
+
+    def test_event_carries_usage_figures(self):
+        event = TelemetryEvent.create(
+            description="participant pressed button",
+            schema_version="8.4.0",
+            hed_string="Agent-action, Press",
+            iterations=1,
+            validation_errors=[],
+            model="claude-haiku-4-5",
+            provider="anthropic",
+            temperature=0.1,
+            latency_ms=4200,
+            source="api",
+            usage=self.ledger_with_a_cached_annotation().total(),
+        )
+
+        assert event.performance.llm_calls == 2
+        assert event.performance.cache_read_tokens == 8000
+        assert event.performance.cost_usd is not None
+        # Serialized events keep the cache fields for later analysis.
+        assert event.to_dict()["performance"]["cache_read_tokens"] == 8000
+
+    def test_usage_takes_precedence_over_loose_token_args(self):
+        event = TelemetryEvent.create(
+            description="participant pressed button",
+            schema_version="8.4.0",
+            hed_string="Agent-action, Press",
+            iterations=1,
+            validation_errors=[],
+            model="claude-haiku-4-5",
+            provider="anthropic",
+            temperature=0.1,
+            latency_ms=100,
+            source="api",
+            input_tokens=1,
+            output_tokens=1,
+            cost_usd=99.0,
+            usage=self.ledger_with_a_cached_annotation().total(),
+        )
+
+        assert event.performance.input_tokens == 9900
+        assert event.performance.cost_usd < 1.0
+
+    def test_events_without_usage_keep_null_token_fields(self):
+        event = TelemetryEvent.create(
+            description="participant pressed button",
+            schema_version="8.4.0",
+            hed_string="Agent-action, Press",
+            iterations=1,
+            validation_errors=[],
+            model="claude-haiku-4-5",
+            provider="anthropic",
+            temperature=0.1,
+            latency_ms=100,
+            source="cli",
+        )
+
+        assert event.performance.input_tokens is None
+        assert event.performance.llm_calls is None
+        assert event.performance.cache_read_tokens is None

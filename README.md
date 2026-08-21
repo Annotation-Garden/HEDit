@@ -67,6 +67,7 @@ Config files are stored in `~/.config/hedit/`:
 - **Image Annotation**: Annotate visual stimuli directly from image files
 - **Multi-Stage Validation**: AI agents generate, validate, evaluate, and refine annotations
 - **Claude-Powered**: Anthropic Claude models (Haiku 4.5 default, Sonnet 5 optional); bring your own Anthropic key if you prefer your own billing
+- **Cost Transparency**: Every annotation reports its token use and how much prompt caching saved (typically ~80% of input cost after the first request)
 - **JSON Output**: Easy integration with scripts and pipelines
 - **HED Schema Support**: Works with official HED schemas (8.x)
 
@@ -83,6 +84,7 @@ The agents work in feedback loops, automatically refining the annotation until i
 
 ## Documentation
 
+- [Prompt Caching and Usage Reporting](docs/prompt-caching.md) - What HEDit caches, what it saves, and where to see the numbers
 - [HED Standard](https://hedtags.org) - Learn about HED annotations
 - [GitHub Issues](https://github.com/Annotation-Garden/HEDit/issues) - Report bugs or request features
 
@@ -234,6 +236,7 @@ uvicorn src.api.main:app --reload --host 0.0.0.0 --port 38427
 - `POST /annotate`: Generate HED annotation from natural language
 - `POST /validate`: Validate HED annotation
 - `GET /health`: Health check
+- `GET /metrics`: Token use, cost, and prompt-cache savings since startup (server API key required)
 - API URL: `http://localhost:38427`
 
 ## Development
