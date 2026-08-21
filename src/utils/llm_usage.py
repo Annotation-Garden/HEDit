@@ -299,7 +299,15 @@ def usage_scope() -> Iterator[UsageLedger]:
     try:
         yield ledger
     finally:
-        _active_scope.reset(token)
+        try:
+            _active_scope.reset(token)
+        except ValueError:
+            # An async generator can be resumed in a different context than
+            # the one that entered the scope (streaming responses), which
+            # makes the token unusable. Clearing the variable still prevents
+            # a finished scope from collecting later calls.
+            logger.warning("Usage scope token expired; clearing the scope instead")
+            _active_scope.set(None)
 
 
 def caching_expected(model: str, prefix_tokens: int) -> bool:

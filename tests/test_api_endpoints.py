@@ -12,7 +12,10 @@ import time
 from unittest.mock import MagicMock, patch
 
 import pytest
+from fastapi import Request
 from fastapi.testclient import TestClient
+
+from src.utils.llm_usage import process_ledger
 
 # Test API key header
 TEST_AUTH_HEADERS = {"X-API-Key": "test-api-key-for-unit-tests"}
@@ -1316,3 +1319,153 @@ class TestModelValidationHTTP:
         response = client.post("/annotate", json=self.REQUEST, headers=headers)
         assert response.status_code == 400
         assert "not available" in response.json()["detail"]
+
+
+def override_header(headers: dict[str, str], name: str) -> str | None:
+    """Read an override header from a real Starlette request.
+
+    The app is imported here rather than at module scope so the client
+    fixture's auth environment is in place first.
+    """
+    from src.api.main import _override_header
+
+    return _override_header(make_request(headers), name)
+
+
+def make_request(headers: dict[str, str]) -> Request:
+    """Build a real Starlette request carrying the given headers."""
+    return Request(
+        {
+            "type": "http",
+            "headers": [(k.lower().encode(), v.encode()) for k, v in headers.items()],
+        }
+    )
+
+
+class TestOverrideHeaders:
+    """Tests for the X-Anthropic-* override headers and their legacy aliases."""
+
+    def test_anthropic_spelling_is_read(self, client):
+        assert override_header({"X-Anthropic-Model": "claude-sonnet-5"}, "model") == (
+            "claude-sonnet-5"
+        )
+
+    def test_legacy_openrouter_spelling_still_works(self, client):
+        assert override_header({"X-OpenRouter-Model": "claude-sonnet-5"}, "model") == (
+            "claude-sonnet-5"
+        )
+
+    def test_anthropic_spelling_wins_when_both_are_sent(self, client):
+        headers = {
+            "X-Anthropic-Model": "claude-sonnet-5",
+            "X-OpenRouter-Model": "claude-haiku-4-5",
+        }
+        assert override_header(headers, "model") == "claude-sonnet-5"
+
+    def test_missing_header_is_none(self, client):
+        assert override_header({}, "model") is None
+
+    def test_all_override_names_are_supported(self, client):
+        headers = {
+            "X-Anthropic-Key": "sk-ant-key",
+            "X-Anthropic-Eval-Model": "claude-haiku-4-5",
+            "X-Anthropic-Vision-Model": "claude-haiku-4-5",
+            "X-Anthropic-Temperature": "0.4",
+        }
+        assert override_header(headers, "key") == "sk-ant-key"
+        assert override_header(headers, "eval-model") == "claude-haiku-4-5"
+        assert override_header(headers, "vision-model") == "claude-haiku-4-5"
+        assert override_header(headers, "temperature") == "0.4"
+
+    def test_new_header_reaches_model_validation(self, client):
+        """An unavailable model in the new header is rejected with 400.
+
+        Model validation runs before any credential check, so this holds
+        whether or not the test environment has server credentials.
+        """
+        response = client.post(
+            "/annotate",
+            json={"description": "A red circle appears", "schema_version": "8.3.0"},
+            headers={**TEST_AUTH_HEADERS, "X-Anthropic-Model": "qwen/qwen3.5-122b-a10b"},
+        )
+        assert response.status_code == 400
+        assert "not available" in response.json()["detail"]
+
+    def test_legacy_header_reaches_model_validation(self, client):
+        response = client.post(
+            "/annotate",
+            json={"description": "A red circle appears", "schema_version": "8.3.0"},
+            headers={**TEST_AUTH_HEADERS, "X-OpenRouter-Model": "qwen/qwen3.5-122b-a10b"},
+        )
+        assert response.status_code == 400
+
+    def test_both_spellings_are_advertised_for_cors(self, client):
+        response = client.options(
+            "/annotate",
+            headers={
+                "Origin": "http://localhost:3000",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "x-anthropic-model",
+            },
+        )
+        allowed = response.headers.get("access-control-allow-headers", "").lower()
+        assert "x-anthropic-model" in allowed
+        assert "x-openrouter-model" in allowed
+
+
+class TestMetricsEndpoint:
+    """Tests for the server usage/savings metrics endpoint."""
+
+    @pytest.fixture(autouse=True)
+    def clean_ledger(self):
+        process_ledger().reset()
+        yield
+        process_ledger().reset()
+
+    def test_requires_auth(self, client):
+        assert client.get("/metrics").status_code == 401
+
+    def test_reports_totals_by_role_and_model(self, client):
+        process_ledger().record(
+            "annotation",
+            "claude-haiku-4-5",
+            {
+                "input_tokens": 9000,
+                "output_tokens": 200,
+                "input_token_details": {"cache_read": 8000},
+            },
+        )
+        process_ledger().record(
+            "evaluation",
+            "claude-haiku-4-5",
+            {"input_tokens": 900, "output_tokens": 150},
+        )
+
+        response = client.get("/metrics", headers=TEST_AUTH_HEADERS)
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["total"]["calls"] == 2
+        assert data["total"]["cache_read_tokens"] == 8000
+        assert data["total"]["savings_usd"] > 0
+        assert data["by_role"]["annotation"]["cache_read_tokens"] == 8000
+        assert data["by_role"]["evaluation"]["cache_read_tokens"] == 0
+        assert data["by_model"]["claude-haiku-4-5"]["calls"] == 2
+        assert data["since"]
+
+    def test_empty_ledger_reports_zeros(self, client):
+        response = client.get("/metrics", headers=TEST_AUTH_HEADERS)
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["total"]["calls"] == 0
+        assert data["total"]["cost_usd"] == 0
+        assert data["by_role"] == {}
+
+    def test_byok_callers_are_refused(self, client):
+        response = client.get(
+            "/metrics",
+            headers={"X-Anthropic-Key": "sk-ant-api03-validlookingkey1234567890"},
+        )
+        assert response.status_code == 403
+        assert "server API key" in response.json()["detail"]

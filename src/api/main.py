@@ -10,6 +10,7 @@ import logging
 import os
 import time
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from pathlib import Path
 
 import anthropic
@@ -31,6 +32,8 @@ from src.api.models import (
     HealthResponse,
     ImageAnnotationRequest,
     ImageAnnotationResponse,
+    MetricsResponse,
+    UsageSummary,
     ValidationRequest,
     ValidationResponse,
 )
@@ -38,6 +41,7 @@ from src.api.security import api_key_auth, audit_logger
 from src.lsp import HedLspClient
 from src.telemetry import LocalFileStorage, TelemetryCollector, TelemetryEvent
 from src.utils.anthropic_llm import DEFAULT_MODEL, create_anthropic_llm, normalize_model
+from src.utils.llm_usage import UsageLedger, process_ledger, usage_scope
 from src.utils.schema_loader import HedSchemaLoader
 from src.validation.hed_validator import HedPythonValidator
 
@@ -56,6 +60,7 @@ lsp_client: HedLspClient | None = None
 
 # Telemetry collector (initialized in lifespan)
 telemetry_collector: TelemetryCollector | None = None
+_startup_time: str = datetime.now(UTC).isoformat()
 
 # Cache for BYOK configuration
 _byok_config: dict = {}
@@ -98,6 +103,41 @@ def _describe_llm_error(exc: Exception) -> tuple[int, str, str]:
 # server-wide lsp_client global". Per-request callers can pass an
 # explicit None to opt out, or another HedLspClient instance to override.
 _USE_GLOBAL_LSP: HedLspClient = object()  # type: ignore[assignment]
+
+
+def _usage_summary(ledger: UsageLedger) -> UsageSummary | None:
+    """Build the response's usage figures from a request's usage ledger.
+
+    Returns None when no LLM call was recorded (a fully cached or failed
+    request), so clients can tell "no calls" from "zero cost".
+
+    Args:
+        ledger: Ledger collected for one request
+
+    Returns:
+        UsageSummary, or None when nothing was recorded
+    """
+    totals = ledger.total()
+    if totals.calls == 0:
+        return None
+    return UsageSummary(**totals.as_dict())
+
+
+def _override_header(req: Request, name: str) -> str | None:
+    """Read a per-request override header, preferring the X-Anthropic-* spelling.
+
+    The X-OpenRouter-* names are the wire spelling from before the Anthropic
+    migration. They remain accepted indefinitely so that cached frontends and
+    third-party clients keep working; current clients send X-Anthropic-*.
+
+    Args:
+        req: Incoming request
+        name: Header suffix, e.g. "model" for X-Anthropic-Model
+
+    Returns:
+        Header value, or None when neither spelling is present
+    """
+    return req.headers.get(f"x-anthropic-{name}") or req.headers.get(f"x-openrouter-{name}")
 
 
 def _resolve_lsp_client(
@@ -483,6 +523,9 @@ async def lifespan(app: FastAPI):
             exc_info=True,
         )
 
+    global _startup_time
+    _startup_time = datetime.now(UTC).isoformat()
+
     # Initialize telemetry collector
     global telemetry_collector
     # Use /app/telemetry in Docker, otherwise use local .hedit/telemetry
@@ -561,13 +604,18 @@ app.add_middleware(
         "X-Requested-With",
         "X-API-Key",
         "X-Anthropic-Key",  # BYOK mode (Anthropic API key)
-        "X-OpenRouter-Key",  # Legacy BYOK header (still accepted as transport)
-        "X-OpenRouter-Model",  # Model override
-        "X-OpenRouter-Vision-Model",  # Vision model override
+        "X-Anthropic-Model",  # Model override
+        "X-Anthropic-Eval-Model",  # Eval model override
+        "X-Anthropic-Vision-Model",  # Vision model override
+        "X-Anthropic-Temperature",  # Temperature override
+        # Legacy X-OpenRouter-* spellings, still accepted as transport
+        "X-OpenRouter-Key",
+        "X-OpenRouter-Model",
+        "X-OpenRouter-Vision-Model",
         "X-OpenRouter-Vision-Provider",  # Legacy, ignored
         "X-OpenRouter-Provider",  # Legacy, ignored
-        "X-OpenRouter-Temperature",  # Temperature override
-        "X-OpenRouter-Eval-Model",  # Eval model override
+        "X-OpenRouter-Temperature",
+        "X-OpenRouter-Eval-Model",
         "X-OpenRouter-Eval-Provider",  # Legacy, ignored
         "X-User-Id",  # Legacy, ignored
     ],
@@ -652,9 +700,9 @@ async def annotate(
     """
     # Determine which workflow to use
     # Check for model override headers (from frontend dropdown or CLI)
-    model_override = request.model or req.headers.get("x-openrouter-model")
-    eval_model_override = req.headers.get("x-openrouter-eval-model")
-    temp_header = req.headers.get("x-openrouter-temperature")
+    model_override = request.model or _override_header(req, "model")
+    eval_model_override = _override_header(req, "eval-model")
+    temp_header = _override_header(req, "temperature")
     temperature = request.temperature
     if temperature is None and temp_header:
         try:
@@ -664,7 +712,7 @@ async def annotate(
 
     if api_key == "byok":
         # BYOK mode: Create workflow with user's Anthropic key
-        byok_key = req.headers.get("x-anthropic-key") or req.headers.get("x-openrouter-key")
+        byok_key = _override_header(req, "key")
         if not byok_key:
             raise HTTPException(status_code=401, detail="Missing X-Anthropic-Key header")
 
@@ -713,14 +761,15 @@ async def annotate(
         config = {"recursion_limit": 50}
 
         start_time = time.time()
-        final_state = await active_workflow.run(
-            input_description=request.description,
-            schema_version=request.schema_version,
-            max_validation_attempts=request.max_validation_attempts,
-            run_assessment=request.run_assessment,
-            no_extend=request.no_extend,
-            config=config,
-        )
+        with usage_scope() as usage:
+            final_state = await active_workflow.run(
+                input_description=request.description,
+                schema_version=request.schema_version,
+                max_validation_attempts=request.max_validation_attempts,
+                run_assessment=request.run_assessment,
+                no_extend=request.no_extend,
+                config=config,
+            )
         latency_ms = int((time.time() - start_time) * 1000)
 
         # Determine overall status
@@ -734,12 +783,12 @@ async def annotate(
             # Get model info from request body, BYOK headers, or server config
             model_name = (
                 request.model
-                or req.headers.get("x-openrouter-model")
+                or _override_header(req, "model")
                 or os.getenv("ANNOTATION_MODEL", DEFAULT_MODEL)
             )
             temperature = request.temperature
             if temperature is None:
-                temp_header = req.headers.get("x-openrouter-temperature")
+                temp_header = _override_header(req, "temperature")
                 if temp_header is not None:
                     try:
                         temperature = float(temp_header)
@@ -759,6 +808,7 @@ async def annotate(
                 temperature=temperature,
                 latency_ms=latency_ms,
                 source="api",
+                usage=usage.total(),
             )
             await telemetry_collector.collect(event)
 
@@ -773,6 +823,7 @@ async def annotate(
             evaluation_feedback=final_state["evaluation_feedback"],
             assessment_feedback=final_state["assessment_feedback"],
             status=status,
+            usage=_usage_summary(usage),
         )
 
     except Exception as e:
@@ -809,10 +860,10 @@ async def annotate_from_image(
     """
     # Determine which workflow and vision agent to use
     # Check for model override headers (from frontend dropdown or CLI)
-    model_override = request.model or req.headers.get("x-openrouter-model")
-    vision_model_override = request.vision_model or req.headers.get("x-openrouter-vision-model")
-    eval_model_override = req.headers.get("x-openrouter-eval-model")
-    temp_header = req.headers.get("x-openrouter-temperature")
+    model_override = request.model or _override_header(req, "model")
+    vision_model_override = request.vision_model or _override_header(req, "vision-model")
+    eval_model_override = _override_header(req, "eval-model")
+    temp_header = _override_header(req, "temperature")
     temperature = request.temperature
     if temperature is None and temp_header:
         try:
@@ -822,7 +873,7 @@ async def annotate_from_image(
 
     if api_key == "byok":
         # BYOK mode: Create workflow and vision agent with user's Anthropic key
-        byok_key = req.headers.get("x-anthropic-key") or req.headers.get("x-openrouter-key")
+        byok_key = _override_header(req, "key")
         if not byok_key:
             raise HTTPException(status_code=401, detail="Missing X-Anthropic-Key header")
 
@@ -884,26 +935,29 @@ async def annotate_from_image(
     try:
         start_time = time.time()
 
-        # Step 1: Generate image description using vision model
-        vision_result = await active_vision_agent.describe_image(
-            image_data=request.image,
-            custom_prompt=request.prompt,
-        )
+        # The vision call and the annotation workflow share one usage scope
+        # so the reported figures cover the whole request.
+        with usage_scope() as usage:
+            # Step 1: Generate image description using vision model
+            vision_result = await active_vision_agent.describe_image(
+                image_data=request.image,
+                custom_prompt=request.prompt,
+            )
 
-        image_description = vision_result["description"]
-        image_metadata = vision_result["metadata"]
+            image_description = vision_result["description"]
+            image_metadata = vision_result["metadata"]
 
-        # Step 2: Pass description through HED annotation workflow
-        config = {"recursion_limit": 50}
+            # Step 2: Pass description through HED annotation workflow
+            config = {"recursion_limit": 50}
 
-        final_state = await active_workflow.run(
-            input_description=image_description,
-            schema_version=request.schema_version,
-            max_validation_attempts=request.max_validation_attempts,
-            run_assessment=request.run_assessment,
-            no_extend=request.no_extend,
-            config=config,
-        )
+            final_state = await active_workflow.run(
+                input_description=image_description,
+                schema_version=request.schema_version,
+                max_validation_attempts=request.max_validation_attempts,
+                run_assessment=request.run_assessment,
+                no_extend=request.no_extend,
+                config=config,
+            )
         latency_ms = int((time.time() - start_time) * 1000)
 
         # Determine overall status
@@ -915,12 +969,12 @@ async def annotate_from_image(
             # Get model info from request body, BYOK headers, or server config
             model_name = (
                 request.model
-                or req.headers.get("x-openrouter-model")
+                or _override_header(req, "model")
                 or os.getenv("ANNOTATION_MODEL", DEFAULT_MODEL)
             )
             temperature = request.temperature
             if temperature is None:
-                temp_header = req.headers.get("x-openrouter-temperature")
+                temp_header = _override_header(req, "temperature")
                 if temp_header is not None:
                     try:
                         temperature = float(temp_header)
@@ -940,6 +994,7 @@ async def annotate_from_image(
                 temperature=temperature,
                 latency_ms=latency_ms,
                 source="api-image",  # Distinguish from text-based annotation
+                usage=usage.total(),
             )
             await telemetry_collector.collect(event)
 
@@ -956,6 +1011,7 @@ async def annotate_from_image(
             assessment_feedback=final_state["assessment_feedback"],
             status=status,
             image_metadata=image_metadata,
+            usage=_usage_summary(usage),
         )
 
     except Exception as e:
@@ -971,6 +1027,7 @@ async def _collect_stream_telemetry(
     start_time: float,
     source: str,
     description: str,
+    usage: UsageLedger | None = None,
 ) -> None:
     """Collect telemetry for streaming endpoints.
 
@@ -984,6 +1041,7 @@ async def _collect_stream_telemetry(
         start_time: Workflow start time (from time.time())
         source: Telemetry source identifier (e.g., "api-stream", "api-image-stream")
         description: Input description text (or image description for image endpoints)
+        usage: Usage ledger for this request, when one was collected
     """
     if not request.telemetry_enabled or not telemetry_collector:
         return
@@ -993,12 +1051,12 @@ async def _collect_stream_telemetry(
     # Get model info from request body, BYOK headers, or server config
     model_name = (
         request.model
-        or req.headers.get("x-openrouter-model")
+        or _override_header(req, "model")
         or os.getenv("ANNOTATION_MODEL", DEFAULT_MODEL)
     )
     temperature = request.temperature
     if temperature is None:
-        temp_header = req.headers.get("x-openrouter-temperature")
+        temp_header = _override_header(req, "temperature")
         if temp_header is not None:
             try:
                 temperature = float(temp_header)
@@ -1018,6 +1076,7 @@ async def _collect_stream_telemetry(
         temperature=temperature,
         latency_ms=latency_ms,
         source=source,
+        usage=usage.total() if usage is not None else None,
     )
     await telemetry_collector.collect(event)
 
@@ -1050,9 +1109,9 @@ async def annotate_stream(
     from src.agents.state import create_initial_state
 
     # Determine which workflow to use (same logic as /annotate)
-    model_override = request.model or req.headers.get("x-openrouter-model")
-    eval_model_override = req.headers.get("x-openrouter-eval-model")
-    temp_header = req.headers.get("x-openrouter-temperature")
+    model_override = request.model or _override_header(req, "model")
+    eval_model_override = _override_header(req, "eval-model")
+    temp_header = _override_header(req, "temperature")
     temperature = request.temperature
     if temperature is None and temp_header:
         try:
@@ -1061,7 +1120,7 @@ async def annotate_stream(
             pass  # Invalid header value, use default temperature
 
     if api_key == "byok":
-        byok_key = req.headers.get("x-anthropic-key") or req.headers.get("x-openrouter-key")
+        byok_key = _override_header(req, "key")
         if not byok_key:
             raise HTTPException(status_code=401, detail="Missing X-Anthropic-Key header")
         try:
@@ -1118,7 +1177,7 @@ async def annotate_stream(
         "assess": ("assessing", "Running final assessment..."),
     }
 
-    async def event_generator():
+    async def event_generator(usage: UsageLedger):
         """Generate SSE events for workflow progress using LangGraph streaming."""
 
         def send_event(event_type: str, data: dict) -> str:
@@ -1217,6 +1276,9 @@ async def annotate_stream(
                 "assessment_feedback": current_state.get("assessment_feedback", ""),
                 "status": status,
             }
+            usage_summary = _usage_summary(usage)
+            if usage_summary is not None:
+                result["usage"] = usage_summary.model_dump()
 
             yield send_event("result", result)
 
@@ -1229,6 +1291,7 @@ async def annotate_stream(
                     start_time=start_time,
                     source="api-stream",
                     description=request.description,
+                    usage=usage,
                 )
             except Exception:
                 logging.warning("Telemetry collection failed for streaming request", exc_info=True)
@@ -1250,13 +1313,25 @@ async def annotate_stream(
                     start_time=start_time,
                     source="api-stream",
                     description=request.description,
+                    usage=usage,
                 )
             except Exception:
                 logging.warning("Telemetry collection failed on error", exc_info=True)
             yield send_event("done", {"message": "Workflow ended with error"})
 
+    async def streamed_events():
+        """Hold one usage scope open for the whole stream.
+
+        The scope lives outside the generator that runs the workflow so that
+        every LLM call made while the response streams is attributed to this
+        request.
+        """
+        with usage_scope() as usage:
+            async for chunk in event_generator(usage):
+                yield chunk
+
     return StreamingResponse(
-        event_generator(),
+        streamed_events(),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -1295,10 +1370,10 @@ async def annotate_from_image_stream(
     from src.agents.state import create_initial_state
 
     # Determine which workflow and vision agent to use (same logic as /annotate-from-image)
-    model_override = request.model or req.headers.get("x-openrouter-model")
-    vision_model_override = request.vision_model or req.headers.get("x-openrouter-vision-model")
-    eval_model_override = req.headers.get("x-openrouter-eval-model")
-    temp_header = req.headers.get("x-openrouter-temperature")
+    model_override = request.model or _override_header(req, "model")
+    vision_model_override = request.vision_model or _override_header(req, "vision-model")
+    eval_model_override = _override_header(req, "eval-model")
+    temp_header = _override_header(req, "temperature")
     temperature = request.temperature
     if temperature is None and temp_header:
         try:
@@ -1307,7 +1382,7 @@ async def annotate_from_image_stream(
             pass
 
     if api_key == "byok":
-        byok_key = req.headers.get("x-anthropic-key") or req.headers.get("x-openrouter-key")
+        byok_key = _override_header(req, "key")
         if not byok_key:
             raise HTTPException(status_code=401, detail="Missing X-Anthropic-Key header")
         try:
@@ -1371,7 +1446,7 @@ async def annotate_from_image_stream(
         "assess": ("assessing", "Running final assessment..."),
     }
 
-    async def event_generator():
+    async def event_generator(usage: UsageLedger):
         """Generate SSE events for image annotation workflow progress."""
 
         def send_event(event_type: str, data: dict) -> str:
@@ -1502,6 +1577,9 @@ async def annotate_from_image_stream(
                 "status": status,
                 "image_metadata": image_metadata,
             }
+            usage_summary = _usage_summary(usage)
+            if usage_summary is not None:
+                result["usage"] = usage_summary.model_dump()
 
             yield send_event("result", result)
 
@@ -1514,6 +1592,7 @@ async def annotate_from_image_stream(
                     start_time=start_time,
                     source="api-image-stream",
                     description=image_description,
+                    usage=usage,
                 )
             except Exception:
                 logging.debug(
@@ -1537,13 +1616,25 @@ async def annotate_from_image_stream(
                     start_time=start_time,
                     source="api-image-stream",
                     description=image_description or "image-annotation-failed",
+                    usage=usage,
                 )
             except Exception:
                 logging.warning("Telemetry collection failed on image error", exc_info=True)
             yield send_event("done", {"message": "Workflow ended with error"})
 
+    async def streamed_events():
+        """Hold one usage scope open for the whole stream.
+
+        The scope lives outside the generator that runs the workflow so that
+        every LLM call made while the response streams is attributed to this
+        request.
+        """
+        with usage_scope() as usage:
+            async for chunk in event_generator(usage):
+                yield chunk
+
     return StreamingResponse(
-        event_generator(),
+        streamed_events(),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -1614,7 +1705,6 @@ async def submit_feedback(request: FeedbackRequest) -> FeedbackResponse:
     Returns:
         FeedbackResponse with feedback ID and status
     """
-    from datetime import datetime
     from uuid import uuid4
 
     try:
@@ -1742,6 +1832,39 @@ async def submit_feedback(request: FeedbackRequest) -> FeedbackResponse:
             status_code=500,
             detail=f"Failed to save feedback: {str(e)}",
         ) from e
+
+
+@app.get("/metrics", response_model=MetricsResponse)
+async def metrics(api_key: str = Depends(api_key_auth)) -> MetricsResponse:
+    """Report LLM token usage, cost, and prompt-cache savings since startup.
+
+    These are server-wide operator figures, so BYOK callers are refused: a
+    BYOK request gets its own numbers in the ``usage`` field of its
+    annotation response instead.
+
+    Args:
+        api_key: Authentication result (injected by dependency)
+
+    Returns:
+        Totals since startup, broken down by agent role and by model
+
+    Raises:
+        HTTPException: 403 when authenticated via BYOK
+    """
+    if api_key == "byok":
+        raise HTTPException(
+            status_code=403,
+            detail="Server metrics require a server API key; "
+            "per-request usage is returned in the annotation response.",
+        )
+
+    snapshot = process_ledger().snapshot()
+    return MetricsResponse(
+        since=_startup_time,
+        total=UsageSummary(**snapshot["total"]),
+        by_role={role: UsageSummary(**totals) for role, totals in snapshot["by_role"].items()},
+        by_model={model: UsageSummary(**totals) for model, totals in snapshot["by_model"].items()},
+    )
 
 
 @app.get("/version")
