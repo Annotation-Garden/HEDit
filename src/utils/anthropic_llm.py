@@ -78,6 +78,9 @@ _ADAPTIVE_THINKING_MODELS = {"claude-sonnet-5"}
 _ALWAYS_THINKING_MODELS: set[str] = set()
 LOWEST_REASONING_EFFORT = "low"
 
+# Smallest thinking budget the API accepts on budget-style models.
+MIN_THINKING_BUDGET_TOKENS = 1024
+
 # Models that still accept sampling parameters. Sonnet 5 rejects
 # `temperature` with a 400 (sampling params are removed on Claude 5 models).
 _SAMPLING_MODELS = {"claude-haiku-4-5"}
@@ -114,6 +117,58 @@ def normalize_model(model: str | None) -> str:
     return resolved
 
 
+def _validate_thinking(thinking: dict[str, Any], model: str, max_tokens: int) -> None:
+    """Check a thinking configuration against what the model accepts.
+
+    The API enforces different shapes per generation, and a mismatch is a
+    400 at request time: Sonnet 5 rejects thinking.type "enabled" ("Use
+    thinking.type adaptive"), while Haiku 4.5 has no adaptive mode and needs
+    an explicit token budget.
+
+    Args:
+        thinking: Thinking configuration to check
+        model: Resolved first-party model id
+        max_tokens: Maximum tokens for the request
+
+    Raises:
+        ValueError: If the configuration is not valid for this model
+    """
+    kind = thinking.get("type")
+
+    if model in _ADAPTIVE_THINKING_MODELS:
+        if kind not in ("adaptive", "disabled"):
+            raise ValueError(
+                f"{model} accepts thinking type 'adaptive' or 'disabled', not {kind!r}; "
+                "budget_tokens was removed on this model generation"
+            )
+        return
+
+    if kind == "disabled":
+        # Accepted (verified against the endpoint) and redundant on these
+        # models, but it lets a caller express "off" the same way for every
+        # model instead of special-casing.
+        return
+
+    if kind != "enabled":
+        raise ValueError(
+            f"{model} has no adaptive thinking mode; enable it with "
+            '{"type": "enabled", "budget_tokens": N}, disable it with '
+            '{"type": "disabled"}, or leave thinking unset'
+        )
+
+    budget = thinking.get("budget_tokens")
+    if not isinstance(budget, int) or budget < MIN_THINKING_BUDGET_TOKENS:
+        raise ValueError(
+            f"budget_tokens must be an integer of at least "
+            f"{MIN_THINKING_BUDGET_TOKENS}, got {budget!r}"
+        )
+    if budget >= max_tokens:
+        raise ValueError(
+            f"budget_tokens ({budget}) must be below max_tokens ({max_tokens}); "
+            "thinking tokens are drawn from the same budget as the response"
+        )
+
+
 def create_anthropic_llm(
     model: str | None = None,
     api_key: str | None = None,
@@ -124,6 +179,7 @@ def create_anthropic_llm(
     timeout: float = 60.0,
     role: str = "unspecified",
     cache_ttl: str | None = None,
+    thinking: dict[str, Any] | None = None,
 ) -> BaseChatModel:
     """Create a Claude LLM instance with prompt caching.
 
@@ -151,12 +207,21 @@ def create_anthropic_llm(
             token and cache usage; has no effect on the request itself.
         cache_ttl: Prompt-cache lifetime, "5m" (default) or "1h". Falls back
             to the HEDIT_PROMPT_CACHE_TTL environment variable when None.
+        thinking: Explicit extended-thinking configuration, overriding
+            disable_reasoning. The accepted shape depends on the model, and
+            the API is strict about it: Sonnet 5 takes
+            {"type": "adaptive"} or {"type": "disabled"} and rejects
+            "enabled"; Haiku 4.5 takes
+            {"type": "enabled", "budget_tokens": N} with N at least 1024 and
+            below max_tokens. Enabling thinking also drops `temperature`,
+            since the API only allows temperature 1 alongside thinking.
 
     Returns:
         LLM instance configured for the Claude Messages API
 
     Raises:
-        ValueError: If the model is not offered or the TTL is not supported
+        ValueError: If the model is not offered, the TTL is not supported, or
+            the thinking configuration is not valid for the model
         RuntimeError: If server mode is used without ANTHROPIC_API_KEY set
     """
     from langchain_anthropic import ChatAnthropic
@@ -188,10 +253,20 @@ def create_anthropic_llm(
         if workspace_id:
             kwargs["default_headers"] = {"anthropic-workspace-id": workspace_id}
 
-    if resolved_model in _SAMPLING_MODELS:
+    resolved_max_tokens = max_tokens or 8000
+
+    if thinking is not None:
+        _validate_thinking(thinking, resolved_model, resolved_max_tokens)
+        kwargs["thinking"] = thinking
+
+    thinking_on = thinking is not None and thinking.get("type") != "disabled"
+
+    # The API rejects any temperature but 1 when thinking is enabled, so the
+    # sampling setting is dropped rather than silently causing a 400.
+    if resolved_model in _SAMPLING_MODELS and not thinking_on:
         kwargs["temperature"] = temperature
 
-    if disable_reasoning:
+    if disable_reasoning and thinking is None:
         if resolved_model in _ADAPTIVE_THINKING_MODELS:
             kwargs["thinking"] = {"type": "disabled"}
         elif resolved_model in _ALWAYS_THINKING_MODELS:
@@ -199,7 +274,7 @@ def create_anthropic_llm(
 
     llm = ChatAnthropic(
         model=resolved_model,
-        max_tokens=max_tokens or 8000,
+        max_tokens=resolved_max_tokens,
         timeout=timeout,
         **kwargs,
     )

@@ -305,3 +305,90 @@ class TestCacheTtl:
         monkeypatch.setenv("HEDIT_PROMPT_CACHE_TTL", "forever")
         with pytest.raises(ValueError, match="Unsupported prompt cache TTL"):
             create_anthropic_llm()
+
+
+class TestThinkingConfiguration:
+    """Tests for the explicit thinking knob.
+
+    The shapes asserted here are the ones the API actually enforces, checked
+    against the live endpoint: Haiku 4.5 needs an explicit budget and refuses
+    any temperature but 1 alongside thinking; Sonnet 5 rejects
+    thinking.type "enabled" and wants "adaptive".
+    """
+
+    @pytest.fixture(autouse=True)
+    def server_key(self, monkeypatch):
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "server-key")
+
+    def test_haiku_takes_a_budget(self):
+        llm = create_anthropic_llm(
+            model="claude-haiku-4-5",
+            thinking={"type": "enabled", "budget_tokens": 1024},
+            enable_caching=False,
+        )
+        assert llm.thinking == {"type": "enabled", "budget_tokens": 1024}
+
+    def test_temperature_is_dropped_when_thinking_is_on(self):
+        """The API allows only temperature 1 with thinking, so it is omitted."""
+        llm = create_anthropic_llm(
+            model="claude-haiku-4-5",
+            temperature=0.1,
+            thinking={"type": "enabled", "budget_tokens": 1024},
+            enable_caching=False,
+        )
+        assert llm.temperature is None
+
+    def test_temperature_survives_thinking_disabled(self):
+        llm = create_anthropic_llm(
+            model="claude-haiku-4-5",
+            temperature=0.1,
+            thinking={"type": "disabled"},
+            enable_caching=False,
+        )
+        assert llm.temperature == 0.1
+
+    def test_sonnet_takes_adaptive(self):
+        llm = create_anthropic_llm(
+            model="claude-sonnet-5", thinking={"type": "adaptive"}, enable_caching=False
+        )
+        assert llm.thinking == {"type": "adaptive"}
+
+    def test_sonnet_rejects_budget_style_thinking(self):
+        with pytest.raises(ValueError, match="adaptive"):
+            create_anthropic_llm(
+                model="claude-sonnet-5",
+                thinking={"type": "enabled", "budget_tokens": 1024},
+                enable_caching=False,
+            )
+
+    def test_haiku_rejects_adaptive(self):
+        with pytest.raises(ValueError, match="no adaptive thinking mode"):
+            create_anthropic_llm(
+                model="claude-haiku-4-5", thinking={"type": "adaptive"}, enable_caching=False
+            )
+
+    def test_budget_below_minimum_rejected(self):
+        with pytest.raises(ValueError, match="at least 1024"):
+            create_anthropic_llm(
+                model="claude-haiku-4-5",
+                thinking={"type": "enabled", "budget_tokens": 512},
+                enable_caching=False,
+            )
+
+    def test_budget_must_fit_under_max_tokens(self):
+        with pytest.raises(ValueError, match="must be below max_tokens"):
+            create_anthropic_llm(
+                model="claude-haiku-4-5",
+                max_tokens=2000,
+                thinking={"type": "enabled", "budget_tokens": 2000},
+                enable_caching=False,
+            )
+
+    def test_explicit_thinking_overrides_disable_reasoning(self):
+        llm = create_anthropic_llm(
+            model="claude-sonnet-5",
+            disable_reasoning=True,
+            thinking={"type": "adaptive"},
+            enable_caching=False,
+        )
+        assert llm.thinking == {"type": "adaptive"}
