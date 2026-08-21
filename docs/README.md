@@ -29,6 +29,7 @@ Welcome to the HED-BOT documentation! This directory contains comprehensive guid
 - **[Contributing](development/contributing.md)** - How to contribute, issue labeling system
 - **[Project Summary](development/project-summary.md)** - Project overview and architecture
 - **[Versioning](development/versioning.md)** - Version management
+- **[Changelog](../CHANGELOG.md)** - What changed in each release
 
 ### 📡 API Reference
 - **API documentation** (coming soon)
