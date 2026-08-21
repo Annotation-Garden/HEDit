@@ -2,6 +2,7 @@
 
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.outputs import ChatGeneration, ChatResult
 
 from src.utils.anthropic_llm import (
     ALLOWED_MODELS,
@@ -10,6 +11,7 @@ from src.utils.anthropic_llm import (
     create_anthropic_llm,
     normalize_model,
 )
+from src.utils.llm_usage import process_ledger
 
 
 class TestNormalizeModel:
@@ -168,3 +170,80 @@ class TestCachingLLMWrapper:
         )
         with pytest.raises(TypeError, match="tool calls"):
             wrapper._add_cache_control([HumanMessage(content="hi"), msg])
+
+
+class TestUsageAccounting:
+    """Tests for the usage the wrapper reports to the ledger.
+
+    These exercise the extraction path with real LangChain response objects;
+    the live cache-hit behavior is covered by the key-gated integration test
+    in tests/test_integration_anthropic.py.
+    """
+
+    @pytest.fixture
+    def wrapper(self, monkeypatch):
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "server-key")
+        process_ledger().reset()
+        return create_anthropic_llm(role="annotation")
+
+    def test_factory_labels_the_wrapper(self, wrapper):
+        assert isinstance(wrapper, CachingLLMWrapper)
+        assert wrapper.role == "annotation"
+
+    def test_default_role_is_unspecified(self, monkeypatch):
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "server-key")
+        assert create_anthropic_llm().role == "unspecified"
+
+    def test_records_usage_from_a_message(self, wrapper):
+        message = AIMessage(
+            content="Sensory-event, Visual-presentation",
+            usage_metadata={
+                "input_tokens": 9000,
+                "output_tokens": 120,
+                "total_tokens": 9120,
+                "input_token_details": {"cache_read": 8500, "cache_creation": 0},
+            },
+        )
+
+        wrapper._record_usage(message)
+
+        totals = process_ledger().by_role()["annotation"]
+        assert totals.calls == 1
+        assert totals.cache_read_tokens == 8500
+        assert totals.uncached_input_tokens == 500
+        assert totals.output_tokens == 120
+        # The model that served the call is attributed, not the wrapper.
+        assert process_ledger().by_model()[DEFAULT_MODEL].calls == 1
+
+    def test_records_usage_from_a_chat_result(self, wrapper):
+        message = AIMessage(
+            content="Agent-action",
+            usage_metadata={
+                "input_tokens": 4200,
+                "output_tokens": 30,
+                "total_tokens": 4230,
+                "input_token_details": {"cache_creation": 4096},
+            },
+        )
+        result = ChatResult(generations=[ChatGeneration(message=message)])
+
+        wrapper._record_usage(result)
+
+        totals = process_ledger().by_role()["annotation"]
+        assert totals.cache_write_tokens == 4096
+        assert totals.calls == 1
+
+    def test_response_without_usage_is_not_counted(self, wrapper):
+        wrapper._record_usage(AIMessage(content="no usage metadata"))
+        assert process_ledger().is_empty()
+
+    def test_empty_chat_result_is_not_counted(self, wrapper):
+        wrapper._record_usage(ChatResult(generations=[]))
+        assert process_ledger().is_empty()
+
+    def test_uncached_llm_has_no_accounting(self, monkeypatch):
+        """enable_caching=False returns the bare model, so nothing is recorded."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "server-key")
+        llm = create_anthropic_llm(enable_caching=False, role="annotation")
+        assert not isinstance(llm, CachingLLMWrapper)
+        assert not hasattr(llm, "_record_usage")

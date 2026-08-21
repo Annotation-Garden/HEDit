@@ -19,6 +19,12 @@ LLM calls now go to Anthropic models only, through one of two endpoints:
 Prompt caching is enabled by default: system messages are transformed to
 the multipart format with ``cache_control`` markers, reducing cost by up
 to 90% on cache hits for the large static HED vocabulary guide.
+
+The same wrapper reports every response's token and cache usage to
+:mod:`src.utils.llm_usage`, which is where the CLI efficiency report, the
+``usage`` field on API responses, and ``GET /metrics`` get their numbers.
+Passing ``enable_caching=False`` returns the bare model, so that path has
+neither caching nor usage accounting; production always leaves it on.
 """
 
 import os
@@ -26,6 +32,8 @@ from typing import Any
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage
+
+from src.utils.llm_usage import record_usage
 
 # Default (and judge/vision) model: fast, cheap, strong enough for HED tasks.
 DEFAULT_MODEL = "claude-haiku-4-5"
@@ -88,6 +96,7 @@ def create_anthropic_llm(
     enable_caching: bool = True,
     disable_reasoning: bool = False,
     timeout: float = 60.0,
+    role: str = "unspecified",
 ) -> BaseChatModel:
     """Create a Claude LLM instance with prompt caching.
 
@@ -107,6 +116,9 @@ def create_anthropic_llm(
             (evaluation, keyword extraction) where thinking adds latency
             without quality benefit. No-op on Haiku 4.5.
         timeout: Per-request timeout in seconds
+        role: Agent role this LLM serves ("annotation", "evaluation",
+            "assessment", "feedback", "keyword", "vision"). Used to label
+            token and cache usage; has no effect on the request itself.
 
     Returns:
         LLM instance configured for the Claude Messages API
@@ -153,7 +165,7 @@ def create_anthropic_llm(
     )
 
     if enable_caching:
-        return CachingLLMWrapper(llm=llm)
+        return CachingLLMWrapper(llm=llm, role=role)
 
     return llm
 
@@ -176,10 +188,13 @@ class CachingLLMWrapper(BaseChatModel):
     llm: BaseChatModel
     """The underlying LLM to wrap."""
 
+    role: str = "unspecified"
+    """Agent role used to label token and cache usage."""
+
     model_config = {"arbitrary_types_allowed": True}
 
-    def __init__(self, llm: BaseChatModel, **kwargs) -> None:
-        super().__init__(llm=llm, **kwargs)  # type: ignore[call-arg]
+    def __init__(self, llm: BaseChatModel, role: str = "unspecified", **kwargs) -> None:
+        super().__init__(llm=llm, role=role, **kwargs)  # type: ignore[call-arg]
 
     @property
     def _llm_type(self) -> str:
@@ -221,26 +236,52 @@ class CachingLLMWrapper(BaseChatModel):
 
         return result
 
+    def _record_usage(self, result: Any) -> None:
+        """Report one response's token and cache usage to the ledger.
+
+        Accepts either an ``AIMessage`` (from invoke/ainvoke) or a
+        ``ChatResult`` (from _generate/_agenerate). Responses without usage
+        metadata are skipped rather than counted as zero.
+        """
+        message = result
+        generations = getattr(result, "generations", None)
+        if generations is not None:
+            message = generations[0].message if generations else None
+
+        usage = getattr(message, "usage_metadata", None)
+        if not usage:
+            return
+
+        record_usage(role=self.role, model=getattr(self.llm, "model", ""), usage=usage)
+
     def _generate(  # type: ignore[override]
         self, messages: list[BaseMessage], **kwargs: Any
     ) -> Any:
         cached_messages = self._add_cache_control(messages)
-        return self.llm._generate(cached_messages, **kwargs)  # type: ignore[arg-type]
+        result = self.llm._generate(cached_messages, **kwargs)  # type: ignore[arg-type]
+        self._record_usage(result)
+        return result
 
     async def _agenerate(  # type: ignore[override]
         self, messages: list[BaseMessage], **kwargs: Any
     ) -> Any:
         cached_messages = self._add_cache_control(messages)
-        return await self.llm._agenerate(cached_messages, **kwargs)  # type: ignore[arg-type]
+        result = await self.llm._agenerate(cached_messages, **kwargs)  # type: ignore[arg-type]
+        self._record_usage(result)
+        return result
 
     def invoke(  # type: ignore[override]
         self, messages: list[BaseMessage], **kwargs: Any
     ) -> Any:
         cached_messages = self._add_cache_control(messages)
-        return self.llm.invoke(cached_messages, **kwargs)
+        result = self.llm.invoke(cached_messages, **kwargs)
+        self._record_usage(result)
+        return result
 
     async def ainvoke(  # type: ignore[override]
         self, messages: list[BaseMessage], **kwargs: Any
     ) -> Any:
         cached_messages = self._add_cache_control(messages)
-        return await self.llm.ainvoke(cached_messages, **kwargs)
+        result = await self.llm.ainvoke(cached_messages, **kwargs)
+        self._record_usage(result)
+        return result

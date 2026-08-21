@@ -167,6 +167,7 @@ def create_anthropic_workflow(
         model=actual_annotation_model,
         api_key=api_key,
         temperature=actual_temperature,
+        role="annotation",
     )
     # Evaluation / assessment / feedback / keyword extraction are short
     # structured tasks; reasoning adds 5-10 s per call without
@@ -176,18 +177,21 @@ def create_anthropic_workflow(
         api_key=api_key,
         temperature=actual_temperature,
         disable_reasoning=True,
+        role="evaluation",
     )
     assessment_llm = create_anthropic_llm(
         model=actual_eval_model,
         api_key=api_key,
         temperature=actual_temperature,
         disable_reasoning=True,
+        role="assessment",
     )
     feedback_llm = create_anthropic_llm(
         model=actual_eval_model,
         api_key=api_key,
         temperature=actual_temperature,
         disable_reasoning=True,
+        role="feedback",
     )
     # Keyword extraction (#148): use the fast annotation model with
     # reasoning explicitly disabled and a small token cap. The
@@ -199,6 +203,7 @@ def create_anthropic_workflow(
         temperature=actual_temperature,
         max_tokens=200,
         disable_reasoning=True,
+        role="keyword",
     )
 
     # Create and return workflow
@@ -283,6 +288,7 @@ def create_vision_agent(
         model=actual_model,
         api_key=api_key,
         temperature=actual_temperature,
+        role="vision",
     )
 
     return VisionAgent(llm=vision_llm)
@@ -1683,6 +1689,7 @@ async def submit_feedback(request: FeedbackRequest) -> FeedbackResponse:
                     model=model,
                     temperature=0.1,
                     max_tokens=1000,
+                    role="triage",
                 )
 
                 # Create and run triage agent

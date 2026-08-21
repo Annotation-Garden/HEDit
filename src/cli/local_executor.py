@@ -156,6 +156,7 @@ class LocalExecutionBackend(ExecutionBackend):
                 model=self._model,
                 api_key=self._api_key,
                 temperature=self._temperature,
+                role="annotation",
             )
 
             # Evaluation / assessment / feedback share a model with
@@ -166,6 +167,7 @@ class LocalExecutionBackend(ExecutionBackend):
                 api_key=self._api_key,
                 temperature=self._temperature,
                 disable_reasoning=True,
+                role="evaluation",
             )
 
             # Lightweight keyword-extraction model (#148): annotation
@@ -176,6 +178,7 @@ class LocalExecutionBackend(ExecutionBackend):
                 temperature=self._temperature,
                 max_tokens=200,
                 disable_reasoning=True,
+                role="keyword",
             )
 
             self._workflow = HedAnnotationWorkflow(
@@ -239,6 +242,7 @@ class LocalExecutionBackend(ExecutionBackend):
                 model=self._vision_model,
                 api_key=self._api_key,
                 temperature=0.3,  # Slightly higher for vision tasks
+                role="vision",
             )
 
             self._vision_agent = VisionAgent(llm=vision_llm)

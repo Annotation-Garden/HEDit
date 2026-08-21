@@ -63,6 +63,7 @@ async def process_feedback_file(
         model=model,
         temperature=0.1,
         max_tokens=1000,
+        role="triage",
     )
 
     # Create GitHub client if token available
