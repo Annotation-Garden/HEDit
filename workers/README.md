@@ -81,8 +81,11 @@ then push to GitHub; Cloudflare Pages auto-deploys.
 The worker forwards these headers to the backend:
 
 - `X-Anthropic-Key`: user's own Anthropic API key (sk-ant-...); BYOK requests skip Turnstile
+- `X-Anthropic-Model`, `X-Anthropic-Eval-Model`, `X-Anthropic-Vision-Model`,
+  `X-Anthropic-Temperature`: per-request overrides
 - `X-OpenRouter-Key`: legacy BYOK header, still forwarded (must carry an Anthropic key)
-- `X-OpenRouter-Model`, `X-OpenRouter-Eval-Model`, `X-OpenRouter-Temperature`: model overrides
+- `X-OpenRouter-Model`, `X-OpenRouter-Eval-Model`, `X-OpenRouter-Vision-Model`,
+  `X-OpenRouter-Temperature`: legacy spelling of the overrides, still forwarded
   (legacy wire names kept for compatibility); offered models are
   `claude-haiku-4-5` (default) and `claude-sonnet-5`
 - `X-User-Id`: telemetry identifier

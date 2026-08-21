@@ -1197,6 +1197,7 @@ Example: A red circle appears on the left side of the screen and the participant
             <div id="warningsSection"></div>
             <div id="evaluationSection"></div>
             <div id="assessmentSection"></div>
+            <div id="usageSection"></div>
 
             <div class="feedback-section">
                 <button class="feedback-btn" onclick="provideFeedback()" title="Submit feedback about this annotation to help improve HEDit">
@@ -1581,7 +1582,7 @@ Example: A red circle appears on the left side of the screen and the participant
                 headers: {
                     'Content-Type': 'application/json',
                     'X-User-Id': `frontend-${FRONTEND_VERSION}`,
-                    'X-OpenRouter-Model': selectedModel,
+                    'X-Anthropic-Model': selectedModel,
                 },
                 body: JSON.stringify(payload)
             });
@@ -1723,7 +1724,7 @@ Example: A red circle appears on the left side of the screen and the participant
                 headers: {
                     'Content-Type': 'application/json',
                     'X-User-Id': `frontend-${FRONTEND_VERSION}`,
-                    'X-OpenRouter-Model': selectedModel,
+                    'X-Anthropic-Model': selectedModel,
                 },
                 body: JSON.stringify(payload)
             });
@@ -1841,7 +1842,7 @@ Example: A red circle appears on the left side of the screen and the participant
                 headers: {
                     'Content-Type': 'application/json',
                     'X-User-Id': `frontend-${FRONTEND_VERSION}`,
-                    'X-OpenRouter-Model': selectedModel,
+                    'X-Anthropic-Model': selectedModel,
                 },
                 body: JSON.stringify(payload)
             });
@@ -1973,7 +1974,7 @@ Example: A red circle appears on the left side of the screen and the participant
                     headers: {
                         'Content-Type': 'application/json',
                         'X-User-Id': `frontend-${FRONTEND_VERSION}`,
-                        'X-OpenRouter-Model': selectedModel,
+                        'X-Anthropic-Model': selectedModel,
                     },
                     body: JSON.stringify(payload)
                 });
@@ -2092,6 +2093,48 @@ Example: A red circle appears on the left side of the screen and the participant
             } else {
                 document.getElementById('assessmentSection').innerHTML = '';
             }
+
+            // Display token use and prompt-cache savings
+            document.getElementById('usageSection').innerHTML = renderUsage(data.usage);
+        }
+
+        // Every annotation re-sends a ~21.8k-token HED vocabulary guide, which
+        // prompt caching serves at a tenth of the input price. Showing the
+        // saving makes the efficiency visible instead of implied.
+        function renderUsage(usage) {
+            if (!usage || !usage.calls) {
+                return '';
+            }
+
+            const calls = usage.calls;
+            const inputTokens = (usage.input_tokens || 0).toLocaleString();
+            const outputTokens = (usage.output_tokens || 0).toLocaleString();
+            const cached = usage.cache_read_tokens || 0;
+
+            const lines = [
+                `${inputTokens} input / ${outputTokens} output tokens in ${calls} LLM call${calls === 1 ? '' : 's'}`
+            ];
+
+            if (cached > 0) {
+                const hitRate = Math.round((usage.cache_hit_rate || 0) * 100);
+                lines.push(`${cached.toLocaleString()} input tokens read from cache (${hitRate}% of input)`);
+            }
+
+            if (typeof usage.cost_usd === 'number') {
+                const savings = usage.savings_usd || 0;
+                let costLine = `$${usage.cost_usd.toFixed(6)}`;
+                if (savings > 0) {
+                    const pct = Math.round((usage.savings_pct || 0) * 100);
+                    costLine += `, saved $${savings.toFixed(6)} (${pct}%) by prompt caching`;
+                } else if (cached > 0) {
+                    costLine += ', no cache savings on this request';
+                } else {
+                    costLine += ', nothing cached yet (the next run reuses this prompt)';
+                }
+                lines.push(costLine);
+            }
+
+            return `<h3>Usage and Cache Savings</h3><div class="feedback">${lines.join('<br>')}</div>`;
         }
 
         function displayError(message) {
