@@ -85,6 +85,7 @@ The agents work in feedback loops, automatically refining the annotation until i
 ## Documentation
 
 - [Prompt Caching and Usage Reporting](docs/prompt-caching.md) - What HEDit caches, what it saves, and where to see the numbers
+- [Extended Thinking](docs/reasoning.md) - Measured effect of reasoning per agent role, and how to tune it
 - [HED Standard](https://hedtags.org) - Learn about HED annotations
 - [GitHub Issues](https://github.com/Annotation-Garden/HEDit/issues) - Report bugs or request features
 
