@@ -1469,3 +1469,84 @@ class TestMetricsEndpoint:
         )
         assert response.status_code == 403
         assert "server API key" in response.json()["detail"]
+
+
+class TestLLMErrorMessages:
+    """Error responses classify the failure without quoting the provider.
+
+    CodeQL flagged the streaming error path (py/stack-trace-exposure) because
+    exception text reached the client. The web app renders these messages as
+    HTML, and a provider error can echo request details, so every branch has
+    to return a fixed string.
+    """
+
+    @staticmethod
+    def _response(status: int):
+        import httpx
+
+        request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+        return httpx.Response(status, request=request)
+
+    def test_bad_request_does_not_quote_the_provider(self):
+        import anthropic
+
+        from src.api.main import _describe_llm_error
+
+        detail = (
+            "Error code: 400 - thinking.type.enabled is not supported for this model; "
+            "workspace wrkspc_01Rayuq1JvjaMYusRvUsn6vk"
+        )
+        exc = anthropic.BadRequestError(detail, response=self._response(400), body=None)
+
+        status, error_type, message = _describe_llm_error(exc)
+
+        assert status == 400
+        assert error_type == "bad_request"
+        assert "wrkspc_01Rayuq1JvjaMYusRvUsn6vk" not in message
+        assert "thinking.type.enabled" not in message
+        assert "Error code" not in message
+
+    def test_context_overflow_still_precedes_bad_request(self):
+        from langchain_anthropic.chat_models import AnthropicContextOverflowError
+
+        from src.api.main import _describe_llm_error
+
+        exc = AnthropicContextOverflowError(
+            "prompt is too long: 250000 tokens > 200000 maximum",
+            response=self._response(400),
+            body=None,
+        )
+
+        status, error_type, _message = _describe_llm_error(exc)
+
+        assert status == 413
+        assert error_type == "context_overflow"
+
+    def test_auth_failure_points_at_the_key(self):
+        import anthropic
+
+        from src.api.main import _describe_llm_error
+
+        exc = anthropic.AuthenticationError(
+            "invalid x-api-key sk-ant-api03-secretmaterial",
+            response=self._response(401),
+            body=None,
+        )
+
+        status, error_type, message = _describe_llm_error(exc)
+
+        assert status == 401
+        assert error_type == "auth"
+        assert "sk-ant-api03-secretmaterial" not in message
+
+    def test_unknown_failure_is_generic(self):
+        from src.api.main import _describe_llm_error
+
+        status, error_type, message = _describe_llm_error(
+            RuntimeError("Traceback (most recent call last): File /srv/hedit/main.py")
+        )
+
+        assert status == 500
+        assert error_type == "internal"
+        assert "Traceback" not in message
+        assert "/srv/hedit" not in message
