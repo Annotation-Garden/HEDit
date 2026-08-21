@@ -310,6 +310,24 @@ def usage_scope() -> Iterator[UsageLedger]:
             _active_scope.set(None)
 
 
+def summarize(ledger: UsageLedger) -> dict[str, Any] | None:
+    """JSON-safe totals for one request, or None when no call was recorded.
+
+    Returning None rather than a zeroed dict lets callers distinguish "no LLM
+    call was made" from "the calls were free".
+
+    Args:
+        ledger: Ledger collected for one request
+
+    Returns:
+        Totals as a plain dict, or None
+    """
+    totals = ledger.total()
+    if totals.calls == 0:
+        return None
+    return totals.as_dict()
+
+
 def caching_expected(model: str, prefix_tokens: int) -> bool:
     """Whether a prefix of this size can create a cache entry on this model.
 

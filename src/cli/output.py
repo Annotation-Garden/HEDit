@@ -26,6 +26,76 @@ def print_json(data: dict[str, Any]) -> None:
     print(json.dumps(data, indent=2))
 
 
+def _check(flag: bool) -> str:
+    """Checkbox marker for a status flag, escaped for Rich markup."""
+    return r"\[x]" if flag else r"\[ ]"
+
+
+def _money(amount: float) -> str:
+    """Format a dollar amount without rounding small costs away to zero."""
+    return f"${amount:.6f}" if abs(amount) < 0.01 else f"${amount:.4f}"
+
+
+def format_usage_lines(usage: dict[str, Any] | None) -> list[str]:
+    """Render token, cost, and prompt-cache figures as display lines.
+
+    Every HEDit annotation re-sends a large static HED vocabulary guide,
+    which prompt caching serves at a tenth of the input price after the first
+    call. Whoever owns the key is paying the bill, so the savings are worth
+    reporting alongside the annotation.
+
+    Args:
+        usage: Usage summary from an API response or a local run
+
+    Returns:
+        Display lines, or an empty list when no LLM usage was reported
+    """
+    if not usage or not usage.get("calls"):
+        return []
+
+    calls = usage.get("calls", 0)
+    input_tokens = usage.get("input_tokens", 0)
+    output_tokens = usage.get("output_tokens", 0)
+    cached = usage.get("cache_read_tokens", 0)
+
+    plural = "s" if calls != 1 else ""
+    lines = [
+        f"{input_tokens:,} input / {output_tokens:,} output tokens in {calls} LLM call{plural}"
+    ]
+
+    if cached:
+        hit_rate = usage.get("cache_hit_rate") or 0.0
+        lines.append(f"{cached:,} input tokens read from cache ({hit_rate:.0%} of input)")
+
+    cost = usage.get("cost_usd")
+    if cost is not None:
+        savings = usage.get("savings_usd") or 0.0
+        cost_line = _money(cost)
+        if savings > 0:
+            pct = usage.get("savings_pct") or 0.0
+            cost_line += f", saved {_money(savings)} ({pct:.0%}) by prompt caching"
+        elif cached:
+            cost_line += ", no cache savings on this request"
+        else:
+            cost_line += ", nothing cached yet (the next run reuses this prompt)"
+        unpriced = usage.get("unpriced_calls") or 0
+        if unpriced:
+            cost_line += f" (excludes {unpriced} call{'s' if unpriced != 1 else ''} with no price)"
+        lines.append(cost_line)
+
+    return lines
+
+
+def _append_usage_section(content: Text, result: dict[str, Any]) -> None:
+    """Append the usage and cache-savings section to a result panel."""
+    lines = format_usage_lines(result.get("usage"))
+    if not lines:
+        return
+    content.append("\n\nUsage and cache savings:\n", style="bold cyan")
+    for line in lines:
+        content.append(f"  {line}\n", style="cyan")
+
+
 def print_annotation_result(
     result: dict[str, Any],
     output_format: str = "text",
@@ -61,16 +131,14 @@ def print_annotation_result(
 
     # Build status line
     status_parts = []
+    status_parts.append(f"[{'green' if is_valid else 'red'}]{_check(is_valid)} Valid[/]")
     status_parts.append(
-        f"[{'green' if is_valid else 'red'}]{'[x]' if is_valid else '[ ]'} Valid[/]"
-    )
-    status_parts.append(
-        f"[{'green' if is_faithful else 'yellow'}]{'[x]' if is_faithful else '[ ]'} Faithful[/]"
+        f"[{'green' if is_faithful else 'yellow'}]{_check(is_faithful)} Faithful[/]"
     )
     if result.get("is_complete") is not None:
         is_complete = result.get("is_complete", False)
         status_parts.append(
-            f"[{'green' if is_complete else 'yellow'}]{'[x]' if is_complete else '[ ]'} Complete[/]"
+            f"[{'green' if is_complete else 'yellow'}]{_check(is_complete)} Complete[/]"
         )
 
     attempts = result.get("validation_attempts", 0)
@@ -81,7 +149,8 @@ def print_annotation_result(
     content.append("Annotation:\n", style="bold")
     content.append(f"  {annotation}\n\n")
     content.append("Status: ")
-    content.append(" ".join(status_parts))
+    # Status parts carry Rich markup, which Text.append would print literally.
+    content.append_text(Text.from_markup(" ".join(status_parts)))
 
     # Warnings
     warnings = result.get("validation_warnings", [])
@@ -96,6 +165,8 @@ def print_annotation_result(
         content.append("\n\nErrors:\n", style="bold red")
         for e in errors:
             content.append(f"  - {e}\n", style="red")
+
+    _append_usage_section(content, result)
 
     # Verbose output
     if verbose:
@@ -149,15 +220,14 @@ def print_image_annotation_result(
 
     # Status
     status_parts = []
+    status_parts.append(f"[{'green' if is_valid else 'red'}]{_check(is_valid)} Valid[/]")
     status_parts.append(
-        f"[{'green' if is_valid else 'red'}]{'[x]' if is_valid else '[ ]'} Valid[/]"
-    )
-    status_parts.append(
-        f"[{'green' if is_faithful else 'yellow'}]{'[x]' if is_faithful else '[ ]'} Faithful[/]"
+        f"[{'green' if is_faithful else 'yellow'}]{_check(is_faithful)} Faithful[/]"
     )
 
     content.append("Status: ")
-    content.append(" ".join(status_parts))
+    # Status parts carry Rich markup, which Text.append would print literally.
+    content.append_text(Text.from_markup(" ".join(status_parts)))
 
     # Warnings/errors
     warnings = result.get("validation_warnings", [])
@@ -171,6 +241,8 @@ def print_image_annotation_result(
         content.append("\n\nErrors:\n", style="bold red")
         for e in errors:
             content.append(f"  - {e}\n", style="red")
+
+    _append_usage_section(content, result)
 
     status = result.get("status", "unknown")
     status_style = "green" if status == "success" and is_valid else "red"
