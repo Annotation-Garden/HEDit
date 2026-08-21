@@ -9,7 +9,7 @@ Multi-agent system for converting natural language event descriptions into valid
 - **Language**: Python 3.12+
 - **Package Manager**: uv (fast Python package installer)
 - **Agent Framework**: LangGraph
-- **LLM Provider**: OpenRouter API (production default)
+- **LLM Provider**: Anthropic Claude via the Claude Platform on AWS (Anthropic-operated Messages API, AWS Marketplace billing; NOT Bedrock). Models: claude-haiku-4-5 (default) and claude-sonnet-5.
 - **Validation**: HED JavaScript validator + HED Python tools
 - **Backend**: FastAPI
 - **Frontend**: Cloudflare Pages
@@ -93,7 +93,7 @@ This keeps clear separation: TestPyPI = dev builds, PyPI = alpha/beta/stable rel
 
 ## Development Guidelines
 1. **Atomic commits**: Make small, focused commits for each logical change
-2. **Testing**: Use `uv run pytest` with coverage; avoid mock tests; use real API calls with OPENROUTER_API_KEY_FOR_TESTING
+2. **Testing**: Use `uv run pytest` with coverage; avoid mock tests; integration tests use real API calls with the ANTHROPIC_API_KEY credentials from .env
 3. **Linting**: Ruff pre-commit hooks with --fix and --unsafe-fixes
 4. **Documentation**: Keep plan.md updated with progress
 5. **Integration tests**: Run with `uv run pytest -m integration`; skip with `uv run pytest -m "not integration"`

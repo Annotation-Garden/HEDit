@@ -16,18 +16,16 @@ services:
     volumes:
       - feedback_data_dev:/app/feedback
     environment:
-      # LLM Provider Configuration
-      - LLM_PROVIDER=${LLM_PROVIDER:-openrouter}
+      # LLM Provider Configuration (Anthropic via Claude Platform on AWS)
+      - LLM_PROVIDER=${LLM_PROVIDER:-anthropic}
 
-      # OpenRouter Configuration
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - LLM_PROVIDER_PREFERENCE=${LLM_PROVIDER_PREFERENCE:-}
-      - ANNOTATION_MODEL=${ANNOTATION_MODEL:-anthropic/claude-haiku-4.5}
-      - ANNOTATION_PROVIDER=${ANNOTATION_PROVIDER:-anthropic}
-      - EVALUATION_MODEL=${EVALUATION_MODEL:-qwen/qwen3.5-122b-a10b}
-      - EVALUATION_PROVIDER=${EVALUATION_PROVIDER:-alibaba}
-      - VISION_MODEL=${VISION_MODEL:-qwen/qwen3.5-122b-a10b}
-      - VISION_PROVIDER=${VISION_PROVIDER:-alibaba}
+      # Anthropic Configuration (all three required)
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - ANTHROPIC_BASE_URL=${ANTHROPIC_BASE_URL:-https://aws-external-anthropic.us-east-2.api.aws}
+      - ANTHROPIC_WORKSPACE_ID=${ANTHROPIC_WORKSPACE_ID}
+      - ANNOTATION_MODEL=${ANNOTATION_MODEL:-claude-haiku-4-5}
+      - EVALUATION_MODEL=${EVALUATION_MODEL:-claude-haiku-4-5}
+      - VISION_MODEL=${VISION_MODEL:-claude-haiku-4-5}
 
       # LLM Settings
       - LLM_TEMPERATURE=${LLM_TEMPERATURE:-0.1}

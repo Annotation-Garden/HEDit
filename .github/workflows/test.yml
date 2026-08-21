@@ -117,10 +117,10 @@ jobs:
           # - Integration test files (test_integration*.py, test_standalone*.py)
           # - Agent code (workflow, annotation, evaluation, keyword extraction, etc.)
           # - Validation code
-          # - OpenRouter/LiteLLM utility
+          # - Anthropic LLM utility
           # - CLI code (for CLI integration tests)
           # - Semantic search code
-          INTEGRATION_PATTERNS="tests/test_.*integration|tests/test_standalone|src/agents/|src/validation/|src/utils/openrouter|src/utils/litellm|src/utils/semantic|src/cli/"
+          INTEGRATION_PATTERNS="tests/test_.*integration|tests/test_standalone|src/agents/|src/validation/|src/utils/anthropic|src/utils/semantic|src/cli/"
 
           if echo "$CHANGED" | grep -qE "$INTEGRATION_PATTERNS"; then
             echo "integration_needed=true" >> $GITHUB_OUTPUT
@@ -160,13 +160,15 @@ jobs:
 
       - name: Run standalone tests only
         env:
-          OPENROUTER_API_KEY_FOR_TESTING: ${{ secrets.OPENROUTER_API_KEY_FOR_TESTING }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_BASE_URL: ${{ vars.ANTHROPIC_BASE_URL }}
+          ANTHROPIC_WORKSPACE_ID: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
         run: |
-          if [ -n "$OPENROUTER_API_KEY_FOR_TESTING" ]; then
+          if [ -n "$ANTHROPIC_API_KEY" ]; then
             echo "Running standalone tests..."
             pytest tests/ -v -m standalone --timeout=180 --cov=src --cov-report=xml:coverage-standalone.xml --cov-report=term-missing
           else
-            echo "OPENROUTER_API_KEY_FOR_TESTING not set, skipping standalone tests"
+            echo "ANTHROPIC_API_KEY not set, skipping standalone tests"
           fi
 
       - name: Upload standalone coverage to Codecov
@@ -185,7 +187,7 @@ jobs:
     needs: [check-changes]
     # Only run integration tests when:
     # 1. Push event (after merge) or manual trigger, not on PRs
-    # 2. Integration-related files changed (agents, validation, openrouter, or test file itself)
+    # 2. Integration-related files changed (agents, validation, anthropic, or test file itself)
     if: |
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       (needs.check-changes.outputs.integration_needed == 'true' || github.event_name == 'workflow_dispatch')
@@ -208,14 +210,16 @@ jobs:
 
       - name: Run integration tests only
         env:
-          OPENROUTER_API_KEY_FOR_TESTING: ${{ secrets.OPENROUTER_API_KEY_FOR_TESTING }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_BASE_URL: ${{ vars.ANTHROPIC_BASE_URL }}
+          ANTHROPIC_WORKSPACE_ID: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
         run: |
           # Only run if the secret is available
-          if [ -n "$OPENROUTER_API_KEY_FOR_TESTING" ]; then
-            echo "Running integration tests with OpenRouter..."
+          if [ -n "$ANTHROPIC_API_KEY" ]; then
+            echo "Running integration tests with Claude (Claude Platform on AWS)..."
             pytest tests/ -v -m integration --timeout=180 --cov=src --cov-report=xml:coverage-integration.xml --cov-report=term-missing
           else
-            echo "OPENROUTER_API_KEY_FOR_TESTING not set, skipping integration tests"
+            echo "ANTHROPIC_API_KEY not set, skipping integration tests"
           fi
 
       - name: Upload integration coverage to Codecov

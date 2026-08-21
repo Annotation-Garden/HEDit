@@ -1,59 +1,25 @@
 services:
-  # Ollama LLM serving with GPU support
-  ollama:
-    image: ollama/ollama:latest
-    container_name: hedit-ollama
-    volumes:
-      - ollama_data:/root/.ollama
-      - ./docker/ollama-entrypoint.sh:/entrypoint.sh
-    ports:
-      - "11435:11434"
-    entrypoint: ["/bin/bash", "/entrypoint.sh"]
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 120s
-
   # HEDit API service
   hedit:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: hedit-api
-    depends_on:
-      - ollama
     volumes:
       - feedback_data:/app/feedback
       - telemetry_data:/app/telemetry
     environment:
-      # LLM Provider Configuration
-      - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
+      # LLM Provider Configuration (Anthropic via Claude Platform on AWS)
+      - LLM_PROVIDER=${LLM_PROVIDER:-anthropic}
 
-      # OpenRouter Configuration (used when LLM_PROVIDER=openrouter)
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - LLM_PROVIDER_PREFERENCE=${LLM_PROVIDER_PREFERENCE}
-      - ANNOTATION_MODEL=${ANNOTATION_MODEL:-anthropic/claude-haiku-4.5}
-      - ANNOTATION_PROVIDER=${ANNOTATION_PROVIDER:-anthropic}
-      - EVALUATION_MODEL=${EVALUATION_MODEL:-qwen/qwen3.5-122b-a10b}
-      - EVALUATION_PROVIDER=${EVALUATION_PROVIDER:-alibaba}
-      - VISION_MODEL=${VISION_MODEL:-qwen/qwen3.5-122b-a10b}
-      - VISION_PROVIDER=${VISION_PROVIDER:-alibaba}
-
-      # Ollama Configuration (used when LLM_PROVIDER=ollama)
-      - LLM_BASE_URL=${LLM_BASE_URL:-http://ollama:11434}
-      - LLM_MODEL=${LLM_MODEL:-gpt-oss:20b}
+      # Anthropic Configuration (all three required)
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - ANTHROPIC_BASE_URL=${ANTHROPIC_BASE_URL:-https://aws-external-anthropic.us-east-2.api.aws}
+      - ANTHROPIC_WORKSPACE_ID=${ANTHROPIC_WORKSPACE_ID}
+      - ANNOTATION_MODEL=${ANNOTATION_MODEL:-claude-haiku-4-5}
+      - EVALUATION_MODEL=${EVALUATION_MODEL:-claude-haiku-4-5}
+      - VISION_MODEL=${VISION_MODEL:-claude-haiku-4-5}
       - LLM_TEMPERATURE=${LLM_TEMPERATURE:-0.1}
-      - OLLAMA_HOST=http://ollama:11434
 
       # HED Configuration
       - HED_SCHEMA_VERSION=${HED_SCHEMA_VERSION:-8.4.0}
@@ -72,8 +38,6 @@ services:
       start_period: 10s
 
 volumes:
-  ollama_data:
-    driver: local
   feedback_data:
     driver: local
   telemetry_data:

@@ -68,7 +68,7 @@ HEDit uses a LangGraph-based multi-agent workflow to convert natural language ev
 
 ### 6. VisionAgent (`src/agents/vision_agent.py`)
 - **Input**: Base64-encoded image
-- **Process**: Uses vision-language models (e.g., Qwen-VL via OpenRouter)
+- **Process**: Uses a Claude model (natively multimodal; no separate vision vendor)
 - **Output**: Natural language description of image content
 - **Key feature**: Enables image-to-HED annotation pipeline
 
@@ -100,7 +100,12 @@ Defined in `src/agents/state.py` as `HedAnnotationState(TypedDict)`:
 
 ## Configuration
 
-- **LLM Provider**: OpenRouter API (production), with Ollama fallback
+- **LLM Provider**: Anthropic Claude via the Claude Platform on AWS (Anthropic-operated
+  Messages API, AWS Marketplace billing; not Amazon Bedrock)
+- **Offered models**: `claude-haiku-4-5` (default) and `claude-sonnet-5`
 - **Default model**: Configurable via environment/headers
-- **BYOK support**: Users can provide their own API keys
+- **BYOK support**: Users can provide their own Anthropic key (`X-Anthropic-Key`),
+  which routes to api.anthropic.com
+- **Prompt caching**: The annotation system prompt is cached; usage and savings are
+  reported per request (see `docs/prompt-caching.md`)
 - **Streaming**: LangGraph `astream_events` for real-time progress via SSE

@@ -16,7 +16,7 @@ Multi-agent system for converting natural language event descriptions into valid
 
 ### Technology Stack
 - **Agent Framework**: LangGraph
-- **LLM Provider**: OpenRouter API (production default)
+- **LLM Provider**: Anthropic Claude via the Claude Platform on AWS (migrated from OpenRouter on 2026-08-18); models claude-haiku-4-5 (default) and claude-sonnet-5
 - **Validation**: HED JavaScript validator + HED Python tools
 - **Backend**: FastAPI
 - **Frontend**: Cloudflare Pages
@@ -431,15 +431,20 @@ Example: telemetry:a3f5e2b8c1d4f6a9:550e8400-e29b-41d4-a716-446655440000
     "validation_errors": []
   },
   "model": {
-    "model": "anthropic/claude-haiku-4.5",
-    "provider": null,
+    "model": "claude-haiku-4-5",
+    "provider": "anthropic",
     "temperature": 0.1
   },
   "performance": {
     "latency_ms": 450,
-    "input_tokens": 1200,
-    "output_tokens": 85,
-    "cost_usd": 0.0012
+    "llm_calls": 3,
+    "input_tokens": 22740,
+    "output_tokens": 311,
+    "cache_read_tokens": 21805,
+    "cache_write_tokens": 0,
+    "cache_hit_rate": 0.9589,
+    "cost_usd": 0.00467,
+    "uncached_cost_usd": 0.024295
   },
   "source": "cli|api|web"
 }
@@ -544,6 +549,28 @@ Tasks:
 5. **User Trust**: Transparent disclosure with easy opt-out builds confidence
 
 ---
+
+## Completed: Anthropic-native default, Haiku for all roles, prompt caching (epic #155)
+
+Migrated every LLM role from OpenRouter to Anthropic Claude via the Claude Platform on
+AWS (Anthropic-operated Messages API, AWS Marketplace billing; not Amazon Bedrock).
+
+- **Phase 1 (#156) and Phase 3 (#158)**: native `langchain-anthropic` factory,
+  `claude-haiku-4-5` default with `claude-sonnet-5` optional, qwen/alibaba eval and
+  vision defaults retired, legacy model ids accepted as aliases. OpenRouter and Ollama
+  were removed rather than kept as opt-in providers; a modular
+  OpenAI/Anthropic-compatible endpoint is tracked separately in #163.
+- **Phase 4 (#159)**: server, Docker, deploy templates, CI, and docs flipped.
+- **Phase 2 (#157)**: transport settled on `langchain-anthropic` (`ChatAnthropic` with
+  `base_url` and the workspace header); LiteLLM is no longer used. Caching audited with
+  real measurements: only the annotation prefix (21,811 tokens) clears Haiku 4.5's
+  4096-token minimum, so "cache every role" is not reachable by adding markers.
+  Token, cost, and cache figures are now reported per request (CLI, API `usage` field,
+  web UI) and server-wide (`GET /metrics`), and recorded in telemetry.
+  See `docs/prompt-caching.md`.
+
+Follow-ups outside the epic: reasoning control (#154, #150), modular LLM endpoint
+(#163).
 
 ## Backlog: v0.7.0+ - Model Exploration & Optimization
 

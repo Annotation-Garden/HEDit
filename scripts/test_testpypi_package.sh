@@ -15,7 +15,7 @@ set -e
 
 VERSION="${1:-}"
 VENV_DIR="/tmp/hedit-testpypi-test"
-TEST_API_KEY="${OPENROUTER_API_KEY_FOR_TESTING:-}"
+TEST_API_KEY="${HEDIT_ANTHROPIC_API_KEY:-}"
 
 echo "========================================"
 echo "HEDit TestPyPI Package Test"
@@ -24,7 +24,7 @@ echo ""
 
 # Check for test API key
 if [ -z "$TEST_API_KEY" ]; then
-    echo "WARNING: OPENROUTER_API_KEY_FOR_TESTING not set"
+    echo "WARNING: HEDIT_ANTHROPIC_API_KEY not set"
     echo "Some tests will be skipped"
     echo ""
 fi
@@ -150,7 +150,7 @@ if [ -n "$TEST_API_KEY" ]; then
     hedit annotate "red circle appeared on screen" --api-key "$TEST_API_KEY" --standalone -o json | head -20
 else
     echo "SKIPPED: No API key provided"
-    echo "Set OPENROUTER_API_KEY_FOR_TESTING to run annotation tests"
+    echo "Set HEDIT_ANTHROPIC_API_KEY to run annotation tests"
 fi
 
 echo ""

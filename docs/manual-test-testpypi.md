@@ -5,7 +5,7 @@ This document describes how to test the HEDit package from TestPyPI before relea
 ## Prerequisites
 
 - `uv` installed (fast Python package manager)
-- `OPENROUTER_API_KEY_FOR_TESTING` environment variable (optional, for annotation tests)
+- `HEDIT_ANTHROPIC_API_KEY` environment variable with an Anthropic API key (`sk-ant-...`; optional, for bring your own key (BYOK) annotation tests)
 
 ## Quick Test
 
@@ -49,8 +49,8 @@ hedit health
 # Validate HED string
 hedit validate "Sensory-event, Visual-presentation"
 
-# Annotate (requires API key)
-hedit annotate "button press" --api-key $OPENROUTER_API_KEY_FOR_TESTING
+# Annotate (no key needed in API mode; add a BYOK key to bill your own account)
+hedit annotate "button press" --api-key $HEDIT_ANTHROPIC_API_KEY
 ```
 
 ### 4. Install Standalone Extras
@@ -71,8 +71,9 @@ hedit health --standalone
 # Validate locally
 hedit validate "Sensory-event, Visual-presentation" --standalone
 
-# Annotate locally (requires API key for LLM)
-hedit annotate "red circle appeared" --api-key $OPENROUTER_API_KEY_FOR_TESTING --standalone
+# Annotate locally (requires an Anthropic key for the LLM; also works with
+# the server credentials ANTHROPIC_API_KEY/ANTHROPIC_BASE_URL/ANTHROPIC_WORKSPACE_ID)
+hedit annotate "red circle appeared" --api-key $HEDIT_ANTHROPIC_API_KEY --standalone
 ```
 
 ### 6. Verify Validator Selection

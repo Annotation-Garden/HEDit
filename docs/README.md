@@ -21,12 +21,15 @@ Welcome to the HED-BOT documentation! This directory contains comprehensive guid
 - **[Docker Quickstart](deployment/docker-quickstart.md)** - Quick Docker setup
 - **[Docker Updates](deployment/docker-updates.md)** - Updating Docker deployments
 - **[Docker Architecture](deployment/docker-architecture.md)** - Docker architecture details
-- **[OpenRouter Configuration](deployment/openrouter.md)** - Using OpenRouter API
+- **[Claude Platform on AWS](deployment/claude-platform-aws.md)** - Configuring the Anthropic Claude API via AWS Marketplace
+- **[Prompt Caching and Usage Reporting](prompt-caching.md)** - What caches, what it saves, and how to verify it
+- **[Extended Thinking](reasoning.md)** - What reasoning buys per role, measured, and how to change it
 
 ### 🛠️ Development
 - **[Contributing](development/contributing.md)** - How to contribute, issue labeling system
 - **[Project Summary](development/project-summary.md)** - Project overview and architecture
 - **[Versioning](development/versioning.md)** - Version management
+- **[Changelog](../CHANGELOG.md)** - What changed in each release
 
 ### 📡 API Reference
 - **API documentation** (coming soon)
@@ -41,7 +44,7 @@ Welcome to the HED-BOT documentation! This directory contains comprehensive guid
 ### For Deployers
 1. Read the [Deployment Overview](deployment/README.md)
 2. Follow the [Docker Quickstart](deployment/docker-quickstart.md)
-3. Configure [OpenRouter](deployment/openrouter.md) if needed
+3. Configure the [Claude Platform on AWS](deployment/claude-platform-aws.md) credentials
 
 ### For Contributors
 1. Read the [Contributing Guide](development/contributing.md)

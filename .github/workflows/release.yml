@@ -56,6 +56,8 @@ jobs:
           body: |
             ## HEDit ${{ steps.get_version.outputs.VERSION }}
 
+            Release notes in prose: [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
+
             ${{ steps.changelog.outputs.CHANGELOG }}
 
             ---
@@ -82,7 +84,7 @@ jobs:
 
             ### Quick Start
             ```bash
-            # Initialize with your OpenRouter API key
+            # Initialize the CLI (optionally with a BYOK Anthropic key)
             hedit init --api-key YOUR_KEY
 
             # Generate HED annotation

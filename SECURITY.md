@@ -123,9 +123,11 @@ See [`deploy/SECURITY.md`](deploy/SECURITY.md) for complete security documentati
 ## Known Security Considerations
 
 ### LLM API Keys
-- OpenRouter API keys are stored as environment variables
-- Keys are passed to OpenRouter API via HTTPS
+- Anthropic API keys are stored as environment variables (`ANTHROPIC_API_KEY`,
+  plus `ANTHROPIC_BASE_URL` and `ANTHROPIC_WORKSPACE_ID` for the Claude Platform on AWS)
+- Keys are sent to the Anthropic Messages API over HTTPS
 - Keys are not logged in audit logs
+- BYOK keys supplied via `X-Anthropic-Key` are used for that request only, never stored
 - Rotate keys if compromised
 
 ### Cloudflare Worker Proxy
@@ -134,11 +136,11 @@ See [`deploy/SECURITY.md`](deploy/SECURITY.md) for complete security documentati
 - Not visible in frontend JavaScript
 - Recommended for production deployments
 
-### Local GPU Deployment
-- Ollama runs locally (no API key needed)
-- No external API calls for LLM inference
-- Complete privacy for offline operation
-- Ensure GPU drivers are up to date
+### Data Sent to the LLM
+- Event descriptions and images submitted for annotation are sent to Anthropic
+- Server mode bills the operator's Claude Platform on AWS workspace; BYOK mode
+  bills the caller's own Anthropic account
+- Local inference is not supported; every annotation involves an external API call
 
 ## Security Scanning
 

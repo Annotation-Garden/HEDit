@@ -1,6 +1,6 @@
-# Docker Quick Start (Local GPU Development)
+# Docker Quick Start (Local Development)
 
-> **Note**: This guide is for local development with GPU and Ollama. For production deployment to servers or cloud platforms, see **[DEPLOYMENT.md](../../DEPLOYMENT.md)** and **[deploy/README.md](../../deploy/README.md)**.
+> **Note**: This guide is for local development with Docker. Local Ollama-based inference has been removed; the container calls the Claude Platform on AWS, so set the credentials from **[claude-platform-aws.md](claude-platform-aws.md)** in your `.env`. For production deployment to servers or cloud platforms, see **[DEPLOYMENT.md](../../DEPLOYMENT.md)** and **[deploy/README.md](../../deploy/README.md)**.
 
 ## TL;DR
 
@@ -9,7 +9,7 @@
 git clone <repo> && cd hed-bot
 docker-compose up -d
 
-# Monitor first start (~10-20 min for model download)
+# Monitor first start
 docker-compose logs -f
 
 # Verify when ready
@@ -103,11 +103,10 @@ docker-compose build
 # - Build validator: 4 min
 # - Python packages: 3 min
 
-# 2. Start containers (auto-pulls gpt-oss:20b)
+# 2. Start containers
 docker-compose up -d
 
-# Time: 10-20 minutes (first time only)
-# - Model download: gpt-oss:20b (~12GB)
+# No model download needed: LLM inference runs on the Claude Platform on AWS
 
 # 3. Monitor progress
 docker-compose logs -f

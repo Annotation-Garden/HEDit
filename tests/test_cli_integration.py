@@ -1,7 +1,8 @@
 """Integration tests for HEDit CLI with real API calls.
 
-These tests use OPENROUTER_API_KEY_FOR_TESTING to make real API calls.
-Tests are skipped if the key is not present or if API is blocked by Cloudflare.
+These tests use HEDIT_ANTHROPIC_API_KEY (a BYOK Anthropic key) to make real
+API calls. Tests are skipped if the key is not present or if the API is
+blocked by Cloudflare.
 
 Run with: pytest tests/test_cli_integration.py -v -m integration
 Skip integration tests: pytest -v -m "not integration"
@@ -18,9 +19,9 @@ from typer.testing import CliRunner
 # Load environment variables from .env file
 load_dotenv()
 
-# Check if OpenRouter testing key is available
-OPENROUTER_TEST_KEY = os.getenv("OPENROUTER_API_KEY_FOR_TESTING")
-SKIP_REASON = "OPENROUTER_API_KEY_FOR_TESTING not set"
+# Check if a BYOK Anthropic testing key is available
+ANTHROPIC_TEST_KEY = os.getenv("HEDIT_ANTHROPIC_API_KEY")
+SKIP_REASON = "HEDIT_ANTHROPIC_API_KEY not set"
 
 # API endpoint - use production or local
 API_URL = os.getenv("HEDIT_TEST_API_URL", "https://api.annotation.garden/hedit")
@@ -93,10 +94,10 @@ def _check_api_reachable() -> bool:
 
 @pytest.fixture
 def test_api_key() -> str:
-    """Get OpenRouter API key for testing."""
-    if not OPENROUTER_TEST_KEY:
+    """Get BYOK Anthropic API key for testing."""
+    if not ANTHROPIC_TEST_KEY:
         pytest.skip(SKIP_REASON)
-    return OPENROUTER_TEST_KEY
+    return ANTHROPIC_TEST_KEY
 
 
 @pytest.fixture
@@ -373,17 +374,17 @@ class TestCLIImageAnnotateIntegration:
             f"Unexpected exit code: {result.exit_code}\n{result.output}"
         )
 
-        # Handle case where vision model is not available on OpenRouter
+        # Handle case where the vision model is unavailable for this account
         if "No allowed providers" in result.output or "model" in result.output.lower():
             if result.exit_code == 1:
-                pytest.skip("Vision model not available on OpenRouter")
+                pytest.skip("Vision model not available")
 
         # Use helper to extract JSON from potentially mixed output
         data = extract_json_from_output(result.output)
         if data is None:
             # If JSON parsing fails, check for expected error messages
             if "No allowed providers" in result.output:
-                pytest.skip("Vision model not available on OpenRouter")
+                pytest.skip("Vision model not available")
             pytest.fail(f"Could not extract JSON from output: {result.output}")
 
         # Simple check that response has expected structure

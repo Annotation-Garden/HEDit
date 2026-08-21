@@ -1,31 +1,35 @@
-# HED-BOT Cloudflare Workers Deployment
+# HEDit Cloudflare Worker (Proxy Mode)
 
-Fully serverless backend for HED annotation using Cloudflare Workers + OpenRouter/Cerebras.
+Caching proxy in front of the Python FastAPI backend,
+which holds the prompts, real HED validation, and the multi-agent workflow.
+LLM calls are made by the backend against Anthropic Claude
+via the Claude Platform on AWS (Anthropic-operated Messages API, AWS Marketplace billing).
 
 ## Architecture
 
 ```
-Frontend (Cloudflare Pages) → Workers API → OpenRouter/Cerebras
+Frontend (Cloudflare Pages) → Worker (cache, rate limit, Turnstile) → FastAPI backend → Claude (Claude Platform on AWS)
 ```
 
-**Benefits:**
-- No backend infrastructure needed
-- Auto-scales globally
-- 100,000 requests/day FREE
-- Built-in caching & rate limiting
-- API keys secured server-side
+**The worker provides:**
+- Response caching (KV, 1 hour TTL in production)
+- Per-IP rate limiting
+- Cloudflare Turnstile verification for browser requests
+- Header forwarding for BYOK (Bring Your Own Key) and model overrides
+
+No LLM API keys live in the worker; Anthropic credentials are configured on the backend.
 
 ---
 
 ## Prerequisites
 
 1. **Cloudflare Account**: [Sign up free](https://dash.cloudflare.com/sign-up)
-2. **OpenRouter API Key**: Get from [OpenRouter](https://openrouter.ai/)
-3. **Node.js**: Install from [nodejs.org](https://nodejs.org/)
+2. **Node.js**: Install from [nodejs.org](https://nodejs.org/)
+3. A running HEDit backend (see `DEPLOYMENT.md`)
 
 ---
 
-## Quick Deployment (5 minutes)
+## Quick Deployment
 
 ### Step 1: Install Wrangler CLI
 
@@ -52,113 +56,39 @@ wrangler kv:namespace create "RATE_LIMITER"
 
 Update `wrangler.toml` with the namespace IDs.
 
-### Step 3: Set API Key Secret
+### Step 3: Set Secrets
 
 ```bash
-# Set OpenRouter API key (secure, not in code)
-wrangler secret put OPENROUTER_API_KEY
-# Paste your OpenRouter API key when prompted
+# Turnstile secret for browser bot protection
+wrangler secret put TURNSTILE_SECRET_KEY
 ```
 
-### Step 4: Deploy!
+### Step 4: Deploy
 
 ```bash
-# Deploy to Cloudflare Workers
 wrangler deploy
-
-# You'll get a URL like: https://hed-bot-api.your-subdomain.workers.dev
 ```
 
 ### Step 5: Update Frontend
 
-Edit `/home/yahya/git/hed-bot/frontend/config.js`:
-
-```javascript
-window.BACKEND_URL = 'https://hed-bot-api.your-subdomain.workers.dev';
-```
-
-Push to GitHub → Cloudflare Pages auto-deploys!
+Edit `frontend/config.js` to point at the deployed worker URL,
+then push to GitHub; Cloudflare Pages auto-deploys.
 
 ---
 
-## Features
+## BYOK and Model Headers
 
-### 🚀 Performance
-- **Cerebras model** for fast annotation (~1-2 sec)
-- **Claude Sonnet** for quality evaluation
-- Global CDN distribution
+The worker forwards these headers to the backend:
 
-### 💰 Cost Optimization
-- **Caching**: Identical requests served from cache (1hr TTL)
-- **Rate limiting**: 10 requests/minute per IP
-- **Free tier**: 100,000 requests/day
-
-### 🔒 Security
-- API keys stored as encrypted secrets
-- CORS enabled for your domain only
-- Rate limiting prevents abuse
-
----
-
-## Configuration
-
-Edit `workers/index.js` CONFIG section:
-
-```javascript
-const CONFIG = {
-  OPENROUTER_API_URL: 'https://openrouter.ai/api/v1/chat/completions',
-  DEFAULT_MODEL: 'anthropic/claude-3.5-sonnet',  // Quality model
-  CEREBRAS_MODEL: 'meta-llama/llama-3.3-70b-instruct',  // Fast model
-  CACHE_TTL: 3600,  // Cache duration (seconds)
-  RATE_LIMIT_PER_MINUTE: 10,  // Max requests per IP
-};
-```
-
----
-
-## API Endpoints
-
-### `GET /health`
-Health check
-
-**Response:**
-```json
-{
-  "status": "healthy",
-  "version": "1.0.0",
-  "llm_available": true,
-  "validator_available": true
-}
-```
-
-### `POST /annotate`
-Generate HED annotation
-
-**Request:**
-```json
-{
-  "description": "A red circle appears on the left",
-  "schema_version": "8.4.0",
-  "max_validation_attempts": 3,
-  "run_assessment": false
-}
-```
-
-**Response:**
-```json
-{
-  "annotation": "(Sensory-event, (Visual, (Color/Red, Shape/Circle, ...))",
-  "is_valid": true,
-  "is_faithful": true,
-  "is_complete": true,
-  "validation_attempts": 1,
-  "validation_errors": [],
-  "validation_warnings": [],
-  "evaluation_feedback": "...",
-  "assessment_feedback": "...",
-  "status": "success"
-}
-```
+- `X-Anthropic-Key`: user's own Anthropic API key (sk-ant-...); BYOK requests skip Turnstile
+- `X-Anthropic-Model`, `X-Anthropic-Eval-Model`, `X-Anthropic-Vision-Model`,
+  `X-Anthropic-Temperature`: per-request overrides
+- `X-OpenRouter-Key`: legacy BYOK header, still forwarded (must carry an Anthropic key)
+- `X-OpenRouter-Model`, `X-OpenRouter-Eval-Model`, `X-OpenRouter-Vision-Model`,
+  `X-OpenRouter-Temperature`: legacy spelling of the overrides, still forwarded
+  (legacy wire names kept for compatibility); offered models are
+  `claude-haiku-4-5` (default) and `claude-sonnet-5`
+- `X-User-Id`: telemetry identifier
 
 ---
 
@@ -170,64 +100,7 @@ wrangler tail
 ```
 
 ### Analytics
-Visit Cloudflare Dashboard → Workers → hed-bot-api → Analytics
-
-### Cache Stats
-```bash
-# Check cache hits/misses
-wrangler kv:namespace list --binding HED_CACHE
-```
-
----
-
-## Costs
-
-### Free Tier (plenty for most use)
-- 100,000 requests/day
-- 10ms CPU time per request
-- KV reads/writes included
-
-### Paid (if needed)
-- $0.50 per million requests
-- $0.50 per million KV reads
-
-### OpenRouter API
-- Cerebras Llama 3.3 70B: ~$0.0001/request (ultra-cheap!)
-- Claude Sonnet: ~$0.003/request
-
-**Estimated monthly cost for 10,000 annotations:**
-- Workers: FREE (under 100k/day limit)
-- OpenRouter: ~$2-5 (mostly Cerebras, some Claude)
-
-**Total: ~$2-5/month** for production use! 🎉
-
----
-
-## Advanced Features
-
-### Custom Domain
-
-1. Add custom domain in Cloudflare Dashboard
-2. Update `wrangler.toml`:
-```toml
-routes = [
-  { pattern = "api.your-domain.com/*", zone_name = "your-domain.com" }
-]
-```
-3. Deploy: `wrangler deploy`
-
-### Increase Rate Limits
-
-Edit `CONFIG.RATE_LIMIT_PER_MINUTE` in `index.js`.
-
-### Add Authentication
-
-Add API key check:
-```javascript
-if (request.headers.get('X-API-Key') !== env.API_KEY) {
-  return new Response('Unauthorized', { status: 401 });
-}
-```
+Visit Cloudflare Dashboard → Workers → Analytics
 
 ---
 
@@ -240,10 +113,6 @@ if (request.headers.get('X-API-Key') !== env.API_KEY) {
 ### "KV namespace not found"
 - Create namespaces: `wrangler kv:namespace create HED_CACHE`
 - Update IDs in `wrangler.toml`
-
-### "OpenRouter API error"
-- Check API key: `wrangler secret list`
-- Set if missing: `wrangler secret put OPENROUTER_API_KEY`
 
 ### Rate limit errors
 - Clear rate limit KV: `wrangler kv:key delete --binding RATE_LIMITER "ratelimit:YOUR_IP"`
@@ -266,23 +135,11 @@ curl -X POST http://localhost:8787/annotate \
 ```bash
 # Make changes to index.js
 wrangler deploy
-# Changes live instantly!
 ```
-
----
-
-## Next Steps
-
-1. Deploy Workers ✅
-2. Deploy Frontend to Cloudflare Pages
-3. Test end-to-end
-4. Monitor usage & costs
-5. Add custom domain (optional)
 
 ---
 
 ## Support
 
 - [Cloudflare Workers Docs](https://developers.cloudflare.com/workers/)
-- [OpenRouter API Docs](https://openrouter.ai/docs)
 - [HED Schema Documentation](https://hedtags.org/)

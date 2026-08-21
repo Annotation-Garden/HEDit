@@ -1,9 +1,10 @@
-"""Integration tests that make real calls to OpenRouter.
+"""Integration tests that make real calls to Claude (Claude Platform on AWS).
 
-These tests use OPENROUTER_API_KEY_FOR_TESTING to track testing costs separately.
-Tests are skipped if the key is not present (for local development without API key).
+These tests use the ANTHROPIC_API_KEY / ANTHROPIC_BASE_URL /
+ANTHROPIC_WORKSPACE_ID server credentials from the environment.
+Tests are skipped if the key is not present.
 
-Run with: pytest tests/test_integration_openrouter.py -v
+Run with: pytest tests/test_integration_anthropic.py -v
 Run all tests including integration: pytest -v
 Skip integration tests: pytest -v -m "not integration"
 """
@@ -16,42 +17,30 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# Check if OpenRouter testing key is available
-OPENROUTER_TEST_KEY = os.getenv("OPENROUTER_API_KEY_FOR_TESTING")
-SKIP_REASON = "OPENROUTER_API_KEY_FOR_TESTING not set"
+# Check if Anthropic server credentials are available
+ANTHROPIC_TEST_KEY = os.getenv("ANTHROPIC_API_KEY")
+SKIP_REASON = "ANTHROPIC_API_KEY not set"
 
 # Use the same models as configured in .env for consistency
-# Default to the environment-configured models
-TEST_MODEL = os.getenv("ANNOTATION_MODEL", "mistralai/mistral-small-3.2-24b-instruct")
-TEST_PROVIDER = os.getenv("ANNOTATION_PROVIDER", "mistral")
+TEST_MODEL = os.getenv("ANNOTATION_MODEL", "claude-haiku-4-5")
 
 
 @pytest.fixture
-def test_api_key() -> str:
-    """Get OpenRouter API key for testing."""
-    if not OPENROUTER_TEST_KEY:
-        pytest.skip(SKIP_REASON)
-    return OPENROUTER_TEST_KEY
-
-
-@pytest.fixture
-def test_llm(test_api_key: str):
+def test_llm():
     """Create an LLM instance for testing using env-configured model."""
-    from src.utils.openrouter_llm import create_openrouter_llm
+    from src.utils.anthropic_llm import create_anthropic_llm
 
-    return create_openrouter_llm(
+    return create_anthropic_llm(
         model=TEST_MODEL,
-        api_key=test_api_key,
         temperature=0.1,
         max_tokens=500,
-        provider=TEST_PROVIDER if TEST_PROVIDER else None,
     )
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not OPENROUTER_TEST_KEY, reason=SKIP_REASON)
-class TestOpenRouterConnection:
-    """Test that we can connect to OpenRouter and get responses."""
+@pytest.mark.skipif(not ANTHROPIC_TEST_KEY, reason=SKIP_REASON)
+class TestAnthropicConnection:
+    """Test that we can connect to the Claude Messages API and get responses."""
 
     @pytest.mark.asyncio
     async def test_basic_llm_call(self, test_llm) -> None:
@@ -84,22 +73,20 @@ class TestOpenRouterConnection:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not OPENROUTER_TEST_KEY, reason=SKIP_REASON)
+@pytest.mark.skipif(not ANTHROPIC_TEST_KEY, reason=SKIP_REASON)
 class TestAnnotationAgentIntegration:
     """Test the annotation agent with real LLM calls."""
 
     @pytest.fixture
-    def annotation_agent(self, test_api_key: str):
+    def annotation_agent(self):
         """Create an annotation agent for testing using env-configured model."""
         from src.agents.annotation_agent import AnnotationAgent
-        from src.utils.openrouter_llm import create_openrouter_llm
+        from src.utils.anthropic_llm import create_anthropic_llm
 
-        llm = create_openrouter_llm(
+        llm = create_anthropic_llm(
             model=TEST_MODEL,
-            api_key=test_api_key,
             temperature=0.1,
             max_tokens=1000,
-            provider=TEST_PROVIDER if TEST_PROVIDER else None,
         )
 
         # Always use None to fetch schemas from GitHub via HED library
@@ -143,22 +130,20 @@ class TestAnnotationAgentIntegration:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not OPENROUTER_TEST_KEY, reason=SKIP_REASON)
+@pytest.mark.skipif(not ANTHROPIC_TEST_KEY, reason=SKIP_REASON)
 class TestEvaluationAgentIntegration:
     """Test the evaluation agent with real LLM calls."""
 
     @pytest.fixture
-    def evaluation_agent(self, test_api_key: str):
+    def evaluation_agent(self):
         """Create an evaluation agent for testing using env-configured model."""
         from src.agents.evaluation_agent import EvaluationAgent
-        from src.utils.openrouter_llm import create_openrouter_llm
+        from src.utils.anthropic_llm import create_anthropic_llm
 
-        llm = create_openrouter_llm(
+        llm = create_anthropic_llm(
             model=TEST_MODEL,
-            api_key=test_api_key,
             temperature=0.1,
             max_tokens=500,
-            provider=TEST_PROVIDER if TEST_PROVIDER else None,
         )
 
         # Always use None to fetch schemas from GitHub via HED library
@@ -187,7 +172,7 @@ class TestEvaluationAgentIntegration:
 
 @pytest.mark.integration
 @pytest.mark.standalone
-@pytest.mark.skipif(not OPENROUTER_TEST_KEY, reason=SKIP_REASON)
+@pytest.mark.skipif(not ANTHROPIC_TEST_KEY, reason=SKIP_REASON)
 class TestWorkflowIntegration:
     """Test the complete annotation workflow with real LLM calls.
 
@@ -197,17 +182,15 @@ class TestWorkflowIntegration:
     """
 
     @pytest.fixture
-    def workflow(self, test_api_key: str):
+    def workflow(self):
         """Create a workflow for testing using env-configured model."""
         from src.agents.workflow import HedAnnotationWorkflow
-        from src.utils.openrouter_llm import create_openrouter_llm
+        from src.utils.anthropic_llm import create_anthropic_llm
 
-        llm = create_openrouter_llm(
+        llm = create_anthropic_llm(
             model=TEST_MODEL,
-            api_key=test_api_key,
             temperature=0.1,
             max_tokens=1000,
-            provider=TEST_PROVIDER if TEST_PROVIDER else None,
         )
 
         # Always use None to fetch schemas from GitHub via HED library
@@ -247,7 +230,7 @@ class TestWorkflowIntegration:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not OPENROUTER_TEST_KEY, reason=SKIP_REASON)
+@pytest.mark.skipif(not ANTHROPIC_TEST_KEY, reason=SKIP_REASON)
 class TestVisionAgentIntegration:
     """Test the vision agent with real vision LLM calls.
 
@@ -256,21 +239,18 @@ class TestVisionAgentIntegration:
     """
 
     @pytest.fixture
-    def vision_agent(self, test_api_key: str):
+    def vision_agent(self):
         """Create a vision agent for testing."""
         from src.agents.vision_agent import VisionAgent
-        from src.utils.openrouter_llm import create_openrouter_llm
+        from src.utils.anthropic_llm import create_anthropic_llm
 
-        # Use default vision model
-        vision_model = os.getenv("VISION_MODEL", "qwen/qwen3-vl-30b-a3b-instruct")
+        # Use default vision model (Claude models are natively multimodal)
+        vision_model = os.getenv("VISION_MODEL", "claude-haiku-4-5")
 
-        llm = create_openrouter_llm(
+        llm = create_anthropic_llm(
             model=vision_model,
-            api_key=test_api_key,
             temperature=0.1,
             max_tokens=500,
-            # Vision models don't use Cerebras provider
-            provider=None,
         )
 
         return VisionAgent(llm=llm)
@@ -340,7 +320,7 @@ class TestVisionAgentIntegration:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not OPENROUTER_TEST_KEY, reason=SKIP_REASON)
+@pytest.mark.skipif(not ANTHROPIC_TEST_KEY, reason=SKIP_REASON)
 class TestImageProcessingIntegration:
     """Test image processing utilities with real images."""
 
@@ -432,7 +412,7 @@ class TestImageProcessingIntegration:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not OPENROUTER_TEST_KEY, reason=SKIP_REASON)
+@pytest.mark.skipif(not ANTHROPIC_TEST_KEY, reason=SKIP_REASON)
 class TestAPIEndpointIntegration:
     """Test API endpoints with real LLM calls.
 
@@ -441,23 +421,17 @@ class TestAPIEndpointIntegration:
     """
 
     @pytest.fixture
-    def client(self, test_api_key: str):
+    def client(self):
         """Create a test client for the API using env-configured models."""
         import importlib
 
         from fastapi.testclient import TestClient
 
         # Set environment variables for the test BEFORE importing app
-        os.environ["LLM_PROVIDER"] = "openrouter"
-        os.environ["OPENROUTER_API_KEY"] = test_api_key
+        # (ANTHROPIC_API_KEY / BASE_URL / WORKSPACE_ID come from the env)
+        os.environ["LLM_PROVIDER"] = "anthropic"
         os.environ["ANNOTATION_MODEL"] = TEST_MODEL
-        os.environ["ANNOTATION_PROVIDER"] = TEST_PROVIDER or ""
         os.environ["EVALUATION_MODEL"] = os.getenv("EVALUATION_MODEL", TEST_MODEL)
-        os.environ["EVALUATION_PROVIDER"] = os.getenv("EVALUATION_PROVIDER", TEST_PROVIDER or "")
-        os.environ["ASSESSMENT_MODEL"] = os.getenv("ASSESSMENT_MODEL", TEST_MODEL)
-        os.environ["FEEDBACK_MODEL"] = os.getenv("FEEDBACK_MODEL", TEST_MODEL)
-        if TEST_PROVIDER:
-            os.environ["LLM_PROVIDER_PREFERENCE"] = TEST_PROVIDER
         # Use API key auth to avoid issues with module caching
         os.environ["REQUIRE_API_AUTH"] = "true"
         os.environ["API_KEYS"] = "integration-test-api-key"
@@ -511,3 +485,105 @@ class TestAPIEndpointIntegration:
         assert "annotation" in data
         assert "is_valid" in data
         assert "status" in data
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(not ANTHROPIC_TEST_KEY, reason=SKIP_REASON)
+class TestPromptCachingIntegration:
+    """Verify prompt caching and usage accounting against the live endpoint.
+
+    The claim these tests protect: the annotation system prompt is large
+    enough to cache, a repeated call reads it back from the cache, and the
+    ledger sees both events. If caching silently stops working (a changed
+    prefix, a marker that no longer lands), cache_read stays at zero here.
+    """
+
+    @staticmethod
+    def large_system_prompt() -> str:
+        """The real annotation prefix, well above Haiku's 4096-token minimum."""
+        from src.utils.hed_comprehensive_guide import get_comprehensive_hed_guide
+
+        return get_comprehensive_hed_guide(
+            vocabulary_sample=["Sensory-event", "Visual-presentation", "Red", "Circle"],
+            extendable_tags=["Animal"],
+        )
+
+    @pytest.mark.asyncio
+    async def test_cache_write_then_read_is_recorded(self) -> None:
+        """A repeated identical prefix is written once and then read back."""
+        from langchain_core.messages import HumanMessage, SystemMessage
+
+        from src.utils.anthropic_llm import create_anthropic_llm
+        from src.utils.llm_usage import MIN_CACHEABLE_PREFIX_TOKENS, usage_scope
+
+        llm = create_anthropic_llm(
+            model="claude-haiku-4-5",
+            temperature=0.1,
+            max_tokens=32,
+            role="annotation",
+        )
+        system = self.large_system_prompt()
+
+        with usage_scope() as first:
+            await llm.ainvoke(
+                [
+                    SystemMessage(content=system),
+                    HumanMessage(content="Reply with the single word: ready"),
+                ]
+            )
+
+        with usage_scope() as second:
+            await llm.ainvoke(
+                [
+                    SystemMessage(content=system),
+                    HumanMessage(content="Reply with the single word: again"),
+                ]
+            )
+
+        first_totals = first.total()
+        second_totals = second.total()
+
+        # The prefix clears the model minimum, so the first call creates an
+        # entry (or reads one left by a recent run) and the second reads it.
+        assert first_totals.input_tokens >= MIN_CACHEABLE_PREFIX_TOKENS["claude-haiku-4-5"]
+        assert first_totals.cache_write_tokens > 0 or first_totals.cache_read_tokens > 0
+        assert second_totals.cache_read_tokens > 0
+        assert second_totals.savings_usd > 0
+        assert second_totals.cost_usd < second_totals.uncached_cost_usd
+
+    @pytest.mark.asyncio
+    async def test_short_prefix_does_not_cache(self) -> None:
+        """Below the model minimum, the marker is accepted but nothing caches.
+
+        This is why the evaluation, assessment, feedback, keyword, and vision
+        prompts (186-623 tokens measured) report no cache activity.
+        """
+        from langchain_core.messages import HumanMessage, SystemMessage
+
+        from src.utils.anthropic_llm import create_anthropic_llm
+        from src.utils.llm_usage import usage_scope
+
+        llm = create_anthropic_llm(
+            model="claude-haiku-4-5",
+            temperature=0.1,
+            max_tokens=16,
+            role="evaluation",
+        )
+        short_system = "You are a terse assistant. Answer in one word."
+
+        for _ in range(2):
+            with usage_scope() as ledger:
+                await llm.ainvoke(
+                    [
+                        SystemMessage(content=short_system),
+                        HumanMessage(content="Reply with the single word: ok"),
+                    ]
+                )
+
+        totals = ledger.total()
+        assert totals.calls == 1
+        assert totals.cache_read_tokens == 0
+        assert totals.cache_write_tokens == 0
+        # No caching means no savings to claim.
+        assert totals.savings_usd == 0.0
+        assert totals.cost_usd == pytest.approx(totals.uncached_cost_usd)

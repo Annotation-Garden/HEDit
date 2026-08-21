@@ -3,7 +3,7 @@
 Runs the LangGraph workflow locally without requiring the HEDit backend.
 This mode requires additional dependencies: pip install hedit[standalone]
 
-Dependencies: langgraph, langchain, langchain-openai, hedtools, etc.
+Dependencies: langgraph, langchain, langchain-anthropic, hedtools, etc.
 """
 
 from __future__ import annotations
@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from src.cli.executor import ExecutionBackend, ExecutionError
+from src.utils.llm_usage import summarize, usage_scope
 from src.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -37,7 +38,7 @@ def _check_standalone_deps() -> bool:
 
     try:
         import langchain  # noqa: F401
-        import langchain_openai  # noqa: F401
+        import langchain_anthropic  # noqa: F401
         import langgraph  # noqa: F401
 
         # hedtools is optional for now (uses GitHub schema fetch)
@@ -59,10 +60,10 @@ class LocalExecutionBackend(ExecutionBackend):
     - No dependency on external HEDit infrastructure
     - Better privacy (all processing local except LLM calls)
     - Faster response times (no extra network hop to backend)
-    - Works offline except for OpenRouter LLM calls
+    - Works offline except for Claude LLM calls
 
     Requirements:
-    - OpenRouter API key
+    - Anthropic credentials (ANTHROPIC_API_KEY env, or a BYOK key)
     - Standalone dependencies installed
     """
 
@@ -71,57 +72,35 @@ class LocalExecutionBackend(ExecutionBackend):
         api_key: str | None = None,
         model: str | None = None,
         eval_model: str | None = None,
-        eval_provider: str | None = None,
         vision_model: str | None = None,
-        vision_provider: str | None = None,
-        provider: str | None = None,
         temperature: float = 0.1,
         schema_dir: Path | str | None = None,
-        user_id: str | None = None,
     ):
         """Initialize local execution backend.
 
         Args:
-            api_key: OpenRouter API key (required for LLM operations, optional for health/validate)
-            model: Model for text annotation (default: anthropic/claude-haiku-4.5)
-            eval_model: Model for evaluation/assessment agents (default: qwen/qwen3.5-122b-a10b)
-            eval_provider: Provider for evaluation model (default: alibaba)
-            vision_model: Model for image annotation (default: qwen/qwen3.5-122b-a10b)
-            vision_provider: Provider for vision model (default: alibaba)
-            provider: Provider preference (cleared if custom model specified)
+            api_key: BYOK Anthropic API key (None = use ANTHROPIC_API_KEY /
+                Claude Platform on AWS credentials from the environment)
+            model: Model for text annotation (default: claude-haiku-4-5)
+            eval_model: Model for evaluation/assessment agents (default: claude-haiku-4-5)
+            vision_model: Model for image annotation (default: claude-haiku-4-5)
             temperature: LLM temperature (0.0-1.0)
             schema_dir: Optional directory with JSON schemas (None = fetch from GitHub)
-            user_id: Custom user ID for cache optimization (default: auto-generated machine ID)
         """
         # Import defaults from config
         from src.cli.config import (
             DEFAULT_EVAL_MODEL,
-            DEFAULT_EVAL_PROVIDER,
             DEFAULT_MODEL,
-            DEFAULT_PROVIDER,
             DEFAULT_VISION_MODEL,
-            DEFAULT_VISION_PROVIDER,
         )
 
         # API key is optional at init time - only required for LLM operations
         self._api_key = api_key
         self._model = model or DEFAULT_MODEL
         self._eval_model = eval_model or DEFAULT_EVAL_MODEL
-        self._eval_provider = eval_provider or DEFAULT_EVAL_PROVIDER
         self._vision_model = vision_model or DEFAULT_VISION_MODEL
-        self._vision_provider = vision_provider or DEFAULT_VISION_PROVIDER
         self._temperature = temperature
         self._schema_dir = Path(schema_dir) if schema_dir else None
-        self._user_id = user_id  # Custom user ID (None = use auto-generated machine ID)
-
-        # Handle provider logic for annotation model:
-        # clear if custom model specified without explicit provider
-        if provider is not None:
-            self._provider = provider if provider else None
-        elif model is not None and model != DEFAULT_MODEL:
-            self._provider = None
-        else:
-            self._provider = DEFAULT_PROVIDER
 
         # Lazy initialization of workflow and vision agent
         self._workflow: HedAnnotationWorkflow | None = None
@@ -155,12 +134,13 @@ class LocalExecutionBackend(ExecutionBackend):
             )
 
     def _ensure_api_key(self) -> None:
-        """Ensure API key is available for LLM operations."""
-        if not self._api_key:
+        """Ensure Anthropic credentials are available for LLM operations."""
+        if not self._api_key and not os.environ.get("ANTHROPIC_API_KEY"):
             raise ExecutionError(
-                "OpenRouter API key required for standalone mode",
+                "Anthropic credentials required for standalone mode",
                 code="missing_api_key",
-                detail="Provide --api-key or run 'hedit init'",
+                detail="Provide --api-key (sk-ant-...), run 'hedit init', "
+                "or set ANTHROPIC_API_KEY in the environment",
             )
 
     def _get_workflow(self) -> HedAnnotationWorkflow:
@@ -170,53 +150,39 @@ class LocalExecutionBackend(ExecutionBackend):
             self._ensure_api_key()
 
             from src.agents.workflow import HedAnnotationWorkflow
-            from src.cli.config import get_machine_id
-            from src.utils.openrouter_llm import create_openrouter_llm
+            from src.utils.anthropic_llm import annotation_thinking, create_anthropic_llm
 
-            # Use custom user_id if provided, otherwise auto-generate
-            user_id = self._user_id or get_machine_id()
-
-            # Annotation LLM keeps reasoning enabled (real HED tag work).
-            annotation_llm = create_openrouter_llm(
+            # Annotation thinks; see annotation_thinking() for the measurement
+            # behind the budget and HEDIT_ANNOTATION_THINKING_BUDGET to change
+            # or disable it.
+            annotation_llm = create_anthropic_llm(
                 model=self._model,
                 api_key=self._api_key,
                 temperature=self._temperature,
-                provider=self._provider,
-                user_id=user_id,
+                thinking=annotation_thinking(self._model),
+                role="annotation",
             )
 
             # Evaluation / assessment / feedback share a model with
             # reasoning disabled -- these are short structured tasks
             # where extended thinking only adds latency. See #150.
-            if self._eval_model:
-                evaluation_llm = create_openrouter_llm(
-                    model=self._eval_model,
-                    api_key=self._api_key,
-                    temperature=self._temperature,
-                    provider=self._eval_provider,
-                    user_id=user_id,
-                    disable_reasoning=True,
-                )
-            else:
-                evaluation_llm = create_openrouter_llm(
-                    model=self._model,
-                    api_key=self._api_key,
-                    temperature=self._temperature,
-                    provider=self._provider,
-                    user_id=user_id,
-                    disable_reasoning=True,
-                )
+            evaluation_llm = create_anthropic_llm(
+                model=self._eval_model or self._model,
+                api_key=self._api_key,
+                temperature=self._temperature,
+                disable_reasoning=True,
+                role="evaluation",
+            )
 
             # Lightweight keyword-extraction model (#148): annotation
             # model with reasoning off and a small token cap.
-            keyword_llm = create_openrouter_llm(
+            keyword_llm = create_anthropic_llm(
                 model=self._model,
                 api_key=self._api_key,
                 temperature=self._temperature,
-                provider=self._provider,
-                user_id=user_id,
                 max_tokens=200,
                 disable_reasoning=True,
+                role="keyword",
             )
 
             self._workflow = HedAnnotationWorkflow(
@@ -274,18 +240,13 @@ class LocalExecutionBackend(ExecutionBackend):
             self._ensure_api_key()
 
             from src.agents.vision_agent import VisionAgent
-            from src.cli.config import get_machine_id
-            from src.utils.openrouter_llm import create_openrouter_llm
+            from src.utils.anthropic_llm import create_anthropic_llm
 
-            # Use custom user_id if provided, otherwise auto-generate
-            user_id = self._user_id or get_machine_id()
-
-            vision_llm = create_openrouter_llm(
+            vision_llm = create_anthropic_llm(
                 model=self._vision_model,
                 api_key=self._api_key,
                 temperature=0.3,  # Slightly higher for vision tasks
-                provider=self._vision_provider,
-                user_id=user_id,
+                role="vision",
             )
 
             self._vision_agent = VisionAgent(llm=vision_llm)
@@ -307,6 +268,62 @@ class LocalExecutionBackend(ExecutionBackend):
             return asyncio.get_event_loop().run_until_complete(coro)
         else:
             return asyncio.run(coro)
+
+    @staticmethod
+    def _shape_result(
+        final_state: dict[str, Any],
+        schema_version: str,
+        usage: dict[str, Any] | None,
+        extra_metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Shape a workflow state into a CLI result dictionary.
+
+        The annotation is returned under both names: ``hed_string`` for the
+        ExecutionBackend contract, and the API response's field names
+        (``annotation``, ``validation_errors``, ``is_faithful``, ...) because
+        the text renderer is shared with API mode and reads those.
+
+        Args:
+            final_state: Terminal workflow state
+            schema_version: HED schema version used
+            usage: Token and cache figures for the run, if any were recorded
+            extra_metadata: Additional metadata entries to merge
+
+        Returns:
+            Result dictionary for the CLI renderers
+        """
+        annotation = final_state.get("current_annotation", "")
+        validation_errors = final_state.get("validation_errors", [])
+
+        metadata = {
+            "schema_version": schema_version,
+            "validation_attempts": final_state.get("validation_attempts", 0),
+            "total_iterations": final_state.get("total_iterations", 0),
+            "is_faithful": final_state.get("is_faithful"),
+            "is_complete": final_state.get("is_complete"),
+            "evaluation_feedback": final_state.get("evaluation_feedback"),
+            "assessment_feedback": final_state.get("assessment_feedback"),
+            "mode": "standalone",
+        }
+        if extra_metadata:
+            metadata.update(extra_metadata)
+
+        return {
+            "status": "success" if final_state.get("is_valid") else "error",
+            "hed_string": annotation,
+            "annotation": annotation,
+            "is_valid": final_state.get("is_valid", False),
+            "is_faithful": final_state.get("is_faithful", False),
+            "is_complete": final_state.get("is_complete", False),
+            "validation_attempts": final_state.get("validation_attempts", 0),
+            "validation_messages": validation_errors,
+            "validation_errors": validation_errors,
+            "validation_warnings": final_state.get("validation_warnings", []),
+            "evaluation_feedback": final_state.get("evaluation_feedback", "") or "",
+            "assessment_feedback": final_state.get("assessment_feedback", "") or "",
+            "usage": usage,
+            "metadata": metadata,
+        }
 
     def annotate(
         self,
@@ -332,7 +349,8 @@ class LocalExecutionBackend(ExecutionBackend):
             )
 
         try:
-            final_state = self._run_async(_run())
+            with usage_scope() as ledger:
+                final_state = self._run_async(_run())
         except Exception as e:
             raise ExecutionError(
                 f"Annotation failed: {e}",
@@ -340,23 +358,7 @@ class LocalExecutionBackend(ExecutionBackend):
                 detail=str(e),
             ) from e
 
-        # Convert state to response format
-        return {
-            "status": "success" if final_state.get("is_valid") else "error",
-            "hed_string": final_state.get("current_annotation", ""),
-            "is_valid": final_state.get("is_valid", False),
-            "validation_messages": final_state.get("validation_errors", []),
-            "metadata": {
-                "schema_version": schema_version,
-                "validation_attempts": final_state.get("validation_attempts", 0),
-                "total_iterations": final_state.get("total_iterations", 0),
-                "is_faithful": final_state.get("is_faithful"),
-                "is_complete": final_state.get("is_complete"),
-                "evaluation_feedback": final_state.get("evaluation_feedback"),
-                "assessment_feedback": final_state.get("assessment_feedback"),
-                "mode": "standalone",
-            },
-        }
+        return self._shape_result(final_state, schema_version, summarize(ledger))
 
     def annotate_image(
         self,
@@ -417,7 +419,10 @@ class LocalExecutionBackend(ExecutionBackend):
             return description, vision_result, final_state
 
         try:
-            description, vision_result, final_state = self._run_async(_run())
+            # The vision call and the annotation workflow share one scope, so
+            # the reported figures cover the whole image request.
+            with usage_scope() as ledger:
+                description, vision_result, final_state = self._run_async(_run())
         except Exception as e:
             raise ExecutionError(
                 f"Image annotation failed: {e}",
@@ -425,23 +430,19 @@ class LocalExecutionBackend(ExecutionBackend):
                 detail=str(e),
             ) from e
 
-        return {
-            "status": "success" if final_state.get("is_valid") else "error",
-            "description": description,
-            "hed_string": final_state.get("current_annotation", ""),
-            "is_valid": final_state.get("is_valid", False),
-            "validation_messages": final_state.get("validation_errors", []),
-            "metadata": {
-                "schema_version": schema_version,
+        result = self._shape_result(
+            final_state,
+            schema_version,
+            summarize(ledger),
+            extra_metadata={
                 "vision_prompt": vision_result.get("prompt_used"),
                 "image_metadata": vision_result.get("metadata"),
-                "validation_attempts": final_state.get("validation_attempts", 0),
-                "total_iterations": final_state.get("total_iterations", 0),
-                "is_faithful": final_state.get("is_faithful"),
-                "is_complete": final_state.get("is_complete"),
-                "mode": "standalone",
             },
-        }
+        )
+        result["description"] = description
+        result["image_description"] = description
+        result["image_metadata"] = vision_result.get("metadata", {})
+        return result
 
     def validate(
         self,

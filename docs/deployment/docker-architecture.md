@@ -1,26 +1,26 @@
-# Docker Architecture (Local GPU Development)
+# Docker Architecture (Local Development)
 
-> **Note**: This document describes the Docker architecture for local GPU development with Ollama. For production deployment architecture, see **[deploy/DEPLOYMENT_ARCHITECTURE.md](../../deploy/DEPLOYMENT_ARCHITECTURE.md)**.
+> **Note**: This document describes the Docker architecture for local development. Local Ollama-based inference has been removed; LLM calls go to the Claude Platform on AWS (see **[claude-platform-aws.md](claude-platform-aws.md)**). For production deployment architecture, see **[deploy/DEPLOYMENT_ARCHITECTURE.md](../../deploy/DEPLOYMENT_ARCHITECTURE.md)**.
 
 ## Overview
 
-HED-BOT uses a **fully self-contained Docker architecture** for local GPU development that requires no external dependencies on the host system (except GPU drivers for CUDA support).
+HED-BOT uses a **fully self-contained Docker architecture** for local development that requires no external dependencies on the host system.
 
 ## Container Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    Docker Compose                        │
-├─────────────────────────┬───────────────────────────────┤
-│  Ollama Container       │  HED-BOT API Container        │
-│  ├─ Ollama Server       │  ├─ Python 3.11               │
-│  ├─ CUDA 12.2           │  ├─ FastAPI Backend           │
-│  └─ gpt-oss:20b (auto)  │  ├─ LangGraph Agents          │
-│                         │  ├─ HED Schemas (embedded)    │
-│                         │  └─ HED Validator (embedded)  │
-└─────────────────────────┴───────────────────────────────┘
-         │                            │
-         └────────────GPU─────────────┘
+├─────────────────────────────────────────────────────────┤
+│  HED-BOT API Container                                   │
+│  ├─ Python 3.11                                          │
+│  ├─ FastAPI Backend                                      │
+│  ├─ LangGraph Agents                                     │
+│  ├─ HED Schemas (embedded)                               │
+│  └─ HED Validator (embedded)                             │
+└─────────────────────────────────────────────────────────┘
+         │
+         └── HTTPS ──> Claude Platform on AWS (Anthropic Messages API)
 ```
 
 ## Self-Contained Design
@@ -109,8 +109,11 @@ USE_JS_VALIDATOR=true
 
 ```yaml
 environment:
-  - LLM_BASE_URL=http://ollama:11434
-  - LLM_MODEL=gpt-oss:20b
+  - LLM_PROVIDER=anthropic
+  - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+  - ANTHROPIC_BASE_URL=${ANTHROPIC_BASE_URL}
+  - ANTHROPIC_WORKSPACE_ID=${ANTHROPIC_WORKSPACE_ID}
+  - ANNOTATION_MODEL=claude-haiku-4-5
   - HED_SCHEMA_VERSION=8.3.0
 ```
 
@@ -153,11 +156,11 @@ git clone hed-bot && cd hed-bot
 # 2. Build images (includes HED resources)
 docker-compose build
 
-# 3. Start containers (auto-pulls gpt-oss:20b)
+# 3. Start containers
 docker-compose up -d
 
-# 4. Wait for model download (~10-20 min)
-docker-compose logs -f ollama
+# 4. Monitor startup
+docker-compose logs -f
 
 # 5. Verify
 curl http://localhost:38427/health
@@ -198,17 +201,6 @@ cd /app/hed-schemas && git pull
 
 ## Health Checks
 
-### Ollama Container
-
-```yaml
-healthcheck:
-  test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-  interval: 30s
-  timeout: 10s
-  retries: 3
-  start_period: 120s  # Allow time for model download
-```
-
 ### HED-BOT Container
 
 ```yaml
@@ -224,20 +216,14 @@ healthcheck:
 
 ### Persistent Data
 
-```yaml
-volumes:
-  ollama_data:  # Model storage (~12GB for gpt-oss:20b)
-    driver: local
-```
-
-**What's stored**:
-- Downloaded LLM models
-- Ollama configuration
+No persistent volumes are required;
+LLM inference runs on the Claude Platform on AWS, so no models are stored locally.
 
 **What's NOT stored**:
 - Application code (in image)
 - HED resources (in image)
 - Python packages (in image)
+- LLM models (inference is remote)
 
 ## Security Considerations
 
@@ -320,7 +306,7 @@ volumes:
 
 - Container startup: <5 seconds
 - API ready: ~10 seconds
-- First LLM request: 5-10 seconds (model loading)
+- First LLM request: a few seconds (remote call to the Claude Platform on AWS)
 
 ## Comparison: Before vs After
 

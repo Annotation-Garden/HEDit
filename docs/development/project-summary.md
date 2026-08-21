@@ -16,9 +16,9 @@ Completed: November 15, 2025
 - **Agent Framework**: LangGraph 1.0.3 (latest)
 - **LLM Framework**: LangChain 1.0.7 (latest)
 - **Backend**: FastAPI 0.121.2 (latest)
-- **LLM Serving**: Ollama with `gpt-oss:20b` (20B parameters)
+- **LLM Serving**: Anthropic Claude via the Claude Platform on AWS (`claude-haiku-4-5` default, `claude-sonnet-5` optional)
 - **Validation**: HED Python tools + HED JavaScript validator
-- **Deployment**: Docker with CUDA 12.2 support
+- **Deployment**: Docker
 - **Testing**: pytest with coverage
 
 ## Architecture
@@ -102,17 +102,16 @@ Final HED Annotation + Feedback
 - **Copy Function**: Easy clipboard integration
 - **Multiple Schemas**: Support for different HED versions
 
-### 6. GPU-Accelerated Serving
-- **Ollama Integration**: Easy LLM deployment with `gpt-oss:20b`
-- **CUDA Support**: NVIDIA GPU acceleration (RTX 4090 optimized)
+### 6. Cloud LLM Serving
+- **Claude Platform on AWS**: Anthropic-operated Messages API billed through the AWS Marketplace
+- **No GPU Needed**: Inference runs remotely, no local model hosting
 - **Concurrent Users**: Optimized for 10-15 simultaneous users
-- **Auto-Pull**: Model automatically downloaded on first container start
+- **Two Models**: `claude-haiku-4-5` (default, recommended) and `claude-sonnet-5` (larger, 2.3x the cost)
 
 ### 7. Containerized Deployment
 - **Docker**: Single-command deployment with all dependencies
 - **Self-Contained**: HED schemas and validator included in image
-- **Docker Compose**: Orchestration of API + Ollama
-- **GPU Passthrough**: NVIDIA runtime support
+- **Docker Compose**: Orchestration of the API container
 - **Health Checks**: Automatic service monitoring
 
 ### 8. Testing & Quality
@@ -177,15 +176,14 @@ hed-bot/
 # Clone and navigate
 cd /Users/yahya/Documents/git/HED/hed-bot
 
-# Configure
+# Configure (set ANTHROPIC_API_KEY, ANTHROPIC_BASE_URL, ANTHROPIC_WORKSPACE_ID)
 cp .env.example .env
 
 # Build and start
 # - Includes HED schemas and JavaScript validator in image
-# - Auto-pulls gpt-oss:20b model on first start
 docker-compose up -d
 
-# Monitor first start (model download ~10-20 min)
+# Monitor first start
 docker-compose logs -f
 
 # Verify
@@ -262,9 +260,8 @@ curl -X POST "http://localhost:38427/validate" \
    - Nginx reverse proxy
 
 3. **Configure for Scale**
-   - Adjust `OLLAMA_NUM_PARALLEL` for concurrent users
-   - Monitor GPU memory with `nvidia-smi`
-   - Consider vLLM for higher throughput
+   - Increase API workers for concurrent users
+   - Monitor Claude Platform on AWS usage in the AWS Console
 
 4. **Add Security**
    - API key authentication
@@ -332,7 +329,7 @@ Potential improvements:
 
 - **HED Standard**: https://www.hedtags.org/
 - **LangGraph**: https://github.com/langchain-ai/langgraph
-- **Ollama**: https://ollama.ai/
+- **Anthropic Claude**: https://www.anthropic.com/
 - **FastAPI**: https://fastapi.tiangolo.com/
 
 ## License

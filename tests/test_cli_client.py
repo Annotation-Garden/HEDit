@@ -43,12 +43,10 @@ class TestHEDitClient:
         client = HEDitClient(
             api_url="https://api.example.com/hedit",
             api_key="test-key",
-            model="gpt-4o",
-            provider="OpenAI",
+            model="claude-sonnet-5",
             temperature=0.5,
         )
-        assert client.model == "gpt-4o"
-        assert client.provider == "OpenAI"
+        assert client.model == "claude-sonnet-5"
         assert client.temperature == 0.5
 
     def test_client_strips_trailing_slash(self):
@@ -60,10 +58,10 @@ class TestHEDitClient:
         """Test headers include API key when provided."""
         client = HEDitClient(
             api_url="https://api.example.com",
-            api_key="sk-or-test-key",
+            api_key="sk-ant-test-key",
         )
         headers = client._get_headers()
-        assert headers["X-OpenRouter-Key"] == "sk-or-test-key"
+        assert headers["X-Anthropic-Key"] == "sk-ant-test-key"
         assert headers["Content-Type"] == "application/json"
         assert headers["User-Agent"] == "hedit-cli"
 
@@ -71,21 +69,31 @@ class TestHEDitClient:
         """Test headers include model configuration."""
         client = HEDitClient(
             api_url="https://api.example.com",
-            api_key="sk-or-test-key",
-            model="gpt-4o",
-            provider="Cerebras",
+            api_key="sk-ant-test-key",
+            model="claude-sonnet-5",
             temperature=0.3,
         )
         headers = client._get_headers()
-        assert headers["X-OpenRouter-Model"] == "gpt-4o"
-        assert headers["X-OpenRouter-Provider"] == "Cerebras"
-        assert headers["X-OpenRouter-Temperature"] == "0.3"
+        assert headers["X-Anthropic-Model"] == "claude-sonnet-5"
+        assert headers["X-Anthropic-Temperature"] == "0.3"
+        # The legacy spelling is no longer sent, only still accepted server-side.
+        assert "X-OpenRouter-Model" not in headers
+
+    def test_headers_include_eval_model_override(self):
+        """Eval model overrides travel under the Anthropic header name."""
+        client = HEDitClient(
+            api_url="https://api.example.com",
+            api_key="sk-ant-test-key",
+            eval_model="claude-haiku-4-5",
+        )
+        headers = client._get_headers()
+        assert headers["X-Anthropic-Eval-Model"] == "claude-haiku-4-5"
 
     def test_headers_without_api_key(self):
         """Test headers without API key."""
         client = HEDitClient(api_url="https://api.example.com")
         headers = client._get_headers()
-        assert "X-OpenRouter-Key" not in headers
+        assert "X-Anthropic-Key" not in headers
         assert headers["Content-Type"] == "application/json"
 
 
