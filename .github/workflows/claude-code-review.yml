@@ -24,6 +24,12 @@ jobs:
       actions: read
 
     steps:
+      # Pinned to v6 deliberately: this job runs on pull_request_target for
+      # fork PRs and checks out the PR head, which checkout v7 blocks outright
+      # (actions/checkout#2454). Bumping this step disables fork-PR review.
+      # The block exists because checking out fork code in a
+      # pull_request_target job that holds secrets and contents: write is a
+      # privilege-escalation shape; revisit the fork lane rather than the pin.
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
