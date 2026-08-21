@@ -246,9 +246,12 @@ class TestUsageScope:
         assert set(outer.by_role()) == {"annotation", "assessment"}
 
     def test_scope_is_restored_after_an_exception(self):
-        with pytest.raises(RuntimeError):
+        def failing_run() -> None:
             with usage_scope():
                 raise RuntimeError("workflow failed")
+
+        with pytest.raises(RuntimeError):
+            failing_run()
 
         # No active scope leaks into later calls.
         process_ledger().reset()

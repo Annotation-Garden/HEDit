@@ -4,6 +4,7 @@ import pytest
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 
+from src.utils import anthropic_llm
 from src.utils.anthropic_llm import (
     ALLOWED_MODELS,
     DEFAULT_MODEL,
@@ -94,6 +95,21 @@ class TestCreateAnthropicLLM:
             model="claude-sonnet-5", temperature=0.3, enable_caching=False
         )
         assert sonnet.temperature is None
+
+    def test_always_thinking_model_falls_back_to_lowest_effort(self, monkeypatch):
+        """Where thinking cannot be disabled, the lowest effort is requested."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "server-key")
+        monkeypatch.setattr(
+            anthropic_llm, "_ALWAYS_THINKING_MODELS", {"claude-sonnet-5"}, raising=True
+        )
+        monkeypatch.setattr(anthropic_llm, "_ADAPTIVE_THINKING_MODELS", set(), raising=True)
+
+        llm = create_anthropic_llm(
+            model="claude-sonnet-5", disable_reasoning=True, enable_caching=False
+        )
+
+        assert llm.thinking is None
+        assert llm.output_config == {"effort": anthropic_llm.LOWEST_REASONING_EFFORT}
 
     def test_disable_reasoning_on_sonnet(self, monkeypatch):
         monkeypatch.setenv("ANTHROPIC_API_KEY", "server-key")

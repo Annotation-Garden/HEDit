@@ -56,10 +56,24 @@ MODEL_ALIASES = {
     "anthropic/claude-sonnet-4-5": "claude-sonnet-5",
 }
 
-# Models where extended thinking runs by default (adaptive) and can be
-# explicitly disabled. Haiku 4.5 has thinking off unless requested, so it
-# needs no flag in either direction.
+# Extended thinking is kept OFF wherever the model allows it. With thinking
+# on, the agents emit far more text and tend to circle in reasoning loops
+# instead of converging on an annotation, which costs latency and tokens
+# without improving the result. Where a model cannot turn thinking off, the
+# closest equivalent is the lowest reasoning effort.
+#
+# Models where thinking runs by default (adaptive) and can be disabled
+# explicitly. Haiku 4.5 does not think unless given a budget, so it needs no
+# flag in either direction.
 _ADAPTIVE_THINKING_MODELS = {"claude-sonnet-5"}
+
+# Models that reject thinking={"type": "disabled"} because reasoning is
+# always on. Empty today: neither offered model is in this position. The rule
+# lives here so that adding such a model to ALLOWED_MODELS applies the
+# lowest-effort fallback automatically instead of silently running at full
+# reasoning depth.
+_ALWAYS_THINKING_MODELS: set[str] = set()
+LOWEST_REASONING_EFFORT = "low"
 
 # Models that still accept sampling parameters. Sonnet 5 rejects
 # `temperature` with a 400 (sampling params are removed on Claude 5 models).
@@ -121,10 +135,13 @@ def create_anthropic_llm(
             models reject it with a 400.
         max_tokens: Maximum tokens to generate (default: 8000)
         enable_caching: Add cache_control to system messages (default True)
-        disable_reasoning: Disable extended thinking on models where it is
-            on by default (Sonnet 5). Used for short structured tasks
-            (evaluation, keyword extraction) where thinking adds latency
-            without quality benefit. No-op on Haiku 4.5.
+        disable_reasoning: Turn extended thinking off. With thinking on, the
+            agents produce much more output and can circle in reasoning loops
+            rather than converging, so it is disabled wherever the model
+            permits it (Sonnet 5 accepts thinking={"type": "disabled"}); on a
+            model where reasoning is always on, the lowest reasoning effort is
+            requested instead. No-op on Haiku 4.5, which does not think unless
+            given a token budget.
         timeout: Per-request timeout in seconds
         role: Agent role this LLM serves ("annotation", "evaluation",
             "assessment", "feedback", "keyword", "vision"). Used to label
@@ -171,8 +188,11 @@ def create_anthropic_llm(
     if resolved_model in _SAMPLING_MODELS:
         kwargs["temperature"] = temperature
 
-    if disable_reasoning and resolved_model in _ADAPTIVE_THINKING_MODELS:
-        kwargs["thinking"] = {"type": "disabled"}
+    if disable_reasoning:
+        if resolved_model in _ADAPTIVE_THINKING_MODELS:
+            kwargs["thinking"] = {"type": "disabled"}
+        elif resolved_model in _ALWAYS_THINKING_MODELS:
+            kwargs["output_config"] = {"effort": LOWEST_REASONING_EFFORT}
 
     llm = ChatAnthropic(
         model=resolved_model,

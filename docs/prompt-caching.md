@@ -139,6 +139,19 @@ keyword      calls=2  input=    396  cache_read=      0  hit_rate=  0%  cost=$0.
 `output_tokens`, `cache_read_tokens`, `cache_write_tokens`, `cache_hit_rate`,
 `cost_usd`, and `uncached_cost_usd`.
 
+## Extended thinking is off on purpose
+
+Related to cost, and easy to mistake for an oversight: HEDit disables extended
+thinking on every role that allows it. With thinking on, the agents emit much more
+text and tend to circle in reasoning loops instead of converging on an annotation,
+which costs latency and tokens without improving the result. On a model where
+reasoning cannot be turned off, the factory requests the lowest reasoning effort
+instead (`_ALWAYS_THINKING_MODELS` in `src/utils/anthropic_llm.py`).
+
+Haiku 4.5, the default, does not think unless given a token budget, so nothing needs
+to be switched off there. Sonnet 5 has adaptive thinking on by default and accepts
+`thinking: {"type": "disabled"}`.
+
 ## Cost figures
 
 Costs use Anthropic list prices ($1/$5 per MTok for Haiku 4.5, $3/$15 for Sonnet 5)
