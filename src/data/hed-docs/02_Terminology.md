@@ -62,6 +62,14 @@ A valid path along one branch of a HED vocabulary hierarchy. A valid long-form H
 
 An aspect of the experiment or task that is measured or calculated for analysis. Indicator variables, sometimes called dependent variables, can be data features that are calculated from measurements rather than aspects that are directly measured.
 
+### Namespace
+
+A named partition of the vocabulary used when several schemas are combined. Schemas listed in a version specification with the same namespace name form one merge group; those listed with no namespace form the default merge group. Every unpartnered library schema must be alone in its own namespace. See [3.1.2. Version combinations](./03_HED_formats.md#312-version-combinations).
+
+### Namespace prefix
+
+The namespace name followed by a colon (e.g., `sc:`), placed before a schema version in a version specification and before every tag drawn from that namespace in an annotation. Tags in the default namespace carry no prefix. See [3.2.6. Tag namespace prefixes](./03_HED_formats.md#326-tag-namespace-prefixes).
+
 ### Parameter [\*]
 
 An experiment-specific item, often a specific behavioral or computer measure, that is useful in documenting the analysis or assisting downstream analysis.
@@ -88,7 +96,7 @@ A contiguous portion of the data recording during which some aspect of the exper
 
 ## 2.2. Character sets and restrictions
 
-Starting with HED standard schema versions 8.3.0 and above, HED will allow UTF-8 characters in various settings. The types of characters referred to in this specification are:
+Starting with HED standard schema versions `8.3.0` and above, HED will allow UTF-8 characters in various settings. The types of characters referred to in this specification are:
 
 | Name            | Description                                                     |
 | --------------- | --------------------------------------------------------------- |

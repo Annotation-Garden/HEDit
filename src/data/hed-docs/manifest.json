@@ -5,16 +5,16 @@
       "title": "HED Annotation Semantics",
       "source_url": "https://raw.githubusercontent.com/hed-standard/hed-resources/main/docs/source/HedAnnotationSemantics.md",
       "public_url": "https://www.hedtags.org/hed-resources/HedAnnotationSemantics.html",
-      "fetched_at": "2026-04-02T21:17:54.155485+00:00",
-      "sha256": "3ee5300d4b99591571f87acfdca27e369d999f8a97447b2427687c12232f761e"
+      "fetched_at": "2026-08-31T06:28:08.119148+00:00",
+      "sha256": "691f1b3212c129c702b222fa37db0cf5e4b68c757052b99cac943d609a740892"
     },
     {
       "filename": "02_Terminology.md",
       "title": "HED Terminology",
       "source_url": "https://raw.githubusercontent.com/hed-standard/hed-specification/main/docs/source/02_Terminology.md",
       "public_url": "https://www.hedtags.org/hed-specification/02_Terminology.html",
-      "fetched_at": "2026-04-02T21:17:54.322353+00:00",
-      "sha256": "514102e9c2f025e2df327b698a46ce25978ed07ab85d0714be6cde6a8d72b7b1"
+      "fetched_at": "2026-08-31T06:28:08.455613+00:00",
+      "sha256": "24e2d350ee6fa49b36f00438eb4df46f12194c7f08c00efa98f0edd6056fd561"
     }
   ],
   "schema_version": "1.0"
