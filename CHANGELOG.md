@@ -18,7 +18,16 @@ which are generated from the commit log.
   `TypeError: null is not an object` in `displayResults`
   and surfaced as "Failed to display results" until a full page reload.
   Errors now render in a dedicated `#errorBox` container
-  and results live in `#resultContent`, which is hidden and shown instead.
+  and results live in `#resultContent`;
+  a CSS rule hides the content whenever the error box is non-empty,
+  so the two can never disagree.
+- Frontend: error messages, validation errors and warnings, evaluation and
+  assessment feedback, and the image description are now escaped or built with
+  `textContent` before display, so angle-bracketed validator or model text
+  renders as text instead of being parsed as HTML.
+- Frontend: a stale "Generated Image Description" box from a previous image
+  run is removed when a new result renders, and the box is no longer created
+  when the description is empty.
 
 ### Changed
 

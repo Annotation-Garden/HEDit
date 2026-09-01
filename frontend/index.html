@@ -478,6 +478,13 @@
             display: block;
         }
 
+        /* Single source of truth for error vs. result display: a non-empty
+           error box hides the result content, so JS only ever writes or
+           clears #errorBox and the two can never disagree */
+        #errorBox:not(:empty) + #resultContent {
+            display: none;
+        }
+
         .result-section h2 {
             color: var(--text-primary);
             margin-bottom: 20px;
@@ -1194,7 +1201,7 @@ Example: A red circle appears on the left side of the screen and the participant
         <div class="result-section" id="results">
             <h2>Results</h2>
             <div id="errorBox"></div>
-            <div id="resultContent" hidden>
+            <div id="resultContent">
             <p class="beta-disclaimer">
                 <strong>Note:</strong> This is a beta service. Validation may still fail in some cases.
                 Please carefully review the validation results below before using the generated annotation.
@@ -1770,33 +1777,27 @@ Example: A red circle appears on the left side of the screen and the participant
         }
 
         function displayImageAnnotationResults(result) {
-            // Show the image description first
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.classList.add('active');
-
-            // Add image description section before annotation
-            const annotationBox = resultsDiv.querySelector('.annotation-box');
-            let descriptionBox = document.getElementById('imageDescriptionBox');
-
-            if (!descriptionBox) {
-                descriptionBox = document.createElement('div');
-                descriptionBox.id = 'imageDescriptionBox';
-                descriptionBox.className = 'annotation-box';
-                descriptionBox.style.borderLeftColor = '#E99852';
-                if (annotationBox) {
-                    annotationBox.parentNode.insertBefore(descriptionBox, annotationBox);
-                } else {
-                    document.getElementById('resultContent').prepend(descriptionBox);
-                }
-            }
-
-            descriptionBox.innerHTML = `
-                <h3>Generated Image Description</h3>
-                <div class="annotation-text">${result.image_description || ''}</div>
-            `;
-
-            // Display annotation and other results using existing function
+            // Render the shared results first; this also removes any stale
+            // image description box left over from a previous run
             displayResults(result);
+
+            if (!result.image_description) return;
+
+            // Build the description box with textContent so model-generated
+            // text is never parsed as HTML
+            const descriptionBox = document.createElement('div');
+            descriptionBox.id = 'imageDescriptionBox';
+            descriptionBox.className = 'annotation-box';
+            descriptionBox.style.borderLeftColor = '#E99852';
+            const heading = document.createElement('h3');
+            heading.textContent = 'Generated Image Description';
+            const descriptionText = document.createElement('div');
+            descriptionText.className = 'annotation-text';
+            descriptionText.textContent = result.image_description;
+            descriptionBox.append(heading, descriptionText);
+
+            const annotationBox = document.getElementById('resultContent').querySelector('.annotation-box');
+            annotationBox.parentNode.insertBefore(descriptionBox, annotationBox);
         }
 
         async function generateAnnotation() {
@@ -2048,12 +2049,16 @@ Example: A red circle appears on the left side of the screen and the participant
             // Store result data for feedback
             lastResultData = data;
 
-            // Show results section, clear any prior error, and reveal the
-            // result content (kept in its own container so errors never
-            // destroy these elements)
+            // Show results section and clear any prior error; emptying
+            // #errorBox is what reveals #resultContent (see the
+            // #errorBox:not(:empty) CSS rule), so errors never destroy
+            // the result elements
             document.getElementById('results').classList.add('active');
             document.getElementById('errorBox').innerHTML = '';
-            document.getElementById('resultContent').hidden = false;
+
+            // Drop any image description box left over from a previous run;
+            // displayImageAnnotationResults re-adds it when appropriate
+            document.getElementById('imageDescriptionBox')?.remove();
 
             // Display annotation
             document.getElementById('annotationText').textContent = data.annotation;
@@ -2089,7 +2094,7 @@ Example: A red circle appears on the left side of the screen and the participant
             // Display errors
             if (data.validation_errors && data.validation_errors.length > 0) {
                 document.getElementById('errorsSection').innerHTML =
-                    `<h3>Validation Errors</h3><div class="error">${data.validation_errors.join('<br>')}</div>`;
+                    `<h3>Validation Errors</h3><div class="error">${data.validation_errors.map(escapeHtml).join('<br>')}</div>`;
             } else {
                 document.getElementById('errorsSection').innerHTML = '';
             }
@@ -2097,7 +2102,7 @@ Example: A red circle appears on the left side of the screen and the participant
             // Display warnings
             if (data.validation_warnings && data.validation_warnings.length > 0) {
                 document.getElementById('warningsSection').innerHTML =
-                    `<h3>Validation Warnings</h3><div class="feedback">${data.validation_warnings.join('<br>')}</div>`;
+                    `<h3>Validation Warnings</h3><div class="feedback">${data.validation_warnings.map(escapeHtml).join('<br>')}</div>`;
             } else {
                 document.getElementById('warningsSection').innerHTML = '';
             }
@@ -2105,7 +2110,7 @@ Example: A red circle appears on the left side of the screen and the participant
             // Display evaluation feedback
             if (data.evaluation_feedback) {
                 document.getElementById('evaluationSection').innerHTML =
-                    `<h3>Evaluation Feedback</h3><div class="feedback">${data.evaluation_feedback}</div>`;
+                    `<h3>Evaluation Feedback</h3><div class="feedback">${escapeHtml(data.evaluation_feedback)}</div>`;
             } else {
                 document.getElementById('evaluationSection').innerHTML = '';
             }
@@ -2113,7 +2118,7 @@ Example: A red circle appears on the left side of the screen and the participant
             // Display assessment feedback
             if (data.assessment_feedback) {
                 document.getElementById('assessmentSection').innerHTML =
-                    `<h3>Assessment Feedback</h3><div class="feedback">${data.assessment_feedback}</div>`;
+                    `<h3>Assessment Feedback</h3><div class="feedback">${escapeHtml(data.assessment_feedback)}</div>`;
             } else {
                 document.getElementById('assessmentSection').innerHTML = '';
             }
@@ -2164,11 +2169,22 @@ Example: A red circle appears on the left side of the screen and the participant
         function displayError(message) {
             // Write into the dedicated error container instead of replacing
             // the results section, which would destroy the result elements
-            // and break every subsequent successful run until a page reload
+            // and break every subsequent successful run until a page reload.
+            // A non-empty #errorBox hides #resultContent via CSS. Built with
+            // textContent so server-supplied text is never parsed as HTML.
             document.getElementById('results').classList.add('active');
-            document.getElementById('resultContent').hidden = true;
-            document.getElementById('errorBox').innerHTML =
-                `<div class="error"><strong>Error:</strong> ${message}</div>`;
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            const label = document.createElement('strong');
+            label.textContent = 'Error:';
+            errorDiv.append(label, ` ${message}`);
+            document.getElementById('errorBox').replaceChildren(errorDiv);
+        }
+
+        function escapeHtml(value) {
+            const div = document.createElement('div');
+            div.textContent = String(value);
+            return div.innerHTML;
         }
 
         function copyAnnotation() {
