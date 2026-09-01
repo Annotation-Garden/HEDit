@@ -61,6 +61,25 @@ bunx cfman wrangler --account neuromechanist deploy --env dev  # dev: hedit-dev-
 ```
 Secrets (`BACKEND_API_KEY`, `TURNSTILE_SECRET_KEY`) and KV bindings persist across deploys.
 
+### Release pipeline (what a merge to main actually deploys, and when)
+A merge to `main` does NOT immediately update the production backend.
+The pipeline is:
+1. CI on main bumps the version to the next alpha, tags it, and creates
+   the GitHub release (resolving version conflicts in a develop->main PR:
+   keep develop's `.dev` version; CI re-bumps after merge)
+2. `docker-build.yml` builds and pushes the backend image to GHCR
+   on every push to main (and develop)
+3. The SCCN VM runs `deploy/auto-update.sh` from an hourly cron
+   (minute 0), which pulls the new image and restarts the container --
+   so the production API lags a merge by up to one hour.
+   To deploy immediately, run `./deploy/auto-update.sh` on the VM
+4. Cloudflare Pages deploys `hedit.pages.dev` from main and
+   `develop.hedit.pages.dev` from develop automatically on push
+
+Verify a backend deploy with
+`curl https://api.annotation.garden/hedit/health` (reports the version);
+the dev container follows the same pattern from develop pushes.
+
 ### CORS and request-header changes
 The Worker maintains its own `Access-Control-Allow-Headers` list in `workers/index.js`,
 separate from the FastAPI CORS middleware in `src/api/main.py`.
@@ -95,6 +114,11 @@ curl -si -X OPTIONS https://hedit-api.shirazi-10f.workers.dev/annotate/stream \
 
 ## Versioning
 - Use `scripts/bump_version.py` (never edit version manually)
+- **Develop auto-bumps**: `auto-dev-bump.yml` increments `.devN` on every
+  non-docs push to develop, so PRs to develop do NOT need a manual bump.
+  A manual bump in a PR is harmless (the squash commit body carries the
+  "Bump version to" line, which the workflow's loop guard detects and skips)
+  but redundant; prefer letting CI bump
 - **Version suffix rules by target branch:**
   - PRs to `develop`: `.dev` suffix (e.g., `0.6.8.dev0`)
   - PRs to `main`: `a` (alpha) suffix (e.g., `0.6.8a1`)
@@ -127,6 +151,8 @@ develop: 0.6.9.dev0 (next cycle)
 - Never edit version numbers manually; use `scripts/bump_version.py`
 - Never push tags from feature branches
 - Never change frontend/backend request headers without redeploying both Workers
+- Never assume a merge to main is live in production; the backend container
+  updates on the VM's hourly cron (see Release pipeline)
 
 ## [REFERENCE] Rules Directory
 - `.rules/git.md` - Branching, commits, PRs, versioning
