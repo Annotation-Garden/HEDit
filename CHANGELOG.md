@@ -8,6 +8,35 @@ This file starts at 0.7.11.
 Earlier releases are described in the [GitHub releases](https://github.com/Annotation-Garden/HEDit/releases),
 which are generated from the commit log.
 
+## [Unreleased]
+
+### Fixed
+
+- Frontend: showing an error no longer destroys the results section.
+  `displayError` used to replace the entire `#results` markup,
+  so after any failed request every later successful annotation threw
+  `TypeError: null is not an object` in `displayResults`
+  and surfaced as "Failed to display results" until a full page reload.
+  Errors now render in a dedicated `#errorBox` container
+  and results live in `#resultContent`;
+  a CSS rule hides the content whenever the error box is non-empty,
+  so the two can never disagree.
+- Frontend: error messages, validation errors and warnings, evaluation and
+  assessment feedback, and the image description are now escaped or built with
+  `textContent` before display, so angle-bracketed validator or model text
+  renders as text instead of being parsed as HTML.
+- Frontend: a stale "Generated Image Description" box from a previous image
+  run is removed when a new result renders, and the box is no longer created
+  when the description is empty.
+
+### Changed
+
+- CI actions moved to their current majors: `actions/checkout` v7, `codecov/codecov-action`
+  v7, `actions/dependency-review-action` v5, `docker/login-action` v4,
+  `docker/metadata-action` v6. The fork-PR review lane stays on `checkout` v6, the last
+  version that permits checking out a fork PR head under `pull_request_target`. Dependabot
+  now opens its PRs against develop rather than main. (#131, #133, #143, #152, #153)
+
 ## [0.7.11] - 2026-08-20
 
 The LLM provider migration, plus token and cache accounting on every surface, and extended
