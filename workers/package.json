@@ -18,6 +18,6 @@
   "author": "neuromechanist",
   "license": "MIT",
   "devDependencies": {
-    "wrangler": "^4.71.0"
+    "wrangler": "^4.127.1"
   }
 }
