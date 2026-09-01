@@ -671,6 +671,31 @@ async def audit_logging_middleware(request: Request, call_next):
         raise
 
 
+# A schema loader existing does not prove the JavaScript validator can run
+# (Node missing, hed-javascript not built), so /health runs a real validation
+# through the workflow's backend. The probe spawns a Node subprocess on the
+# JS path, so its result is cached and refreshed at most once per TTL.
+_VALIDATOR_PROBE_TTL_SECONDS = 300.0
+_validator_probe: dict[str, float | bool] = {"functional": False, "checked_at": float("-inf")}
+
+
+async def _validator_functional() -> bool:
+    """Return whether the active validator backend passes a functional probe."""
+    now = time.monotonic()
+    if now - _validator_probe["checked_at"] < _VALIDATOR_PROBE_TTL_SECONDS:
+        return bool(_validator_probe["functional"])
+
+    functional = False
+    if workflow is not None:
+        schema_version = os.getenv("HED_SCHEMA_VERSION", "8.4.0")
+        functional = await asyncio.to_thread(
+            workflow.validation_agent.probe, schema_version
+        )
+    _validator_probe["functional"] = functional
+    _validator_probe["checked_at"] = now
+    return functional
+
+
 @app.get("/health", response_model=HealthResponse)
 async def health_check() -> HealthResponse:
     """Health check endpoint.
@@ -679,7 +704,7 @@ async def health_check() -> HealthResponse:
         Health status and service availability
     """
     llm_available = workflow is not None and _llm_credentials_ok
-    validator_available = schema_loader is not None
+    validator_available = schema_loader is not None and await _validator_functional()
 
     status = "healthy" if (llm_available and validator_available) else "degraded"
 

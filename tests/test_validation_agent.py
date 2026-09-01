@@ -428,3 +428,21 @@ class TestGetOrCreateValidatorSchemaVersionWarning:
             validation_agent._get_or_create_validator("8.4.0")
 
         assert not any("reusing cached" in record.message for record in caplog.records)
+
+
+class TestValidationAgentProbe:
+    """Tests for the health-check probe (#27)."""
+
+    @pytest.fixture
+    def validation_agent(self):
+        """Create a validation agent using the Python validator."""
+        loader = HedSchemaLoader()
+        return ValidationAgent(loader, use_javascript=False)
+
+    def test_probe_returns_true_on_working_backend(self, validation_agent):
+        """A functional backend validates "Red" cleanly."""
+        assert validation_agent.probe("8.4.0") is True
+
+    def test_probe_returns_false_on_broken_backend(self, validation_agent):
+        """An unloadable schema version fails the probe instead of raising."""
+        assert validation_agent.probe("not-a-real-version") is False
