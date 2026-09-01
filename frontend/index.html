@@ -1193,6 +1193,8 @@ Example: A red circle appears on the left side of the screen and the participant
 
         <div class="result-section" id="results">
             <h2>Results</h2>
+            <div id="errorBox"></div>
+            <div id="resultContent" hidden>
             <p class="beta-disclaimer">
                 <strong>Note:</strong> This is a beta service. Validation may still fail in some cases.
                 Please carefully review the validation results below before using the generated annotation.
@@ -1223,6 +1225,7 @@ Example: A red circle appears on the left side of the screen and the participant
                 <p style="color: #57534e; font-size: 12px; margin-top: 8px;">
                     Found an issue or have suggestions? Click to send feedback.
                 </p>
+            </div>
             </div>
         </div>
 
@@ -1783,7 +1786,7 @@ Example: A red circle appears on the left side of the screen and the participant
                 if (annotationBox) {
                     annotationBox.parentNode.insertBefore(descriptionBox, annotationBox);
                 } else {
-                    resultsDiv.prepend(descriptionBox);
+                    document.getElementById('resultContent').prepend(descriptionBox);
                 }
             }
 
@@ -2045,8 +2048,12 @@ Example: A red circle appears on the left side of the screen and the participant
             // Store result data for feedback
             lastResultData = data;
 
-            // Show results section
+            // Show results section, clear any prior error, and reveal the
+            // result content (kept in its own container so errors never
+            // destroy these elements)
             document.getElementById('results').classList.add('active');
+            document.getElementById('errorBox').innerHTML = '';
+            document.getElementById('resultContent').hidden = false;
 
             // Display annotation
             document.getElementById('annotationText').textContent = data.annotation;
@@ -2155,8 +2162,12 @@ Example: A red circle appears on the left side of the screen and the participant
         }
 
         function displayError(message) {
+            // Write into the dedicated error container instead of replacing
+            // the results section, which would destroy the result elements
+            // and break every subsequent successful run until a page reload
             document.getElementById('results').classList.add('active');
-            document.getElementById('results').innerHTML =
+            document.getElementById('resultContent').hidden = true;
+            document.getElementById('errorBox').innerHTML =
                 `<div class="error"><strong>Error:</strong> ${message}</div>`;
         }
 
