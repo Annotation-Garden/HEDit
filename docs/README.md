@@ -1,12 +1,12 @@
-# HED-BOT Documentation
+# HEDit Documentation
 
-Welcome to the HED-BOT documentation! This directory contains comprehensive guides for using, developing, and deploying HED-BOT.
+Welcome to the HEDit documentation! This directory contains comprehensive guides for using, developing, and deploying HEDit.
 
 ## Quick Links
 
-- **[User Guides](guides/)** - How to use HED-BOT
-- **[Deployment](deployment/)** - How to deploy HED-BOT
-- **[Development](development/)** - How to contribute to HED-BOT
+- **[User Guides](guides/)** - How to use HEDit
+- **[Deployment](deployment/)** - How to deploy HEDit
+- **[Development](development/)** - How to contribute to HEDit
 - **[API Reference](api/)** - API documentation
 
 ## Documentation Structure
@@ -73,8 +73,8 @@ We welcome documentation improvements! Please:
 
 ## Questions?
 
-- **GitHub Issues**: [Report bugs or request features](https://github.com/neuromechanist/hed-bot/issues)
-- **GitHub Discussions**: [Ask questions and discuss](https://github.com/neuromechanist/hed-bot/discussions)
+- **GitHub Issues**: [Report bugs or request features](https://github.com/Annotation-Garden/HEDit/issues)
+- **GitHub Discussions**: [Ask questions and discuss](https://github.com/Annotation-Garden/HEDit/discussions)
 
 ---
 

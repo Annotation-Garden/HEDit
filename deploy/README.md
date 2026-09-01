@@ -1,6 +1,6 @@
-# HED-BOT Deployment Guide
+# HEDit Deployment Guide
 
-This directory contains deployment scripts and configuration for running HED-BOT in production.
+This directory contains deployment scripts and configuration for running HEDit in production.
 
 ## Table of Contents
 
@@ -27,8 +27,8 @@ This directory contains deployment scripts and configuration for running HED-BOT
 
 ```bash
 # Clone repository
-git clone https://github.com/neuromechanist/hed-bot.git
-cd hed-bot
+git clone https://github.com/Annotation-Garden/HEDit.git
+cd HEDit
 
 # Generate API key for authentication
 python scripts/generate_api_key.py
@@ -48,7 +48,7 @@ cp .env.example .env
 
 ## Security Setup
 
-HED-BOT implements comprehensive security features for production deployment:
+HEDit implements comprehensive security features for production deployment:
 
 - **API Key Authentication**: Protects endpoints from unauthorized access
 - **Audit Logging**: Complete request/response trail for compliance
@@ -70,16 +70,16 @@ HED-BOT implements comprehensive security features for production deployment:
 
    # Audit Logging
    ENABLE_AUDIT_LOG=true
-   AUDIT_LOG_FILE=/var/log/hed-bot/audit.log
+   AUDIT_LOG_FILE=/var/log/hedit/audit.log
 
    # CORS (optional extra origins)
-   # EXTRA_CORS_ORIGINS=https://staging.hed-bot.pages.dev
+   # EXTRA_CORS_ORIGINS=https://develop.hedit.pages.dev
    ```
 
 3. **Use API key in requests:**
    ```bash
    curl -H "X-API-Key: your_key_here" \
-        https://hedtools.ucsd.edu/hed-bot-api/annotate
+        https://api.annotation.garden/hedit/annotate
    ```
 
 ### Protected vs Public Endpoints
@@ -124,7 +124,7 @@ Automatically checks for and deploys new releases every hour.
 crontab -e
 
 # Add this line:
-0 * * * * /path/to/hed-bot/deploy/auto-update.sh >> /var/log/hed-bot-update.log 2>&1
+0 * * * * /path/to/hedit/deploy/auto-update.sh >> /var/log/hedit/auto-update.log 2>&1
 ```
 
 **How it works:**
@@ -132,7 +132,7 @@ crontab -e
 2. Image is pushed to GitHub Container Registry (GHCR)
 3. Cron job checks for new images hourly
 4. Automatically pulls and deploys new version if available
-5. Logs all updates to `/var/log/hed-bot-update.log`
+5. Logs all updates to `/var/log/hedit/auto-update.log`
 
 ### Option 2: Manual Deployment
 
@@ -158,7 +158,7 @@ When code is pushed to `main` branch or a version tag is created:
 
 1. **Build**: Docker image is built from `deploy/Dockerfile`
 2. **Test**: (Future) Run tests against the image
-3. **Push**: Image is pushed to `ghcr.io/neuromechanist/hed-bot`
+3. **Push**: Image is pushed to `ghcr.io/annotation-garden/hedit`
 4. **Tag**: Images are tagged with:
    - `latest` (from main branch)
    - `main` (latest main branch)
@@ -190,7 +190,7 @@ The `auto-update.sh` script provides automated deployment:
 ./deploy/auto-update.sh --env dev
 
 # Run from cron (recommended)
-0 * * * * /path/to/deploy/auto-update.sh >> /var/log/hed-bot-update.log 2>&1
+0 * * * * /path/to/deploy/auto-update.sh >> /var/log/hedit/auto-update.log 2>&1
 ```
 
 #### Configuration
@@ -199,13 +199,13 @@ Edit the script to customize:
 
 ```bash
 # Image registry
-REGISTRY_IMAGE="ghcr.io/neuromechanist/hed-bot:latest"
+REGISTRY_IMAGE="ghcr.io/annotation-garden/hedit:latest"
 
 # Log file location
-LOG_FILE="/var/log/hed-bot-update.log"
+LOG_FILE="/var/log/hedit/auto-update.log"
 
 # Lock file location
-LOCK_FILE="/tmp/hed-bot-update.lock"
+LOCK_FILE="/tmp/hedit-update.lock"
 ```
 
 ---
@@ -265,10 +265,10 @@ REQUIRE_API_AUTH=true
 
 # Audit Logging (recommended for production)
 ENABLE_AUDIT_LOG=true
-AUDIT_LOG_FILE=/var/log/hed-bot/audit.log
+AUDIT_LOG_FILE=/var/log/hedit/audit.log
 
 # CORS Configuration (optional extra origins)
-# EXTRA_CORS_ORIGINS=https://staging.hed-bot.pages.dev,https://dev.hed-bot.pages.dev
+# EXTRA_CORS_ORIGINS=https://develop.hedit.pages.dev,https://develop.hedit.pages.dev
 
 # LLM Configuration (Claude Platform on AWS; all three credentials required)
 LLM_PROVIDER=anthropic
@@ -298,9 +298,9 @@ VISION_MODEL=claude-haiku-4-5
 Add to your Apache virtual host configuration:
 
 ```apache
-# HED-BOT API Backend
-ProxyPass /hed-bot-api/ http://localhost:38427/
-ProxyPassReverse /hed-bot-api/ http://localhost:38427/
+# HEDit API Backend
+ProxyPass /hedit/ http://localhost:38427/
+ProxyPassReverse /hedit/ http://localhost:38427/
 ```
 
 Reload Apache:
@@ -312,7 +312,7 @@ sudo systemctl reload apache2
 #### Nginx (Alternative)
 
 ```nginx
-location /hed-bot-api/ {
+location /hedit/ {
     proxy_pass http://127.0.0.1:38427/;
     proxy_http_version 1.1;
     proxy_set_header Host $host;
@@ -339,29 +339,29 @@ sudo systemctl reload nginx
 
 ```bash
 # Check if container is running
-docker ps | grep hed-bot
+docker ps | grep hedit
 
 # Check container health
-docker inspect --format='{{.State.Health.Status}}' hed-bot
+docker inspect --format='{{.State.Health.Status}}' hedit
 
 # View resource usage
-docker stats hed-bot
+docker stats hedit
 ```
 
 ### Logs
 
 ```bash
 # View real-time logs
-docker logs -f hed-bot
+docker logs -f hedit
 
 # View last 100 lines
-docker logs --tail 100 hed-bot
+docker logs --tail 100 hedit
 
 # View logs with timestamps
-docker logs -t hed-bot
+docker logs -t hedit
 
 # Auto-update logs
-tail -f /var/log/hed-bot-update.log
+tail -f /var/log/hedit/auto-update.log
 ```
 
 ### Health Checks
@@ -371,7 +371,7 @@ tail -f /var/log/hed-bot-update.log
 curl http://localhost:38427/health
 
 # Through reverse proxy
-curl https://your-domain.com/hed-bot/health
+curl https://your-domain.com/hedit/health
 ```
 
 Expected response:
@@ -392,7 +392,7 @@ Expected response:
 
 **Check logs:**
 ```bash
-docker logs hed-bot
+docker logs hedit
 ```
 
 **Common issues:**
@@ -414,7 +414,7 @@ chmod +x deploy/auto-update.sh
 
 **Check logs:**
 ```bash
-tail -f /var/log/hed-bot-update.log
+tail -f /var/log/hedit/auto-update.log
 ```
 
 **Test manually:**
@@ -426,7 +426,7 @@ tail -f /var/log/hed-bot-update.log
 
 **Check health:**
 ```bash
-docker inspect --format='{{.State.Health}}' hed-bot
+docker inspect --format='{{.State.Health}}' hedit
 ```
 
 **Check network:**
@@ -436,7 +436,7 @@ curl http://127.0.0.1:38427/health
 
 **Restart container:**
 ```bash
-docker restart hed-bot
+docker restart hedit
 ```
 
 ### Rollback to Previous Version
@@ -445,19 +445,19 @@ docker restart hed-bot
 
 ```bash
 # Stop current container
-docker stop hed-bot
-docker rm hed-bot
+docker stop hedit
+docker rm hedit
 
 # Find previous image
-docker images | grep hed-bot
+docker images | grep hedit
 
 # Run previous image
 docker run -d \
-  --name hed-bot \
+  --name hedit \
   --restart unless-stopped \
   -p 127.0.0.1:38427:38427 \
   --env-file .env \
-  hed-bot:previous-tag
+  hedit:previous-tag
 ```
 
 ### Docker Image Not Pulling
@@ -472,7 +472,7 @@ echo YOUR_TOKEN | docker login ghcr.io -u YOUR_USERNAME --password-stdin
 
 **Manually pull image:**
 ```bash
-docker pull ghcr.io/neuromechanist/hed-bot:latest
+docker pull ghcr.io/annotation-garden/hedit:latest
 ```
 
 ---
@@ -485,16 +485,16 @@ Modify cron schedule for different update frequencies:
 
 ```bash
 # Every 15 minutes
-*/15 * * * * /path/to/auto-update.sh >> /var/log/hed-bot-update.log 2>&1
+*/15 * * * * /path/to/auto-update.sh >> /var/log/hedit/auto-update.log 2>&1
 
 # Every 6 hours
-0 */6 * * * /path/to/auto-update.sh >> /var/log/hed-bot-update.log 2>&1
+0 */6 * * * /path/to/auto-update.sh >> /var/log/hedit/auto-update.log 2>&1
 
 # Once daily at 2 AM
-0 2 * * * /path/to/auto-update.sh >> /var/log/hed-bot-update.log 2>&1
+0 2 * * * /path/to/auto-update.sh >> /var/log/hedit/auto-update.log 2>&1
 
 # Weekdays at 6 AM
-0 6 * * 1-5 /path/to/auto-update.sh >> /var/log/hed-bot-update.log 2>&1
+0 6 * * 1-5 /path/to/auto-update.sh >> /var/log/hedit/auto-update.log 2>&1
 ```
 
 ### Notification Integration
@@ -511,7 +511,7 @@ send_notification() {
         YOUR_SLACK_WEBHOOK_URL
 
     # Email
-    echo "$MESSAGE" | mail -s "HED-BOT Update" admin@example.com
+    echo "$MESSAGE" | mail -s "HEDit Update" admin@example.com
 }
 ```
 
@@ -530,8 +530,8 @@ curl http://localhost:38428/health
 # Update Nginx configuration
 
 # Remove old version
-docker stop hed-bot
-docker rm hed-bot
+docker stop hedit
+docker rm hedit
 ```
 
 ---
@@ -552,8 +552,8 @@ docker rm hed-bot
 
 ## Support
 
-- **Issues**: https://github.com/neuromechanist/hed-bot/issues
-- **Documentation**: https://github.com/neuromechanist/hed-bot/tree/main/docs
+- **Issues**: https://github.com/Annotation-Garden/HEDit/issues
+- **Documentation**: https://github.com/Annotation-Garden/HEDit/tree/main/docs
 
 ---
 

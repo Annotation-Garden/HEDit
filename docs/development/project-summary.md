@@ -1,8 +1,8 @@
-# HED-BOT Project Summary
+# HEDit Project Summary
 
 ## Project Overview
 
-HED-BOT is a complete multi-agent system for converting natural language event descriptions into valid HED (Hierarchical Event Descriptors) annotations. The system uses LangGraph to orchestrate specialized AI agents that work together to generate, validate, evaluate, and assess HED annotations.
+HEDit is a complete multi-agent system for converting natural language event descriptions into valid HED (Hierarchical Event Descriptors) annotations. The system uses LangGraph to orchestrate specialized AI agents that work together to generate, validate, evaluate, and assess HED annotations.
 
 ## Implementation Complete ✓
 
@@ -129,7 +129,7 @@ Final HED Annotation + Feedback
 ## Project Structure
 
 ```
-hed-bot/
+HEDit/
 ├── src/
 │   ├── agents/                 # Multi-agent system
 │   │   ├── annotation_agent.py # Generates HED tags
@@ -174,7 +174,7 @@ hed-bot/
 
 ```bash
 # Clone and navigate
-cd /Users/yahya/Documents/git/HED/hed-bot
+cd /Users/yahya/Documents/git/annot-garden/HEDit
 
 # Configure (set ANTHROPIC_API_KEY, ANTHROPIC_BASE_URL, ANTHROPIC_WORKSPACE_ID)
 cp .env.example .env
@@ -199,7 +199,7 @@ open frontend/index.html
 # Setup environment
 source ~/miniconda3/etc/profile.d/conda.sh
 conda env create -f environment.yml
-conda activate hed-bot
+conda activate hedit
 
 # Install
 pip install -e ".[dev]"

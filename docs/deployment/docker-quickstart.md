@@ -6,7 +6,7 @@
 
 ```bash
 # Clone and start (everything included!)
-git clone <repo> && cd hed-bot
+git clone <repo> && cd HEDit
 docker-compose up -d
 
 # Monitor first start
@@ -65,7 +65,7 @@ Just: docker-compose up -d                      ✅ One command
    - HED JavaScript validator → `/app/hed-javascript` (built)
 
 3. **Application**
-   - HED-BOT source code
+   - HEDit source code
    - All Python dependencies
    - Installed as package (not editable)
 
@@ -120,16 +120,16 @@ curl http://localhost:38427/health
 ### Update Application Code
 ```bash
 git pull
-docker-compose build hed-bot
-docker-compose up -d hed-bot
+docker-compose build hedit
+docker-compose up -d hedit
 # Time: ~30 seconds (Docker cache)
 ```
 
 ### Update HED Resources
 ```bash
 # Rebuild image (re-clones latest HED repos)
-docker-compose build --no-cache hed-bot
-docker-compose up -d hed-bot
+docker-compose build --no-cache hedit
+docker-compose up -d hedit
 # Time: ~10 minutes (full rebuild)
 ```
 
@@ -150,14 +150,14 @@ docker-compose up -d hed-bot
 ### Container Unhealthy
 ```bash
 # Check logs
-docker-compose logs hed-bot
+docker-compose logs hedit
 
 # Check HED resources exist
-docker exec -it hed-bot-api ls -la /app/hed-schemas
-docker exec -it hed-bot-api ls -la /app/hed-javascript
+docker exec -it hedit-api ls -la /app/hed-schemas
+docker exec -it hedit-api ls -la /app/hed-javascript
 
 # Verify validator built
-docker exec -it hed-bot-api ls -la /app/hed-javascript/dist
+docker exec -it hedit-api ls -la /app/hed-javascript/dist
 ```
 
 ## Benefits

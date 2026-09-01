@@ -1,4 +1,4 @@
-# HED-BOT Deployment Guide
+# HEDit Deployment Guide
 
 This document helps you choose the right deployment option for your use case.
 
