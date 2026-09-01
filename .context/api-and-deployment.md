@@ -52,6 +52,20 @@ still accepted as transport; provider-routing headers are ignored.
 - Cloudflare Workers proxy for API routing
 - SSE streaming support
 
+### Cloudflare Workers (manual deploy, no CI)
+- Code: `workers/index.js`, config: `workers/wrangler.toml`
+- Prod: `hedit-api` -> `api.annotation.garden/hedit`;
+  dev: `hedit-dev-api` -> `api.annotation.garden/hedit-dev`
+- Deploy (Cloudflare account `neuromechanist`):
+  `cd workers && bunx cfman wrangler --account neuromechanist deploy`
+  and `... deploy --env dev`
+- The Worker keeps its own CORS `Access-Control-Allow-Headers` list;
+  redeploy BOTH Workers whenever request headers change,
+  otherwise browser preflights fail
+  ("Load failed" in Safari, "NetworkError" in Firefox)
+- See AGENTS.md "Deployment Architecture and Operations" for the full chain
+  and the preflight verification curl
+
 ## CLI (`src/cli/`)
 - Built with Typer + Rich
 - Commands: `annotate`, `annotate-image`, `validate`, `health`, `init`, `config`
