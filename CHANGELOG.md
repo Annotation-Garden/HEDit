@@ -10,6 +10,16 @@ which are generated from the commit log.
 
 ## [Unreleased]
 
+### Fixed
+
+- Frontend: showing an error no longer destroys the results section.
+  `displayError` used to replace the entire `#results` markup,
+  so after any failed request every later successful annotation threw
+  `TypeError: null is not an object` in `displayResults`
+  and surfaced as "Failed to display results" until a full page reload.
+  Errors now render in a dedicated `#errorBox` container
+  and results live in `#resultContent`, which is hidden and shown instead.
+
 ### Changed
 
 - CI actions moved to their current majors: `actions/checkout` v7, `codecov/codecov-action`
