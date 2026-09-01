@@ -688,9 +688,7 @@ async def _validator_functional() -> bool:
     functional = False
     if workflow is not None:
         schema_version = os.getenv("HED_SCHEMA_VERSION", "8.4.0")
-        functional = await asyncio.to_thread(
-            workflow.validation_agent.probe, schema_version
-        )
+        functional = await asyncio.to_thread(workflow.validation_agent.probe, schema_version)
     _validator_probe["functional"] = functional
     _validator_probe["checked_at"] = now
     return functional
