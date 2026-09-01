@@ -12,6 +12,12 @@ which are generated from the commit log.
 
 ### Fixed
 
+- `/health` now runs a real validation ("Red") through the workflow's active
+  validator backend instead of only checking that the schema loader exists,
+  so a broken JavaScript validator (Node missing, hed-javascript not built)
+  reports `validator_available: false` and a degraded status. The probe
+  result is cached for five minutes. (#27)
+
 - Frontend: showing an error no longer destroys the results section.
   `displayError` used to replace the entire `#results` markup,
   so after any failed request every later successful annotation threw
