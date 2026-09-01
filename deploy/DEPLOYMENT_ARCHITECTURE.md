@@ -1,4 +1,4 @@
-# HED-BOT Deployment Architecture
+# HEDit Deployment Architecture
 
 This document explains the deployment architecture for `hedtools.ucsd.edu` with proper CORS and security configuration.
 
@@ -15,10 +15,10 @@ This document explains the deployment architecture for `hedtools.ucsd.edu` with 
 ## Overview
 
 **Server**: `hedtools.ucsd.edu`
-**Frontend**: `hed-bot.pages.dev` (Cloudflare Pages)
+**Frontend**: `hedit.pages.dev` (Cloudflare Pages)
 **Backend**: FastAPI + Docker on port 33427
 
-**Goal**: Only allow requests from `hed-bot.pages.dev` frontend
+**Goal**: Only allow requests from `hedit.pages.dev` frontend
 
 ---
 
@@ -28,7 +28,7 @@ This document explains the deployment architecture for `hedtools.ucsd.edu` with 
 
 ```
 ┌─────────────────────────────┐
-│  hed-bot.pages.dev         │  ← Frontend (Cloudflare Pages)
+│  hedit.pages.dev         │  ← Frontend (Cloudflare Pages)
 │  (Static Site)             │
 └──────────────┬──────────────┘
                │ HTTPS
@@ -37,14 +37,14 @@ This document explains the deployment architecture for `hedtools.ucsd.edu` with 
 │  hedtools.ucsd.edu         │  ← Your Server
 │                            │
 │  Nginx Reverse Proxy       │
-│  /hed-bot → :33427         │
+│  /hedit → :38427         │
 │  (CORS validation)         │
 └──────────────┬──────────────┘
                │
                ▼
 ┌─────────────────────────────┐
 │  Docker Container          │
-│  hed-bot:latest            │
+│  hedit:latest            │
 │  127.0.0.1:33427           │
 │  (FastAPI + CORS)          │
 └─────────────────────────────┘
@@ -61,7 +61,7 @@ This document explains the deployment architecture for `hedtools.ucsd.edu` with 
 
 **Two-Layer Defense:**
 
-1. **Nginx Layer**: Only allows requests from `hed-bot.pages.dev`
+1. **Nginx Layer**: Only allows requests from `hedit.pages.dev`
 2. **FastAPI Layer**: Validates Origin header programmatically
 
 Even if someone bypasses Nginx (impossible without server access), FastAPI will reject the request.
@@ -74,14 +74,14 @@ Even if someone bypasses Nginx (impossible without server access), FastAPI will 
 
 ```
 ┌─────────────────────────────┐
-│  hed-bot.pages.dev         │  ← Frontend (Cloudflare Pages)
+│  hedit.pages.dev         │  ← Frontend (Cloudflare Pages)
 │  (Static Site)             │
 └──────────────┬──────────────┘
                │ HTTPS
                ▼
 ┌─────────────────────────────┐
 │  Cloudflare Worker         │  ← Proxy Worker
-│  worker.hed-bot.pages.dev  │
+│  hedit-api.shirazi-10f.workers.dev  │
 │  (Origin validation)       │
 └──────────────┬──────────────┘
                │ HTTPS
@@ -90,13 +90,13 @@ Even if someone bypasses Nginx (impossible without server access), FastAPI will 
 │  hedtools.ucsd.edu         │  ← Your Server
 │                            │
 │  Nginx Reverse Proxy       │
-│  /hed-bot → :33427         │
+│  /hedit → :38427         │
 └──────────────┬──────────────┘
                │
                ▼
 ┌─────────────────────────────┐
 │  Docker Container          │
-│  hed-bot:latest            │
+│  hedit:latest            │
 │  127.0.0.1:33427           │
 └─────────────────────────────┘
 ```
@@ -113,17 +113,17 @@ Use Cloudflare Worker proxy if you need:
 
 ### Cloudflare Worker Code
 
-Create a Worker at `worker.hed-bot.pages.dev`:
+Create a Worker at `hedit-api.shirazi-10f.workers.dev`:
 
 ```javascript
-// Cloudflare Worker for HED-BOT API Proxy
+// Cloudflare Worker for HEDit API Proxy
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // Only allow requests from hed-bot.pages.dev
+    // Only allow requests from hedit.pages.dev
     const origin = request.headers.get('Origin');
-    const allowedOrigin = 'https://hed-bot.pages.dev';
+    const allowedOrigin = 'https://hedit.pages.dev';
 
     if (origin !== allowedOrigin) {
       return new Response('Forbidden: Invalid origin', {
@@ -135,7 +135,7 @@ export default {
     }
 
     // Proxy to backend server
-    const backendUrl = `https://hedtools.ucsd.edu/hed-bot${url.pathname}${url.search}`;
+    const backendUrl = `https://api.annotation.garden/hedit${url.pathname}${url.search}`;
 
     // Forward the request
     const backendRequest = new Request(backendUrl, {
@@ -164,12 +164,12 @@ export default {
 **wrangler.toml** (if using separate worker project):
 
 ```toml
-name = "hed-bot-api-proxy"
+name = "hedit-api"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
 
 [env.production]
-route = { pattern = "worker.hed-bot.pages.dev/*", zone_name = "hed-bot.pages.dev" }
+route = { pattern = "hedit-api.shirazi-10f.workers.dev/*", zone_name = "hedit.pages.dev" }
 ```
 
 ### Frontend Configuration
@@ -177,8 +177,8 @@ route = { pattern = "worker.hed-bot.pages.dev/*", zone_name = "hed-bot.pages.dev
 Update frontend to use Worker URL:
 
 ```javascript
-// In hed-bot frontend
-const API_URL = 'https://worker.hed-bot.pages.dev';
+// In the HEDit frontend
+const API_URL = 'https://hedit-api.shirazi-10f.workers.dev';
 
 // All API calls go through Worker
 fetch(`${API_URL}/annotate`, {
@@ -196,7 +196,7 @@ fetch(`${API_URL}/annotate`, {
 
 ### CORS Origins
 
-**Production**: Only `https://hed-bot.pages.dev`
+**Production**: Only `https://hedit.pages.dev`
 **Development**: `http://localhost:5173`, `http://localhost:3000`
 
 ### Environment Variables
@@ -205,7 +205,7 @@ Add to `.env` on server:
 
 ```bash
 # No extra CORS origins by default
-# EXTRA_CORS_ORIGINS=https://staging.hed-bot.pages.dev,https://dev.hed-bot.pages.dev
+# EXTRA_CORS_ORIGINS=https://develop.hedit.pages.dev,https://develop.hedit.pages.dev
 ```
 
 ### Nginx Security Headers
@@ -229,10 +229,10 @@ Protect against abuse:
 
 ```nginx
 # In http block
-limit_req_zone $binary_remote_addr zone=hed_bot_limit:10m rate=60r/m;
+limit_req_zone $binary_remote_addr zone=hedit_limit:10m rate=60r/m;
 
 # In location block
-limit_req zone=hed_bot_limit burst=10 nodelay;
+limit_req zone=hedit_limit burst=10 nodelay;
 limit_req_status 429;
 ```
 
@@ -249,7 +249,7 @@ This allows:
 
 #### Step 1: Update CORS in FastAPI
 
-Already done! The code now only allows `hed-bot.pages.dev`.
+Already done! The code now only allows `hedit.pages.dev`.
 
 #### Step 2: Configure Nginx
 
@@ -257,7 +257,7 @@ Already done! The code now only allows `hed-bot.pages.dev`.
 # On hedtools.ucsd.edu server
 
 # Copy Nginx config
-sudo cp deploy/nginx-hedtools.conf /etc/nginx/conf.d/hed-bot.conf
+sudo cp deploy/nginx-hedtools.conf /etc/nginx/conf.d/hedit.conf
 
 # Test configuration
 sudo nginx -t
@@ -273,7 +273,7 @@ sudo systemctl reload nginx
 ./deploy/deploy.sh prod
 
 # Verify it's running
-docker ps | grep hed-bot
+docker ps | grep hedit
 curl http://localhost:33427/health
 ```
 
@@ -281,20 +281,20 @@ curl http://localhost:33427/health
 
 ```bash
 # Should succeed (from allowed origin)
-curl -H "Origin: https://hed-bot.pages.dev" \
-     -I https://hedtools.ucsd.edu/hed-bot-api/health
+curl -H "Origin: https://hedit.pages.dev" \
+     -I https://api.annotation.garden/hedit/health
 
 # Should fail (from disallowed origin)
 curl -H "Origin: https://evil.com" \
-     -I https://hedtools.ucsd.edu/hed-bot-api/health
+     -I https://api.annotation.garden/hedit/health
 ```
 
 #### Step 5: Update Frontend
 
-In your frontend (`hed-bot.pages.dev`), update API URL:
+In your frontend (`hedit.pages.dev`), update API URL:
 
 ```javascript
-const API_URL = 'https://hedtools.ucsd.edu/hed-bot';
+const API_URL = 'https://api.annotation.garden/hedit';
 ```
 
 ---
@@ -315,7 +315,7 @@ wrangler publish
 
 In Cloudflare dashboard:
 - Go to Workers & Pages
-- Add route: `worker.hed-bot.pages.dev/*` → `hed-bot-api-proxy`
+- Add route: `hedit-api.shirazi-10f.workers.dev/*` → `hedit-api`
 
 #### Step 3: Update Nginx
 
@@ -329,7 +329,7 @@ Allow requests from Worker (or keep same CORS config):
 #### Step 4: Update Frontend
 
 ```javascript
-const API_URL = 'https://worker.hed-bot.pages.dev';
+const API_URL = 'https://hedit-api.shirazi-10f.workers.dev';
 ```
 
 ---
@@ -371,9 +371,9 @@ Reasons:
 
 - [ ] Docker container builds successfully
 - [ ] Container runs on port 33427
-- [ ] Nginx proxies /hed-bot correctly
-- [ ] Health check accessible: `https://hedtools.ucsd.edu/hed-bot-api/health`
-- [ ] CORS allows `hed-bot.pages.dev`
+- [ ] Nginx proxies /hedit correctly
+- [ ] Health check accessible: `https://api.annotation.garden/hedit/health`
+- [ ] CORS allows `hedit.pages.dev`
 - [ ] CORS blocks other origins
 - [ ] Frontend can make API requests
 - [ ] Streaming endpoints work (if using)
@@ -384,7 +384,7 @@ Reasons:
 
 ### CORS errors in browser console
 
-**Error**: `Access to fetch at 'https://hedtools.ucsd.edu/hed-bot-api/annotate' from origin 'https://hed-bot.pages.dev' has been blocked by CORS policy`
+**Error**: `Access to fetch at 'https://api.annotation.garden/hedit/annotate' from origin 'https://hedit.pages.dev' has been blocked by CORS policy`
 
 **Solutions**:
 1. Check Nginx is running and configured correctly
@@ -397,7 +397,7 @@ Reasons:
 **Cause**: Nginx can't reach Docker container
 
 **Solutions**:
-1. Check container is running: `docker ps | grep hed-bot`
+1. Check container is running: `docker ps | grep hedit`
 2. Check container health: `curl http://localhost:33427/health`
 3. Check Nginx error logs: `sudo tail -f /var/log/nginx/error.log`
 

@@ -1,6 +1,6 @@
-# Contributing to HED-BOT
+# Contributing to HEDit
 
-Thank you for your interest in contributing to HED-BOT! This guide covers our development workflow, issue management, and contribution guidelines.
+Thank you for your interest in contributing to HEDit! This guide covers our development workflow, issue management, and contribution guidelines.
 
 ## Issue and PR Labeling System
 

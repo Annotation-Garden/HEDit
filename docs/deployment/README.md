@@ -1,6 +1,6 @@
-# HED-BOT Deployment Guide
+# HEDit Deployment Guide
 
-This guide provides deployment options for HED-BOT.
+This guide provides deployment options for HEDit.
 
 ## Deployment Options
 
@@ -51,7 +51,7 @@ This guide provides deployment options for HED-BOT.
 ### Step 1: Push to GitHub
 
 ```bash
-cd /home/yahya/git/hed-bot
+cd /home/yahya/git/HEDit
 git add .
 git commit -m "Prepare for Cloudflare Pages deployment"
 git push origin main
@@ -62,7 +62,7 @@ git push origin main
 1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com/)
 2. Navigate to **Pages** → **Create a project**
 3. **Connect to Git** → Select your GitHub account
-4. Select the `hed-bot` repository
+4. Select the `HEDit` repository
 5. Configure build settings:
    - **Production branch**: `main`
    - **Build command**: (leave empty - it's a static site)
@@ -73,7 +73,7 @@ git push origin main
 
 ### Step 3: Configure Backend URL
 
-After deployment, you'll get a URL like: `https://hed-bot-abc.pages.dev`
+After deployment, you'll get a URL like: `https://abc123.hedit.pages.dev`
 
 Update `frontend/config.js` with your Cloudflare Tunnel URL (see Part 2):
 
@@ -112,16 +112,16 @@ cloudflared --version
 
 ### Step 2: Start Your Backend
 
-Make sure your HED-BOT backend is running:
+Make sure your HEDit backend is running:
 
 ```bash
-cd /home/yahya/git/hed-bot
+cd /home/yahya/git/HEDit
 
 # Start with Docker Compose
-docker compose up -d hed-bot
+docker compose up -d hedit
 
 # Or start directly
-# conda activate hed-bot
+# conda activate hedit
 # python -m uvicorn src.api.main:app --host 0.0.0.0 --port 38427
 ```
 
@@ -163,28 +163,28 @@ For a permanent, named tunnel:
 
 2. **Create a named tunnel**:
    ```bash
-   cloudflared tunnel create hed-bot
+   cloudflared tunnel create hedit
    ```
 
 3. **Create tunnel config** (`~/.cloudflared/config.yml`):
    ```yaml
-   tunnel: hed-bot
+   tunnel: hedit
    credentials-file: /home/yahya/.cloudflared/<TUNNEL-ID>.json
 
    ingress:
-     - hostname: hed-bot.your-domain.com  # Your custom domain
+     - hostname: hedit.your-domain.com  # Your custom domain
        service: http://localhost:38427
      - service: http_status:404
    ```
 
 4. **Add DNS record** (if using custom domain):
    ```bash
-   cloudflared tunnel route dns hed-bot hed-bot.your-domain.com
+   cloudflared tunnel route dns hedit hedit.your-domain.com
    ```
 
 5. **Run tunnel**:
    ```bash
-   cloudflared tunnel run hed-bot
+   cloudflared tunnel run hedit
    ```
 
 6. **Run as service** (auto-start on boot):
@@ -208,7 +208,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:8080",
         "http://127.0.0.1:8080",
-        "https://hed-bot-abc.pages.dev",  # Your Cloudflare Pages URL
+        "https://abc123.hedit.pages.dev",  # Your Cloudflare Pages URL
         "https://your-custom-domain.com",  # Optional custom domain
     ],
     allow_credentials=True,
@@ -234,7 +234,7 @@ Restart your backend after making changes.
 ### Check Tunnel Status
 ```bash
 cloudflared tunnel list
-cloudflared tunnel info hed-bot
+cloudflared tunnel info hedit
 ```
 
 ### View Tunnel Logs
@@ -244,7 +244,7 @@ sudo journalctl -u cloudflared -f
 
 ### Check Backend
 ```bash
-docker compose logs -f hed-bot
+docker compose logs -f hedit
 ```
 
 ---
@@ -277,7 +277,7 @@ For even more advanced setups, you could:
 ### Tunnel connection issues
 - Check backend is running: `curl http://localhost:38427/health`
 - Verify firewall isn't blocking cloudflared
-- Check logs: `cloudflared tunnel info hed-bot`
+- Check logs: `cloudflared tunnel info hedit`
 
 ### Cloudflare Pages build fails
 - Ensure `frontend/` directory is in repo
@@ -302,9 +302,9 @@ For even more advanced setups, you could:
 - Add monitoring/alerting
 - Set up CI/CD for automatic deployments
 - Consider adding authentication if needed
-# HED-BOT Deployment Guide
+# HEDit Deployment Guide
 
-This guide covers deploying HED-BOT on your own workstation or server with persistent URL access.
+This guide covers deploying HEDit on your own workstation or server with persistent URL access.
 
 ## Prerequisites
 
@@ -325,7 +325,7 @@ This guide covers deploying HED-BOT on your own workstation or server with persi
 ### 1. Clone Repository
 
 ```bash
-cd /path/to/hed-bot
+cd /path/to/hedit
 ```
 
 ### 2. Build and Run (Self-Contained)
@@ -334,7 +334,7 @@ cd /path/to/hed-bot
 # Build and start all services
 # This will:
 # - Build Docker image with HED schemas and validator
-# - Start the HED-BOT container
+# - Start the HEDit container
 docker-compose up -d
 
 # Monitor first start
@@ -389,7 +389,7 @@ curl http://localhost:38427/health
 ```bash
 source ~/miniconda3/etc/profile.d/conda.sh
 conda env create -f environment.yml
-conda activate hed-bot
+conda activate hedit
 ```
 
 ### 2. Install HED JavaScript Validator
@@ -409,7 +409,7 @@ cp .env.example .env
 # - Set HED_VALIDATOR_PATH to hed-javascript location
 ```
 
-### 4. Start HED-BOT API
+### 4. Start HEDit API
 
 ```bash
 uvicorn src.api.main:app --host 0.0.0.0 --port 38427 --workers 4
@@ -438,13 +438,13 @@ chmod +x cloudflared-linux-amd64
 sudo mv cloudflared-linux-amd64 /usr/local/bin/cloudflared
 
 # Create tunnel
-cloudflared tunnel create hed-bot
+cloudflared tunnel create hedit
 
 # Route traffic
-cloudflared tunnel route dns hed-bot hed-bot.yourdomain.com
+cloudflared tunnel route dns hedit hedit.yourdomain.com
 
 # Run tunnel
-cloudflared tunnel --config ~/.cloudflared/config.yml run hed-bot
+cloudflared tunnel --config ~/.cloudflared/config.yml run hedit
 ```
 
 Example `~/.cloudflared/config.yml`:
@@ -453,7 +453,7 @@ tunnel: <TUNNEL_ID>
 credentials-file: /home/user/.cloudflared/<TUNNEL_ID>.json
 
 ingress:
-  - hostname: hed-bot.yourdomain.com
+  - hostname: hedit.yourdomain.com
     service: http://localhost:38427
   - service: http_status:404
 ```
@@ -469,7 +469,7 @@ ngrok http 8000
 ```nginx
 server {
     listen 80;
-    server_name hed-bot.yourdomain.com;
+    server_name hedit.yourdomain.com;
 
     location / {
         proxy_pass http://localhost:38427;
@@ -484,19 +484,19 @@ server {
 
 ### Systemd Service (for auto-restart)
 
-Create `/etc/systemd/system/hed-bot.service`:
+Create `/etc/systemd/system/hedit.service`:
 
 ```ini
 [Unit]
-Description=HED-BOT Annotation Service
+Description=HEDit Annotation Service
 After=network.target
 
 [Service]
 Type=simple
 User=youruser
-WorkingDirectory=/path/to/hed-bot
-Environment="PATH=/home/youruser/miniconda3/envs/hed-bot/bin"
-ExecStart=/home/youruser/miniconda3/envs/hed-bot/bin/uvicorn src.api.main:app --host 0.0.0.0 --port 38427 --workers 4
+WorkingDirectory=/path/to/hedit
+Environment="PATH=/home/youruser/miniconda3/envs/hedit/bin"
+ExecStart=/home/youruser/miniconda3/envs/hedit/bin/uvicorn src.api.main:app --host 0.0.0.0 --port 38427 --workers 4
 Restart=always
 RestartSec=10
 
@@ -507,9 +507,9 @@ WantedBy=multi-user.target
 Enable and start:
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable hed-bot
-sudo systemctl start hed-bot
-sudo systemctl status hed-bot
+sudo systemctl enable hedit
+sudo systemctl start hedit
+sudo systemctl status hedit
 ```
 
 ## Performance Tuning
@@ -545,7 +545,7 @@ curl http://localhost:38427/health
 docker-compose logs -f
 
 # Systemd logs
-journalctl -u hed-bot -f
+journalctl -u hedit -f
 ```
 
 ### Metrics
@@ -587,8 +587,8 @@ Monitor:
 cd /Users/yahya/Documents/git/HED/hed-schemas
 git pull
 
-# Update hed-bot
-cd /path/to/hed-bot
+# Update HEDit
+cd /path/to/hedit
 git pull
 docker-compose build
 docker-compose up -d

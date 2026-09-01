@@ -1,8 +1,8 @@
-# HED Schema Handling in HED-BOT
+# HED Schema Handling in HEDit
 
 ## Overview
 
-HED-BOT now uses JSON schemas from the official HED repository with proper support for:
+HEDit now uses JSON schemas from the official HED repository with proper support for:
 - Short-form (leaf) tags
 - Tag extension rules
 - Vocabulary validation
@@ -26,7 +26,7 @@ HED_SCHEMA_DIR=/Users/yahya/Documents/git/HED/hed-schemas/schemas_latest_json
 
 ## Short-Form Tags
 
-**Critical**: HED-BOT uses SHORT-FORM tags (leaf nodes only).
+**Critical**: HEDit uses SHORT-FORM tags (leaf nodes only).
 
 **Correct**:
 - `Square` (not `Item/Object/Geometric-object/2D-shape/Rectangle/Square`)
@@ -195,8 +195,8 @@ git pull
 # 2. Check new schemas are in schemas_latest_json/
 ls schemas_latest_json/
 
-# 3. Restart HED-BOT (automatic reload)
-docker-compose restart hed-bot
+# 3. Restart HEDit (automatic reload)
+docker-compose restart hedit
 ```
 
 ## Debugging Schema Issues
@@ -266,4 +266,4 @@ The new JSON schema system provides:
 - ✓ Production-ready validation
 - ✓ Portable annotations (with warnings)
 
-This makes HED-BOT truly production-ready for generating valid, portable HED annotations.
+This makes HEDit truly production-ready for generating valid, portable HED annotations.

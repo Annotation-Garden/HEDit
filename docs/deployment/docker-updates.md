@@ -1,6 +1,6 @@
 # Docker Deployment & Code Updates
 
-This guide explains how to deploy code changes when running HED-BOT with Docker.
+This guide explains how to deploy code changes when running HEDit with Docker.
 
 ## The Problem
 
@@ -29,7 +29,7 @@ Use the deployment script to properly rebuild and deploy:
 curl http://localhost:38427/version
 
 # View logs
-docker-compose logs -f hed-bot
+docker-compose logs -f hedit
 ```
 
 ## Deployment Script Usage
@@ -75,14 +75,14 @@ If you prefer manual steps:
 # 1. Stop containers
 docker-compose down
 
-# 2. Rebuild hed-bot image (no cache)
-docker-compose build --no-cache hed-bot
+# 2. Rebuild hedit image (no cache)
+docker-compose build --no-cache hedit
 
 # 3. Start services
 docker-compose up -d
 
 # 4. Check logs
-docker-compose logs -f hed-bot
+docker-compose logs -f hedit
 
 # 5. Verify version
 curl http://localhost:38427/version
@@ -126,10 +126,10 @@ git push origin v0.3.1-alpha  # your version
 
 ```bash
 # View logs (follow mode)
-docker-compose logs -f hed-bot
+docker-compose logs -f hedit
 
 # View logs (last 100 lines)
-docker-compose logs --tail=100 hed-bot
+docker-compose logs --tail=100 hedit
 
 # Check container status
 docker-compose ps
@@ -141,13 +141,13 @@ docker-compose down
 docker-compose down -v
 
 # Execute command in container
-docker-compose exec hed-bot bash
+docker-compose exec hedit bash
 
 # View resource usage
 docker stats
 
 # Restart just one service
-docker-compose restart hed-bot
+docker-compose restart hedit
 # Note: This WON'T pick up code changes!
 ```
 
@@ -161,7 +161,7 @@ docker-compose restart hed-bot
 1. Force rebuild: `./scripts/deploy.sh --force`
 2. Clear browser cache (Ctrl+Shift+R or Cmd+Shift+R)
 3. Verify API: `curl http://localhost:38427/version`
-4. Check logs: `docker-compose logs hed-bot`
+4. Check logs: `docker-compose logs hedit`
 
 ### Container Won't Start
 
@@ -170,7 +170,7 @@ docker-compose restart hed-bot
 **Steps**:
 ```bash
 # Check logs for errors
-docker-compose logs hed-bot
+docker-compose logs hedit
 
 # Common causes:
 # - Port 38427 already in use
@@ -179,7 +179,7 @@ docker-compose logs hed-bot
 
 # Try clean rebuild
 docker-compose down
-docker-compose build --no-cache hed-bot
+docker-compose build --no-cache hedit
 docker-compose up -d
 ```
 
@@ -208,7 +208,7 @@ sudo kill -9 <PID>
    - Network problems (HED repo clone)
    - Node.js build failures
    - Python dependency conflicts
-3. Try: `docker-compose build --no-cache --pull hed-bot`
+3. Try: `docker-compose build --no-cache --pull hedit`
 
 ## Development Mode
 
@@ -218,7 +218,7 @@ Edit `docker-compose.yml`:
 
 ```yaml
 services:
-  hed-bot:
+  hedit:
     # ... existing config ...
     volumes:
       - ./src:/app/src  # Mount source code
@@ -235,7 +235,7 @@ docker-compose up -d
 
 ```bash
 # Activate conda environment
-conda activate hed-bot
+conda activate hedit
 
 # Set environment variables (Claude Platform on AWS; all three required)
 export LLM_PROVIDER=anthropic
@@ -258,18 +258,18 @@ uvicorn src.api.main:app --host 0.0.0.0 --port 38427 --reload
 VERSION=$(python scripts/bump_version.py --current | awk '{print $3}')
 
 # Build with version tag
-docker build -t hed-bot:$VERSION -t hed-bot:latest .
+docker build -t hedit:$VERSION -t hedit:latest .
 ```
 
 ### Push to Registry (Optional)
 
 ```bash
 # Tag for your registry
-docker tag hed-bot:$VERSION your-registry.com/hed-bot:$VERSION
+docker tag hedit:$VERSION your-registry.com/hedit:$VERSION
 
 # Push
-docker push your-registry.com/hed-bot:$VERSION
-docker push your-registry.com/hed-bot:latest
+docker push your-registry.com/hedit:$VERSION
+docker push your-registry.com/hedit:latest
 ```
 
 ## Understanding Docker Caching
@@ -304,7 +304,7 @@ Docker uses layer caching to speed up builds:
 curl http://localhost:38427/version
 
 # View logs
-docker-compose logs -f hed-bot
+docker-compose logs -f hedit
 
 # Stop everything
 docker-compose down

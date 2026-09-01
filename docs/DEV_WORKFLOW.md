@@ -1,6 +1,6 @@
 # Development Workflow
 
-This document describes the development and testing workflow for hed-bot.
+This document describes the development and testing workflow for HEDit.
 
 ## Branch Strategy
 
@@ -108,7 +108,7 @@ After local testing passes, create a PR to the `develop` branch.
    ```
 
 4. **Staging deployment**:
-   - Docker image built: `ghcr.io/neuromechanist/hed-bot:develop`
+   - Docker image built: `ghcr.io/annotation-garden/hedit:develop`
    - Dev backend pulls and runs the image
    - Test via dev API endpoint
 
@@ -118,8 +118,8 @@ After local testing passes, create a PR to the `develop` branch.
 
 | Component | URL/Location |
 |-----------|--------------|
-| Docker Image | `ghcr.io/neuromechanist/hed-bot:develop` |
-| Dev API | `hed-bot-dev-api.workers.dev` (when configured) |
+| Docker Image | `ghcr.io/annotation-garden/hedit:develop` |
+| Dev API | `hedit-dev-api.workers.dev` (when configured) |
 | Frontend Preview | Cloudflare Pages preview deployments |
 
 ## Level 4: Production (main branch)
@@ -134,9 +134,9 @@ gh pr create --base main --head develop --title "Release: feature description"
 
 | Component | URL/Location |
 |-----------|--------------|
-| Docker Image | `ghcr.io/neuromechanist/hed-bot:latest` |
-| Prod API | `hed-bot-api.workers.dev` |
-| Frontend | `hed-bot.pages.dev` |
+| Docker Image | `ghcr.io/annotation-garden/hedit:latest` |
+| Prod API | `hedit-api.workers.dev` |
+| Frontend | `hedit.pages.dev` |
 
 ## Testing the Error Remediation Feature
 

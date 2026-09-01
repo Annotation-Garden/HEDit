@@ -2,7 +2,7 @@
 
 ## Overview
 
-The HED-BOT frontend is a single-page HTML application that connects to the FastAPI backend to generate HED annotations.
+The HEDit frontend is a single-page HTML application that connects to the FastAPI backend to generate HED annotations.
 
 ## Setup
 
@@ -10,7 +10,7 @@ The HED-BOT frontend is a single-page HTML application that connects to the Fast
 
 1. **Start the backend**:
    ```bash
-   cd /Users/yahya/Documents/git/HED/hed-bot
+   cd /Users/yahya/Documents/git/annot-garden/HEDit
    uvicorn src.api.main:app --host 0.0.0.0 --port 38427
    ```
 
@@ -44,7 +44,7 @@ The HED-BOT frontend is a single-page HTML application that connects to the Fast
 
 1. **Create `frontend/wrangler.toml`**:
    ```toml
-   name = "hed-bot-frontend"
+   name = "hedit"
    compatibility_date = "2025-11-15"
 
    [site]
@@ -53,7 +53,7 @@ The HED-BOT frontend is a single-page HTML application that connects to the Fast
 
 2. **Update API URL** in `frontend/index.html` line 260:
    ```javascript
-   const API_URL = 'https://your-hed-bot-api.yourdomain.com';
+   const API_URL = 'https://your-hedit-api.yourdomain.com';
    ```
 
 3. **Deploy**:
@@ -79,7 +79,7 @@ const API_URL = 'http://localhost:38427';
 | Local development | `http://localhost:38427` |
 | Same machine, different port | `http://localhost:38427` |
 | Remote server | `https://your-domain.com` |
-| Docker deployment | `http://hed-bot:8000` (internal) or `http://localhost:38427` (external) |
+| Docker deployment | `http://hedit:8000` (internal) or `http://localhost:38427` (external) |
 
 **CORS Note**: The backend already has CORS enabled for all origins (`allow_origins=["*"]`). For production, update this in `src/api/main.py`.
 
