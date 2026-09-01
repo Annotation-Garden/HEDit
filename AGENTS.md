@@ -114,6 +114,11 @@ curl -si -X OPTIONS https://hedit-api.shirazi-10f.workers.dev/annotate/stream \
 
 ## Versioning
 - Use `scripts/bump_version.py` (never edit version manually)
+- **Develop auto-bumps**: `auto-dev-bump.yml` increments `.devN` on every
+  non-docs push to develop, so PRs to develop do NOT need a manual bump.
+  A manual bump in a PR is harmless (the squash commit body carries the
+  "Bump version to" line, which the workflow's loop guard detects and skips)
+  but redundant; prefer letting CI bump
 - **Version suffix rules by target branch:**
   - PRs to `develop`: `.dev` suffix (e.g., `0.6.8.dev0`)
   - PRs to `main`: `a` (alpha) suffix (e.g., `0.6.8a1`)
