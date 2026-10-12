@@ -62,6 +62,14 @@ A valid path along one branch of a HED vocabulary hierarchy. A valid long-form H
 
 An aspect of the experiment or task that is measured or calculated for analysis. Indicator variables, sometimes called dependent variables, can be data features that are calculated from measurements rather than aspects that are directly measured.
 
+### Namespace
+
+A named partition of the vocabulary used when several schemas are combined. Schemas listed in a version specification with the same namespace name form one merge group; those listed with no namespace form the default merge group. Every unpartnered library schema must be alone in its own namespace. See [3.1.2. Version combinations](./03_HED_formats.md#312-version-combinations).
+
+### Namespace prefix
+
+The namespace name followed by a colon (e.g., `sc:`), placed before a schema version in a version specification and before every tag drawn from that namespace in an annotation. Tags in the default namespace carry no prefix. See [3.2.6. Tag namespace prefixes](./03_HED_formats.md#326-tag-namespace-prefixes).
+
 ### Parameter [\*]
 
 An experiment-specific item, often a specific behavioral or computer measure, that is useful in documenting the analysis or assisting downstream analysis.
@@ -69,6 +77,14 @@ An experiment-specific item, often a specific behavioral or computer measure, th
 ### Recording [\*]
 
 A continuous recording of data from an instrument in a single session without repositioning the recording sensors.
+
+### Schema element
+
+A named item of a HED schema that is assigned a `hedId` in the HED ontology: a tag, unit, unit class, unit modifier, value class, schema attribute, or schema attribute property, together with the structural elements (header, prologue, and epilogue). All schema elements except the structural elements participate in merging and are subject to the element compatibility rules of [3.1.2.4. Partnered combinations](./03_HED_formats.md#3124-partnered-combinations); differences in prologues and epilogues are not merge conflicts.
+
+### Schema section
+
+One of the ordered blocks of a HED schema file (see [3.1.4. Schema layout overview](./03_HED_formats.md#314-schema-layout-overview)). The *schema section* holds the tags. The *auxiliary sections* (unit classes, unit modifiers, value classes, schema attributes, and properties) hold the other schema elements. The *extra sections* (Sources, Prefixes, and External annotations) hold rows that are not schema elements: they have no `hedId` and are not merged when the schema is loaded.
 
 ### Tag-group
 
@@ -88,48 +104,60 @@ A contiguous portion of the data recording during which some aspect of the exper
 
 ## 2.2. Character sets and restrictions
 
-Starting with HED standard schema versions 8.3.0 and above, HED will allow UTF-8 characters in various settings. The types of characters referred to in this specification are:
+Starting with HED standard schema versions `8.3.0` and above, HED will allow UTF-8 characters in various settings. The types of characters referred to in this specification are:
 
-| Name            | Description                                                     |
-| --------------- | --------------------------------------------------------------- |
-| `alphanumeric`  | `letters` and/or `digits`                                       |
-| `ampersand`     | ASCII code 38                                                   |
-| `ascii`         | utf-8 codes 0 to 127 (single byte)                              |
-| `asterisk`      | ASCII code 42                                                   |
-| `at-sign`       | ASCII code 64                                                   |
-| `backslash`     | ASCII code 92                                                   |
-| `blank`         | ASCII code 32                                                   |
-| `caret`         | ASCII code 94                                                   |
-| `colon`         | ASCII code 58                                                   |
-| `comma`         | ASCII code 44                                                   |
-| `dollar`        | ASCII code 36                                                   |
-| `digits`        | 0-9                                                             |
-| `double-quote`  | ASCII code 34                                                   |
-| `equals`        | ASCII code 61                                                   |
-| `exclamation`   | ASCII code 33                                                   |
-| `forward-slash` | ASCII code 47                                                   |
-| `greater-than`  | ASCII code 62                                                   |
-| `hyphen`        | ASCII code 45                                                   |
-| `left-paren`    | ASCII code 40                                                   |
-| `less-than`     | ASCII code 60                                                   |
-| `letters`       | `lowercase` and/or `uppercase`                                  |
-| `lowercase`     | ASCII characters a-z                                            |
-| `name`          | `alphanumeric`, `hyphen`, `period`, `underscore`, `nonascii`    |
-| `newline`       | ASCII code 10 (linefeed)                                        |
-| `nonascii`      | utf-8 codes >= 160 (multi-byte)                                 |
-| `number-sign`   | ASCII code 35                                                   |
-| `numeric`       | digits, period, hyphen, plus, caret, E, e                       |
-| `percent-sign`  | ASCII code 37                                                   |
-| `period`        | ASCII code 46                                                   |
-| `plus`          | ASCII code 43                                                   |
-| `printable`     | ASCII 32 \<= code < 127                                         |
-| `question-mark` | ASCII code 63                                                   |
-| `right-paren`   | ASCII code 41                                                   |
-| `semicolon`     | ASCII code 59                                                   |
-| `single-quote`  | ASCII code 39                                                   |
-| `tab`           | ASCII code 09                                                   |
-| `text`          | `printable` and/or `nonascii` excluding comma and curly braces. |
-| `tilde`         | ASCII code 126                                                  |
-| `underscore`    | ASCII code 95                                                   |
-| `uppercase`     | ASCII characters A-Z                                            |
-| `vertical-bar`  | ASCII code 124                                                  |
+<!-- character-sets:begin -->
+
+| Name            | Description                                                                       |
+| --------------- | --------------------------------------------------------------------------------- |
+| `alphanumeric`  | `letters` and/or `digits`                                                         |
+| `ampersand`     | ASCII code 38                                                                     |
+| `ascii`         | utf-8 codes 0 to 127 (single byte)                                                |
+| `asterisk`      | ASCII code 42                                                                     |
+| `at-sign`       | ASCII code 64                                                                     |
+| `backslash`     | ASCII code 92                                                                     |
+| `blank`         | ASCII code 32                                                                     |
+| `caret`         | ASCII code 94                                                                     |
+| `colon`         | ASCII code 58                                                                     |
+| `comma`         | ASCII code 44                                                                     |
+| `digits`        | 0-9                                                                               |
+| `dollar`        | ASCII code 36                                                                     |
+| `double-quote`  | ASCII code 34                                                                     |
+| `equals`        | ASCII code 61                                                                     |
+| `exclamation`   | ASCII code 33                                                                     |
+| `forward-slash` | ASCII code 47                                                                     |
+| `greater-than`  | ASCII code 62                                                                     |
+| `hyphen`        | ASCII code 45                                                                     |
+| `left-paren`    | ASCII code 40                                                                     |
+| `less-than`     | ASCII code 60                                                                     |
+| `letters`       | `lowercase` and/or `uppercase`                                                    |
+| `lowercase`     | ASCII characters a-z                                                              |
+| `name`          | `alphanumeric`, `hyphen`, `underscore`, `nonascii`                                |
+| `newline`       | ASCII code 10 (linefeed)                                                          |
+| `nonascii`      | utf-8 codes 160 and above (multi-byte)                                            |
+| `number-sign`   | ASCII code 35                                                                     |
+| `numeric`       | digits, period, hyphen, plus, caret, E, e                                         |
+| `percent-sign`  | ASCII code 37                                                                     |
+| `period`        | ASCII code 46                                                                     |
+| `plus`          | ASCII code 43                                                                     |
+| `printable`     | ASCII codes 32 to 126                                                             |
+| `question-mark` | ASCII code 63                                                                     |
+| `right-paren`   | ASCII code 41                                                                     |
+| `semicolon`     | ASCII code 59                                                                     |
+| `single-quote`  | ASCII code 39                                                                     |
+| `slash`         | Alias of `forward-slash`.                                                         |
+| `tab`           | ASCII code 09                                                                     |
+| `text`          | `printable` and/or `nonascii` excluding comma, square brackets, and curly braces. |
+| `tilde`         | ASCII code 126                                                                    |
+| `underscore`    | ASCII code 95                                                                     |
+| `uppercase`     | ASCII characters A-Z                                                              |
+| `value-text`    | `text` excluding left and right parentheses, number sign, and tilde.              |
+| `vertical-bar`  | ASCII code 124                                                                    |
+
+<!-- character-sets:end -->
+
+`text` is the character set of the prologue, epilogue, and element descriptions of a schema, and of textClass values in standard schemas before `8.5.0`. `value-text` is the textClass character set from standard schema `8.5.0` and in libraries partnered with `8.5.0` or later: the characters a value may contain without changing the structure of the HED string it is substituted into.
+
+A schema names these sets in its `allowedCharacter` attributes (see [A.1.4.1. allowedCharacter](./Appendix_A.md#a141-allowedcharacter)). An `allowedCharacter` name is a name from this table, an alias listed in it, or a single character, which names itself: `allowedCharacter=T` allows `T`, and HED `8.0.0` through `8.2.0` write `allowedCharacter=-` where later versions write `allowedCharacter=hyphen`. The characters that no HED string may contain (Appendix B [CHARACTER_INVALID](./Appendix_B.md#character_invalid)) are excluded from every value whatever its value class allows.
+
+The table is generated from the machine-readable file [`character_sets.json`](_static/character_sets.json), published with this specification at `https://www.hedtags.org/hed-specification/_static/character_sets.json`. The file gives each set as a regular expression usable from Python and JavaScript, the default character sets of the standard value classes by schema version, and the structural characters of HED strings. Validators are expected to read that file rather than transcribe this table.
