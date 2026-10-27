@@ -232,10 +232,25 @@ jobs:
           name: codecov-integration
           fail_ci_if_error: false
 
+  worker-tests:
+    name: Worker Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Edge Worker routing (edge.annotation.garden/hedit mount)
+        run: bun workers/test-routing.js
+
+      - name: Frontend Worker (annotation.garden/hedit under wrangler dev)
+        run: bash workers/web/smoke-test.sh
+
   all-tests:
     name: All Tests Summary
     runs-on: ubuntu-latest
-    needs: [lint, unit-tests, check-changes, standalone-tests, integration-tests]
+    needs: [lint, unit-tests, worker-tests, check-changes, standalone-tests, integration-tests]
     # Run even if integration-tests or standalone-tests was skipped
     if: always()
 
@@ -244,6 +259,12 @@ jobs:
         if: needs.lint.result == 'failure'
         run: |
           echo "Lint check failed"
+          exit 1
+
+      - name: Check worker tests result
+        if: needs.worker-tests.result == 'failure'
+        run: |
+          echo "Worker tests failed"
           exit 1
 
       - name: Check unit tests result
