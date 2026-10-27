@@ -1,5 +1,11 @@
 # HEDit Deployment Architecture
 
+> **Historical design notes.** The live request chain is `annotation.garden/hedit/` ->
+> `edge.annotation.garden/hedit` -> `api.annotation.garden/hedit`; see "Deployment
+> Architecture and Operations" in `AGENTS.md`. The `*.pages.dev` and `*.workers.dev`
+> hostnames below are retired as entry points. Reconciling the proxy templates in
+> this directory is tracked in #179.
+
 This document explains the deployment architecture for `hedtools.ucsd.edu` with proper CORS and security configuration.
 
 ## Table of Contents

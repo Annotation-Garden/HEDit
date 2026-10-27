@@ -40,26 +40,42 @@ uv run pytest tests/test_hed_lsp.py -v # Single test file
 
 ### Request chain (production and dev)
 ```
-hedit.pages.dev (frontend, Cloudflare Pages)
-  └─> hedit-api.shirazi-10f.workers.dev (Cloudflare Worker proxy: Turnstile,
-      rate limit, KV cache, CORS; forwards X-API-Key to backend)
+annotation.garden/hedit/ (frontend: hedit-web Worker, static assets from frontend/)
+  └─> edge.annotation.garden/hedit (hedit-api Worker: Turnstile, rate limit,
+      KV cache, CORS; forwards X-API-Key to backend)
         └─> api.annotation.garden/hedit (Cloudflare DNS -> Apache reverse
             proxy on SCCN VM, hedtools.ucsd.edu)
               └─> FastAPI container (port 38427)
 ```
-Dev mirrors this: `develop.hedit.pages.dev` -> `hedit-dev-api.shirazi-10f.workers.dev`
--> `api.annotation.garden/hedit-dev` -> container port 38428.
-`frontend/config.js` selects the Worker by hostname.
+Dev mirrors this with a `-dev` path suffix: `annotation.garden/hedit-dev/`
+-> `edge.annotation.garden/hedit-dev` (hedit-dev-api) -> `api.annotation.garden/hedit-dev`
+-> container port 38428.
+`frontend/config.js` selects dev by the `/hedit-dev/` path.
+The CLI calls `api.annotation.garden/hedit` directly with its own key.
+
+URL convention: `annotation.garden/<project>` is the frontend, `edge.annotation.garden/<project>`
+holds browser-facing Workers, and `api.annotation.garden/<project>` is the origin.
+Nothing may depend on an account-scoped `*.pages.dev` or `*.workers.dev` name,
+because those change when the project moves Cloudflare accounts.
+Until they are retired, `hedit.pages.dev`, `develop.hedit.pages.dev`, and the
+`hedit-api`/`hedit-dev-api` workers.dev names still work.
 
 ### Worker deployment (MANUAL - no CI)
-The Workers in `workers/index.js` are NOT deployed by CI.
-After any change to `workers/`, deploy both environments explicitly:
+The Workers in `workers/` are NOT deployed by CI.
+After any change to `workers/index.js`, deploy both edge environments explicitly;
+after any change to `frontend/` or `workers/web/`, deploy the frontend Worker
+(prod from `main` only, since it uploads whatever `frontend/` holds):
 ```bash
 cd workers
-bunx cfman wrangler --account neuromechanist deploy            # prod: hedit-api
-bunx cfman wrangler --account neuromechanist deploy --env dev  # dev: hedit-dev-api
+bunx cfman wrangler --account neuromechanist deploy            # prod edge: hedit-api
+bunx cfman wrangler --account neuromechanist deploy --env dev  # dev edge: hedit-dev-api
+cd web
+bunx cfman wrangler --account neuromechanist deploy            # prod frontend: hedit-web
+bunx cfman wrangler --account neuromechanist deploy --env dev  # dev frontend: hedit-web-dev
+bun ../test-routing.js                                          # edge mount routing checks
 ```
 Secrets (`BACKEND_API_KEY`, `TURNSTILE_SECRET_KEY`) and KV bindings persist across deploys.
+Their source of truth is Infisical (`annot-garden` project, `/hedit/edge`).
 
 ### Release pipeline (what a merge to main actually deploys, and when)
 A merge to `main` does NOT immediately update the production backend.
@@ -73,8 +89,10 @@ The pipeline is:
    (minute 0), which pulls the new image and restarts the container --
    so the production API lags a merge by up to one hour.
    To deploy immediately, run `./deploy/auto-update.sh` on the VM
-4. Cloudflare Pages deploys `hedit.pages.dev` from main and
-   `develop.hedit.pages.dev` from develop automatically on push
+4. The frontend at `annotation.garden/hedit/` is the `hedit-web` Worker,
+   deployed by hand from main (see above). Cloudflare Pages still deploys the
+   legacy `hedit.pages.dev` from main and `develop.hedit.pages.dev` from
+   develop automatically on push, until that project is retired
 
 Verify a backend deploy with
 `curl https://api.annotation.garden/hedit/health` (reports the version);
@@ -90,8 +108,8 @@ which surfaces as "Load failed" (Safari) or
 "NetworkError when attempting to fetch resource" (Firefox).
 Verify after deploying:
 ```bash
-curl -si -X OPTIONS https://hedit-api.shirazi-10f.workers.dev/annotate/stream \
-  -H 'Origin: https://hedit.pages.dev' \
+curl -si -X OPTIONS https://edge.annotation.garden/hedit/annotate/stream \
+  -H 'Origin: https://annotation.garden' \
   -H 'Access-Control-Request-Method: POST' \
   -H 'Access-Control-Request-Headers: content-type,x-anthropic-model,x-user-id' \
   | grep -i access-control
@@ -179,7 +197,8 @@ develop: 0.6.9.dev0 (next cycle)
 ## Deployment URLs
 - **Production API**: https://api.annotation.garden/hedit
 - **Development API**: https://api.annotation.garden/hedit-dev
-- **Frontend**: https://hedit.pages.dev (dev: https://develop.hedit.pages.dev)
+- **Frontend**: https://annotation.garden/hedit/ (dev: https://annotation.garden/hedit-dev/)
+- **Edge Worker**: https://edge.annotation.garden/hedit (dev: https://edge.annotation.garden/hedit-dev)
 - **PyPI Package**: `hedit`
 
 ## Current Phase
