@@ -76,6 +76,7 @@ bunx cfman wrangler --account neuromechanist deploy --env dev  # dev frontend: h
 ```
 Secrets (`BACKEND_API_KEY`, `TURNSTILE_SECRET_KEY`) and KV bindings persist across deploys.
 Their source of truth is Infisical (`annot-garden` project, `/hedit/edge`).
+A Worker without `TURNSTILE_SECRET_KEY` rejects browser requests unless `ENVIRONMENT` is `development`, so populate it before a deploy into a new account.
 
 Order matters when a change moves where the frontend calls: the legacy Pages
 deployments rebuild on every push, so deploy the edge Worker for an environment
