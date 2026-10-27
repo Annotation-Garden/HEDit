@@ -61,11 +61,18 @@ Until they are retired, `hedit.pages.dev` and `develop.hedit.pages.dev` redirect
 `annotation.garden/hedit/` and `/hedit-dev/`, and the `hedit-api`/`hedit-dev-api`
 workers.dev names still work.
 
-### Worker deployment (MANUAL - no CI)
-The Workers in `workers/` are NOT deployed by CI.
-After any change to `workers/index.js`, deploy both edge environments explicitly;
-after any change to `frontend/` or `workers/web/`, deploy the frontend Worker
-(prod from `main` only, since it uploads whatever `frontend/` holds):
+### Worker deployment (CI)
+`.github/workflows/deploy-workers.yml` deploys both Workers on a push that touches
+`workers/` or `frontend/`: `develop` to the dev Workers (`/hedit-dev`), `main` to
+production (`/hedit`). It reruns the Worker tests, deploys the edge Worker,
+checks it answers, then deploys the frontend Worker and checks its page and
+`config.js`. The edge goes first, so a frontend that calls something new never
+goes live before the edge that answers it. Changes to Markdown under `workers/`
+do not deploy. The deploy token and account id are
+repository secrets synced from Infisical (`annot-garden`, prod `/hedit/ci`).
+To redeploy without a change, run the workflow from Actions on that branch.
+Manual deploys are the fallback (prod from `main` only, since the frontend
+Worker uploads whatever `frontend/` holds):
 ```bash
 cd workers
 bunx cfman wrangler --account neuromechanist deploy            # prod edge: hedit-api
@@ -78,12 +85,9 @@ Secrets (`BACKEND_API_KEY`, `TURNSTILE_SECRET_KEY`) and KV bindings persist acro
 Their source of truth is Infisical (`annot-garden` project, `/hedit/edge`).
 A Worker without `TURNSTILE_SECRET_KEY` rejects browser requests unless `ENVIRONMENT` is `development`, so populate it before a deploy into a new account.
 
-Order matters when a change moves where the frontend calls: the legacy Pages
-deployments rebuild on every push, so deploy the edge Worker for an environment
-and verify it (`curl https://edge.annotation.garden/hedit-dev/health`) before
-merging a `frontend/config.js` change to develop, and likewise for `/hedit`
-before releasing it to main.
-CI runs `bun workers/test-routing.js` (edge mount routing) and
+The Worker Tests job (and the deploy, before it deploys) runs
+`bun workers/test-routing.js` (edge mount routing), `bun workers/test-turnstile.js`
+(Turnstile, including the missing-secret rejection) and
 `bash workers/web/smoke-test.sh` (frontend Worker under `wrangler dev`).
 
 ### Release pipeline (what a merge to main actually deploys, and when)
