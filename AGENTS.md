@@ -64,7 +64,9 @@ workers.dev names still work.
 ### Worker deployment (CI)
 `.github/workflows/deploy-workers.yml` deploys both Workers on a push that touches
 `workers/` or `frontend/`: `develop` to the dev Workers (`/hedit-dev`), `main` to
-production (`/hedit`). It reruns the Worker tests, deploys the edge Worker,
+production (`/hedit`). It reruns the Worker tests, refuses to deploy unless the
+edge Worker has `BACKEND_API_KEY` and `TURNSTILE_SECRET_KEY` in that account,
+deploys the edge Worker,
 checks it answers, then deploys the frontend Worker and checks its page and
 `config.js`. The edge goes first, so a frontend that calls something new never
 goes live before the edge that answers it. Changes to Markdown under `workers/`
