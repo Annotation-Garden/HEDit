@@ -119,8 +119,8 @@ After local testing passes, create a PR to the `develop` branch.
 | Component | URL/Location |
 |-----------|--------------|
 | Docker Image | `ghcr.io/annotation-garden/hedit:develop` |
-| Dev API | `hedit-dev-api.workers.dev` (when configured) |
-| Frontend Preview | Cloudflare Pages preview deployments |
+| Dev edge Worker | `edge.annotation.garden/hedit-dev` |
+| Dev frontend | `annotation.garden/hedit-dev/` |
 
 ## Level 4: Production (main branch)
 
@@ -135,8 +135,8 @@ gh pr create --base main --head develop --title "Release: feature description"
 | Component | URL/Location |
 |-----------|--------------|
 | Docker Image | `ghcr.io/annotation-garden/hedit:latest` |
-| Prod API | `hedit-api.workers.dev` |
-| Frontend | `hedit.pages.dev` |
+| Prod edge Worker | `edge.annotation.garden/hedit` |
+| Frontend | `annotation.garden/hedit/` |
 
 ## Testing the Error Remediation Feature
 

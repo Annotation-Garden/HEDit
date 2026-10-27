@@ -24,9 +24,10 @@ User → Cloudflare Worker → api.annotation.garden/hedit → Docker Container
 - Uses Cloudflare KV for distributed rate limiting
 
 ### CORS Protection
-- **Restricted to**: `https://hedit.pages.dev` (production frontend)
-- **Development**: Also allows `http://localhost:*` for local testing
-- Blocks all other origins
+- **Allows**: `https://annotation.garden` (the production frontend at `annotation.garden/hedit/`) and its subdomains
+- **Legacy**: `hedit.pages.dev` and `hed-bot.pages.dev` (and their preview subdomains) until those Pages projects are retired
+- **Development**: `http://localhost:*` for local testing
+- Any other origin receives a mismatched `Access-Control-Allow-Origin`, so the browser rejects the response
 
 ### Request Timeout
 - **2 minutes** for annotation workflows
@@ -71,20 +72,21 @@ echo "your-api-key-here" | npx wrangler secret put BACKEND_API_KEY
 
 ```bash
 # Deploy to Cloudflare
-npx wrangler deploy
+bunx cfman wrangler --account <account> deploy
 ```
 
 You should see output like:
 ```
 Published hedit-api (0.42 sec)
-  https://hedit-api.shirazi-10f.workers.dev
+  https://hedit-api.<account>.workers.dev
+  edge.annotation.garden/hedit* (zone name: annotation.garden)
 ```
 
 ### 4. Test the Setup
 
 #### Test health endpoint:
 ```bash
-curl https://hedit-api.shirazi-10f.workers.dev/health | jq .
+curl https://edge.annotation.garden/hedit/health | jq .
 ```
 
 Expected output:
@@ -104,9 +106,9 @@ Expected output:
 
 #### Test annotation:
 ```bash
-curl -X POST https://hedit-api.shirazi-10f.workers.dev/annotate \
+curl -X POST https://edge.annotation.garden/hedit/annotate \
   -H "Content-Type: application/json" \
-  -H "Origin: https://hedit.pages.dev" \
+  -H "Origin: https://annotation.garden" \
   -d '{
     "description": "A red circle appears on the left side of the screen",
     "schema_version": "8.4.0",
@@ -128,9 +130,9 @@ Expected output:
 #### Test caching:
 ```bash
 # Run the same request again - should return cached result
-curl -X POST https://hedit-api.shirazi-10f.workers.dev/annotate \
+curl -X POST https://edge.annotation.garden/hedit/annotate \
   -H "Content-Type: application/json" \
-  -H "Origin: https://hedit.pages.dev" \
+  -H "Origin: https://annotation.garden" \
   -d '{
     "description": "A red circle appears on the left side of the screen",
     "schema_version": "8.4.0"
@@ -144,7 +146,7 @@ Update your frontend to use the worker URL:
 
 ```javascript
 // Frontend configuration
-const API_URL = 'https://hedit-api.shirazi-10f.workers.dev';
+const API_URL = 'https://edge.annotation.garden/hedit';
 
 // All requests automatically include proper CORS headers
 fetch(`${API_URL}/annotate`, {
@@ -182,7 +184,7 @@ const CONFIG = {
   CACHE_TTL: 3600,                    // 1 hour cache
   RATE_LIMIT_PER_MINUTE: 20,          // 20 requests per minute per IP
   REQUEST_TIMEOUT: 120000,            // 2 minutes for workflows
-  ALLOWED_ORIGIN: 'https://hedit.pages.dev',  // Production frontend only
+  ALLOWED_ORIGIN: 'https://annotation.garden',  // Production frontend (annotation.garden/hedit/)
 };
 ```
 
@@ -229,7 +231,7 @@ npx wrangler kv:key delete "ratelimit:1.2.3.4" \
 ### CORS errors in browser
 ```bash
 # Verify origin is allowed
-# Production: https://hedit.pages.dev
+# Production: https://annotation.garden
 # Development: http://localhost:*
 
 # Check browser console for actual origin being sent
@@ -322,33 +324,33 @@ cd workers
 
 # Create dev cache namespace
 wrangler kv:namespace create "HED_CACHE_DEV"
-# Note the ID, update wrangler.dev.toml
+# Note the ID, update [env.dev] in wrangler.toml
 
 # Create dev rate limiter namespace
 wrangler kv:namespace create "RATE_LIMITER_DEV"
-# Note the ID, update wrangler.dev.toml
+# Note the ID, update [env.dev] in wrangler.toml
 ```
 
-Update `wrangler.dev.toml` with the namespace IDs.
+Update the `[env.dev]` KV entries in `wrangler.toml` with the namespace IDs.
 
 #### 2. Configure Secrets
 
 ```bash
 # Set backend API key for dev
-wrangler secret put BACKEND_API_KEY --config wrangler.dev.toml
+wrangler secret put BACKEND_API_KEY --env dev
 
 # Set Turnstile secret (can use testing keys for dev)
 # Always pass: 1x0000000000000000000000000000000AA
-wrangler secret put TURNSTILE_SECRET_KEY --config wrangler.dev.toml
+wrangler secret put TURNSTILE_SECRET_KEY --env dev
 ```
 
 #### 3. Deploy Dev Worker
 
 ```bash
 # Deploy using dev config
-wrangler deploy --config wrangler.dev.toml
+wrangler deploy --env dev
 
-# You'll get a URL like: https://hedit-dev-api.your-subdomain.workers.dev
+# The Worker is then reachable at https://edge.annotation.garden/hedit-dev
 ```
 
 ### Dev vs Production Differences
@@ -359,13 +361,14 @@ wrangler deploy --config wrangler.dev.toml
 | Cache TTL | 1 hour | 5 minutes |
 | Rate limit | 20/min | 60/min |
 | Backend URL | api.annotation.garden/hedit | api.annotation.garden/hedit-dev |
+| Public URL | edge.annotation.garden/hedit | edge.annotation.garden/hedit-dev |
 | KV namespaces | Production namespaces | Dev namespaces |
 
 ### Testing Dev Deployment
 
 ```bash
 # Test dev health endpoint
-curl https://hedit-dev-api.your-subdomain.workers.dev/health | jq .
+curl https://edge.annotation.garden/hedit-dev/health | jq .
 
 # Expected output includes environment field
 {
@@ -385,7 +388,7 @@ Both configs support local development:
 wrangler dev
 
 # Test dev config locally
-wrangler dev --config wrangler.dev.toml
+wrangler dev --env dev
 ```
 
 ---

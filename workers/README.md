@@ -8,7 +8,7 @@ via the Claude Platform on AWS (Anthropic-operated Messages API, AWS Marketplace
 ## Architecture
 
 ```
-Frontend (Cloudflare Pages) → Worker (cache, rate limit, Turnstile) → FastAPI backend → Claude (Claude Platform on AWS)
+Frontend (hedit-web Worker, annotation.garden/hedit/) → Worker (edge.annotation.garden/hedit) (cache, rate limit, Turnstile) → FastAPI backend → Claude (Claude Platform on AWS)
 ```
 
 **The worker provides:**
@@ -66,13 +66,13 @@ wrangler secret put TURNSTILE_SECRET_KEY
 ### Step 4: Deploy
 
 ```bash
-wrangler deploy
+bunx cfman wrangler --account <account> deploy
 ```
 
 ### Step 5: Update Frontend
 
-Edit `frontend/config.js` to point at the deployed worker URL,
-then push to GitHub; Cloudflare Pages auto-deploys.
+`frontend/config.js` points at `https://edge.annotation.garden/hedit` (dev: `/hedit-dev`).
+After a frontend change, deploy the `hedit-web` Worker from `workers/web/` (see AGENTS.md).
 
 ---
 
@@ -134,7 +134,7 @@ curl -X POST http://localhost:8787/annotate \
 ### Update Deployment
 ```bash
 # Make changes to index.js
-wrangler deploy
+bunx cfman wrangler --account <account> deploy
 ```
 
 ---
