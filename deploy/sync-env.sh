@@ -16,7 +16,8 @@
 INFISICAL_PROJECT_ID="4d8cc8dc-cdea-4826-86cd-b13ec79a8a82"   # annot-garden
 INFISICAL_ENV="prod"
 INFISICAL_PATH="/hedit/server"
-# Keys without which the backend cannot serve requests
+# Keys the production deployment depends on; an export missing any of them
+# is rejected and the existing .env is kept
 REQUIRED_KEYS="API_KEYS ANTHROPIC_API_KEY ANTHROPIC_BASE_URL ANTHROPIC_WORKSPACE_ID"
 
 IDENTITY_FILE="${INFISICAL_IDENTITY_FILE:-${HOME}/.config/infisical/hedtools-identity.env}"
@@ -47,7 +48,7 @@ export INFISICAL_TOKEN
 
 umask 077
 TMP="$(mktemp "${TARGET}.XXXXXX")" || keep_previous "cannot create a temporary file next to ${TARGET}"
-trap 'rm -f "$TMP"' EXIT
+trap 'rm -f "$TMP" "${TMP}.err"' EXIT
 
 # Docker's --env-file takes KEY=value literally (no quoting, no multi-line
 # values), so build the file from the JSON export instead of the CLI's dotenv
@@ -82,6 +83,11 @@ if [ -f "$TARGET" ] && cmp -s "$TMP" "$TARGET"; then
     chmod 600 "$TARGET"
     log "unchanged ($(wc -l < "$TMP") keys from ${INFISICAL_ENV}${INFISICAL_PATH})"
     exit 0
+fi
+if [ -f "$TARGET" ]; then
+    # Names only: keys the previous file had that Infisical does not
+    dropped="$(comm -23 <(grep -E '^[A-Za-z_][A-Za-z0-9_]*=' "$TARGET" | cut -d= -f1 | sort -u) <(cut -d= -f1 "$TMP" | sort -u) | tr '\n' ' ')"
+    [ -z "$dropped" ] || log "keys in the previous .env that are not in Infisical (now removed): ${dropped}"
 fi
 mv "$TMP" "$TARGET" || keep_previous "cannot replace ${TARGET}"
 log "rendered $(wc -l < "$TARGET") keys from ${INFISICAL_ENV}${INFISICAL_PATH}"
