@@ -80,6 +80,16 @@ Verify a backend deploy with
 `curl https://api.annotation.garden/hedit/health` (reports the version);
 the dev container follows the same pattern from develop pushes.
 
+### Server configuration (Infisical)
+The server `.env` (shared by the prod and dev containers) is generated: never edit it by hand.
+Its source of truth is Infisical at `infisical.nemar.org`, project `annot-garden`, `prod` `/hedit/server`.
+`deploy/sync-env.sh` renders it (mode 0600) with the host's machine identity
+(`~/.config/infisical/hedtools-identity.env`) each time a deploy script is about to replace a container.
+If Infisical is unreachable, the existing `.env` is kept and the failure is logged;
+if there is no `.env` at all, the deploy scripts refuse to replace the running container.
+A changed value in Infisical takes effect on the next deploy;
+to apply it immediately, run `deploy/auto-update.sh --force` (prod) or `deploy/deploy.sh dev` (dev) on the VM.
+
 ### CORS and request-header changes
 The Worker maintains its own `Access-Control-Allow-Headers` list in `workers/index.js`,
 separate from the FastAPI CORS middleware in `src/api/main.py`.
