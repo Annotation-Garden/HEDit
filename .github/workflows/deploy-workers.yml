@@ -1,0 +1,107 @@
+name: Deploy Workers
+
+# Deploys the two HEDit Workers after their tests pass:
+#   - the edge Worker (workers/, edge.annotation.garden/hedit), then
+#   - the frontend Worker (workers/web/, annotation.garden/hedit).
+# develop deploys the dev Workers (/hedit-dev); main deploys production (/hedit).
+# The edge Worker goes first, so a frontend that calls something new never
+# reaches the browser before the edge that answers it.
+#
+# CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID are repository secrets synced
+# from Infisical (project annot-garden, prod /hedit/ci). Change them there, not
+# in GitHub. Worker secrets (BACKEND_API_KEY, TURNSTILE_SECRET_KEY) are not set
+# here; they persist across deploys and live in Infisical under /hedit/edge.
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'workers/**'
+      - 'frontend/**'
+      - '.github/workflows/deploy-workers.yml'
+  workflow_dispatch:
+
+# Deploys of one branch run in order; a newer push never cancels a deploy
+concurrency:
+  group: deploy-workers-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # One exact version for the smoke test and the deploys
+  WRANGLER_VERSION: '4.149.0'
+
+jobs:
+  deploy:
+    name: Deploy Workers (${{ github.ref_name }})
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Test the edge Worker
+        run: |
+          bun workers/test-routing.js
+          bun workers/test-turnstile.js
+
+      - name: Test the frontend Worker under wrangler dev
+        run: bash workers/web/smoke-test.sh
+
+      - name: Choose the environment
+        id: target
+        run: |
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then
+            { echo "wrangler_env="; echo "mount=/hedit"; } >> "$GITHUB_OUTPUT"
+          else
+            { echo "wrangler_env=dev"; echo "mount=/hedit-dev"; } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check the deploy credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID is not set; they are synced from Infisical (annot-garden, prod /hedit/ci)"
+            exit 1
+          fi
+
+      - name: Deploy the edge Worker
+        working-directory: workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_ENV: ${{ steps.target.outputs.wrangler_env }}
+        run: bunx "wrangler@${WRANGLER_VERSION}" deploy ${WRANGLER_ENV:+--env "$WRANGLER_ENV"}
+
+      - name: Check the edge Worker
+        env:
+          MOUNT: ${{ steps.target.outputs.mount }}
+        run: |
+          name="$(curl -fsS --retry 5 --retry-delay 3 --retry-all-errors "https://edge.annotation.garden${MOUNT}/" | jq -r .name)"
+          [ "$name" = "HEDit API (Cloudflare Workers Proxy)" ] || { echo "::error::edge.annotation.garden${MOUNT}/ answered '$name'"; exit 1; }
+          echo "edge.annotation.garden${MOUNT}/ answers"
+
+      - name: Deploy the frontend Worker
+        working-directory: workers/web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_ENV: ${{ steps.target.outputs.wrangler_env }}
+        run: bunx "wrangler@${WRANGLER_VERSION}" deploy ${WRANGLER_ENV:+--env "$WRANGLER_ENV"}
+
+      - name: Check the frontend Worker
+        env:
+          MOUNT: ${{ steps.target.outputs.mount }}
+        run: |
+          page="$(curl -fsS --retry 5 --retry-delay 3 --retry-all-errors "https://annotation.garden${MOUNT}/")"
+          grep -q '<title>HEDit' <<<"$page" || { echo "::error::annotation.garden${MOUNT}/ is not the HEDit page"; exit 1; }
+          config="$(curl -fsS "https://annotation.garden${MOUNT}/config.js")"
+          grep -q "https://edge.annotation.garden${MOUNT}'" <<<"$config" || { echo "::error::annotation.garden${MOUNT}/config.js does not call edge.annotation.garden${MOUNT}"; exit 1; }
+          echo "annotation.garden${MOUNT}/ serves the HEDit page"

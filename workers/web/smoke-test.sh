@@ -8,7 +8,7 @@ PORT="${PORT:-8799}"
 BASE="http://127.0.0.1:${PORT}"
 LOG="$(mktemp)"
 
-bunx wrangler@4 dev --port "$PORT" --ip 127.0.0.1 >"$LOG" 2>&1 &
+bunx "wrangler@${WRANGLER_VERSION:-4.149.0}" dev --port "$PORT" --ip 127.0.0.1 >"$LOG" 2>&1 &
 PID=$!
 trap 'kill "$PID" 2>/dev/null || true; rm -f "$LOG"' EXIT
 
