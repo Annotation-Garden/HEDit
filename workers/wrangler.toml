@@ -52,7 +52,8 @@ MOUNT_PREFIX = "/hedit"
 
 # =============================================================================
 # Development environment
-# Deploy with: bunx cfman wrangler --account <account> deploy --env dev
+# Deployed from develop by .github/workflows/deploy-workers.yml; by hand:
+#   bunx cfman wrangler --account <account> deploy --env dev
 # Secrets: bunx cfman wrangler --account <account> secret put BACKEND_API_KEY --env dev
 # (secret values live in Infisical: annot-garden project, dev /hedit/edge)
 # =============================================================================

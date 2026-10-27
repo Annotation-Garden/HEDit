@@ -577,12 +577,13 @@ app = FastAPI(
 # Configure CORS
 # Production: Strict origin validation
 # Development: Allow all localhost ports for easy local testing
+# Browsers reach the backend through the edge Worker
+# (edge.annotation.garden/hedit), which does not forward Origin, so only a page
+# calling this API directly needs an entry. Account-scoped *.pages.dev and
+# *.workers.dev names are deliberately absent: they change with the Cloudflare
+# account.
 allowed_origins = [
-    "https://hedit.pages.dev",  # Production frontend
-    "https://develop.hedit.pages.dev",  # Development frontend
-    "https://hedit-api.shirazi-10f.workers.dev",  # Production Worker proxy
-    "https://hedit-dev-api.shirazi-10f.workers.dev",  # Development Worker proxy
-    "https://annotation.garden",  # Main AGI website
+    "https://annotation.garden",  # annotation.garden pages that call this API directly
 ]
 
 # Add common localhost ports for development

@@ -30,7 +30,7 @@ The legacy `X-OpenRouter-*` spellings of these names (plus `X-OpenRouter-Key`) a
 still accepted as transport; provider-routing headers are ignored.
 
 ### CORS
-- Production: `annotation.garden` (the frontend at `annotation.garden/hedit/`); legacy `hedit.pages.dev` until retired
+- Production: `annotation.garden` (pages calling the API directly; the frontend goes through the edge Worker, which does not forward `Origin`)
 - Development: Cloudflare Workers, localhost
 - Custom: `EXTRA_CORS_ORIGINS` environment variable
 
@@ -53,20 +53,22 @@ still accepted as transport; provider-routing headers are ignored.
 - Calls the edge Worker at `edge.annotation.garden/hedit` (dev: `/hedit-dev`)
 - SSE streaming support
 - Legacy: the `hedit` Pages project (`hedit.pages.dev`, `develop.hedit.pages.dev`)
-  still deploys from git until it is retired
+  still deploys from git until it is retired; its `config.js` redirects visitors
+  to `annotation.garden/hedit/` and `/hedit-dev/`
 
-### Cloudflare Workers (manual deploy, no CI)
+### Cloudflare Workers (deployed by CI)
 - Edge proxy: `workers/index.js`, config `workers/wrangler.toml`.
   Prod `hedit-api` at `edge.annotation.garden/hedit` -> `api.annotation.garden/hedit`;
   dev `hedit-dev-api` at `edge.annotation.garden/hedit-dev` -> `api.annotation.garden/hedit-dev`
 - Frontend: `workers/web/` (`hedit-web`, dev `hedit-web-dev`), see above
 - Secrets: Infisical, `annot-garden` project, `/hedit/edge` (prod and dev)
-- Deploy (Cloudflare account `neuromechanist`):
-  `cd workers && bunx cfman wrangler --account neuromechanist deploy`
-  and `... deploy --env dev`
+- Deploy: `.github/workflows/deploy-workers.yml` on a push to `develop` (dev)
+  or `main` (prod) that touches `workers/` or `frontend/`, edge Worker first.
+  Manual fallback: `cd workers && bunx cfman wrangler --account neuromechanist deploy`
+  and `... deploy --env dev` (same in `workers/web`)
 - The Worker keeps its own CORS `Access-Control-Allow-Headers` list;
-  redeploy BOTH Workers whenever request headers change,
-  otherwise browser preflights fail
+  a change to it reaches both environments only once it is on `develop` and `main`,
+  so release it before a client starts sending a new header
   ("Load failed" in Safari, "NetworkError" in Firefox)
 - See AGENTS.md "Deployment Architecture and Operations" for the full chain
   and the preflight verification curl

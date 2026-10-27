@@ -133,7 +133,7 @@ response = requests.post(
 
 ### Allowed Origins
 
-**Production**: Only `https://hedit.pages.dev`
+**Production**: Only `https://annotation.garden` (pages that call the API directly; the frontend at `annotation.garden/hedit/` goes through the edge Worker, which does not forward `Origin`)
 
 **Development**: `http://localhost:5173`, `http://localhost:3000`
 
@@ -142,8 +142,8 @@ response = requests.post(
 ```python
 # src/api/main.py
 allowed_origins = [
-    "https://hedit.pages.dev",  # Production
-    "http://localhost:5173",       # Dev
+    "https://annotation.garden",  # Production
+    "http://localhost:5173",      # Dev
 ]
 ```
 
@@ -151,7 +151,7 @@ allowed_origins = [
 
 ```bash
 # .env file
-EXTRA_CORS_ORIGINS=https://develop.hedit.pages.dev,https://develop.hedit.pages.dev
+EXTRA_CORS_ORIGINS=https://example.annotation.garden
 ```
 
 ### Two-Layer CORS Protection
@@ -460,7 +460,7 @@ curl -H "X-API-Key: valid_key" https://api.annotation.garden/hedit/annotate
 **CORS Test**:
 ```bash
 # Should include CORS headers
-curl -H "Origin: https://hedit.pages.dev" \
+curl -H "Origin: https://annotation.garden" \
      -I https://api.annotation.garden/hedit/health
 
 # Should reject invalid origin
