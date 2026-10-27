@@ -5,6 +5,63 @@
  * which has all the strong prompts, real HED validation, and multi-agent workflow.
  */
 
+// This Worker is path-mounted at EDGE_HOST + MOUNT_PREFIX (both set in
+// wrangler.toml: edge.annotation.garden with "/hedit" for production and
+// "/hedit-dev" for dev). Browser-facing Workers live at
+// edge.<domain>/<project>, so no client depends on the account-scoped
+// *.workers.dev name, which changes if the Worker moves Cloudflare accounts.
+// Cloudflare delivers the full path, mount prefix included; resolveRoutePath
+// strips it once before routing.
+
+// A mount prefix is exactly one path segment, such as "/hedit".
+const MOUNT_PREFIX_PATTERN = /^\/[^/]+$/;
+
+/**
+ * Describe what is wrong with the mount configuration, or return null.
+ * Both values are required: without them, requests on the edge host could
+ * not be told apart from requests on the workers.dev name.
+ */
+function mountConfigError(env) {
+  if (!env.EDGE_HOST) {
+    return 'EDGE_HOST is not configured';
+  }
+  if (!MOUNT_PREFIX_PATTERN.test(env.MOUNT_PREFIX ?? '')) {
+    return `MOUNT_PREFIX must be one path segment such as "/hedit", got ${JSON.stringify(env.MOUNT_PREFIX)}`;
+  }
+  return null;
+}
+
+/**
+ * Map a request URL to the path the route table expects.
+ * On the edge host, the mount prefix is stripped, and requests outside the
+ * mount are answered here (CORS preflights are answered earlier, before
+ * routing). On any other host (the *.workers.dev name, or `wrangler dev`)
+ * the path is used as is.
+ * @returns {{path: string} | {response: Response}}
+ */
+function resolveRoutePath(request, url, env, corsHeaders) {
+  const configError = mountConfigError(env);
+  if (configError) {
+    console.error(`Worker misconfigured: ${configError}`);
+    return { response: new Response(`Worker misconfigured: ${configError}`, { status: 500, headers: corsHeaders }) };
+  }
+  if (url.hostname !== env.EDGE_HOST) {
+    return { path: url.pathname };
+  }
+  const prefix = env.MOUNT_PREFIX;
+  if (url.pathname === prefix) {
+    return { response: Response.redirect(`${url.origin}${prefix}/${url.search}`, 308) };
+  }
+  if (!url.pathname.startsWith(`${prefix}/`)) {
+    // Typically a request for another environment's mount (for example
+    // "/hedit-dev/..." reaching the production Worker because the dev route
+    // is missing), so name the cause instead of a bare 404.
+    console.warn(`Outside mount: ${request.method} ${url.hostname}${url.pathname} (this Worker serves ${prefix}/)`);
+    return { response: new Response(`Not Found: this Worker serves ${prefix}/ only`, { status: 404, headers: corsHeaders }) };
+  }
+  return { path: url.pathname.slice(prefix.length) };
+}
+
 // Worker configuration (environment-aware)
 function getConfig(env) {
   const isDev = env.ENVIRONMENT === 'development';
@@ -12,7 +69,7 @@ function getConfig(env) {
     CACHE_TTL: isDev ? 300 : 3600, // 5 min for dev, 1 hour for prod
     RATE_LIMIT_PER_MINUTE: isDev ? 60 : 20, // Higher limit for dev testing
     REQUEST_TIMEOUT: 120000, // 2 minutes for long-running annotation workflows
-    ALLOWED_ORIGIN: 'https://hedit.pages.dev', // Production frontend
+    ALLOWED_ORIGIN: 'https://annotation.garden', // Production frontend (annotation.garden/hedit)
     TURNSTILE_VERIFY_URL: 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
     IS_DEV: isDev,
   };
@@ -72,7 +129,8 @@ export default {
     const CONFIG = getConfig(env);
     const origin = request.headers.get('Origin');
 
-    // CORS validation - allow hedit.pages.dev, hed-bot.pages.dev (legacy), annotation.garden, and preview deployments
+    // CORS validation - allow annotation.garden (the frontend lives at annotation.garden/hedit),
+    // hedit.pages.dev and hed-bot.pages.dev (legacy, until those Pages projects are retired), and localhost
     const isAllowedOrigin = origin === CONFIG.ALLOWED_ORIGIN ||
                            origin === 'https://hedit.pages.dev' || // Production (new)
                            origin?.endsWith('.hedit.pages.dev') || // Preview/develop deployments (new)
@@ -99,30 +157,37 @@ export default {
 
     try {
       const url = new URL(request.url);
+      const resolved = resolveRoutePath(request, url, env, corsHeaders);
+      if (resolved.response) {
+        return resolved.response;
+      }
+      const path = resolved.path;
 
       // Route requests
-      if (url.pathname === '/health') {
+      if (path === '/health') {
         return await handleHealth(request, env, corsHeaders, CONFIG);
-      } else if (url.pathname === '/version') {
+      } else if (path === '/version') {
         return await handleVersion(request, env, corsHeaders);
-      } else if (url.pathname === '/annotate' && request.method === 'POST') {
+      } else if (path === '/annotate' && request.method === 'POST') {
         return await handleAnnotate(request, env, ctx, corsHeaders, CONFIG);
-      } else if (url.pathname === '/annotate/stream' && request.method === 'POST') {
+      } else if (path === '/annotate/stream' && request.method === 'POST') {
         return await handleAnnotateStream(request, env, corsHeaders, CONFIG);
-      } else if (url.pathname === '/annotate-from-image' && request.method === 'POST') {
+      } else if (path === '/annotate-from-image' && request.method === 'POST') {
         return await handleAnnotateFromImage(request, env, corsHeaders, CONFIG);
-      } else if (url.pathname === '/annotate-from-image/stream' && request.method === 'POST') {
+      } else if (path === '/annotate-from-image/stream' && request.method === 'POST') {
         return await handleAnnotateFromImageStream(request, env, corsHeaders, CONFIG);
-      } else if (url.pathname === '/validate' && request.method === 'POST') {
+      } else if (path === '/validate' && request.method === 'POST') {
         return await handleValidate(request, env, corsHeaders, CONFIG);
-      } else if (url.pathname === '/feedback' && request.method === 'POST') {
+      } else if (path === '/feedback' && request.method === 'POST') {
         return await handleFeedback(request, env, corsHeaders, CONFIG);
-      } else if (url.pathname === '/') {
+      } else if (path === '/') {
         return handleRoot(corsHeaders, CONFIG);
       }
 
+      console.warn(`No route: ${request.method} ${url.hostname}${url.pathname} (route path ${path})`);
       return new Response('Not Found', { status: 404, headers: corsHeaders });
     } catch (error) {
+      console.error(`Unhandled error: ${request.method} ${request.url}`, error.stack);
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

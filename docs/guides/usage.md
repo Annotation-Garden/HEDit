@@ -1,8 +1,8 @@
-# HED-BOT Usage Guide
+# HEDit Usage Guide
 
 ## Overview
 
-HED-BOT is a multi-agent system that converts natural language event descriptions into valid HED (Hierarchical Event Descriptors) annotations.
+HEDit is a multi-agent system that converts natural language event descriptions into valid HED (Hierarchical Event Descriptors) annotations.
 
 ## Using the Web Interface
 

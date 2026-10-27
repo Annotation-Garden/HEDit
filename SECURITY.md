@@ -11,7 +11,7 @@ We release security updates for the following versions:
 
 ## Reporting a Vulnerability
 
-We take the security of HED-BOT seriously. If you believe you have found a security vulnerability, please report it to us as described below.
+We take the security of HEDit seriously. If you believe you have found a security vulnerability, please report it to us as described below.
 
 ### Reporting Process
 
@@ -20,7 +20,7 @@ We take the security of HED-BOT seriously. If you believe you have found a secur
 Instead, please report them via one of the following methods:
 
 1. **GitHub Security Advisories** (Preferred)
-   - Go to the repository's [Security tab](https://github.com/neuromechanist/hed-bot/security/advisories)
+   - Go to the repository's [Security tab](https://github.com/Annotation-Garden/HEDit/security/advisories)
    - Click "Report a vulnerability"
    - Fill out the form with details
 
@@ -58,7 +58,7 @@ Please include the following information in your report:
 
 ## Security Features
 
-HED-BOT implements the following security measures:
+HEDit implements the following security measures:
 
 ### Authentication & Authorization
 - API key authentication for all protected endpoints
@@ -105,7 +105,7 @@ HED-BOT implements the following security measures:
 
 ## Security Best Practices for Deployers
 
-When deploying HED-BOT:
+When deploying HEDit:
 
 1. **Always use HTTPS** in production
 2. **Enable API key authentication** (`REQUIRE_API_AUTH=true`)
@@ -153,7 +153,7 @@ This repository uses:
 
 ## Compliance
 
-HED-BOT is designed to comply with:
+HEDit is designed to comply with:
 
 - **OWASP Top 10 (2021)**: See `deploy/SECURITY.md` for compliance mapping
 - **Security Audit Requirements**: Complete audit logging and access controls

@@ -1,4 +1,4 @@
-# Docker Compose for HED-BOT Development Environment
+# Docker Compose for HEDit Development Environment
 # Pulls from GHCR :develop tag instead of building locally
 #
 # Usage:
@@ -9,10 +9,10 @@
 #   ./deploy/auto-update-dev.sh
 
 services:
-  # HED-BOT Dev API service
-  hed-bot-dev:
-    image: ghcr.io/neuromechanist/hed-bot:dev
-    container_name: hed-bot-dev
+  # HEDit Dev API service
+  hedit-dev:
+    image: ghcr.io/annotation-garden/hedit:dev
+    container_name: hedit-dev
     volumes:
       - feedback_data_dev:/app/feedback
     environment:

@@ -30,7 +30,7 @@ The legacy `X-OpenRouter-*` spellings of these names (plus `X-OpenRouter-Key`) a
 still accepted as transport; provider-routing headers are ignored.
 
 ### CORS
-- Production: `hedit.pages.dev`, `annotation.garden`
+- Production: `annotation.garden` (the frontend at `annotation.garden/hedit/`); legacy `hedit.pages.dev` until retired
 - Development: Cloudflare Workers, localhost
 - Custom: `EXTRA_CORS_ORIGINS` environment variable
 
@@ -46,16 +46,21 @@ still accepted as transport; provider-routing headers are ignored.
 - Cloudflare SSL: Origin Certificate for SCCN VM
 - Apache reverse proxy: `/hedit` (prod), `/hedit-dev` (dev)
 
-### Frontend (Cloudflare Pages)
-- URL: `https://hedit.pages.dev`
-- Static HTML/CSS/JS
-- Cloudflare Workers proxy for API routing
+### Frontend (hedit-web Worker)
+- URL: `https://annotation.garden/hedit/` (dev: `https://annotation.garden/hedit-dev/`)
+- Static HTML/CSS/JS from `frontend/`, served by a Worker with static assets
+  (`workers/web/`, routes `annotation.garden/hedit/*` and the bare `/hedit`)
+- Calls the edge Worker at `edge.annotation.garden/hedit` (dev: `/hedit-dev`)
 - SSE streaming support
+- Legacy: the `hedit` Pages project (`hedit.pages.dev`, `develop.hedit.pages.dev`)
+  still deploys from git until it is retired
 
 ### Cloudflare Workers (manual deploy, no CI)
-- Code: `workers/index.js`, config: `workers/wrangler.toml`
-- Prod: `hedit-api` -> `api.annotation.garden/hedit`;
-  dev: `hedit-dev-api` -> `api.annotation.garden/hedit-dev`
+- Edge proxy: `workers/index.js`, config `workers/wrangler.toml`.
+  Prod `hedit-api` at `edge.annotation.garden/hedit` -> `api.annotation.garden/hedit`;
+  dev `hedit-dev-api` at `edge.annotation.garden/hedit-dev` -> `api.annotation.garden/hedit-dev`
+- Frontend: `workers/web/` (`hedit-web`, dev `hedit-web-dev`), see above
+- Secrets: Infisical, `annot-garden` project, `/hedit/edge` (prod and dev)
 - Deploy (Cloudflare account `neuromechanist`):
   `cd workers && bunx cfman wrangler --account neuromechanist deploy`
   and `... deploy --env dev`

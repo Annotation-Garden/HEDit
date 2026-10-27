@@ -244,6 +244,27 @@ class ValidationAgent:
 
         return result_dict
 
+    def probe(self, schema_version: str = "8.4.0") -> bool:
+        """Confirm the active validator backend can actually run a validation.
+
+        Validates a known-valid HED string ("Red") through the same backend
+        real requests use. A broken backend (Node missing, hed-javascript not
+        built, schema unavailable) surfaces either as an exception or as a
+        VALIDATOR_INIT_ERROR result, both of which return False here.
+
+        Args:
+            schema_version: Schema version to validate against
+
+        Returns:
+            True only when the backend produced a valid result for "Red"
+        """
+        try:
+            result = self._run_validation("Red", schema_version)
+        except Exception:
+            logger.exception("Validator probe failed")
+            return False
+        return result.is_valid
+
     def _get_or_create_validator(
         self, schema_version: str
     ) -> HedJavaScriptValidator | HedPythonValidator:

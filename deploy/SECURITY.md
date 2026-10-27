@@ -1,6 +1,6 @@
-# HED-BOT Security Best Practices
+# HEDit Security Best Practices
 
-This document outlines the security measures implemented in HED-BOT to ensure compliance with security audits and best practices.
+This document outlines the security measures implemented in HEDit to ensure compliance with security audits and best practices.
 
 ## Table of Contents
 
@@ -18,7 +18,7 @@ This document outlines the security measures implemented in HED-BOT to ensure co
 
 ## Overview
 
-HED-BOT implements defense-in-depth security with multiple layers:
+HEDit implements defense-in-depth security with multiple layers:
 
 1. **API Key Authentication** - Prevents unauthorized access
 2. **CORS Validation** - Allows only approved origins
@@ -85,7 +85,7 @@ REQUIRE_API_AUTH=false  # NOT recommended for production
 
 **Frontend (JavaScript)**:
 ```javascript
-fetch('https://hedtools.ucsd.edu/hed-bot-api/annotate', {
+fetch('https://api.annotation.garden/hedit/annotate', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -97,7 +97,7 @@ fetch('https://hedtools.ucsd.edu/hed-bot-api/annotate', {
 
 **cURL**:
 ```bash
-curl -X POST https://hedtools.ucsd.edu/hed-bot-api/annotate \
+curl -X POST https://api.annotation.garden/hedit/annotate \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your_api_key_here" \
   -d '{"description": "person sees red circle"}'
@@ -108,7 +108,7 @@ curl -X POST https://hedtools.ucsd.edu/hed-bot-api/annotate \
 import requests
 
 response = requests.post(
-    'https://hedtools.ucsd.edu/hed-bot-api/annotate',
+    'https://api.annotation.garden/hedit/annotate',
     headers={'X-API-Key': 'your_api_key_here'},
     json={'description': 'person sees red circle'}
 )
@@ -133,7 +133,7 @@ response = requests.post(
 
 ### Allowed Origins
 
-**Production**: Only `https://hed-bot.pages.dev`
+**Production**: Only `https://hedit.pages.dev`
 
 **Development**: `http://localhost:5173`, `http://localhost:3000`
 
@@ -142,7 +142,7 @@ response = requests.post(
 ```python
 # src/api/main.py
 allowed_origins = [
-    "https://hed-bot.pages.dev",  # Production
+    "https://hedit.pages.dev",  # Production
     "http://localhost:5173",       # Dev
 ]
 ```
@@ -151,7 +151,7 @@ allowed_origins = [
 
 ```bash
 # .env file
-EXTRA_CORS_ORIGINS=https://staging.hed-bot.pages.dev,https://dev.hed-bot.pages.dev
+EXTRA_CORS_ORIGINS=https://develop.hedit.pages.dev,https://develop.hedit.pages.dev
 ```
 
 ### Two-Layer CORS Protection
@@ -187,13 +187,13 @@ Even if Nginx is bypassed, FastAPI will reject invalid origins.
 ### Log Format
 
 ```
-2025-12-02T15:30:45.123Z - hed_bot.audit - INFO - [AUDIT] REQUEST - timestamp=2025-12-02T15:30:45.123Z, ip=1.2.3.4, method=POST, path=/annotate, api_key=a1b2c3d4..., user=anonymous
-2025-12-02T15:30:47.456Z - hed_bot.audit - INFO - [AUDIT] RESPONSE - timestamp=2025-12-02T15:30:47.456Z, ip=1.2.3.4, method=POST, path=/annotate, status=200, duration_ms=2333.45
+2025-12-02T15:30:45.123Z - hedit.audit - INFO - [AUDIT] REQUEST - timestamp=2025-12-02T15:30:45.123Z, ip=1.2.3.4, method=POST, path=/annotate, api_key=a1b2c3d4..., user=anonymous
+2025-12-02T15:30:47.456Z - hedit.audit - INFO - [AUDIT] RESPONSE - timestamp=2025-12-02T15:30:47.456Z, ip=1.2.3.4, method=POST, path=/annotate, status=200, duration_ms=2333.45
 ```
 
 ### Log Locations
 
-**Audit Log**: `/var/log/hed-bot/audit.log`
+**Audit Log**: `/var/log/hedit/audit.log`
 **Application Log**: Docker container logs (via `docker logs`)
 **Nginx Access Log**: `/var/log/nginx/access.log`
 **Nginx Error Log**: `/var/log/nginx/error.log`
@@ -203,7 +203,7 @@ Even if Nginx is bypassed, FastAPI will reject invalid origins.
 ```bash
 # .env file
 ENABLE_AUDIT_LOG=true  # Enable/disable audit logging
-AUDIT_LOG_FILE=/var/log/hed-bot/audit.log  # Log file location
+AUDIT_LOG_FILE=/var/log/hedit/audit.log  # Log file location
 ```
 
 ### Log Retention
@@ -216,8 +216,8 @@ Recommended retention policies:
 
 **Logrotate Configuration**:
 ```bash
-# /etc/logrotate.d/hed-bot
-/var/log/hed-bot/*.log {
+# /etc/logrotate.d/hedit
+/var/log/hedit/*.log {
     daily
     rotate 90
     compress
@@ -226,7 +226,7 @@ Recommended retention policies:
     create 0640 www-data adm
     sharedscripts
     postrotate
-        docker kill -s USR1 hed-bot
+        docker kill -s USR1 hedit
     endscript
 }
 ```
@@ -262,10 +262,10 @@ add_header Content-Security-Policy "default-src 'self'" always;
 **Configuration**:
 ```nginx
 # In http block
-limit_req_zone $binary_remote_addr zone=hed_bot_limit:10m rate=60r/m;
+limit_req_zone $binary_remote_addr zone=hedit_limit:10m rate=60r/m;
 
 # In location block
-limit_req zone=hed_bot_limit burst=10 nodelay;
+limit_req zone=hedit_limit burst=10 nodelay;
 limit_req_status 429;
 ```
 
@@ -347,7 +347,7 @@ ANTHROPIC_WORKSPACE_ID=your_workspace_id_here
 API_KEYS=your_api_key_1,your_api_key_2
 REQUIRE_API_AUTH=true
 ENABLE_AUDIT_LOG=true
-AUDIT_LOG_FILE=/var/log/hed-bot/audit.log
+AUDIT_LOG_FILE=/var/log/hedit/audit.log
 EXTRA_CORS_ORIGINS=
 ```
 
@@ -356,11 +356,11 @@ EXTRA_CORS_ORIGINS=
 ```bash
 # Restrict .env file permissions
 chmod 600 .env
-chown hed-bot:hed-bot .env
+chown hedit:hedit .env
 
 # Verify
 ls -la .env
-# Output: -rw------- 1 hed-bot hed-bot 256 Dec 02 15:30 .env
+# Output: -rw------- 1 hedit hedit 256 Dec 02 15:30 .env
 ```
 
 ---
@@ -369,7 +369,7 @@ ls -la .env
 
 ### For Security Auditors
 
-This section provides information for security auditors reviewing HED-BOT.
+This section provides information for security auditors reviewing HEDit.
 
 #### Security Controls Implemented
 
@@ -434,16 +434,16 @@ This section provides information for security auditors reviewing HED-BOT.
 **Viewing Audit Logs**:
 ```bash
 # View recent audit logs
-sudo tail -f /var/log/hed-bot/audit.log
+sudo tail -f /var/log/hedit/audit.log
 
 # Search for specific API key usage
-grep "api_key=a1b2c3d4" /var/log/hed-bot/audit.log
+grep "api_key=a1b2c3d4" /var/log/hedit/audit.log
 
 # View all requests from an IP
-grep "ip=1.2.3.4" /var/log/hed-bot/audit.log
+grep "ip=1.2.3.4" /var/log/hedit/audit.log
 
 # View errors
-grep "ERROR" /var/log/hed-bot/audit.log
+grep "ERROR" /var/log/hedit/audit.log
 ```
 
 #### Testing Security Controls
@@ -451,28 +451,28 @@ grep "ERROR" /var/log/hed-bot/audit.log
 **Authentication Test**:
 ```bash
 # Should fail (no API key)
-curl https://hedtools.ucsd.edu/hed-bot-api/annotate
+curl https://api.annotation.garden/hedit/annotate
 
 # Should succeed (valid API key)
-curl -H "X-API-Key: valid_key" https://hedtools.ucsd.edu/hed-bot-api/annotate
+curl -H "X-API-Key: valid_key" https://api.annotation.garden/hedit/annotate
 ```
 
 **CORS Test**:
 ```bash
 # Should include CORS headers
-curl -H "Origin: https://hed-bot.pages.dev" \
-     -I https://hedtools.ucsd.edu/hed-bot-api/health
+curl -H "Origin: https://hedit.pages.dev" \
+     -I https://api.annotation.garden/hedit/health
 
 # Should reject invalid origin
 curl -H "Origin: https://evil.com" \
-     -I https://hedtools.ucsd.edu/hed-bot-api/health
+     -I https://api.annotation.garden/hedit/health
 ```
 
 **Rate Limiting Test**:
 ```bash
 # Rapid requests should trigger 429
 for i in {1..70}; do
-  curl https://hedtools.ucsd.edu/hed-bot-api/health
+  curl https://api.annotation.garden/hedit/health
 done
 ```
 
@@ -495,10 +495,10 @@ Use this checklist for deployment and audits:
 
 ### Post-Deployment
 
-- [ ] Health check accessible: `https://hedtools.ucsd.edu/hed-bot-api/health`
+- [ ] Health check accessible: `https://api.annotation.garden/hedit/health`
 - [ ] Authentication working (401 without API key)
 - [ ] CORS headers present in responses
-- [ ] Audit logs being written to `/var/log/hed-bot/audit.log`
+- [ ] Audit logs being written to `/var/log/hedit/audit.log`
 - [ ] Security headers present in responses
 - [ ] Rate limiting triggering after 60 req/min
 - [ ] HTTPS redirect working (HTTP → HTTPS)
@@ -519,7 +519,7 @@ Use this checklist for deployment and audits:
 ### If API Key is Compromised
 
 1. **Immediately** remove compromised key from `.env`
-2. Restart Docker container: `docker restart hed-bot`
+2. Restart Docker container: `docker restart hedit`
 3. Generate new API key: `python scripts/generate_api_key.py`
 4. Update frontend with new key
 5. Review audit logs for unauthorized access

@@ -1,6 +1,6 @@
 # Version Management
 
-HED-BOT follows [Semantic Versioning 2.0.0](https://semver.org/).
+HEDit follows [Semantic Versioning 2.0.0](https://semver.org/).
 
 ## Current Version
 

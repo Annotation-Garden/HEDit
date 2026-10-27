@@ -4,7 +4,7 @@
 
 ## Overview
 
-HED-BOT uses a **fully self-contained Docker architecture** for local development that requires no external dependencies on the host system.
+HEDit uses a **fully self-contained Docker architecture** for local development that requires no external dependencies on the host system.
 
 ## Container Architecture
 
@@ -12,7 +12,7 @@ HED-BOT uses a **fully self-contained Docker architecture** for local developmen
 ┌─────────────────────────────────────────────────────────┐
 │                    Docker Compose                        │
 ├─────────────────────────────────────────────────────────┤
-│  HED-BOT API Container                                   │
+│  HEDit API Container                                   │
 │  ├─ Python 3.11                                          │
 │  ├─ FastAPI Backend                                      │
 │  ├─ LangGraph Agents                                     │
@@ -120,7 +120,7 @@ environment:
 ### Override at Runtime (Optional)
 
 ```bash
-docker run -e HED_SCHEMA_VERSION=8.4.0 hed-bot-api
+docker run -e HED_SCHEMA_VERSION=8.4.0 hedit-api
 ```
 
 ## Build Optimization
@@ -151,7 +151,7 @@ Docker caches layers, so rebuilds are fast when only app code changes.
 
 ```bash
 # 1. Clone repository
-git clone hed-bot && cd hed-bot
+git clone https://github.com/Annotation-Garden/HEDit.git && cd HEDit
 
 # 2. Build images (includes HED resources)
 docker-compose build
@@ -173,10 +173,10 @@ curl http://localhost:38427/health
 git pull
 
 # 2. Rebuild API image only
-docker-compose build hed-bot
+docker-compose build hedit
 
 # 3. Restart
-docker-compose up -d hed-bot
+docker-compose up -d hedit
 ```
 
 ### Updating HED Resources
@@ -185,23 +185,23 @@ HED schemas and validator are embedded in the image. To update:
 
 ```bash
 # 1. Rebuild image (re-clones latest HED repos)
-docker-compose build --no-cache hed-bot
+docker-compose build --no-cache hedit
 
 # 2. Restart
-docker-compose up -d hed-bot
+docker-compose up -d hedit
 ```
 
 Or manually:
 
 ```bash
-docker exec -it hed-bot-api bash
+docker exec -it hedit-api bash
 cd /app/hed-schemas && git pull
 # Restart container to reload
 ```
 
 ## Health Checks
 
-### HED-BOT Container
+### HEDit Container
 
 ```yaml
 healthcheck:
@@ -231,8 +231,8 @@ LLM inference runs on the Claude Platform on AWS, so no models are stored locall
 
 1. **Don't run as root**
    ```dockerfile
-   RUN useradd -m -u 1000 hed-bot
-   USER hed-bot
+   RUN useradd -m -u 1000 hedit
+   USER hedit
    ```
 
 2. **Read-only filesystem**
@@ -254,7 +254,7 @@ LLM inference runs on the Claude Platform on AWS, so no models are stored locall
 4. **Network isolation**
    ```yaml
    networks:
-     - hed-bot-internal
+     - hedit-internal
    ```
 
 ## Troubleshooting

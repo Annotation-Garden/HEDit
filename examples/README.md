@@ -1,6 +1,6 @@
 # Examples and Test Scripts
 
-This directory contains example scripts and test files for HED-BOT.
+This directory contains example scripts and test files for HEDit.
 
 ## Files
 

@@ -1,6 +1,6 @@
 # HEDit Project Plan
 
-> **Note**: This project is being rebranded from `hed-bot` to `HEDit`. See v0.6.0 roadmap below.
+> **Note**: This project was rebranded from `hed-bot` to `HEDit` in v0.6.0 (the roadmap below records that migration).
 
 ## Project Overview
 
@@ -40,7 +40,7 @@ Core system fully implemented and deployed. Summary of completed work:
 - **Testing**: Unit tests with pytest, 80%+ coverage
 - **Deployment**: Docker Compose, OpenRouter integration
 
-Development now follows issue-based tracking. See [GitHub Issues](https://github.com/neuromechanist/hed-bot/issues) for detailed tasks.
+Development now follows issue-based tracking. See [GitHub Issues](https://github.com/Annotation-Garden/HEDit/issues) for detailed tasks.
 
 ---
 
