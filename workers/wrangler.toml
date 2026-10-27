@@ -27,12 +27,12 @@ head_sampling_rate = 1.0
 # KV Namespaces for caching
 [[kv_namespaces]]
 binding = "HED_CACHE"
-id = "18f0bc588a2a4e24bd1d98b51340bd5a"
+id = "7625fc43d3c24ed2ba33c769ad044ee9"
 
 # KV Namespace for rate limiting
 [[kv_namespaces]]
 binding = "RATE_LIMITER"
-id = "8deb8c02177349afb1d1fe2f7d4079f4"
+id = "49665add38394107aad8ef8386af98ec"
 
 # Environment variables
 [vars]
@@ -72,8 +72,8 @@ head_sampling_rate = 1.0
 # Dev-specific KV namespaces (separate from production)
 [[env.dev.kv_namespaces]]
 binding = "HED_CACHE"
-id = "4f9f591d9dc34806973efd069d29230b"
+id = "368630a8c973475f962fc3dcb8568cfc"
 
 [[env.dev.kv_namespaces]]
 binding = "RATE_LIMITER"
-id = "cceec1ae15754a7a946273b97eb488a3"
+id = "98e1cfde831e4d98b1dea4ee358f54b9"
