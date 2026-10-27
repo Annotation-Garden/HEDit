@@ -45,6 +45,9 @@ ENV/
 # Environment variables
 .env
 .env.local
+# Temporary renders from deploy/sync-env.sh and server backups
+.env.*
+!.env.example
 
 # Logs
 *.log

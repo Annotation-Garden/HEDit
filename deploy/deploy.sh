@@ -39,14 +39,19 @@ stop_existing_container() {
     docker rm "${CONTAINER_NAME}" 2>/dev/null || true
 }
 
+sync_env() {
+    # Render .env from Infisical; on failure the existing .env is kept
+    bash "${DEPLOY_DIR}/deploy/sync-env.sh" || echo "[WARN] Infisical sync failed; deploying with the existing .env"
+    ENV_FILE="${DEPLOY_DIR}/.env"
+    if [ ! -f "$ENV_FILE" ]; then
+        error_exit "Missing env file: ${ENV_FILE}. Refusing to replace the container with one that has no configuration."
+    fi
+}
+
 run_container() {
     echo "Starting container ${CONTAINER_NAME} on port ${HOST_PORT}..."
 
-    ENV_FILE="${DEPLOY_DIR}/.env"
-    ENV_ARGS=""
-    if [ -f "$ENV_FILE" ]; then
-        ENV_ARGS="--env-file ${ENV_FILE}"
-    fi
+    ENV_ARGS="--env-file ${ENV_FILE}"
 
     # Create persistent feedback directory on host
     FEEDBACK_DIR="/var/lib/hedit/${CONTAINER_NAME}/feedback"
@@ -85,6 +90,7 @@ echo "Container: ${CONTAINER_NAME}"
 echo "Port: 127.0.0.1:${HOST_PORT}"
 echo "========================================="
 
+sync_env
 pull_image
 stop_existing_container
 run_container
