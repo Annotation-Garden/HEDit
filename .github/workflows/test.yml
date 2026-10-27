@@ -244,6 +244,9 @@ jobs:
       - name: Edge Worker routing (edge.annotation.garden/hedit mount)
         run: bun workers/test-routing.js
 
+      - name: Edge Worker Turnstile (rejects when the secret is missing)
+        run: bun workers/test-turnstile.js
+
       - name: Frontend Worker (annotation.garden/hedit under wrangler dev)
         run: bash workers/web/smoke-test.sh
 
