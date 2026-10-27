@@ -35,7 +35,7 @@ function remountRedirect(response, assetUrl, url, prefix) {
   try {
     target = new URL(location, assetUrl);
   } catch (error) {
-    console.error(`Unparseable Location from asset handler: ${JSON.stringify(location)}`, error.stack);
+    console.error(`Unparsable Location from asset handler: ${JSON.stringify(location)}`, error.stack);
     return response;
   }
   if (target.origin !== url.origin) {
