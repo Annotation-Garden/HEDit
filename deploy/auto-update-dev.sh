@@ -27,7 +27,7 @@ if [ "$RUNNING_ID" != "$NEW_ID" ]; then
     echo "[$(date '+%Y-%m-%d %H:%M')] Updating dev container..."
 
     # Render .env from Infisical; on failure the existing .env is kept
-    "${SCRIPT_DIR}/sync-env.sh" || echo "[$(date '+%Y-%m-%d %H:%M')] WARNING: Infisical sync failed; deploying with the existing .env"
+    bash "${SCRIPT_DIR}/sync-env.sh" || echo "[$(date '+%Y-%m-%d %H:%M')] WARNING: Infisical sync failed; deploying with the existing .env"
 
     # Refuse before the running container is stopped, not after
     ENV_FILE="${SCRIPT_DIR}/../.env"

@@ -17,7 +17,7 @@ INFISICAL_PROJECT_ID="4d8cc8dc-cdea-4826-86cd-b13ec79a8a82"   # annot-garden
 INFISICAL_ENV="prod"
 INFISICAL_PATH="/hedit/server"
 # Keys without which the backend cannot serve requests
-REQUIRED_KEYS="API_KEYS ANTHROPIC_API_KEY"
+REQUIRED_KEYS="API_KEYS ANTHROPIC_API_KEY ANTHROPIC_BASE_URL ANTHROPIC_WORKSPACE_ID"
 
 IDENTITY_FILE="${INFISICAL_IDENTITY_FILE:-${HOME}/.config/infisical/hedtools-identity.env}"
 INFISICAL_BIN="${INFISICAL_BIN:-$(command -v infisical || echo "${HOME}/.local/bin/infisical")}"
@@ -40,7 +40,8 @@ set -a
 . "$IDENTITY_FILE"
 set +a
 
-INFISICAL_TOKEN="$("$INFISICAL_BIN" login --method=universal-auth --domain="$INFISICAL_API_URL" --plain --silent 2>/dev/null)"
+# A hung connection must not stall a deploy that holds its lock
+INFISICAL_TOKEN="$(timeout 60 "$INFISICAL_BIN" login --method=universal-auth --domain="$INFISICAL_API_URL" --plain --silent 2>/dev/null)"
 [ -n "$INFISICAL_TOKEN" ] || keep_previous "Infisical login failed"
 export INFISICAL_TOKEN
 
@@ -51,18 +52,21 @@ trap 'rm -f "$TMP"' EXIT
 # Docker's --env-file takes KEY=value literally (no quoting, no multi-line
 # values), so build the file from the JSON export instead of the CLI's dotenv
 # output, which quotes values.
-"$INFISICAL_BIN" export --domain="$INFISICAL_API_URL" --projectId="$INFISICAL_PROJECT_ID" \
+timeout 60 "$INFISICAL_BIN" export --domain="$INFISICAL_API_URL" --projectId="$INFISICAL_PROJECT_ID" \
     --env="$INFISICAL_ENV" --path="$INFISICAL_PATH" --format=json --silent 2>/dev/null \
     | python3 -c '
-import json, sys
+import json, re, sys
 required = sys.argv[1].split()
+KEY = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 try:
     secrets = json.load(sys.stdin)
 except json.JSONDecodeError as error:
     sys.exit(f"export was not JSON ({error})")
 values = {s["key"]: s["value"] for s in secrets}
 problems = [f"{k} is missing or empty" for k in required if not values.get(k)]
+problems += [f"key {k!r} is not a valid variable name" for k in values if not KEY.fullmatch(k)]
 problems += [f"{k} spans several lines" for k, v in values.items() if "\n" in v or "\r" in v]
+problems += [f"{k} is longer than docker --env-file accepts" for k, v in values.items() if len(k) + len(v) > 60000]
 if problems:
     sys.exit("; ".join(problems))
 for key in sorted(values):

@@ -41,7 +41,7 @@ stop_existing_container() {
 
 sync_env() {
     # Render .env from Infisical; on failure the existing .env is kept
-    "${DEPLOY_DIR}/deploy/sync-env.sh" || echo "[WARN] Infisical sync failed; deploying with the existing .env"
+    bash "${DEPLOY_DIR}/deploy/sync-env.sh" || echo "[WARN] Infisical sync failed; deploying with the existing .env"
     ENV_FILE="${DEPLOY_DIR}/.env"
     if [ ! -f "$ENV_FILE" ]; then
         error_exit "Missing env file: ${ENV_FILE}. Refusing to replace the container with one that has no configuration."

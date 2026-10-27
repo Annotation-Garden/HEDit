@@ -133,7 +133,7 @@ deploy_update() {
     log "Deploying update..."
 
     # Render .env from Infisical; on failure the existing .env is kept
-    "${SCRIPT_DIR}/sync-env.sh" || log "Warning: Infisical sync failed; deploying with the existing .env"
+    bash "${SCRIPT_DIR}/sync-env.sh" || log "Warning: Infisical sync failed; deploying with the existing .env"
 
     # Refuse before the running container is stopped, not after
     ENV_FILE="${SCRIPT_DIR}/../.env"
