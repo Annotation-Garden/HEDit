@@ -23,6 +23,12 @@ routes = [
   { pattern = "annotation.garden/hedit", zone_name = "annotation.garden" },
 ]
 
+# Workers Logs, so misconfiguration and asset failures logged by index.js are
+# retained (otherwise visible only to a live `wrangler tail`).
+[observability]
+enabled = true
+head_sampling_rate = 1.0
+
 # run_worker_first: every request goes through index.js, which strips the
 # mount prefix before looking up the asset.
 [assets]
@@ -41,3 +47,7 @@ routes = [
   { pattern = "annotation.garden/hedit-dev", zone_name = "annotation.garden" },
 ]
 vars = { MOUNT_PREFIX = "/hedit-dev" }
+
+[env.dev.observability]
+enabled = true
+head_sampling_rate = 1.0
