@@ -80,6 +80,31 @@ jobs:
             exit 1
           fi
 
+      # The edge Worker rejects browser requests without TURNSTILE_SECRET_KEY
+      # and cannot reach the backend without BACKEND_API_KEY. Secrets belong to
+      # the Worker in one Cloudflare account, so a deploy into an account where
+      # they were never set (such as after a move) must stop here.
+      - name: Check the edge Worker's secrets
+        working-directory: workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_ENV: ${{ steps.target.outputs.wrangler_env }}
+        run: |
+          names="$(bunx "wrangler@${WRANGLER_VERSION}" secret list ${WRANGLER_ENV:+--env "$WRANGLER_ENV"} --format json | jq -r '.[].name')" || {
+            echo "::error::Could not list the edge Worker's secrets in this account; set them first (see below)"
+            names=""
+          }
+          missing=""
+          for secret in BACKEND_API_KEY TURNSTILE_SECRET_KEY; do
+            grep -qx "$secret" <<<"$names" || missing="$missing $secret"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Not set on the edge Worker:${missing}. Set each from Infisical (annot-garden, /hedit/edge) with: wrangler secret put <NAME>${WRANGLER_ENV:+ --env $WRANGLER_ENV}"
+            exit 1
+          fi
+          echo "BACKEND_API_KEY and TURNSTILE_SECRET_KEY are set"
+
       - name: Deploy the edge Worker
         working-directory: workers
         env:
