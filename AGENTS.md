@@ -67,7 +67,8 @@ workers.dev names still work.
 production (`/hedit`). It reruns the Worker tests, deploys the edge Worker,
 checks it answers, then deploys the frontend Worker and checks its page and
 `config.js`. The edge goes first, so a frontend that calls something new never
-goes live before the edge that answers it. The deploy token and account id are
+goes live before the edge that answers it. Changes to Markdown under `workers/`
+do not deploy. The deploy token and account id are
 repository secrets synced from Infisical (`annot-garden`, prod `/hedit/ci`).
 To redeploy without a change, run the workflow from Actions on that branch.
 Manual deploys are the fallback (prod from `main` only, since the frontend
@@ -83,7 +84,9 @@ bunx cfman wrangler --account neuromechanist deploy --env dev  # dev frontend: h
 Secrets (`BACKEND_API_KEY`, `TURNSTILE_SECRET_KEY`) and KV bindings persist across deploys.
 Their source of truth is Infisical (`annot-garden` project, `/hedit/edge`).
 
-CI runs `bun workers/test-routing.js` (edge mount routing) and
+The Worker Tests job (and the deploy, before it deploys) runs
+`bun workers/test-routing.js` (edge mount routing), `bun workers/test-turnstile.js`
+(Turnstile, including the missing-secret rejection) and
 `bash workers/web/smoke-test.sh` (frontend Worker under `wrangler dev`).
 
 ### Release pipeline (what a merge to main actually deploys, and when)

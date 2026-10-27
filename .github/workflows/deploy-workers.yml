@@ -17,11 +17,13 @@ on:
     branches: [main, develop]
     paths:
       - 'workers/**'
+      - '!workers/**/*.md'
       - 'frontend/**'
       - '.github/workflows/deploy-workers.yml'
   workflow_dispatch:
 
-# Deploys of one branch run in order; a newer push never cancels a deploy
+# A running deploy is never cancelled; of the runs waiting behind it, only the
+# newest is kept
 concurrency:
   group: deploy-workers-${{ github.ref }}
   cancel-in-progress: false
@@ -36,10 +38,16 @@ env:
 jobs:
   deploy:
     name: Deploy Workers (${{ github.ref_name }})
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      # Fail, rather than skip green, when run by hand on any other branch
+      - name: Check the branch
+        if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop'
+        run: |
+          echo "::error::Deploy Workers runs on main (production) or develop (dev) only, not ${GITHUB_REF_NAME}"
+          exit 1
+
       - uses: actions/checkout@v7
 
       - name: Set up Bun
@@ -57,9 +65,9 @@ jobs:
         id: target
         run: |
           if [ "$GITHUB_REF" = "refs/heads/main" ]; then
-            { echo "wrangler_env="; echo "mount=/hedit"; } >> "$GITHUB_OUTPUT"
+            { echo "wrangler_env="; echo "mount=/hedit"; echo "environment=production"; } >> "$GITHUB_OUTPUT"
           else
-            { echo "wrangler_env=dev"; echo "mount=/hedit-dev"; } >> "$GITHUB_OUTPUT"
+            { echo "wrangler_env=dev"; echo "mount=/hedit-dev"; echo "environment=development"; } >> "$GITHUB_OUTPUT"
           fi
 
       - name: Check the deploy credentials
@@ -80,13 +88,18 @@ jobs:
           WRANGLER_ENV: ${{ steps.target.outputs.wrangler_env }}
         run: bunx "wrangler@${WRANGLER_VERSION}" deploy ${WRANGLER_ENV:+--env "$WRANGLER_ENV"}
 
+      # The live checks prove the routes answer with the right Worker and
+      # environment; that the new code is the one serving is wrangler deploy's
+      # job (it fails the step when the upload or the routes fail).
       - name: Check the edge Worker
         env:
           MOUNT: ${{ steps.target.outputs.mount }}
+          ENVIRONMENT: ${{ steps.target.outputs.environment }}
         run: |
-          name="$(curl -fsS --retry 5 --retry-delay 3 --retry-all-errors "https://edge.annotation.garden${MOUNT}/" | jq -r .name)"
-          [ "$name" = "HEDit API (Cloudflare Workers Proxy)" ] || { echo "::error::edge.annotation.garden${MOUNT}/ answered '$name'"; exit 1; }
-          echo "edge.annotation.garden${MOUNT}/ answers"
+          root="$(curl -fsS --retry 5 --retry-delay 3 --retry-all-errors "https://edge.annotation.garden${MOUNT}/")"
+          answer="$(jq -r '"\(.name) / \(.environment)"' <<<"$root")"
+          [ "$answer" = "HEDit API (Cloudflare Workers Proxy) / ${ENVIRONMENT}" ] || { echo "::error::edge.annotation.garden${MOUNT}/ answered '$answer'"; exit 1; }
+          echo "edge.annotation.garden${MOUNT}/ answers ($ENVIRONMENT)"
 
       - name: Deploy the frontend Worker
         working-directory: workers/web
@@ -102,6 +115,6 @@ jobs:
         run: |
           page="$(curl -fsS --retry 5 --retry-delay 3 --retry-all-errors "https://annotation.garden${MOUNT}/")"
           grep -q '<title>HEDit' <<<"$page" || { echo "::error::annotation.garden${MOUNT}/ is not the HEDit page"; exit 1; }
-          config="$(curl -fsS "https://annotation.garden${MOUNT}/config.js")"
+          config="$(curl -fsS --retry 5 --retry-delay 3 --retry-all-errors "https://annotation.garden${MOUNT}/config.js")"
           grep -q "https://edge.annotation.garden${MOUNT}'" <<<"$config" || { echo "::error::annotation.garden${MOUNT}/config.js does not call edge.annotation.garden${MOUNT}"; exit 1; }
           echo "annotation.garden${MOUNT}/ serves the HEDit page"
