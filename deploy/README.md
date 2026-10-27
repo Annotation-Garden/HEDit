@@ -2,6 +2,13 @@
 
 This directory contains deployment scripts and configuration for running HEDit in production.
 
+> **On the SCCN VM, `.env` is generated.** `deploy/sync-env.sh` renders it from Infisical
+> (project `annot-garden`, `prod` `/hedit/server`) before every deploy, so a hand edit there is
+> overwritten: change the value in Infisical and redeploy instead. See "Server configuration
+> (Infisical)" in `AGENTS.md`. On a host without an Infisical identity
+> (`~/.config/infisical/hedtools-identity.env`, or `INFISICAL_IDENTITY_FILE`), the sync only warns
+> and the hand-written `.env` described below is used as is.
+
 ## Table of Contents
 
 - [Quick Start](#quick-start)
@@ -396,7 +403,7 @@ docker logs hedit
 ```
 
 **Common issues:**
-- Missing `.env` file → Copy from `.env.example`
+- Missing `.env` file → on the SCCN VM, run `bash deploy/sync-env.sh` and read its error; elsewhere, copy from `.env.example`
 - Invalid API key → Check ANTHROPIC_API_KEY (and ANTHROPIC_WORKSPACE_ID; the endpoint rejects requests without the workspace header)
 - Port already in use → `sudo lsof -i :38427`
 
