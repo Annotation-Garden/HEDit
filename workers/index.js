@@ -127,6 +127,7 @@ async function verifyTurnstileToken(token, secretKey, ip, isDev) {
       };
     }
   } catch (error) {
+    console.error('Turnstile Siteverify call failed; rejecting request:', error.message);
     return { success: false, error: `Turnstile verification error: ${error.message}` };
   }
 }
