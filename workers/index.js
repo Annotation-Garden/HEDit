@@ -5,6 +5,39 @@
  * which has all the strong prompts, real HED validation, and multi-agent workflow.
  */
 
+// The host this Worker is path-mounted on. Browser-facing Workers live at
+// edge.<domain>/<project>, so no client depends on the account-scoped
+// *.workers.dev name (which changes if the Worker moves Cloudflare accounts).
+// Cloudflare delivers the full path, mount prefix included; resolveRoutePath
+// strips it once before routing. The prefix comes from MOUNT_PREFIX in
+// wrangler.toml ("/hedit" for production, "/hedit-dev" for dev).
+const EDGE_HOST = 'edge.annotation.garden';
+
+/**
+ * Map a request URL to the path the route table expects.
+ * On the edge host, the mount prefix is stripped; requests outside the mount
+ * are answered directly. On any other host (the *.workers.dev name, or
+ * `wrangler dev`) the path is used as is.
+ * @returns {{path: string} | {response: Response}}
+ */
+function resolveRoutePath(url, env, corsHeaders) {
+  if (url.hostname !== EDGE_HOST) {
+    return { path: url.pathname };
+  }
+  const prefix = env.MOUNT_PREFIX;
+  if (!prefix) {
+    console.error(`MOUNT_PREFIX is not configured, but the Worker is serving ${EDGE_HOST}`);
+    return { response: new Response('Worker misconfigured: MOUNT_PREFIX missing', { status: 500, headers: corsHeaders }) };
+  }
+  if (url.pathname === prefix) {
+    return { response: Response.redirect(`${url.origin}${prefix}/${url.search}`, 308) };
+  }
+  if (!url.pathname.startsWith(`${prefix}/`)) {
+    return { response: new Response('Not Found', { status: 404, headers: corsHeaders }) };
+  }
+  return { path: url.pathname.slice(prefix.length) };
+}
+
 // Worker configuration (environment-aware)
 function getConfig(env) {
   const isDev = env.ENVIRONMENT === 'development';
@@ -12,7 +45,7 @@ function getConfig(env) {
     CACHE_TTL: isDev ? 300 : 3600, // 5 min for dev, 1 hour for prod
     RATE_LIMIT_PER_MINUTE: isDev ? 60 : 20, // Higher limit for dev testing
     REQUEST_TIMEOUT: 120000, // 2 minutes for long-running annotation workflows
-    ALLOWED_ORIGIN: 'https://hedit.pages.dev', // Production frontend
+    ALLOWED_ORIGIN: 'https://annotation.garden', // Production frontend (annotation.garden/hedit)
     TURNSTILE_VERIFY_URL: 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
     IS_DEV: isDev,
   };
@@ -72,7 +105,8 @@ export default {
     const CONFIG = getConfig(env);
     const origin = request.headers.get('Origin');
 
-    // CORS validation - allow hedit.pages.dev, hed-bot.pages.dev (legacy), annotation.garden, and preview deployments
+    // CORS validation - allow annotation.garden (the frontend lives at annotation.garden/hedit),
+    // hedit.pages.dev and hed-bot.pages.dev (legacy, until those Pages projects are retired), and localhost
     const isAllowedOrigin = origin === CONFIG.ALLOWED_ORIGIN ||
                            origin === 'https://hedit.pages.dev' || // Production (new)
                            origin?.endsWith('.hedit.pages.dev') || // Preview/develop deployments (new)
@@ -99,25 +133,30 @@ export default {
 
     try {
       const url = new URL(request.url);
+      const resolved = resolveRoutePath(url, env, corsHeaders);
+      if (resolved.response) {
+        return resolved.response;
+      }
+      const path = resolved.path;
 
       // Route requests
-      if (url.pathname === '/health') {
+      if (path === '/health') {
         return await handleHealth(request, env, corsHeaders, CONFIG);
-      } else if (url.pathname === '/version') {
+      } else if (path === '/version') {
         return await handleVersion(request, env, corsHeaders);
-      } else if (url.pathname === '/annotate' && request.method === 'POST') {
+      } else if (path === '/annotate' && request.method === 'POST') {
         return await handleAnnotate(request, env, ctx, corsHeaders, CONFIG);
-      } else if (url.pathname === '/annotate/stream' && request.method === 'POST') {
+      } else if (path === '/annotate/stream' && request.method === 'POST') {
         return await handleAnnotateStream(request, env, corsHeaders, CONFIG);
-      } else if (url.pathname === '/annotate-from-image' && request.method === 'POST') {
+      } else if (path === '/annotate-from-image' && request.method === 'POST') {
         return await handleAnnotateFromImage(request, env, corsHeaders, CONFIG);
-      } else if (url.pathname === '/annotate-from-image/stream' && request.method === 'POST') {
+      } else if (path === '/annotate-from-image/stream' && request.method === 'POST') {
         return await handleAnnotateFromImageStream(request, env, corsHeaders, CONFIG);
-      } else if (url.pathname === '/validate' && request.method === 'POST') {
+      } else if (path === '/validate' && request.method === 'POST') {
         return await handleValidate(request, env, corsHeaders, CONFIG);
-      } else if (url.pathname === '/feedback' && request.method === 'POST') {
+      } else if (path === '/feedback' && request.method === 'POST') {
         return await handleFeedback(request, env, corsHeaders, CONFIG);
-      } else if (url.pathname === '/') {
+      } else if (path === '/') {
         return handleRoot(corsHeaders, CONFIG);
       }
 

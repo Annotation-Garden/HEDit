@@ -2,6 +2,21 @@ name = "hedit-api"
 main = "index.js"
 compatibility_date = "2024-01-01"
 
+# Kept explicit: once routes are declared, wrangler turns workers_dev off on
+# deploy unless it is set, which would take the hedit-api.<account>.workers.dev
+# name down while clients are still moving to the edge host below. Turn it off
+# once nothing uses the workers.dev name.
+workers_dev = true
+
+# Browser-facing edge: edge.<domain>/<project>. The DNS record
+# (edge.annotation.garden AAAA 100::, proxied) exists only to carry routes.
+# "/hedit*" also matches "/hedit-dev/...", but the dev route below is more
+# specific and wins; a "/hedit-dev" path that reaches this Worker is outside
+# its "/hedit/" mount and answered 404.
+routes = [
+  { pattern = "edge.annotation.garden/hedit*", zone_name = "annotation.garden" },
+]
+
 # KV Namespaces for caching
 [[kv_namespaces]]
 binding = "HED_CACHE"
@@ -16,6 +31,8 @@ id = "8deb8c02177349afb1d1fe2f7d4079f4"
 [vars]
 ENVIRONMENT = "production"
 BACKEND_URL = "https://api.annotation.garden/hedit"
+# Path this Worker is mounted at on edge.annotation.garden (see EDGE_HOST in index.js)
+MOUNT_PREFIX = "/hedit"
 
 # Secrets (set via wrangler secret put)
 # Run: wrangler secret put BACKEND_API_KEY
@@ -24,11 +41,6 @@ BACKEND_URL = "https://api.annotation.garden/hedit"
 # Run: wrangler secret put TURNSTILE_SECRET_KEY
 # TURNSTILE_SECRET_KEY = Cloudflare Turnstile secret key for bot protection
 
-# Routes (optional - if you want custom domain)
-# routes = [
-#   { pattern = "api.your-domain.com/*", zone_name = "your-domain.com" }
-# ]
-
 # =============================================================================
 # Development environment
 # Deploy with: npx wrangler deploy --env dev
@@ -36,7 +48,11 @@ BACKEND_URL = "https://api.annotation.garden/hedit"
 # =============================================================================
 [env.dev]
 name = "hedit-dev-api"
-vars = { ENVIRONMENT = "development", BACKEND_URL = "https://api.annotation.garden/hedit-dev" }
+workers_dev = true
+vars = { ENVIRONMENT = "development", BACKEND_URL = "https://api.annotation.garden/hedit-dev", MOUNT_PREFIX = "/hedit-dev" }
+routes = [
+  { pattern = "edge.annotation.garden/hedit-dev*", zone_name = "annotation.garden" },
+]
 
 # Dev-specific KV namespaces (separate from production)
 [[env.dev.kv_namespaces]]
