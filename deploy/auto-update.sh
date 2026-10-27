@@ -132,19 +132,16 @@ check_for_updates() {
 deploy_update() {
     log "Deploying update..."
 
-    # Find .env file
+    # Render .env from Infisical; on failure the existing .env is kept
+    "${SCRIPT_DIR}/sync-env.sh" || log "Warning: Infisical sync failed; deploying with the existing .env"
+
+    # Refuse before the running container is stopped, not after
     ENV_FILE="${SCRIPT_DIR}/../.env"
     if [ ! -f "$ENV_FILE" ]; then
-        ENV_FILE="${SCRIPT_DIR}/.env"
+        error_exit "No .env file at ${ENV_FILE}. Refusing to replace the container with one that has no configuration."
     fi
-
-    ENV_ARGS=""
-    if [ -f "$ENV_FILE" ]; then
-        ENV_ARGS="--env-file ${ENV_FILE}"
-        log "Using env file: ${ENV_FILE}"
-    else
-        log "Warning: No .env file found"
-    fi
+    ENV_ARGS="--env-file ${ENV_FILE}"
+    log "Using env file: ${ENV_FILE}"
 
     # Set port based on environment
     if [ "$ENVIRONMENT" = "dev" ]; then

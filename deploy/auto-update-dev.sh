@@ -26,12 +26,19 @@ NEW_ID=$(docker inspect "$REGISTRY_IMAGE" --format='{{.Id}}' 2>/dev/null)
 if [ "$RUNNING_ID" != "$NEW_ID" ]; then
     echo "[$(date '+%Y-%m-%d %H:%M')] Updating dev container..."
 
+    # Render .env from Infisical; on failure the existing .env is kept
+    "${SCRIPT_DIR}/sync-env.sh" || echo "[$(date '+%Y-%m-%d %H:%M')] WARNING: Infisical sync failed; deploying with the existing .env"
+
+    # Refuse before the running container is stopped, not after
+    ENV_FILE="${SCRIPT_DIR}/../.env"
+    if [ ! -f "$ENV_FILE" ]; then
+        echo "[$(date '+%Y-%m-%d %H:%M')] ERROR: No .env file at ${ENV_FILE}. Refusing to replace the container with one that has no configuration."
+        exit 1
+    fi
+    ENV_ARGS="--env-file $ENV_FILE"
+
     docker stop "$CONTAINER_NAME" 2>/dev/null || true
     docker rm "$CONTAINER_NAME" 2>/dev/null || true
-
-    ENV_FILE="${SCRIPT_DIR}/../.env"
-    ENV_ARGS=""
-    [ -f "$ENV_FILE" ] && ENV_ARGS="--env-file $ENV_FILE"
 
     # Create persistent feedback directory
     FEEDBACK_DIR="/var/lib/hedit/${CONTAINER_NAME}/feedback"
