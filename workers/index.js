@@ -5,35 +5,59 @@
  * which has all the strong prompts, real HED validation, and multi-agent workflow.
  */
 
-// The host this Worker is path-mounted on. Browser-facing Workers live at
+// This Worker is path-mounted at EDGE_HOST + MOUNT_PREFIX (both set in
+// wrangler.toml: edge.annotation.garden with "/hedit" for production and
+// "/hedit-dev" for dev). Browser-facing Workers live at
 // edge.<domain>/<project>, so no client depends on the account-scoped
-// *.workers.dev name (which changes if the Worker moves Cloudflare accounts).
+// *.workers.dev name, which changes if the Worker moves Cloudflare accounts.
 // Cloudflare delivers the full path, mount prefix included; resolveRoutePath
-// strips it once before routing. The prefix comes from MOUNT_PREFIX in
-// wrangler.toml ("/hedit" for production, "/hedit-dev" for dev).
-const EDGE_HOST = 'edge.annotation.garden';
+// strips it once before routing.
+
+// A mount prefix is exactly one path segment, such as "/hedit".
+const MOUNT_PREFIX_PATTERN = /^\/[^/]+$/;
+
+/**
+ * Describe what is wrong with the mount configuration, or return null.
+ * Both values are required: without them, requests on the edge host could
+ * not be told apart from requests on the workers.dev name.
+ */
+function mountConfigError(env) {
+  if (!env.EDGE_HOST) {
+    return 'EDGE_HOST is not configured';
+  }
+  if (!MOUNT_PREFIX_PATTERN.test(env.MOUNT_PREFIX ?? '')) {
+    return `MOUNT_PREFIX must be one path segment such as "/hedit", got ${JSON.stringify(env.MOUNT_PREFIX)}`;
+  }
+  return null;
+}
 
 /**
  * Map a request URL to the path the route table expects.
- * On the edge host, the mount prefix is stripped; requests outside the mount
- * are answered directly. On any other host (the *.workers.dev name, or
- * `wrangler dev`) the path is used as is.
+ * On the edge host, the mount prefix is stripped, and requests outside the
+ * mount are answered here (CORS preflights are answered earlier, before
+ * routing). On any other host (the *.workers.dev name, or `wrangler dev`)
+ * the path is used as is.
  * @returns {{path: string} | {response: Response}}
  */
-function resolveRoutePath(url, env, corsHeaders) {
-  if (url.hostname !== EDGE_HOST) {
+function resolveRoutePath(request, url, env, corsHeaders) {
+  const configError = mountConfigError(env);
+  if (configError) {
+    console.error(`Worker misconfigured: ${configError}`);
+    return { response: new Response(`Worker misconfigured: ${configError}`, { status: 500, headers: corsHeaders }) };
+  }
+  if (url.hostname !== env.EDGE_HOST) {
     return { path: url.pathname };
   }
   const prefix = env.MOUNT_PREFIX;
-  if (!prefix) {
-    console.error(`MOUNT_PREFIX is not configured, but the Worker is serving ${EDGE_HOST}`);
-    return { response: new Response('Worker misconfigured: MOUNT_PREFIX missing', { status: 500, headers: corsHeaders }) };
-  }
   if (url.pathname === prefix) {
     return { response: Response.redirect(`${url.origin}${prefix}/${url.search}`, 308) };
   }
   if (!url.pathname.startsWith(`${prefix}/`)) {
-    return { response: new Response('Not Found', { status: 404, headers: corsHeaders }) };
+    // Typically a request for another environment's mount (for example
+    // "/hedit-dev/..." reaching the production Worker because the dev route
+    // is missing), so name the cause instead of a bare 404.
+    console.warn(`Outside mount: ${request.method} ${url.hostname}${url.pathname} (this Worker serves ${prefix}/)`);
+    return { response: new Response(`Not Found: this Worker serves ${prefix}/ only`, { status: 404, headers: corsHeaders }) };
   }
   return { path: url.pathname.slice(prefix.length) };
 }
@@ -133,7 +157,7 @@ export default {
 
     try {
       const url = new URL(request.url);
-      const resolved = resolveRoutePath(url, env, corsHeaders);
+      const resolved = resolveRoutePath(request, url, env, corsHeaders);
       if (resolved.response) {
         return resolved.response;
       }
@@ -160,8 +184,10 @@ export default {
         return handleRoot(corsHeaders, CONFIG);
       }
 
+      console.warn(`No route: ${request.method} ${url.hostname}${url.pathname} (route path ${path})`);
       return new Response('Not Found', { status: 404, headers: corsHeaders });
     } catch (error) {
+      console.error(`Unhandled error: ${request.method} ${request.url}`, error.stack);
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

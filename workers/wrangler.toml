@@ -17,6 +17,13 @@ routes = [
   { pattern = "edge.annotation.garden/hedit*", zone_name = "annotation.garden" },
 ]
 
+# Workers Logs: without this, console.warn/console.error (misconfiguration,
+# out-of-mount requests, unhandled errors) are visible only to someone running
+# `wrangler tail` at that moment.
+[observability]
+enabled = true
+head_sampling_rate = 1.0
+
 # KV Namespaces for caching
 [[kv_namespaces]]
 binding = "HED_CACHE"
@@ -31,7 +38,9 @@ id = "8deb8c02177349afb1d1fe2f7d4079f4"
 [vars]
 ENVIRONMENT = "production"
 BACKEND_URL = "https://api.annotation.garden/hedit"
-# Path this Worker is mounted at on edge.annotation.garden (see EDGE_HOST in index.js)
+# Where this Worker is path-mounted (see resolveRoutePath in index.js). Both are
+# required; the Worker answers 500 if either is missing or malformed.
+EDGE_HOST = "edge.annotation.garden"
 MOUNT_PREFIX = "/hedit"
 
 # Secrets (set via wrangler secret put)
@@ -43,16 +52,21 @@ MOUNT_PREFIX = "/hedit"
 
 # =============================================================================
 # Development environment
-# Deploy with: npx wrangler deploy --env dev
-# Secrets: npx wrangler secret put BACKEND_API_KEY --env dev
+# Deploy with: bunx cfman wrangler --account <account> deploy --env dev
+# Secrets: bunx cfman wrangler --account <account> secret put BACKEND_API_KEY --env dev
+# (secret values live in Infisical: annot-garden project, dev /hedit/edge)
 # =============================================================================
 [env.dev]
 name = "hedit-dev-api"
 workers_dev = true
-vars = { ENVIRONMENT = "development", BACKEND_URL = "https://api.annotation.garden/hedit-dev", MOUNT_PREFIX = "/hedit-dev" }
+vars = { ENVIRONMENT = "development", BACKEND_URL = "https://api.annotation.garden/hedit-dev", EDGE_HOST = "edge.annotation.garden", MOUNT_PREFIX = "/hedit-dev" }
 routes = [
   { pattern = "edge.annotation.garden/hedit-dev*", zone_name = "annotation.garden" },
 ]
+
+[env.dev.observability]
+enabled = true
+head_sampling_rate = 1.0
 
 # Dev-specific KV namespaces (separate from production)
 [[env.dev.kv_namespaces]]

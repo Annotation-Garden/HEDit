@@ -7,8 +7,9 @@
  */
 import worker from './index.js';
 
-const PROD_ENV = { ENVIRONMENT: 'production', MOUNT_PREFIX: '/hedit' };
-const DEV_ENV = { ENVIRONMENT: 'development', MOUNT_PREFIX: '/hedit-dev' };
+const EDGE_HOST = 'edge.annotation.garden';
+const PROD_ENV = { ENVIRONMENT: 'production', EDGE_HOST, MOUNT_PREFIX: '/hedit' };
+const DEV_ENV = { ENVIRONMENT: 'development', EDGE_HOST, MOUNT_PREFIX: '/hedit-dev' };
 
 let failures = 0;
 function check(condition, message) {
@@ -41,21 +42,31 @@ r = await call('https://edge.annotation.garden/annotate', PROD_ENV);
 check(r.status === 404, 'unprefixed path on the edge host is 404');
 
 r = await call('https://edge.annotation.garden/hedit-dev/', PROD_ENV);
-check(r.status === 404, 'prod Worker does not serve the dev mount');
+check(r.status === 404 && (await r.text()).includes('serves /hedit/ only'),
+  'prod Worker answers the dev mount with a 404 that names its own mount');
 
 r = await call('https://edge.annotation.garden/heditfoo', PROD_ENV);
 check(r.status === 404, '/heditfoo is outside the /hedit/ mount');
 
-// A missing MOUNT_PREFIX fails loudly instead of routing everything to 404
-r = await call('https://edge.annotation.garden/hedit/', { ENVIRONMENT: 'production' });
-check(r.status === 500, 'missing MOUNT_PREFIX on the edge host is a 500');
+// Missing or malformed mount configuration fails loudly instead of routing everything to 404
+r = await call('https://edge.annotation.garden/hedit/', { ENVIRONMENT: 'production', EDGE_HOST });
+check(r.status === 500, 'missing MOUNT_PREFIX is a 500');
+
+r = await call('https://edge.annotation.garden/hedit/', { ...PROD_ENV, MOUNT_PREFIX: '/hedit/' });
+check(r.status === 500, 'MOUNT_PREFIX with a trailing slash is a 500');
+
+r = await call('https://edge.annotation.garden/hedit/', { ...PROD_ENV, MOUNT_PREFIX: 'hedit' });
+check(r.status === 500, 'MOUNT_PREFIX without a leading slash is a 500');
+
+r = await call('https://hedit-api.example.workers.dev/', { ENVIRONMENT: 'production', MOUNT_PREFIX: '/hedit' });
+check(r.status === 500, 'missing EDGE_HOST is a 500, on any host');
 
 // Any other host (workers.dev, wrangler dev) keeps the raw paths
 r = await call('https://hedit-api.example.workers.dev/', PROD_ENV);
 check(await rootName(r) === 'HEDit API (Cloudflare Workers Proxy)', 'workers.dev root still routes unprefixed');
 
 r = await call('https://hedit-api.example.workers.dev/hedit/', PROD_ENV);
-check(r.status === 404, 'the mount prefix is not stripped off the edge host');
+check(r.status === 404, 'the mount prefix is not stripped on non-edge hosts (/hedit/ is 404 there)');
 
 // CORS preflight answers the annotation.garden frontend on the mounted path
 r = await call('https://edge.annotation.garden/hedit/annotate/stream', PROD_ENV, {
