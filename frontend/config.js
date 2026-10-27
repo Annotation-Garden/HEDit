@@ -8,15 +8,16 @@
     // The legacy hedit Pages project still builds hedit.pages.dev (main) and
     // develop.hedit.pages.dev (develop) until it is retired; send those
     // visitors to the same page on annotation.garden. Other *.hedit.pages.dev
-    // previews are left alone for pull-request testing.
+    // previews are left alone for pull-request testing. The configuration
+    // below still runs: replace() navigates asynchronously, and the page's
+    // scripts start calling the backend before it does.
     const legacyMounts = { 'hedit.pages.dev': '/hedit', 'develop.hedit.pages.dev': '/hedit-dev' };
-    if (legacyMounts[hostname]) {
+    if (Object.hasOwn(legacyMounts, hostname)) {
         window.location.replace(`https://annotation.garden${legacyMounts[hostname]}${pathname}${search}${hash}`);
-        return;
     }
 
-    // Development: the /hedit-dev/ path, the legacy develop.hedit.pages.dev
-    // deployment (until the Pages project is retired), and local runs
+    // Development: the /hedit-dev/ path, develop.hedit.pages.dev (until the
+    // redirect above completes), and local runs
     const isDev = pathname.startsWith('/hedit-dev/') ||
                   hostname.startsWith('develop.') ||
                   hostname.includes('localhost') ||
