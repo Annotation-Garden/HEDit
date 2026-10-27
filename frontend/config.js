@@ -3,10 +3,21 @@
 // and calls its browser-facing Worker at edge.annotation.garden/hedit (dev: /hedit-dev).
 // Neither depends on an account-scoped *.pages.dev or *.workers.dev name.
 (function() {
-    const { hostname, pathname } = window.location;
+    const { hostname, pathname, search, hash } = window.location;
 
-    // Development: the /hedit-dev/ path, the legacy develop.hedit.pages.dev
-    // deployment (until the Pages project is retired), and local runs
+    // The legacy hedit Pages project still builds hedit.pages.dev (main) and
+    // develop.hedit.pages.dev (develop) until it is retired; send those
+    // visitors to the same page on annotation.garden. Other *.hedit.pages.dev
+    // previews are left alone for pull-request testing. The configuration
+    // below still runs: replace() navigates asynchronously, and the page's
+    // scripts start calling the backend before it does.
+    const legacyMounts = { 'hedit.pages.dev': '/hedit', 'develop.hedit.pages.dev': '/hedit-dev' };
+    if (Object.hasOwn(legacyMounts, hostname)) {
+        window.location.replace(`https://annotation.garden${legacyMounts[hostname]}${pathname}${search}${hash}`);
+    }
+
+    // Development: the /hedit-dev/ path, develop.hedit.pages.dev (until the
+    // redirect above completes), and local runs
     const isDev = pathname.startsWith('/hedit-dev/') ||
                   hostname.startsWith('develop.') ||
                   hostname.includes('localhost') ||

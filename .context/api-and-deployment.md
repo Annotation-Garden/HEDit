@@ -30,7 +30,7 @@ The legacy `X-OpenRouter-*` spellings of these names (plus `X-OpenRouter-Key`) a
 still accepted as transport; provider-routing headers are ignored.
 
 ### CORS
-- Production: `annotation.garden` (the frontend at `annotation.garden/hedit/`); legacy `hedit.pages.dev` until retired
+- Production: `annotation.garden` (pages calling the API directly; the frontend goes through the edge Worker, which does not forward `Origin`)
 - Development: Cloudflare Workers, localhost
 - Custom: `EXTRA_CORS_ORIGINS` environment variable
 
@@ -53,7 +53,8 @@ still accepted as transport; provider-routing headers are ignored.
 - Calls the edge Worker at `edge.annotation.garden/hedit` (dev: `/hedit-dev`)
 - SSE streaming support
 - Legacy: the `hedit` Pages project (`hedit.pages.dev`, `develop.hedit.pages.dev`)
-  still deploys from git until it is retired
+  still deploys from git until it is retired; its `config.js` redirects visitors
+  to `annotation.garden/hedit/` and `/hedit-dev/`
 
 ### Cloudflare Workers (manual deploy, no CI)
 - Edge proxy: `workers/index.js`, config `workers/wrangler.toml`.

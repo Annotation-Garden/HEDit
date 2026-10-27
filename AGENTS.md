@@ -57,8 +57,9 @@ URL convention: `annotation.garden/<project>` is the frontend, `edge.annotation.
 holds browser-facing Workers, and `api.annotation.garden/<project>` is the origin.
 Nothing may depend on an account-scoped `*.pages.dev` or `*.workers.dev` name,
 because those change when the project moves Cloudflare accounts.
-Until they are retired, `hedit.pages.dev`, `develop.hedit.pages.dev`, and the
-`hedit-api`/`hedit-dev-api` workers.dev names still work.
+Until they are retired, `hedit.pages.dev` and `develop.hedit.pages.dev` redirect to
+`annotation.garden/hedit/` and `/hedit-dev/`, and the `hedit-api`/`hedit-dev-api`
+workers.dev names still work.
 
 ### Worker deployment (MANUAL - no CI)
 The Workers in `workers/` are NOT deployed by CI.
@@ -99,7 +100,8 @@ The pipeline is:
 4. The frontend at `annotation.garden/hedit/` is the `hedit-web` Worker,
    deployed by hand from main (see above). Cloudflare Pages still deploys the
    legacy `hedit.pages.dev` from main and `develop.hedit.pages.dev` from
-   develop automatically on push, until that project is retired
+   develop automatically on push, until that project is retired; those
+   deployments redirect visitors to `annotation.garden/hedit/` and `/hedit-dev/`
 
 Verify a backend deploy with
 `curl https://api.annotation.garden/hedit/health` (reports the version);
