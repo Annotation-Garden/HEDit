@@ -583,7 +583,7 @@ app = FastAPI(
 # *.workers.dev names are deliberately absent: they change with the Cloudflare
 # account.
 allowed_origins = [
-    "https://annotation.garden",  # Frontend (annotation.garden/hedit/) and main AGI website
+    "https://annotation.garden",  # annotation.garden pages that call this API directly
 ]
 
 # Add common localhost ports for development
