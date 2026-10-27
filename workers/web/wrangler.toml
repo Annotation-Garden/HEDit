@@ -1,6 +1,6 @@
 # HEDit frontend: serves ../../frontend at annotation.garden/hedit/
-# Deploy with: bunx cfman wrangler --account <account> deploy            (prod: hedit-web)
-#              bunx cfman wrangler --account <account> deploy --env dev  (dev: hedit-web-dev)
+# Deployed by .github/workflows/deploy-workers.yml (main: hedit-web, develop: hedit-web-dev).
+# By hand: bunx cfman wrangler --account <account> deploy [--env dev]
 # Deploy prod from main only: whatever frontend/ holds at deploy time goes live.
 
 name = "hedit-web"
