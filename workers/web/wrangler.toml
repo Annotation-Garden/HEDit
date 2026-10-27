@@ -1,0 +1,43 @@
+# HEDit frontend: serves ../../frontend at annotation.garden/hedit/
+# Deploy with: bunx cfman wrangler --account <account> deploy            (prod: hedit-web)
+#              bunx cfman wrangler --account <account> deploy --env dev  (dev: hedit-web-dev)
+# Deploy prod from main only: whatever frontend/ holds at deploy time goes live.
+
+name = "hedit-web"
+main = "index.js"
+compatibility_date = "2026-10-01"
+
+# Served only through the routes below; no account-scoped workers.dev name.
+workers_dev = false
+
+# The main annotation.garden site (a Pages project) also serves files whose
+# names start with "hedit" (/hedit-light.png, /hedit-dark.png), so the routes
+# match "/hedit/" and the bare "/hedit" only, never "/hedit*".
+# A Worker route takes precedence over the Pages site on the same hostname.
+# The bare-path route has no wildcard, so it does not match "/hedit?x=1"; that
+# request falls through to the main site, whose middleware also redirects
+# "/hedit" to "/hedit/". "/hedit-dev?x=1" has no such fallback and lands on the
+# main site's page; acceptable for the dev path.
+routes = [
+  { pattern = "annotation.garden/hedit/*", zone_name = "annotation.garden" },
+  { pattern = "annotation.garden/hedit", zone_name = "annotation.garden" },
+]
+
+# run_worker_first: every request goes through index.js, which strips the
+# mount prefix before looking up the asset.
+[assets]
+directory = "../../frontend"
+binding = "ASSETS"
+run_worker_first = true
+
+[vars]
+MOUNT_PREFIX = "/hedit"
+
+[env.dev]
+name = "hedit-web-dev"
+workers_dev = false
+routes = [
+  { pattern = "annotation.garden/hedit-dev/*", zone_name = "annotation.garden" },
+  { pattern = "annotation.garden/hedit-dev", zone_name = "annotation.garden" },
+]
+vars = { MOUNT_PREFIX = "/hedit-dev" }
