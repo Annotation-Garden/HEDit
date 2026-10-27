@@ -80,17 +80,24 @@ function getConfig(env) {
  * @param {string} token - The Turnstile response token from the client
  * @param {string} secretKey - The Turnstile secret key
  * @param {string} ip - The client's IP address
+ * @param {boolean} isDev - Whether this is the development Worker
  * @returns {Promise<{success: boolean, error?: string}>}
  */
-async function verifyTurnstileToken(token, secretKey, ip) {
+async function verifyTurnstileToken(token, secretKey, ip, isDev) {
   if (!token) {
     return { success: false, error: 'Missing Turnstile token' };
   }
 
   if (!secretKey) {
-    // If no secret key configured, skip verification (for development)
-    console.warn('TURNSTILE_SECRET_KEY not configured, skipping verification');
-    return { success: true };
+    // Only development may run without the secret. Anywhere else a missing
+    // secret (for example a redeploy into an account whose secrets were not
+    // populated yet) must reject, not turn bot protection off.
+    if (isDev) {
+      console.warn('TURNSTILE_SECRET_KEY not configured, skipping verification (development)');
+      return { success: true };
+    }
+    console.error('TURNSTILE_SECRET_KEY not configured; rejecting request');
+    return { success: false, error: 'Bot verification is not configured' };
   }
 
   try {
@@ -120,6 +127,7 @@ async function verifyTurnstileToken(token, secretKey, ip) {
       };
     }
   } catch (error) {
+    console.error('Turnstile Siteverify call failed; rejecting request:', error.message);
     return { success: false, error: `Turnstile verification error: ${error.message}` };
   }
 }
@@ -362,7 +370,8 @@ async function handleAnnotate(request, env, ctx, corsHeaders, CONFIG) {
     const turnstileResult = await verifyTurnstileToken(
       cf_turnstile_response,
       env.TURNSTILE_SECRET_KEY,
-      clientIp
+      clientIp,
+      CONFIG.IS_DEV
     );
 
     if (!turnstileResult.success) {
@@ -496,7 +505,8 @@ async function handleAnnotateStream(request, env, corsHeaders, CONFIG) {
     const turnstileResult = await verifyTurnstileToken(
       cf_turnstile_response,
       env.TURNSTILE_SECRET_KEY,
-      clientIp
+      clientIp,
+      CONFIG.IS_DEV
     );
 
     if (!turnstileResult.success) {
@@ -617,7 +627,8 @@ async function handleAnnotateFromImage(request, env, corsHeaders, CONFIG) {
       const turnstileResult = await verifyTurnstileToken(
         cf_turnstile_response,
         env.TURNSTILE_SECRET_KEY,
-        clientIp
+        clientIp,
+        CONFIG.IS_DEV
       );
 
       if (!turnstileResult.success) {
@@ -726,7 +737,8 @@ async function handleAnnotateFromImageStream(request, env, corsHeaders, CONFIG) 
       const turnstileResult = await verifyTurnstileToken(
         cf_turnstile_response,
         env.TURNSTILE_SECRET_KEY,
-        clientIp
+        clientIp,
+        CONFIG.IS_DEV
       );
 
       if (!turnstileResult.success) {

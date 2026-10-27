@@ -63,6 +63,9 @@ Update `wrangler.toml` with the namespace IDs.
 wrangler secret put TURNSTILE_SECRET_KEY
 ```
 
+Set it before the first deploy that takes traffic.
+Without it, the production Worker rejects every browser request (403, "Bot verification is not configured"); only `ENVIRONMENT = "development"` skips verification when it is missing.
+
 ### Step 4: Deploy
 
 ```bash
