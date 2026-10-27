@@ -5,7 +5,7 @@
 into valid Hierarchical Event Descriptors (HED) annotations using LangGraph.
 Part of the Annotation Garden Initiative (AGI).
 **Tech Stack:** Python 3.12+, LangGraph, FastAPI, HED JavaScript/Python validators,
-Cloudflare Pages + Workers, Anthropic Claude via the Claude Platform on AWS
+Cloudflare Workers (static assets + edge proxy), Anthropic Claude via the Claude Platform on AWS
 (Anthropic-operated Messages API, AWS Marketplace billing; NOT Bedrock).
 Models: claude-haiku-4-5 (default) and claude-sonnet-5.
 
@@ -17,7 +17,7 @@ src/
 ├── api/            # FastAPI backend (main.py: endpoints, CORS, auth)
 ├── cli/            # Typer + Rich CLI
 └── utils/          # Helper functions
-frontend/           # Web interface (Cloudflare Pages; config.js picks backend)
+frontend/           # Web interface (hedit-web Worker serves it at annotation.garden/hedit/; config.js picks backend)
 workers/            # Cloudflare Worker proxies (index.js + wrangler.toml)
 deploy/             # Deployment assets
 tests/              # pytest + coverage
@@ -72,10 +72,17 @@ bunx cfman wrangler --account neuromechanist deploy --env dev  # dev edge: hedit
 cd web
 bunx cfman wrangler --account neuromechanist deploy            # prod frontend: hedit-web
 bunx cfman wrangler --account neuromechanist deploy --env dev  # dev frontend: hedit-web-dev
-bun ../test-routing.js                                          # edge mount routing checks
 ```
 Secrets (`BACKEND_API_KEY`, `TURNSTILE_SECRET_KEY`) and KV bindings persist across deploys.
 Their source of truth is Infisical (`annot-garden` project, `/hedit/edge`).
+
+Order matters when a change moves where the frontend calls: the legacy Pages
+deployments rebuild on every push, so deploy the edge Worker for an environment
+and verify it (`curl https://edge.annotation.garden/hedit-dev/health`) before
+merging a `frontend/config.js` change to develop, and likewise for `/hedit`
+before releasing it to main.
+CI runs `bun workers/test-routing.js` (edge mount routing) and
+`bash workers/web/smoke-test.sh` (frontend Worker under `wrangler dev`).
 
 ### Release pipeline (what a merge to main actually deploys, and when)
 A merge to `main` does NOT immediately update the production backend.

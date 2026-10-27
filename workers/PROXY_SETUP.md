@@ -24,9 +24,10 @@ User → Cloudflare Worker → api.annotation.garden/hedit → Docker Container
 - Uses Cloudflare KV for distributed rate limiting
 
 ### CORS Protection
-- **Restricted to**: `https://annotation.garden` (production frontend at `annotation.garden/hedit/`)
-- **Development**: Also allows `http://localhost:*` for local testing
-- Blocks all other origins
+- **Allows**: `https://annotation.garden` (the production frontend at `annotation.garden/hedit/`) and its subdomains
+- **Legacy**: `hedit.pages.dev` and `hed-bot.pages.dev` (and their preview subdomains) until those Pages projects are retired
+- **Development**: `http://localhost:*` for local testing
+- Any other origin receives a mismatched `Access-Control-Allow-Origin`, so the browser rejects the response
 
 ### Request Timeout
 - **2 minutes** for annotation workflows
@@ -71,13 +72,14 @@ echo "your-api-key-here" | npx wrangler secret put BACKEND_API_KEY
 
 ```bash
 # Deploy to Cloudflare
-npx wrangler deploy
+bunx cfman wrangler --account <account> deploy
 ```
 
 You should see output like:
 ```
 Published hedit-api (0.42 sec)
-  https://edge.annotation.garden/hedit
+  https://hedit-api.<account>.workers.dev
+  edge.annotation.garden/hedit* (zone name: annotation.garden)
 ```
 
 ### 4. Test the Setup
