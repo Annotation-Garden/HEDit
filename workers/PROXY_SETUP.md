@@ -221,11 +221,11 @@ echo "your-api-key" | npx wrangler secret put BACKEND_API_KEY
 ### "Rate limit exceeded"
 ```bash
 # Check rate limiter KV namespace
-npx wrangler kv:key list --namespace-id=8deb8c02177349afb1d1fe2f7d4079f4
+npx wrangler kv key list --binding=RATE_LIMITER --remote
 
 # Clear rate limit for specific IP (if needed)
-npx wrangler kv:key delete "ratelimit:1.2.3.4" \
-  --namespace-id=8deb8c02177349afb1d1fe2f7d4079f4
+npx wrangler kv key delete "ratelimit:1.2.3.4" \
+  --binding=RATE_LIMITER --remote
 ```
 
 ### CORS errors in browser
