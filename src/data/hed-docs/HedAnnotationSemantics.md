@@ -66,7 +66,7 @@ The reversibility principle provides a practical test for whether your HED annot
 **Example:** A reversible HED annotation
 
 ```
- Sensory-event, Experimental-stimulus, Target, Visual-presentation, 
+ Sensory-event, Experimental-stimulus, Target, Visual-presentation,
 ((Green, Triangle), (Center-of, Computer-screen))
 ```
 
@@ -102,6 +102,55 @@ We can determine that this is a sensory event presented visually because of the 
 
 **A simple reversibility test:** Randomly shuffle the order of the tags and tag groups (keeping the same nesting) and see if you interpret the annotation in the same way.
 
+## The discrimination principle
+
+**The discrimination principle**
+
+**Events that must be distinguished in analysis must have distinguishable HED annotations.**
+
+
+
+While reversibility is a property of a single annotation, discrimination is a property of a set of annotations. If two events represent different values of a contrast variable or will need to be separated in downstream analysis, their assembled HED annotations must differ. Tools that search, epoch, or summarize data based on HED can only separate events whose annotations are distinct.
+
+**Example:** Distinguishable annotations for an auditory oddball experiment
+
+```
+Sensory-event, Experimental-stimulus, Target, Auditory-presentation, (Tone, Frequency/1000 Hz)
+```
+```
+Sensory-event, Experimental-stimulus, Non-target, Auditory-presentation, (Tone, Frequency/500 Hz)
+```
+
+
+**Why these are distinguishable:**
+
+The experiment contrasts responses to rare target tones with responses to frequent standard tones, and the annotations preserve that contrast:
+
+- `Target` vs `Non-target` captures the task distinction that the analysis will contrast
+- `Frequency/1000 Hz` vs `Frequency/500 Hz` captures the physical distinction between the stimuli
+- A query for `Target` (or for either frequency) cleanly separates the two conditions
+
+**Example:** A non-distinguishable annotation for the same experiment
+
+
+Both the target tones and the standard tones are assembled as:
+```
+Sensory-event, Auditory-presentation, Tone
+```
+
+
+**Why this fails discrimination:**
+
+Each individual annotation is reversible -- it translates to the coherent English sentence "A sensory event consists of the auditory presentation of a tone." However, the two experimental conditions produce identical assembled annotations:
+
+- No HED-based query can separate the target tones from the standard tones
+- The contrast that motivated the experiment is not recoverable from the annotations
+- The information distinguishing the conditions exists only in external documentation (or nowhere)
+
+A common version of this problem is tagging every stimulus row as just `Sensory-event` (or every response row as just `Agent-action`) without enough detail to tell the events apart. Such annotations are syntactically valid and individually reversible but useless for analysis.
+
+**A simple discrimination test:** List the experimental conditions or event categories that your analysis (or a future re-analysis) will need to separate. For each pair, compare the assembled annotations: if any pair is identical, the annotations need more detail. Equivalently, the number of distinct assembled annotations in your timeline data should be at least the number of conditions you intend to distinguish. The [HED summary tools](HedSummaryGuide.md) can list the distinct annotations for you.
+
 ## Timeline vs descriptor data
 
 The semantic requirements for HED annotations depend on whether they appear in **timeline data** or **descriptor data**.
@@ -130,7 +179,7 @@ Timeline data has timestamps indicating when things happen. Every assembled anno
 
 
 **Excerpt from:** `events.tsv`
-| onset | duration | event_type | 
+| onset | duration | event_type |
 |-------| -------- | ---------- |
 | 2.5   | n/a      | square     |
 
@@ -214,7 +263,7 @@ Remember that HED vocabularies maintain a strict taxonomical or is-a relationshi
 
 **HED annotations are unordered**
 
-**The order of tags in a HED annotation does not affect its meaning.** 
+**The order of tags in a HED annotation does not affect its meaning.**
 
 
 The annotations `Red, Circle` and the annotations `Circle, Red` are semantically equivalent—-both are just a list of two independent tags.
@@ -402,12 +451,12 @@ It is also possible to annotate this as a single sensory event that is an experi
 
 | onset | duration | event_type      |
 | ----- | -------- | --------------- |
-| 104.5 |  'n/a'   |  show_circle    | 
+| 104.5 |  'n/a'   |  show_circle    |
 | 104.5 |  'n/a'   |  sound_green    |
 
 **Asssembled annotation:**
 ```
-(Sensory-event, Experimental-stimulus, Visual-presentation, (Red, Circle)), 
+(Sensory-event, Experimental-stimulus, Visual-presentation, (Red, Circle)),
 (Sensory-event, Experimental-stimulus, Auditory-presentation, (Word, Label/Green))
 ```
 
@@ -443,7 +492,7 @@ At time 104.5 seconds into the experiment a circle is presented on the computer 
 
 **Key principle**
 
-**Every type of event has a perspective that informs the viewpoint of the annotation.** 
+**Every type of event has a perspective that informs the viewpoint of the annotation.**
 
 
 Perspective is generally a property of timeline data not descriptor data. Correct identification of the perspective allows downstream tools to assess the influence of the event on the participants' cognition and behavior. Event annotations that contain `Agent` and/or `Agent-task-role` tags have **explicit** perspective, while those without those tags have **implicit** perspective. See the Event table in [Rule 2: Classify events carefully](#rule-2-classify-events-carefully) for the implicit agent associated with each event type.
@@ -923,7 +972,7 @@ Use `Duration` when you know the event's duration and want to capture it in a si
 
 **Sidecar:** `events.json`
 ```json
-{ 
+{
   "duration": {
     "HED": "(Duration/# s, ({event_type}, {cross_size}))"
   },
@@ -1028,7 +1077,7 @@ The `Delay` tag is used to indicate that the event starts at a specified delay f
 
 **Sidecar:** `events.json`
 ```json
-{ 
+{
   "event_type": {
     "HED": {
       "square": "(Sensory-event, experimental-stimulus, Visual-presentation, Square)"
@@ -1134,7 +1183,7 @@ Agent-action, (Experiment-participant, (Press, Mouse-button))
 
 **Correct:**
 ```
-(Sensory-event, Visual-presentation, (Red, Circle)), 
+(Sensory-event, Visual-presentation, (Red, Circle)),
 (Agent-action, Participant-response, (Experiment-participant, Press))
 ```
 
@@ -1202,6 +1251,24 @@ Sensory-event, Visual-presentation, (Red, Circle)
 ```
 
 
+**Mistake 10:** Identical annotations for events that must be distinguished - [The discrimination principle](#the-discrimination-principle)
+
+**Wrong (target and standard tones assemble to the same annotation):**
+```
+Sensory-event, Auditory-presentation, Tone
+```
+
+**Correct:**
+```
+Sensory-event, Experimental-stimulus, Target, Auditory-presentation, (Tone, Frequency/1000 Hz)
+```
+```
+Sensory-event, Experimental-stimulus, Non-target, Auditory-presentation, (Tone, Frequency/500 Hz)
+```
+
+
+If two conditions will be contrasted in analysis, their assembled annotations must differ.
+
 ## Best practices checklist
 
 Use this checklist before finalizing your annotations:
@@ -1249,6 +1316,7 @@ Use this checklist before finalizing your annotations:
 
 **✓ Semantics**
 - [ ] Annotation translates to coherent English (reversibility test)
+- [ ] Events to be contrasted in analysis have distinct annotations (discrimination test)
 - [ ] No ambiguity in interpretation
 - [ ] Makes sense in context
 - [ ] Consistent structure across similar events
@@ -1265,12 +1333,13 @@ Use this checklist before finalizing your annotations:
 Creating semantically correct HED annotations requires understanding:
 
 1. **The reversibility principle** - Your annotations should translate back to coherent English
-2. **Semantic grouping rules** - Parentheses bind tags that describe the same entity
-3. **Event classification** - Every event should have both `Event` and `Task-event-role` tags
-4. **Data type semantics** - Timeline and descriptor data have different requirements
-5. **Relationship patterns** - Agent-action-object and directional relationships need specific structures
-6. **Assembly control** - Use curly braces to control how multi-column annotations are assembled
-7. **Consistency** - Use the same patterns for similar events throughout your dataset
+2. **The discrimination principle** - Events that must be distinguished in analysis have distinguishable annotations
+3. **Semantic grouping rules** - Parentheses bind tags that describe the same entity
+4. **Event classification** - Every event should have both `Event` and `Task-event-role` tags
+5. **Data type semantics** - Timeline and descriptor data have different requirements
+6. **Relationship patterns** - Agent-action-object and directional relationships need specific structures
+7. **Assembly control** - Use curly braces to control how multi-column annotations are assembled
+8. **Consistency** - Use the same patterns for similar events throughout your dataset
 
 By following these principles and patterns, you create annotations that are not only syntactically valid but also semantically meaningful and machine-actionable, enabling powerful downstream analysis and cross-study comparisons.
 
@@ -1284,7 +1353,7 @@ By following these principles and patterns, you create annotations that are not 
 **Available tools:**
 
 - [HED online tools](https://hedtools.org/hed) - Fairly complete set of tools for a single tsv and json files.
-- [HED browser-based validation](https://www.hedtags.org/hed-javascript) - validate an entire BIDS dataset -- all local, no installation
+- [HED browser-based validation](https://www.hedtags.org/hed-web) - validate an entire BIDS dataset -- all local, no installation
 - [HED extension for NWB](https://github.com/hed-standard/ndx-hed) - incorporates HED into Neurodata Without Borders datasets.
 - [Python HEDTools](https://github.com/hed-standard/hed-python) - comprehensive set of tools for HED in Python.
 - [MATLAB HEDTools](https://github.com/hed-standard/hed-matlab) - HED interface in MATLAB
